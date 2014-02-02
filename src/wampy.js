@@ -16,9 +16,16 @@
 
 ;(function(window, document, undefined) {
 
-
-	var wampcli = function () {
-
+	var WAMP_SPEC = {
+		TYPE_ID_WELCOME: 0,
+		TYPE_ID_PREFIX: 1,
+		TYPE_ID_CALL: 2,
+		TYPE_ID_CALLRESULT: 3,
+		TYPE_ID_CALLERROR: 4,
+		TYPE_ID_SUBSCRIBE: 5,
+		TYPE_ID_UNSUBSCRIBE: 6,
+		TYPE_ID_PUBLISH: 7,
+		TYPE_ID_EVENT: 8
 	};
 
 	function getServerUrl (url) {
@@ -52,5 +59,43 @@
 		}
 		return key;
 	};
+
+	function getWebSocket (url, protocols) {
+		if ("WebSocket" in window) {
+		// Chrome, MSIE, newer Firefox
+			if (protocols) {
+				return new WebSocket(url, protocols);
+			} else {
+				return new WebSocket(url);
+			}
+		} else if ("MozWebSocket" in window) {
+			// older versions of Firefox
+			if (protocols) {
+				return new MozWebSocket(url, protocols);
+			} else {
+				return new MozWebSocket(url);
+			}
+		} else {
+			return null;
+		}
+	};
+
+	var wampy = function (url, protocols) {
+
+		this._ws = null;
+
+		if(url) {
+			this._ws = getWebSocket(url, protocols);
+		}
+
+
+
+	};
+
+	wampy.prototype.connect = function (url, protocols) {
+		this._ws = getWebSocket(url, protocols);
+	};
+
+	window.wampy = wampy;
 
 })(window, document);
