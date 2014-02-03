@@ -14,7 +14,7 @@
  *
  */
 
-;(function(window, document, undefined) {
+;(function(window, undefined) {
 
 	var WAMP_SPEC = {
 		TYPE_ID_WELCOME: 0,
@@ -80,22 +80,152 @@
 		}
 	};
 
-	var wampy = function (url, protocols) {
-
-		this._ws = null;
-
-		if(url) {
-			this._ws = getWebSocket(url, protocols);
-		}
-
-
-
+	/**
+	 * Prefixes table object
+	 */
+	var prefixMap = function () {
+		this._pref2uri = {};
+		this._uri2pref = {};
 	};
 
-	wampy.prototype.connect = function (url, protocols) {
+	prefixMap.prototype.get = function (prefix) {
+		return this._pref2uri[prefix];
+	};
+
+	prefixMap.prototype.set = function (prefix, uri) {
+		this._pref2uri[prefix] = uri;
+		this._uri2pref[prefix] = uri;
+	}
+
+	prefixMap.prototype.remove = function (prefix) {
+		if (this._pref2uri[prefix]) {
+			delete this._uri2pref[this._pref2uri[prefix]];
+			delete this._pref2uri[prefix];
+		}
+	};
+
+	prefixMap.prototype.reset = function () {
+		this._pref2uri = {};
+		this._uri2pref = {};
+	};
+
+	prefixMap.prototype.resolve = function (curie) {
+		var i = curie.indexOf(":"), prefix;
+
+		if (i >= 0) {
+			prefix = curie.substring(0, i);
+			if (this._pref2uri[prefix]) {
+				return this._pref2uri[prefix] + curie.substring(i + 1);
+			} else {
+				return null;
+			}
+		} else {
+			return curie;
+		}
+	};
+
+	/**
+	 * WAMP Client Class
+	 * @param {string} url
+	 * @param {Array} protocols
+	 * @param {Object} options
+	 */
+	var Wampy = function (url, protocols, options) {
+
+		/**
+		 * WAMP Session ID
+		 * @type {string}
+		 * @private
+		 */
+		this._sessionId = null;
+
+		/**
+		 * WAMP Server info
+		 * @type {string}
+		 * @private
+		 */
+		this._serverIdent = null;
+
+		/**
+		 * WAMP Protocol version
+		 * @type {number}
+		 * @private
+		 */
+		this._protocolVersion = 1;
+
+		/**
+		 * WebSocket object
+		 * @type {Object}
+		 * @private
+		 */
+		this._ws = null;
+
+		/**
+		 * Options hash-table
+		 * @type {Object}
+		 * @private
+		 */
+		this._options = {};
+
+		/**
+		 * Prefixes hash-table for instance
+		 * @type {prefixMap}
+		 * @private
+		 */
+		this._prefixMap = new prefixMap();
+
+		switch (arguments.length) {
+			case 1:
+				if (typeof arguments[0] === 'string') {
+					this._ws = getWebSocket(arguments[0]);
+				} else {
+					this._options = arguments[0];
+				}
+				break;
+			case 2:
+				if (typeof arguments[0] === 'string' && arguments[1] instanceof Array) {
+					this._ws = getWebSocket(arguments[0], arguments[1]);
+				} else {
+					this._ws = getWebSocket(arguments[0]);
+					this._options = arguments[1];
+				}
+				break;
+			case 3:
+				this._ws = getWebSocket(arguments[0], arguments[1]);
+				this._options = arguments[2];
+				break;
+		}
+	};
+
+	Wampy.prototype.connect = function (url, protocols) {
 		this._ws = getWebSocket(url, protocols);
 	};
 
-	window.wampy = wampy;
+//	Wampy.prototype.welcome = function (sessionId , protocolVersion, serverIdent) {
+//		this._sessionId = sessionId;
+//		this._protocolVersion = protocolVersion;
+//		this._serverIdent = serverIdent;
+//	};
 
-})(window, document);
+	Wampy.prototype.prefix = function (prefix, uri) {
+		this._prefixMap.set(prefix, uri);
+	};
+
+	Wampy.prototype.call = function (procURI, callRes, callErr) {
+
+	};
+
+	Wampy.prototype.subscribe = function (topicURI, callback) {
+
+	};
+	Wampy.prototype.unsubscribe = function (topicURI) {
+
+	};
+
+	Wampy.prototype.publish = function (topicURI, event, exclude, eligible) {
+
+	};
+
+	window.Wampy = Wampy;
+
+})(window);
