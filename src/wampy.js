@@ -111,18 +111,18 @@
 		this._uri2pref = {};
 	};
 
-	prefixMap.prototype.resolve = function (curie) {
-		var i = curie.indexOf(":"), prefix;
+	prefixMap.prototype.resolve = function (uri) {
+		var i = uri.indexOf(":"), prefix;
 
 		if (i >= 0) {
-			prefix = curie.substring(0, i);
+			prefix = uri.substring(0, i);
 			if (this._pref2uri[prefix]) {
-				return this._pref2uri[prefix] + curie.substring(i + 1);
+				return this._pref2uri[prefix] + uri.substring(i + 1);
 			} else {
 				return null;
 			}
 		} else {
-			return curie;
+			return uri;
 		}
 	};
 
@@ -182,7 +182,31 @@
 			 * Did we received welcome message
 			 * @type {boolean}
 			 */
-			welcome: false
+			welcome: false,
+
+			/**
+			 * onConnect callback
+			 * @type {function}
+			 */
+			onConnect: null,
+
+			/**
+			 * onClose callback
+			 * @type {function}
+			 */
+			onClose: null,
+
+			/**
+			 * onError callback
+			 * @type {function}
+			 */
+			onError: null,
+
+			/**
+			 * onReconnect callback
+			 * @type {function}
+			 */
+			onReconnect: null
 		};
 
 		/**
@@ -200,7 +224,28 @@
 		this._ws = null;
 
 		/**
-		 * WS State
+		 * Internal queue for requests, for case of disconnect
+		 * @type {Array}
+		 * @private
+		 */
+		this._queue = [];
+
+		/**
+		 * Stored RPC
+		 * @type {object}
+		 * @private
+		 */
+		this._calls = {};
+
+		/**
+		 * Stored Pub/Sub
+		 * @type {object}
+		 * @private
+		 */
+		this._subscriptions = {};
+
+		/**
+		 * Wampy State
 		 * @type {boolean}
 		 * @private
 		 */
@@ -248,6 +293,8 @@
 				break;
 		}
 
+		//TODO Catch if no websocket object
+
 		this._initWsCallbacks();
 	};
 
@@ -270,7 +317,20 @@
 		return obj;
 	};
 
-	/* Internal websocket object functions */
+	/* Internal websocket related functions */
+
+	Wampy.prototype._send = function (msg) {
+		if(msg) {
+			this._queue.push(JSON.stringify(msg));
+		}
+
+		if (this._isConnected && this._ws.readyState === 1) {
+			while (this._queue.length) {
+				this._ws.send(this._queue.shift());
+			}
+		}
+	};
+
 	Wampy.prototype._initWsCallbacks = function () {
 		var self = this;
 
@@ -284,11 +344,18 @@
 	Wampy.prototype._wsOnOpen = function () {
 		console.log("[wampy] websocket connected");
 
-		this._isConnected = true;
+		//TODO Make subprotocol check
 
-		if (this._options.onConnect) {
-			this._options.onConnect();
+		if (this._isConnected === false) {
+			this._isConnected = true;
+
+			if (this._options.onConnect) {
+				this._options.onConnect();
+			}
 		}
+
+		// Send local queue if there is something out there
+		this._send();
 	};
 
 	Wampy.prototype._wsOnClose = function (event) {
@@ -302,11 +369,11 @@
 			this._timer = window.setTimeout(function () { self._wsReconnect.call(self); }, this._options.reconnectInterval);
 		} else {
 			// No reconnection needed or reached max retries count
-			this._isConnected = false;
-
 			if (this._options.onClose) {
 				this._options.onClose();
 			}
+
+			this.disconnect();
 		}
 	};
 
@@ -366,6 +433,7 @@
 			return this._options;
 		} else if (typeof opts === 'object') {
 			this._options = this._merge(this._options, opts);
+			return this;
 		}
 	};
 
@@ -381,40 +449,91 @@
 		}
 
 		this._ws = getWebSocket(this._url, this._protocols);
+
+		return this;
 	};
 
 	Wampy.prototype.disconnect = function () {
-		this._isConnected = false;
-		this._ws.close();
-		this._cache.timer = null;
-		this._cache.sessionId = null;
-		this._cache.reconnectingAttempts = 0;
-		this._serverIdent = null;
-		this._prefixMap.reset();
-		this._ws = null;
+		if (this._isConnected) {
+			this._isConnected = false;
+			this._ws.close();
+			this._cache.timer = null;
+			this._cache.sessionId = null;
+			this._cache.reconnectingAttempts = 0;
+			this._serverIdent = null;
+			this._prefixMap.reset();
+			this._ws = null;
+			this._queue = [];
+			this._subscriptions = {};
+			this._calls = {};
+		}
+
+		return this;
 	};
 
 	Wampy.prototype.prefix = function (prefix, uri) {
 		this._prefixMap.set(prefix, uri);
+		this._send([WAMP_SPEC.TYPE_ID_PREFIX, prefix, uri]);
+
+		return this;
 	};
 
 	Wampy.prototype.unprefix = function (prefix) {
 		this._prefixMap.remove(prefix);
+
+		return this;
 	};
 
 	Wampy.prototype.call = function (procURI, callRes, callErr) {
-
+		this._calls;
+		return this;
 	};
 
 	Wampy.prototype.subscribe = function (topicURI, callback) {
+		var uri = this._prefixMap.resolve(topicURI);
 
+		if (!this._subscriptions[uri]) {
+			this._subscriptions[uri] = [];
+			this._send([WAMP_SPEC.TYPE_ID_SUBSCRIBE, topicURI]);
+		}
+
+		// There is no such callback yet
+		if (this._subscriptions[uri].indexOf(callback) < 0) {
+			this._subscriptions[uri].push(callback);
+		}
+
+		return this;
 	};
+	
 	Wampy.prototype.unsubscribe = function (topicURI, callback) {
+		var i, uri = this._prefixMap.resolve(topicURI);
 
+		if (this._subscriptions[uri]) {
+			if (callback !== undefined) {
+				i = this._subscriptions[uri].indexOf(callback);
+				if (i >= 0) {
+					this._subscriptions[uri].splice(i, 1);
+				}
+
+				if (this._subscriptions[uri].length) {
+					// There are another callbacks for this topic
+					return this;
+				}
+			}
+
+			this._send([WAMP_SPEC.TYPE_ID_UNSUBSCRIBE, topicURI]);
+			delete this._subscriptions[uri];
+		}
+
+		return this;
 	};
 
 	Wampy.prototype.publish = function (topicURI, event, exclude, eligible) {
+		var i, uri = this._prefixMap.resolve(topicURI);
 
+
+
+		return this;
 	};
 
 	window.Wampy = Wampy;
