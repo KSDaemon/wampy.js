@@ -348,10 +348,6 @@
 
 		if (this._isConnected === false) {
 			this._isConnected = true;
-
-			if (this._options.onConnect) {
-				this._options.onConnect();
-			}
 		}
 
 		// Send local queue if there is something out there
@@ -378,7 +374,7 @@
 	};
 
 	Wampy.prototype._wsOnMessage = function (event) {
-		var data;
+		var data, i;
 
 		console.log("[wampy] websocket message received: ", event.data);
 
@@ -386,21 +382,34 @@
 
 		switch (data[0]) {
 			case WAMP_SPEC.TYPE_ID_WELCOME:
-				if (this._cache.welcome) {
-					console.log("[wampy] Received WELCOME message, while already initialized!");
-				}
 				this._cache.sessionId = data[1];
 				this._cache.protocolVersion = data[2];
 				this._serverIdent = data[3];
+
+				// Firing onConnect event on real connection to WAMP server
+				if (this._options.onConnect) {
+					this._options.onConnect();
+				}
+
 				break;
 			case WAMP_SPEC.TYPE_ID_CALLRESULT:
-
+				if (this._calls[data[1]] && this._calls[data[1]].callRes) {
+					this._calls[data[1]]['callRes'](data[2]);
+				}
 				break;
 			case WAMP_SPEC.TYPE_ID_CALLERROR:
-
+				if (this._calls[data[1]] && this._calls[data[1]].callErr) {
+					// I don't think client is interested in URI of error
+					this._calls[data[1]]['callErr'](data[3], data[4]);
+				}
 				break;
 			case WAMP_SPEC.TYPE_ID_EVENT:
-
+				if (this._subscriptions[data[1]]) {
+					i = this._subscriptions[data[1]].length;
+					while (i--) {
+						this._subscriptions[data[1]][i](data[2]);
+					}
+				}
 				break;
 		}
 
@@ -429,7 +438,7 @@
 	/* Wampy public API */
 
 	Wampy.prototype.options = function (opts) {
-		if (!opts) {
+		if (opts === undefined) {
 			return this._options;
 		} else if (typeof opts === 'object') {
 			this._options = this._merge(this._options, opts);
