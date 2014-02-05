@@ -485,8 +485,33 @@
 	};
 
 	Wampy.prototype.call = function (procURI, callRes, callErr) {
-		this._calls;
+		var callId = generateId(), i,
+			l = arguments.length,
+			msg = [WAMP_SPEC.TYPE_ID_CALL];
 
+		// If we've got for some reason nonunique key
+		while (callId in this._calls) {
+			callId = generateId();
+		}
+
+		this._calls[callId] = {};
+
+		msg.push(callId);
+		msg.push(procURI);
+
+		if (callRes) {
+			this._calls[callId].callRes = callRes;
+		}
+
+		if (callErr) {
+			this._calls[callId].callErr = callErr;
+		}
+
+		for (i = 3; i < l; i++) {
+			msg.push(arguments[i]);
+		}
+
+		this._send(msg);
 
 		return this;
 	};
