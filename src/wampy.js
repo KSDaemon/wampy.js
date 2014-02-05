@@ -504,7 +504,7 @@
 
 		return this;
 	};
-	
+
 	Wampy.prototype.unsubscribe = function (topicURI, callback) {
 		var i, uri = this._prefixMap.resolve(topicURI);
 
@@ -529,9 +529,28 @@
 	};
 
 	Wampy.prototype.publish = function (topicURI, event, exclude, eligible) {
-		var i, uri = this._prefixMap.resolve(topicURI);
+		var i, uri = this._prefixMap.resolve(topicURI),
+			msg = [WAMP_SPEC.TYPE_ID_PUBLISH, topicURI];
 
-
+		switch (arguments.length) {
+			case 2:
+				msg.push(event);
+				this._send(msg);
+				break;
+			case 3:
+				if ((typeof(exclude) === 'boolean') || (exclude instanceof Array)) {
+					msg.push(exclude);
+					this._send(msg);
+				}
+				break;
+			case 4:
+				if ((exclude instanceof Array) && (eligible instanceof Array)) {
+					msg.push(exclude);
+					msg.push(eligible);
+					this._send(msg);
+				}
+				break;
+		}
 
 		return this;
 	};
