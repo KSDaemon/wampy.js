@@ -362,7 +362,7 @@
 
 		// Automatic reconnection
 		if (this._isConnected && this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries) {
-			this._timer = window.setTimeout(function () { self._wsReconnect.call(self); }, this._options.reconnectInterval);
+			this._cache.timer = window.setTimeout(function () { self._wsReconnect.call(self); }, this._options.reconnectInterval);
 		} else {
 			// No reconnection needed or reached max retries count
 			if (this._options.onClose) {
@@ -466,15 +466,19 @@
 		if (this._isConnected) {
 			this._isConnected = false;
 			this._ws.close();
-			this._cache.timer = null;
-			this._cache.sessionId = null;
-			this._cache.reconnectingAttempts = 0;
 			this._serverIdent = null;
 			this._prefixMap.reset();
 			this._ws = null;
 			this._queue = [];
 			this._subscriptions = {};
 			this._calls = {};
+
+			// Just keep attrs that are have to be present
+			this._cache = {
+				protocolVersion: 1,
+				reconnectingAttempts: 0
+			};
+
 		}
 
 		return this;
