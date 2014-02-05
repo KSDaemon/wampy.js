@@ -486,6 +486,8 @@
 
 	Wampy.prototype.call = function (procURI, callRes, callErr) {
 		this._calls;
+
+
 		return this;
 	};
 
@@ -529,12 +531,10 @@
 	};
 
 	Wampy.prototype.publish = function (topicURI, event, exclude, eligible) {
-		var i, uri = this._prefixMap.resolve(topicURI),
-			msg = [WAMP_SPEC.TYPE_ID_PUBLISH, topicURI];
+		var msg = [WAMP_SPEC.TYPE_ID_PUBLISH, topicURI, event];
 
 		switch (arguments.length) {
 			case 2:
-				msg.push(event);
 				this._send(msg);
 				break;
 			case 3:
