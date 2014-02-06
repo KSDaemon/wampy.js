@@ -497,7 +497,7 @@
 		return this;
 	};
 
-	Wampy.prototype.call = function (procURI, callRes, callErr) {
+	Wampy.prototype.call = function (procURI, callbacks) {
 		var callId = generateId(), i,
 			l = arguments.length,
 			msg = [WAMP_SPEC.TYPE_ID_CALL];
@@ -507,20 +507,12 @@
 			callId = generateId();
 		}
 
-		this._calls[callId] = {};
+		this._calls[callId] = callbacks;
 
 		msg.push(callId);
 		msg.push(procURI);
 
-		if (callRes) {
-			this._calls[callId].callRes = callRes;
-		}
-
-		if (callErr) {
-			this._calls[callId].callErr = callErr;
-		}
-
-		for (i = 3; i < l; i++) {
+		for (i = 2; i < l; i++) {
 			msg.push(arguments[i]);
 		}
 
