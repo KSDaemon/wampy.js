@@ -112,9 +112,10 @@
 	};
 
 	prefixMap.prototype.resolve = function (uri) {
-		var i = uri.indexOf(":"), prefix;
+		var isSchema = /^http(s)?:\/\//.test(uri),
+			i = uri.indexOf(":"), prefix;
 
-		if (i >= 0) {
+		if ((!isSchema) && (i >= 0)) {
 			prefix = uri.substring(0, i);
 			if (this._pref2uri[prefix]) {
 				return this._pref2uri[prefix] + uri.substring(i + 1);
@@ -249,7 +250,7 @@
 		 * @type {boolean}
 		 * @private
 		 */
-		this._isConnected = false;
+		this._isInitialized = false;
 
 		/**
 		 * Options hash-table
@@ -324,7 +325,7 @@
 			this._queue.push(JSON.stringify(msg));
 		}
 
-		if (this._isConnected && this._ws.readyState === 1) {
+		if (this._isInitialized && this._ws.readyState === 1) {
 			while (this._queue.length) {
 				this._ws.send(this._queue.shift());
 			}
@@ -345,13 +346,6 @@
 		console.log("[wampy] websocket connected");
 
 		//TODO Make subprotocol check
-
-		if (this._isConnected === false) {
-			this._isConnected = true;
-		}
-
-		// Send local queue if there is something out there
-		this._send();
 	};
 
 	Wampy.prototype._wsOnClose = function (event) {
@@ -361,7 +355,7 @@
 		this._cache.welcome = false;
 
 		// Automatic reconnection
-		if (this._isConnected && this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries) {
+		if (this._isInitialized && this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries) {
 			this._cache.timer = window.setTimeout(function () { self._wsReconnect.call(self); }, this._options.reconnectInterval);
 		} else {
 			// No reconnection needed or reached max retries count
@@ -374,7 +368,7 @@
 	};
 
 	Wampy.prototype._wsOnMessage = function (event) {
-		var data, i;
+		var data, i, uri;
 
 		console.log("[wampy] websocket message received: ", event.data);
 
@@ -385,11 +379,15 @@
 				this._cache.sessionId = data[1];
 				this._cache.protocolVersion = data[2];
 				this._serverIdent = data[3];
+				this._isInitialized = true;
 
 				// Firing onConnect event on real connection to WAMP server
 				if (this._options.onConnect) {
 					this._options.onConnect();
 				}
+
+				// Send local queue if there is something out there
+				this._send();
 
 				break;
 			case WAMP_SPEC.TYPE_ID_CALLRESULT:
@@ -404,10 +402,13 @@
 				}
 				break;
 			case WAMP_SPEC.TYPE_ID_EVENT:
-				if (this._subscriptions[data[1]]) {
-					i = this._subscriptions[data[1]].length;
+				// Ratchet does not return fully qualified URI for the topic as in spec
+				// so we need to resolve it manually :(
+				uri = this._prefixMap.resolve(data[1]);
+				if (this._subscriptions[uri]) {
+					i = this._subscriptions[uri].length;
 					while (i--) {
-						this._subscriptions[data[1]][i](data[2]);
+						this._subscriptions[uri][i](data[2]);
 					}
 				}
 				break;
@@ -463,8 +464,8 @@
 	};
 
 	Wampy.prototype.disconnect = function () {
-		if (this._isConnected) {
-			this._isConnected = false;
+		if (this._isInitialized) {
+			this._isInitialized = false;
 			this._ws.close();
 			this._serverIdent = null;
 			this._prefixMap.reset();
