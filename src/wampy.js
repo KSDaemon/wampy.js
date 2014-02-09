@@ -136,6 +136,13 @@
 	var Wampy = function (url, protocols, options) {
 
 		/**
+		 * Wampy version
+		 * @type {string}
+		 * @private
+		 */
+		this.version = 'v0.1.0';
+
+		/**
 		 * WS Url
 		 * @type {string}
 		 * @private
