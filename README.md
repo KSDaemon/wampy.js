@@ -168,6 +168,11 @@ unprefix(prefix)
 
 Remove previously saved prefix. Supports chaining.
 
+```javascript
+ws.unprefix('admin');
+ws.unprefix('chat');
+```
+
 [Back to TOC](#table-of-contents)
 
 call(procURI, callbacks[, param1, param2, ...])
@@ -254,9 +259,9 @@ Can be in forms of:
 	* prefix-form: admin:addUser
 * event data to send. Any valid object/string/number.
 * exclude parameter can be in two forms:
-	* bool (true|false) - to exclude sender for receiving this event (in case sender is subscribed to this topic).
+	* bool (true / false) - to exclude sender for receiving this event (in case sender is subscribed to this topic).
 	* array of wamp session ids, which should be excluded from receiving event.
-* eligible parameter is array of wamp session ids, which should receive event.
+* eligible parameter is array of wamp session ids, only which should receive event.
 
 ```javascript
 ws.publish('test:subscribe1', 'string data');
