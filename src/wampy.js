@@ -662,49 +662,7 @@
 			case WAMP_MSG_SPEC.YIELD:
 				// WAMP SPEC:
 				break;
-
-
-
-
-//			case WAMP_SPEC.TYPE_ID_WELCOME:
-//				this._cache.sessionId = data[1];
-//				this._cache.protocolVersion = data[2];
-//				this._serverIdent = data[3];
-//				this._isInitialized = true;
-//
-//				// Firing onConnect event on real connection to WAMP server
-//				if (this._options.onConnect) {
-//					this._options.onConnect();
-//				}
-//
-//				// Send local queue if there is something out there
-//				this._send();
-//
-//				break;
-//			case WAMP_SPEC.TYPE_ID_CALLRESULT:
-//				if (this._calls[data[1]] && this._calls[data[1]].callRes) {
-//					this._calls[data[1]]['callRes'](data[2]);
-//				}
-//				break;
-//			case WAMP_SPEC.TYPE_ID_CALLERROR:
-//				if (this._calls[data[1]] && this._calls[data[1]].callErr) {
-//					// I don't think client is interested in URI of error
-//					this._calls[data[1]]['callErr'](data[3], data[4]);
-//				}
-//				break;
-//			case WAMP_SPEC.TYPE_ID_EVENT:
-//				// Ratchet does not return fully qualified URI for the topic as in spec
-//				// so we need to resolve it manually :(
-//				uri = this._prefixMap.resolve(data[1]);
-//				if (this._subscriptions[uri]) {
-//					i = this._subscriptions[uri].length;
-//					while (i--) {
-//						this._subscriptions[uri][i](data[2]);
-//					}
-//				}
-//				break;
 		}
-
 	};
 
 	Wampy.prototype._wsOnError = function (error) {
