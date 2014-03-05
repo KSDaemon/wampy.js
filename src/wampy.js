@@ -44,6 +44,20 @@
 		YIELD: 70
 	};
 
+	var WAMP_ERROR_MSG = {
+		SUCCESS:  { code: 0, description: "Success!" },
+		URI_ERROR: { code: 1, description: "Topic URI doesn't meet requirements!" },
+		NO_BROKER: { code: 2, description: "Server doesn't provide broker role!" },
+		NO_CALLBACK_SPEC: { code: 3, description: "No required callback function specified!" },
+		NON_EXIST_SUBSCRIBE_CONFIRM: { code: 4, description: "Received subscribe confirmation to non existent subscription!" },
+		NON_EXIST_SUBSCRIBE_ERROR: { code: 5, description: "Received error for non existent subscription!" },
+		NON_EXIST_UNSUBSCRIBE: { code: 6, description: "Trying to unsubscribe from non existent subscription!" },
+		NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: { code: 7, description: "Received unsubscribe confirmation to non existent subscription!" },
+		NON_EXIST_PUBLISH_ERROR: { code: 8, description: "Received error for non existent publication!" },
+		NON_EXIST_PUBLISH_PUBLISHED: { code: 9, description: "Received publish confirmation for non existent publication!" },
+		NON_EXIST_SUBSCRIBE_EVENT: { code: 10, description: "Received event for non existent subscription!" }
+	};
+
 	function getServerUrl (url) {
 		var scheme, port, path;
 
@@ -156,6 +170,11 @@
 			isSayingGoodbye: false,
 
 			/**
+			 * Status of last operation
+			 */
+			opStatus: { code: 0, description: 'Success!' },
+
+			/**
 			 * Timer for reconnection
 			 * @type {null}
 			 */
@@ -204,7 +223,7 @@
 		 * @type {Array}
 		 * @private
 		 */
-		this._queue = [];
+		this._wsQueue = [];
 
 		/**
 		 * Internal queue for wamp requests
@@ -351,12 +370,12 @@
 	 */
 	Wampy.prototype._send = function (msg) {
 		if(msg) {
-			this._queue.push(this._encode(msg));
+			this._wsQueue.push(this._encode(msg));
 		}
 
 		if (this._isInitialized && this._ws.readyState === 1) {
-			while (this._queue.length) {
-				this._ws.send(this._queue.shift());
+			while (this._wsQueue.length) {
+				this._ws.send(this._wsQueue.shift());
 			}
 		}
 	};
@@ -366,7 +385,7 @@
 	 * @private
 	 */
 	Wampy.prototype._resetState = function () {
-		this._queue = [];
+		this._wsQueue = [];
 		this._subscriptions = {};
 		this._requests = {};
 		this._calls = {};
@@ -394,7 +413,10 @@
 	Wampy.prototype._wsOnOpen = function () {
 		console.log("[wampy] websocket connected");
 
-		//TODO Make a URI check for the realm specified in options
+		//TODO Check the protocols selected by the server
+		// this._ws.protocol
+
+		//TODO Make somewhere a URI check for the realm specified in options
 
 		// WAMP SPEC: [HELLO, Realm|uri, Details|dict]
 		this._send([WAMP_MSG_SPEC.HELLO, this._options.realm, this._wamp_features]);
@@ -419,7 +441,7 @@
 	};
 
 	Wampy.prototype._wsOnMessage = function (event) {
-		var data;
+		var data, id, i, d;
 
 		console.log("[wampy] websocket message received");
 
@@ -456,10 +478,31 @@
 				// WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict, Error|uri, (Arguments|list, ArgumentsKw|dict)]
 				switch(data[1]) {
 					case WAMP_MSG_SPEC.SUBSCRIBE:
-						break;
 					case WAMP_MSG_SPEC.UNSUBSCRIBE:
+						if(this._requests[data[2]]) {
+
+							if(this._requests[data[2]].callbacks.onError) {
+								this._requests[data[2]].callbacks['onError'](data[4]);
+							}
+
+							delete this._requests[data[2]];
+
+						} else {
+							this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_SUBSCRIBE_ERROR;
+						}
 						break;
 					case WAMP_MSG_SPEC.PUBLISH:
+						if(this._requests[data[2]]) {
+
+							if(this._requests[data[2]].callbacks.onError) {
+								this._requests[data[2]].callbacks['onError'](data[4]);
+							}
+
+							delete this._requests[data[2]];
+
+						} else {
+							this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_PUBLISH_ERROR;
+						}
 						break;
 					case WAMP_MSG_SPEC.REGISTER:
 						break;
@@ -474,38 +517,101 @@
 			case WAMP_MSG_SPEC.SUBSCRIBED:
 				// WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
 				if(this._requests[data[1]]) {
-					this._subscriptions[this._requests[data[1]]].id = data[2];
+					this._subscriptions[this._requests[data[1]].topic] = this._subscriptions[data[2]] = {
+						id: data[2],
+						callbacks: [this._requests[data[1]].callbacks.onEvent]
+					};
+
+					if(this._requests[data[1]].callbacks.onSuccess) {
+						this._requests[data[1]].callbacks['onSuccess']();
+					}
+
+					delete this._requests[data[1]];
+
+				} else {
+					this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_SUBSCRIBE_CONFIRM;
 				}
 				break;
 			case WAMP_MSG_SPEC.UNSUBSCRIBED:
-				// WAMP SPEC:
+				// WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
+				if(this._requests[data[1]]) {
+					id = this._subscriptions[this._requests[data[1]].topic].id;
+					delete this._subscriptions[this._requests[data[1]].topic];
+					delete this._subscriptions[id];
+
+					if(this._requests[data[1]].callbacks.onSuccess) {
+						this._requests[data[1]].callbacks['onSuccess']();
+					}
+
+					delete this._requests[data[1]];
+				} else {
+					this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_SUBSCRIBE_UNSUBSCRIBED;
+				}
 				break;
 			case WAMP_MSG_SPEC.PUBLISHED:
-				// WAMP SPEC:
+				// WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
+				if(this._requests[data[1]]) {
+					if(this._requests[data[1]].callbacks.onSuccess) {
+						this._requests[data[1]].callbacks['onSuccess']();
+					}
+
+					delete this._requests[data[1]];
+
+				} else {
+					this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_PUBLISH_PUBLISHED;
+				}
+				break;
+			case WAMP_MSG_SPEC.EVENT:
+				if(this._subscriptions[data[1]]) {
+
+					switch (data.length) {
+						case 4:
+							// WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict]
+							d = null;
+							break;
+						case 5:
+							// WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list]
+							d = data[4];
+							break;
+						case 6:
+							// WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
+							d = data[5];
+							break;
+
+					}
+
+					i = this._subscriptions[data[1]].callbacks.length;
+					while (i--) {
+						this._subscriptions[data[1]].callbacks[i](d);
+					}
+
+				} else {
+					this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_SUBSCRIBE_EVENT;
+				}
 				break;
 			case WAMP_MSG_SPEC.RESULT:
-
+				// WAMP SPEC:
 				break;
 			case WAMP_MSG_SPEC.REGISTER:
-
+				// WAMP SPEC:
 				break;
 			case WAMP_MSG_SPEC.REGISTERED:
-
+				// WAMP SPEC:
 				break;
 			case WAMP_MSG_SPEC.UNREGISTER:
-
+				// WAMP SPEC:
 				break;
 			case WAMP_MSG_SPEC.UNREGISTERED:
-
+				// WAMP SPEC:
 				break;
 			case WAMP_MSG_SPEC.INVOCATION:
-
+				// WAMP SPEC:
 				break;
 			case WAMP_MSG_SPEC.INTERRUPT:
-
+				// WAMP SPEC:
 				break;
 			case WAMP_MSG_SPEC.YIELD:
-
+				// WAMP SPEC:
 				break;
 
 
@@ -593,6 +699,18 @@
 	};
 
 	/**
+	 * Get the status of last operation
+	 *
+	 * @returns {code, description}
+	 *      code: 0 - if operation was successful
+	 *      code > 0 - if error occurred
+	 *      description contains details about error
+	 */
+	Wampy.prototype.getOpStatus = function () {
+		return this._cache.opStatus;
+	};
+
+	/**
 	 * Connect to server
 	 * @param {string} url New url (optional)
 	 * @returns {Wampy}
@@ -618,6 +736,8 @@
 			this._send([WAMP_MSG_SPEC.GOODBYE, {}, "wamp.error.close_realm"]);
 		}
 
+		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+
 		return this;
 	};
 
@@ -633,6 +753,7 @@
 		}
 
 		this._ws.close();
+		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
 
 		return this;
 	};
@@ -641,38 +762,170 @@
 	 * Subscribe to a topic on a broker
 	 *
 	 * @param {string} topicURI
-	 * @param {function} callback
+	 * @param {function|object} callbacks - if it is a function - it will be treated as published event callback
+	 *                          or it can be hash table of callbacks:
+	 *                          { onSuccess: will be called when subscribe would be confirmed
+	 *                            onError: will be called if subscribe would be aborted
+	 *                            onEvent: will be called on receiving published event }
+	 *
 	 * @returns {Wampy}
 	 */
-	Wampy.prototype.subscribe = function (topicURI, callback) {
+	Wampy.prototype.subscribe = function (topicURI, callbacks) {
 		var reqId;
 
 		if(!this._cache.server_wamp_features.roles.broker) {
-			throw new Error("[wampy] server doesn't provide broker role!");
+			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
+			return this;
 		}
 
 		if(!this._validateURI(topicURI)) {
-			throw new Error("[wampy] topic URI doesn't meet requirements!");
+			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+			return this;
 		}
 
-		if (!this._subscriptions[topicURI]) {
-			reqId = generateId();
-			this._requests[reqId] = topicURI;
-			this._subscriptions[topicURI] = {
-				id: 0,
-				callbacks: [],
-				reqId: reqId
+		if(typeof callbacks === 'function') {
+			callbacks = { onEvent: callbacks};
+		} else if(typeof callbacks === 'object' && callbacks.onEvent !== undefined) {
+
+		} else {
+			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
+			return this;
+		}
+
+		if (!this._subscriptions[topicURI]) {   // no such subscription
+
+			do {
+				reqId = generateId();
+			} while (reqId in this._requests);
+
+			this._requests[reqId] = {
+				topic: topicURI,
+				callbacks: callbacks
 			};
 
 			// WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
 			this._send([WAMP_SPEC.SUBSCRIBE, reqId, {}, topicURI]);
+
+		} else {    // already have subscription to this topic
+			// There is no such callback yet
+			if (this._subscriptions[topicURI].callbacks.indexOf(callbacks.onEvent) < 0) {
+				this._subscriptions[topicURI].callbacks.push(callbacks.onEvent);
+			}
+
+			if(callbacks.onSuccess) {
+				callbacks['onSuccess']();
+			}
 		}
 
-		// There is no such callback yet
-		if (this._subscriptions[topicURI].callbacks.indexOf(callback) < 0) {
-			this._subscriptions[topicURI].callbacks.push(callback);
+		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		return this;
+	};
+
+	/**
+	 * Unsubscribe from topic
+	 * @param {string} topicURI
+	 * @param {function|object} callbacks - if it is a function - it will be treated as published event callback
+	 *                          or it can be hash table of callbacks:
+	 *                          { onSuccess: will be called when unsubscribe would be confirmed
+	 *                            onError: will be called if unsubscribe would be aborted
+	 *                            onEvent: published event callback to remove }
+	 * @returns {Wampy}
+	 */
+	Wampy.prototype.unsubscribe = function (topicURI, callbacks) {
+		var reqId, i;
+
+		if (this._subscriptions[topicURI]) {
+
+			do {
+				reqId = generateId();
+			} while (reqId in this._requests);
+
+			if(typeof callbacks === 'function') {
+				callbacks = { onEvent: callbacks};
+			}
+
+			if (callbacks.onEvent !== undefined) {
+				i = this._subscriptions[topicURI].callbacks.indexOf(callbacks.onEvent);
+				if (i >= 0) {
+					this._subscriptions[topicURI].callbacks.splice(i, 1);
+				}
+
+				if (this._subscriptions[topicURI].length) {
+					// There are another callbacks for this topic
+					this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+					return this;
+				}
+			}
+
+			this._requests[reqId] = {
+				topic: topicURI,
+				callbacks: callbacks
+			};
+
+			// WAMP_SPEC: [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
+			this._send([WAMP_SPEC.UNSUBSCRIBE, reqId, this._subscriptions[topicURI].id]);
+
+		} else {
+			this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE;
+			return this;
 		}
 
+		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		return this;
+	};
+
+	/**
+	 * Publish a event to topic
+	 * @param {string} topicURI
+	 * @param {Array|object} payload - optional parameter.
+	 *                      Can be either an array or hash-table
+	 * @param {object} callbacks - optional hash table of callbacks:
+	 *                          { onSuccess: will be called when publish would be confirmed
+	 *                            onError: will be called if publish would be aborted }
+	 * @returns {Wampy}
+	 */
+	Wampy.prototype.publish = function (topicURI, payload, callbacks) {
+		var reqId, msg;
+
+		if(!this._validateURI(topicURI)) {
+			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+			return this;
+		}
+
+		do {
+			reqId = generateId();
+		} while (reqId in this._requests);
+
+		switch (arguments.length) {
+			case 1:
+				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
+				msg = [WAMP_SPEC.PUBLISH, reqId, {}, topicURI];
+				break;
+			case 2:
+				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
+				if(payload instanceof Array) {
+					msg = [WAMP_SPEC.PUBLISH, reqId, {}, topicURI, payload];
+				} else {    // assume it's a hash-table
+					msg = [WAMP_SPEC.PUBLISH, reqId, {}, topicURI, [], payload];
+				}
+				break;
+			default:
+				this._requests[reqId] = {
+							topic: topicURI,
+							callbacks: callbacks
+						};
+
+				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
+				if(payload instanceof Array) {
+					msg = [WAMP_SPEC.PUBLISH, reqId, { acknowledge: true }, topicURI, payload];
+				} else {    // assume it's a hash-table
+					msg = [WAMP_SPEC.PUBLISH, reqId, { acknowledge: true }, topicURI, [], payload];
+				}
+				break;
+		}
+
+		this._send(msg);
+		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
 		return this;
 	};
 
@@ -700,53 +953,6 @@
 //		return this;
 //	};
 
-//	Wampy.prototype.unsubscribe = function (topicURI, callback) {
-//		var i, uri = this._prefixMap.resolve(topicURI);
-//
-//		if (this._subscriptions[uri]) {
-//			if (callback !== undefined) {
-//				i = this._subscriptions[uri].indexOf(callback);
-//				if (i >= 0) {
-//					this._subscriptions[uri].splice(i, 1);
-//				}
-//
-//				if (this._subscriptions[uri].length) {
-//					// There are another callbacks for this topic
-//					return this;
-//				}
-//			}
-//
-//			this._send([WAMP_SPEC.TYPE_ID_UNSUBSCRIBE, topicURI]);
-//			delete this._subscriptions[uri];
-//		}
-//
-//		return this;
-//	};
-
-//	Wampy.prototype.publish = function (topicURI, event, exclude, eligible) {
-//		var msg = [WAMP_SPEC.TYPE_ID_PUBLISH, topicURI, event];
-//
-//		switch (arguments.length) {
-//			case 2:
-//				this._send(msg);
-//				break;
-//			case 3:
-//				if ((typeof(exclude) === 'boolean') || (exclude instanceof Array)) {
-//					msg.push(exclude);
-//					this._send(msg);
-//				}
-//				break;
-//			case 4:
-//				if ((exclude instanceof Array) && (eligible instanceof Array)) {
-//					msg.push(exclude);
-//					msg.push(eligible);
-//					this._send(msg);
-//				}
-//				break;
-//		}
-//
-//		return this;
-//	};
 
 	window.Wampy = Wampy;
 
