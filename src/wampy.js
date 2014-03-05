@@ -55,7 +55,10 @@
 		NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: { code: 7, description: "Received unsubscribe confirmation to non existent subscription!" },
 		NON_EXIST_PUBLISH_ERROR: { code: 8, description: "Received error for non existent publication!" },
 		NON_EXIST_PUBLISH_PUBLISHED: { code: 9, description: "Received publish confirmation for non existent publication!" },
-		NON_EXIST_SUBSCRIBE_EVENT: { code: 10, description: "Received event for non existent subscription!" }
+		NON_EXIST_SUBSCRIBE_EVENT: { code: 10, description: "Received event for non existent subscription!" },
+		NO_DEALER: { code: 11, description: "Server doesn't provide dealer role!" },
+		NON_EXIST_CALL_RESULT: { code: 12, description: "Received rpc result for non existent call!" },
+		NON_EXIST_CALL_ERROR: { code: 13, description: "Received rpc call error for non existent call!" }
 	};
 
 	function getServerUrl (url) {
@@ -141,8 +144,8 @@
 			roles: {
 				publisher: {},
 				subscriber: {},
-				caller: {},
-				callee: {}
+				caller: {}/*,
+				callee: {}*/
 			}
 		};
 
@@ -511,6 +514,30 @@
 					case WAMP_MSG_SPEC.INVOCATION:
 						break;
 					case WAMP_MSG_SPEC.CALL:
+						if(this._calls[data[2]]) {
+
+							switch (data.length) {
+								case 5:
+									// WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict, Error|uri]
+									d = null;
+									break;
+								case 6:
+									// WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict, Error|uri, Arguments|list]
+									d = data[5];
+									break;
+								case 7:
+									// WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict, Error|uri, Arguments|list, ArgumentsKw|dict]
+									d = data[6];
+									break;
+							}
+
+							this._calls[data[2]]['onError'](d);
+							delete this._calls[data[2]];
+
+						} else {
+							this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_CALL_ERROR;
+						}
+
 						break;
 				}
 				break;
@@ -590,7 +617,29 @@
 				}
 				break;
 			case WAMP_MSG_SPEC.RESULT:
-				// WAMP SPEC:
+				if(this._calls[data[1]]) {
+
+					switch (data.length) {
+						case 3:
+							// WAMP SPEC: [RESULT, CALL.Request|id, Details|dict]
+							d = null;
+							break;
+						case 4:
+							// WAMP SPEC: [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list]
+							d = data[3];
+							break;
+						case 5:
+							// WAMP SPEC: [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
+							d = data[4];
+							break;
+					}
+
+					this._calls[data[1]]['onSuccess'](d);
+					delete this._calls[data[1]];
+
+				} else {
+					this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_CALL_RESULT;
+				}
 				break;
 			case WAMP_MSG_SPEC.REGISTER:
 				// WAMP SPEC:
@@ -733,7 +782,7 @@
 		if (this._cache.sessionId) {
 			// need to send goodbye message to server
 			this._cache.isSayingGoodbye = true;
-			this._send([WAMP_MSG_SPEC.GOODBYE, {}, "wamp.error.close_realm"]);
+			this._send([WAMP_MSG_SPEC.GOODBYE, {}, "wamp.error.system_shutdown"]);
 		}
 
 		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
@@ -929,29 +978,60 @@
 		return this;
 	};
 
-//	Wampy.prototype.call = function (procURI, callbacks) {
-//		var callId = generateId(), i,
-//			l = arguments.length,
-//			msg = [WAMP_SPEC.TYPE_ID_CALL];
-//
-//		// If we've got for some reason nonunique key
-//		while (callId in this._calls) {
-//			callId = generateId();
-//		}
-//
-//		this._calls[callId] = callbacks;
-//
-//		msg.push(callId);
-//		msg.push(procURI);
-//
-//		for (i = 2; i < l; i++) {
-//			msg.push(arguments[i]);
-//		}
-//
-//		this._send(msg);
-//
-//		return this;
-//	};
+	/**
+	 * Remote Procedure Call
+	 * @param {string} topicURI
+	 * @param {Array|object} payload - can be either an array or hash-table or null
+	 * @param {function|object} callbacks - if it is a function - it will be treated as result callback function
+	 *                          or it can be hash table of callbacks:
+	 *                          { onSuccess: will be called with result on successful call
+	 *                            onError: will be called if invocation would be aborted }
+	 * @returns {Wampy}
+	 */
+	Wampy.prototype.call = function (topicURI, payload, callbacks) {
+		var reqId, msg;
+
+		if(!this._cache.server_wamp_features.roles.dealer) {
+			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
+			return this;
+		}
+
+		if(!this._validateURI(topicURI)) {
+			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+			return this;
+		}
+
+		if(typeof callbacks === 'function') {
+			callbacks = { onSuccess: callbacks};
+		} else if(typeof callbacks === 'object' && callbacks.onSuccess !== undefined) {
+
+		} else {
+			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
+			return this;
+		}
+
+		do {
+			reqId = generateId();
+		} while (reqId in this._requests || reqId in this._calls);
+
+		this._calls[reqId] = callbacks;
+
+
+		//WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
+		if(!payload) {
+			msg = [WAMP_SPEC.CALL, reqId, {}, topicURI];
+		} else {
+			if(payload instanceof Array) {
+				msg = [WAMP_SPEC.CALL, reqId, {}, topicURI, payload];
+			} else {    // assume it's a hash-table
+				msg = [WAMP_SPEC.CALL, reqId, {}, topicURI, [], payload];
+			}
+		}
+
+		this._send(msg);
+		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		return this;
+	};
 
 
 	window.Wampy = Wampy;
