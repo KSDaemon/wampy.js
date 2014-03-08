@@ -186,31 +186,7 @@
 			 * Reconnection attempts
 			 * @type {number}
 			 */
-			reconnectingAttempts: 0,
-
-			/**
-			 * onConnect callback
-			 * @type {function}
-			 */
-			onConnect: null,
-
-			/**
-			 * onClose callback
-			 * @type {function}
-			 */
-			onClose: null,
-
-			/**
-			 * onError callback
-			 * @type {function}
-			 */
-			onError: null,
-
-			/**
-			 * onReconnect callback
-			 * @type {function}
-			 */
-			onReconnect: null
+			reconnectingAttempts: 0
 		};
 
 		/**
@@ -254,11 +230,60 @@
 		 * @private
 		 */
 		this._options = {
+			/**
+			 * Reconnecting flag
+			 * @type {boolean}
+			 */
 			autoReconnect: true,
+
+			/**
+			 * Reconnecting interval (in ms)
+			 * @type {number}
+			 */
 			reconnectInterval: 2 * 1000,
+
+			/**
+			 * Maximum reconnection retries
+			 * @type {number}
+			 */
 			maxRetries: 25,
+
+			/**
+			 * Message serializer
+			 * @type {string}
+			 */
 			transportEncoding: 'json',
-			realm: window.location.hostname
+
+			/**
+			 * WAMP Realm to join
+			 * @type {string}
+			 */
+			realm: window.location.hostname,
+
+			/**
+			 * onConnect callback
+			 * @type {function}
+			 */
+			onConnect: null,
+
+			/**
+			 * onClose callback
+			 * @type {function}
+			 */
+			onClose: null,
+
+			/**
+			 * onError callback
+			 * @type {function}
+			 */
+			onError: null,
+
+			/**
+			 * onReconnect callback
+			 * @type {function}
+			 */
+			onReconnect: null
+
 		};
 
 		if(window.msgpack !== undefined) {
@@ -455,6 +480,15 @@
 				// WAMP SPEC: [WELCOME, Session|id, Details|dict]
 				this._cache.sessionId = data[1];
 				this._cache.server_wamp_features = data[2];
+
+				// Firing onConnect event on real connection to WAMP server
+				if (this._options.onConnect) {
+					this._options.onConnect();
+				}
+
+				// Send local queue if there is something out there
+				this._send();
+
 				break;
 			case WAMP_MSG_SPEC.ABORT:
 				// WAMP SPEC: [ABORT, Details|dict, Reason|uri]
@@ -895,8 +929,8 @@
 	 * @param {Array|object} payload - optional parameter.
 	 *                      Can be either an array or hash-table
 	 * @param {object} callbacks - optional hash table of callbacks:
-	 *                          { onSuccess: will be called when publish would be confirmed
-	 *                            onError: will be called if publish would be aborted }
+	 *                          { onSuccess: will be called when publishing would be confirmed
+	 *                            onError: will be called if publishing would be aborted }
 	 * @returns {Wampy}
 	 */
 	Wampy.prototype.publish = function (topicURI, payload, callbacks) {

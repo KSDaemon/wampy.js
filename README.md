@@ -12,23 +12,27 @@ Table of Contents
 * [Methods](#methods)
 	* [Constructor](#constructor)
 	* [options](#options)
+	* [getOpStatus](#getOpStatus)
 	* [connect](#connect)
 	* [disconnect](#disconnect)
-	* [prefix](#prefix)
-	* [unprefix](#unprefix)
-	* [call](#call)
+	* [abort](#abort)
 	* [subscribe](#subscribe)
 	* [unsubscribe](#unsubscribe)
 	* [publish](#publish)
+	* [call](#call)
 * [Copyright and License](#copyright-and-license)
 * [See Also](#see-also)
 
 Description
 ===========
 
-Wampy.js is client-side javascript library. It implements [WAMP](http://wamp.ws) specification on top
+Wampy.js is client-side javascript library. It implements 3 roles: publisher, subscriber and caller from [WAMP](http://wamp.ws) v2 specification on top
 of WebSocket object, also provides additional features like autoreconnecting and use of Chaining Pattern.
-It has no external dependencies and is easy to use.
+It has no external dependencies (by default) and is easy to use.
+
+Wampy supports msgpack as serializer, but you need to include [javascript msgpack library](http://msgpack.org) as dependency.
+
+For v1 WAMP implementation, please see tag v0.1.0.
 
 [Back to TOC](#table-of-contents)
 
@@ -37,24 +41,23 @@ Usage example
 
 ```javascript
 var ws = new Wampy('/ws/');
-ws.prefix('admin', '/ws/admin/')
-	.prefix('client', '/ws/client/');
-	.subscribe('admin:update', function (data) { console.log('Received admin:update event!'); })
-	.subscribe('client:message', function (data) { console.log('Received client:message event!'); })
+ws.subscribe('system.monitor.update', function (data) { console.log('Received system.monitor.update event!'); })
+  .subscribe('client.message', function (data) { console.log('Received client.message event!'); })
 
-ws.call('admin:addUser', {
-	callRes: function (data) {
+ws.call('get.server.time', null, {
+	onSuccess: function (stime) {
 		console.log('RPC successfully called');
+		console.log('Server time is ' + stime);
 	},
-	callErr: function (err, desc) {
+	onError: function (err) {
 		console.log('RPC call failed with error ' + err);
 	}
-}, 'newUser', 'userPAss', 'user@company.com');
+});
 
 // Somewhere else for example
-ws.publish('admin:update', { action: 'addUser', user: 'newUser' });
+ws.publish('system.monitor.update');
 
-ws.publish('client:message', 'Hi guys!', true);
+ws.publish('client.message', 'Hi guys!');
 ```
 
 [Back to TOC](#table-of-contents)
@@ -73,16 +76,15 @@ To use Wampy simply add wampy.(min.)?js file to your page.
 Methods
 ========
 
-Constructor([url[, protocols]][, options])
+Constructor([url[, options]])
 ------------------------------------------
 
-Wampy constructor can take 3 parameters:
+Wampy constructor can take 2 parameters:
 * url to wamp server - optional. If its undefined, page-schema://page-server:page-port/ws will be used.
 Can be in forms of:
 	* fully qualified url: schema://server:port/path
 	* server:port/path. In this case page schema will be used.
 	* /path. In this case page schema, server, port will be used.
-* websocket protocols array - optional
 * options hash-table - optional. See description.
 
 ```javascript
@@ -97,7 +99,7 @@ ws = new Wampy({ reconnectInterval: 1*1000 });
 options([opts])
 ---------------
 
-.options() method can be in two forms:
+.options() method can be called in two forms:
 * without parameters it will return current options
 * with one parameter as hash-table it will set new options. Support chaining.
 
@@ -106,6 +108,9 @@ Options attributes description:
 * reconnectInterval. Default value: 2000 (ms). Reconnection Interval in ms.
 * maxRetries. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
 will be called
+* transportEncoding. Default value: json. Transport serializer to use. Supported 2 values: json|msgpack.
+For using msgpack you need to include msgpack javascript library, and also wamp server, that also supports it.
+* realm. Default value: window.location.hostname. WAMP Realm to join on server. See WAMP spec for additional info.
 * onConnect. Default value: undefined. Callback function. Fired when connection to wamp server is established.
 * onClose. Default value: undefined. Callback function. Fired on closing connection to wamp server.
 * onError. Default value: undefined. Callback function. Fired on error in websocket communication.
@@ -126,10 +131,27 @@ ws.options({
 
 [Back to TOC](#table-of-contents)
 
-connect([url[, protocols]])
+getOpStatus()
+---------------
+
+Returns the status of last operation. Wampy is developed in a such way, that every operation returns **this** even
+in case of error to suport chaining. But if you want to know status of last operation, you can call .getOpStatus().
+This method returns an object with 2 attributes: code and description. Code is integer, and value > 0 means error.
+Description is a description of code.
+
+```javascript
+ws.publish('system.monitor.update');
+ws.getOpStatus();
+// may return { code: 1, description: "Topic URI doesn't meet requirements!" }
+// or { code: 2, description: "Server doesn't provide broker role!" }
+```
+
+[Back to TOC](#table-of-contents)
+
+connect([url])
 ---------------------------
 
-Connect to wamp server. url and protocols parameters are the same as in specified in [Constructor](#constructor).
+Connects to wamp server. url parameter is the same as specified in [Constructor](#constructor).
 Supports chaining.
 
 ```javascript
@@ -143,7 +165,7 @@ ws.connect('https://socket.server.com:5000/ws');
 disconnect()
 ------------
 
-Disconnect from wamp server. Clears all queues, subscription, calls. Supports chaining.
+Disconnects from wamp server. Clears all queues, subscription, calls. Supports chaining.
 
 ```javascript
 ws.disconnect();
@@ -151,123 +173,131 @@ ws.disconnect();
 
 [Back to TOC](#table-of-contents)
 
-prefix(prefix, uri)
--------------------
+abort()
+------------
 
-Set a prefix (alias) for uri. Supports chaining.
+Aborts WAMP session and closes a websocket connection. If it is called on handshake stage - it sends a abort message
+to wamp server (as described in spec).
+Also clears all queues, subscription, calls. Supports chaining.
 
 ```javascript
-ws.prefix('admin', '/ws/admin/');
-ws.prefix('chat', '/ws/chat/');
+ws.abort();
 ```
 
 [Back to TOC](#table-of-contents)
 
-unprefix(prefix)
-----------------
-
-Remove previously saved prefix. Supports chaining.
-
-```javascript
-ws.unprefix('admin');
-ws.unprefix('chat');
-```
-
-[Back to TOC](#table-of-contents)
-
-call(procURI, callbacks[, param1, param2, ...])
------------------------------------------------
-
-Make a RPC call to procURI. Supports chaining.
-
-Parameters:
-* procURI. Required. A string that identifies the remote procedure to be called.
-Can be in forms of:
-	* URI: http://example.com/ws/admin/addUser
-	* prefix-form: admin:addUser
-* callbacks. Object with 2 attributes: callRes - callback for success call, callErr - callback for error.
-If you don't want to call any callbacks, just pass empty object {}
-* any number of parameters for rpc.
-
-```javascript
-ws.call('https://socket.server.com:5000/chat/notify', {}, 'new message!');
-
-ws.call('admin:addUser', {
-	callRes: function (data) {
-		console.log('RPC successfully called');
-	},
-	callErr: function (err, desc) {
-		console.log('RPC call failed with error ' + err);
-	}
-}, 'newUser', 'userPAss', 'user@company.com');
-
-ws.call('chat:notify', {}, 'new message!');
-```
-
-[Back to TOC](#table-of-contents)
-
-subscribe(topicURI, callback)
+subscribe(topicURI, callbacks)
 -----------------------------
 
-Subscribe for topicURI events. Supports chaining.
+Subscribes for topicURI events. Supports chaining.
 
 Parameters:
-* procURI. Required. A string that identifies the topic.
-Can be in forms of:
-	* URI: http://example.com/ws/admin/addUser
-	* prefix-form: admin:addUser
-* callback function with 1 argument. Will be fired on receiving event in this topic.
+* topicURI. Required. A string that identifies the topic.
+Must meet a WAMP Spec URI requirements.
+* callbacks. If it is a function - it will be treated as published event callback
+             or it can be hash table of callbacks:
+           { onSuccess: will be called when subscribe would be confirmed
+             onError: will be called if subscribe would be aborted
+             onEvent: will be called on receiving published event }
 
 ```javascript
-ws.subscribe('http://example.com/ws/chat/message', function (data) { console.log('Received client:message event!'); });
+ws.subscribe('chat.message.received', function (msg) { console.log('Received new chat message!'); });
 
-ws.subscribe('client:message', function (data) { console.log('Received client:message event!'); });
+ws.subscribe('some.another.topic', {
+   onSuccess: function () { console.log('Successfully subscribed to topic'); },
+   onError: function (err) { console.log('Subscription error:' + err); },
+   onEvent: function (data) { console.log('Received topic event'); }
+});
 ```
 
 [Back to TOC](#table-of-contents)
 
-unsubscribe(topicURI[, callback])
+unsubscribe(topicURI[, callbacks])
 -------------------------------
 
 Unsubscribe from topicURI events. Supports chaining.
 
 Parameters:
-* procURI. Required. A string that identifies the topic.
-Can be in forms of:
-	* URI: http://example.com/ws/admin/addUser
-	* prefix-form: admin:addUser
-* callback function to remove. Optional. If it is not specified, all callbacks will be removed.
+* topicURI. Required. A string that identifies the topic.
+Must meet a WAMP Spec URI requirements.
+* callbacks. If it is a function - it will be treated as published event callback to remove
+             or it can be hash table of callbacks:
+           { onSuccess: will be called when unsubscribe would be confirmed
+             onError: will be called if unsubscribe would be aborted
+             onEvent: published event callback to remove }
+             or it can be not specified, in this case all callbacks and subscription will be removed.
 
 ```javascript
 var f1 = function (data) { ... };
-ws.unsubscribe('http://example.com/ws/chat/message', f1);
+ws.unsubscribe('subscribed.topic', f1);
 
-ws.unsubscribe('client:message');
+ws.unsubscribe('chat.message.received');
 ```
 
 [Back to TOC](#table-of-contents)
 
-publish(topicURI, event[, exclude[, eligible]])
+publish(topicURI[, payload[, callbacks]])
 -----------------------------------------------
 
 Publish a new event to topic. Supports chaining.
 
 Parameters:
-* procURI. Required. A string that identifies the topic.
-Can be in forms of:
-	* URI: http://example.com/ws/admin/addUser
-	* prefix-form: admin:addUser
-* event data to send. Any valid object/string/number.
-* exclude parameter can be in two forms:
-	* bool (true / false) - to exclude sender for receiving this event (in case sender is subscribed to this topic).
-	* array of wamp session ids, which should be excluded from receiving event.
-* eligible parameter is array of wamp session ids, only which should receive event.
+* topicURI. Required. A string that identifies the topic.
+Must meet a WAMP Spec URI requirements.
+* payload. Publishing event data. Optional. Must be array or hash-table object or null.
+* callbacks. Optional hash table of callbacks:
+           { onSuccess: will be called when publishing would be confirmed
+             onError: will be called if publishing would be aborted }
 
 ```javascript
-ws.publish('test:subscribe1', 'string data');
-ws.publish('test:subscribe2', { field1: 'field1', field2: true, field3: 123 }, true);
-ws.publish('test:subscribe4', 'event-data', ["NwtXQ8rdfPsydfsewS"]);
-ws.publish('test:subscribe5', 'event-data', [], ["NwtXQ8rdfPsysdfewS", "dYqgDl0FthIsdfthjb"]);
+ws.publish('user.logged.in');
+ws.publish('chat.message.received', ['user message']);
+ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
+ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
+  onSuccess: function () { console.log('User successfully modified'); }
+});
+ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
+  onSuccess: function () { console.log('User successfully modified'); },
+  onError: function (err) { console.log('User modification failed', err); }
+});
+```
+
+[Back to TOC](#table-of-contents)
+
+call(topicURI[, payload[, callbacks]])
+-----------------------------------------------
+
+Make a RPC call to topicURI. Supports chaining.
+
+Parameters:
+* topicURI. Required. A string that identifies the remote procedure to be called.
+Must meet a WAMP Spec URI requirements.
+* payload. RPC data. Optional. Must be array or hash-table object or null.
+* callbacks. If it is a function - it will be treated as result callback function
+             or it can be hash table of callbacks:
+           { onSuccess: will be called with result on successful call
+             onError: will be called if invocation would be aborted }
+
+```javascript
+ws.call('server.time', null, function (data) { console.log('Server time is ' + d[0]); });
+
+ws.call('start.migration', null, {
+	onSuccess: function (data) {
+		console.log('RPC successfully called');
+	},
+	onError: function (err) {
+		console.log('RPC call failed!',err);
+	}
+});
+
+ws.call('restore.backup', { backupFile: 'backup.zip' }, {
+	onSuccess: function (data) {
+		console.log('Backup successfully restored');
+	},
+	onError: function (err) {
+		console.log('Restore failed!',err);
+	}
+});
 ```
 
 [Back to TOC](#table-of-contents)
