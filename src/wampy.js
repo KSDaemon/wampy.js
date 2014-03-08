@@ -141,11 +141,10 @@
 		 * @private
 		 */
 		this._wamp_features = {
-			roles: {
-				publisher: {},
-				subscriber: {},
-				caller: {}/*,
-				callee: {}*/
+			"roles": {
+				"publisher": {},
+				"subscriber": {},
+				"caller": {}
 			}
 		};
 
@@ -250,13 +249,6 @@
 		this._subscriptions = {};
 
 		/**
-		 * Wampy State
-		 * @type {boolean}
-		 * @private
-		 */
-		this._isInitialized = false;
-
-		/**
 		 * Options hash-table
 		 * @type {Object}
 		 * @private
@@ -269,7 +261,7 @@
 			realm: window.location.hostname
 		};
 
-		if(msgpack in window) {
+		if(window.msgpack !== undefined) {
 			this._protocols.push('wamp.2.msgpack');
 		}
 
@@ -376,7 +368,7 @@
 			this._wsQueue.push(this._encode(msg));
 		}
 
-		if (this._isInitialized && this._ws.readyState === 1) {
+		if (this._ws.readyState === 1) {
 			while (this._wsQueue.length) {
 				this._ws.send(this._wsQueue.shift());
 			}
@@ -414,12 +406,20 @@
 	};
 
 	Wampy.prototype._wsOnOpen = function () {
+		var p;
+
 		console.log("[wampy] websocket connected");
 
-		//TODO Check the protocols selected by the server
-		// this._ws.protocol
-
-		//TODO Make somewhere a URI check for the realm specified in options
+		if (this._ws.protocol instanceof Array) {
+			// Server supports more than one subprotocol.
+			// Right now available 2: json, msgpack
+			// Both are supported by Wampy
+			// For msgpack - requires msgpack lib
+			// So we will use protocol from options
+		} else {
+			p = this._ws.protocol.split('.');
+			this._options.transportEncoding = p[2];
+		}
 
 		// WAMP SPEC: [HELLO, Realm|uri, Details|dict]
 		this._send([WAMP_MSG_SPEC.HELLO, this._options.realm, this._wamp_features]);
@@ -446,7 +446,7 @@
 	Wampy.prototype._wsOnMessage = function (event) {
 		var data, id, i, d;
 
-		console.log("[wampy] websocket message received");
+		console.log("[wampy] websocket message received", event.data);
 
 		data = this._decode(event.data);
 
@@ -514,7 +514,7 @@
 					case WAMP_MSG_SPEC.INVOCATION:
 						break;
 					case WAMP_MSG_SPEC.CALL:
-						if(this._calls[data[2]]) {
+						if(this._calls[data[2]]['onError']) {
 
 							switch (data.length) {
 								case 5:
@@ -537,7 +537,6 @@
 						} else {
 							this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_CALL_ERROR;
 						}
-
 						break;
 				}
 				break;
@@ -757,6 +756,7 @@
 
 		if(!this._cache.sessionId && this._ws.readyState === 1) {
 			this._send([WAMP_MSG_SPEC.ABORT, {}, "wamp.error.abort"]);
+			this._cache.sessionId = null;
 		}
 
 		this._ws.close();
@@ -811,7 +811,7 @@
 			};
 
 			// WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
-			this._send([WAMP_SPEC.SUBSCRIBE, reqId, {}, topicURI]);
+			this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, {}, topicURI]);
 
 		} else {    // already have subscription to this topic
 			// There is no such callback yet
@@ -839,7 +839,12 @@
 	 * @returns {Wampy}
 	 */
 	Wampy.prototype.unsubscribe = function (topicURI, callbacks) {
-		var reqId, i;
+		var reqId, i = -1;
+
+		if(!this._cache.server_wamp_features.roles.broker) {
+			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
+			return this;
+		}
 
 		if (this._subscriptions[topicURI]) {
 
@@ -847,21 +852,24 @@
 				reqId = generateId();
 			} while (reqId in this._requests);
 
-			if(typeof callbacks === 'function') {
-				callbacks = { onEvent: callbacks};
+			if(callbacks === undefined) {
+				this._subscriptions[topicURI].callbacks = [];
+				callbacks = {};
+			} else if(typeof callbacks === 'function') {
+				i = this._subscriptions[topicURI].callbacks.indexOf(callbacks);
+				callbacks = { onEvent: callbacks };
+			} else {
+				i = this._subscriptions[topicURI].callbacks.indexOf(callbacks.onEvent);
 			}
 
-			if (callbacks.onEvent !== undefined) {
-				i = this._subscriptions[topicURI].callbacks.indexOf(callbacks.onEvent);
-				if (i >= 0) {
-					this._subscriptions[topicURI].callbacks.splice(i, 1);
-				}
+			if (i >= 0) {
+				this._subscriptions[topicURI].callbacks.splice(i, 1);
+			}
 
-				if (this._subscriptions[topicURI].length) {
-					// There are another callbacks for this topic
-					this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
-					return this;
-				}
+			if (this._subscriptions[topicURI].callbacks.length) {
+				// There are another callbacks for this topic
+				this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+				return this;
 			}
 
 			this._requests[reqId] = {
@@ -870,7 +878,7 @@
 			};
 
 			// WAMP_SPEC: [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
-			this._send([WAMP_SPEC.UNSUBSCRIBE, reqId, this._subscriptions[topicURI].id]);
+			this._send([WAMP_MSG_SPEC.UNSUBSCRIBE, reqId, this._subscriptions[topicURI].id]);
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE;
@@ -894,6 +902,11 @@
 	Wampy.prototype.publish = function (topicURI, payload, callbacks) {
 		var reqId, msg;
 
+		if(!this._cache.server_wamp_features.roles.broker) {
+			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
+			return this;
+		}
+
 		if(!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 			return this;
@@ -906,14 +919,14 @@
 		switch (arguments.length) {
 			case 1:
 				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
-				msg = [WAMP_SPEC.PUBLISH, reqId, {}, topicURI];
+				msg = [WAMP_MSG_SPEC.PUBLISH, reqId, {}, topicURI];
 				break;
 			case 2:
 				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
 				if(payload instanceof Array) {
-					msg = [WAMP_SPEC.PUBLISH, reqId, {}, topicURI, payload];
+					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, {}, topicURI, payload];
 				} else {    // assume it's a hash-table
-					msg = [WAMP_SPEC.PUBLISH, reqId, {}, topicURI, [], payload];
+					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, {}, topicURI, [], payload];
 				}
 				break;
 			default:
@@ -924,9 +937,9 @@
 
 				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
 				if(payload instanceof Array) {
-					msg = [WAMP_SPEC.PUBLISH, reqId, { acknowledge: true }, topicURI, payload];
+					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, { acknowledge: true }, topicURI, payload];
 				} else {    // assume it's a hash-table
-					msg = [WAMP_SPEC.PUBLISH, reqId, { acknowledge: true }, topicURI, [], payload];
+					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, { acknowledge: true }, topicURI, [], payload];
 				}
 				break;
 		}
@@ -977,12 +990,12 @@
 
 		//WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
 		if(!payload) {
-			msg = [WAMP_SPEC.CALL, reqId, {}, topicURI];
+			msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI];
 		} else {
 			if(payload instanceof Array) {
-				msg = [WAMP_SPEC.CALL, reqId, {}, topicURI, payload];
+				msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI, payload];
 			} else {    // assume it's a hash-table
-				msg = [WAMP_SPEC.CALL, reqId, {}, topicURI, [], payload];
+				msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI, [], payload];
 			}
 		}
 
