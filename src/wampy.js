@@ -126,7 +126,7 @@
 		 * @type {string}
 		 * @private
 		 */
-		this._url = url;
+		this._url = (typeof arguments[0] === 'string') ? url : undefined;
 
 		/**
 		 * WS protocols
@@ -286,28 +286,19 @@
 
 		};
 
-		if(window.msgpack !== undefined) {
-			this._protocols.push('wamp.2.msgpack');
-		}
-
 		switch (arguments.length) {
 			case 1:
-				if (typeof arguments[0] === 'string') {
-					this._ws = getWebSocket(arguments[0], this._protocols);
-				} else {
+				if (typeof arguments[0] !== 'string') {
 					this._options = this._merge(this._options, arguments[0]);
 				}
 				break;
 			case 2:
-				this._ws = getWebSocket(arguments[0], this._protocols);
-				this._options = this._merge(this._options, arguments[1]);
+				this._options = this._merge(this._options, options);
 				break;
-			default:
-				this._ws = getWebSocket(undefined, this._protocols);
 		}
 
-		//TODO Catch if no websocket object
-
+		this._setWsProtocols();
+		this._ws = getWebSocket(this._url, this._protocols);
 		this._initWsCallbacks();
 	};
 
@@ -330,7 +321,21 @@
 		return obj;
 	};
 
-	/* Internal websocket related functions */
+	/**
+	 * Fix websocket protocols based on options
+	 * @private
+	 */
+	Wampy.prototype._setWsProtocols = function () {
+
+		if(window.msgpack !== undefined) {
+			if(this._options.transportEncoding === 'msgpack') {
+				this._protocols = ['wamp.2.msgpack', 'wamp.2.json'];
+			} else {
+				this._protocols = ['wamp.2.json', 'wamp.2.msgpack'];
+			}
+		}
+
+	};
 
 	/**
 	 * Validate uri
@@ -354,9 +359,14 @@
 	 * @private
 	 */
 	Wampy.prototype._encode = function (msg) {
+		var bytearray;
+
 		if(this._options.transportEncoding === 'msgpack') {
 			try {
-				return msgpack.pack(msg);
+				bytearray = new Uint8Array(msgpack.pack(msg));
+
+				return bytearray.buffer;
+
 			} catch (e) {
 				throw new Error("[wampy] no msgpack encoder available!");
 			}
@@ -372,9 +382,21 @@
 	 * @private
 	 */
 	Wampy.prototype._decode = function (msg) {
+		var m = [], i, l, bytearray;
+
 		if(this._options.transportEncoding === 'msgpack') {
 			try {
-				return msgpack.unpack(msg);
+
+				bytearray = new Uint8Array(msg);
+
+				l = bytearray.length;
+
+				for (i = 0; i < l; ++i) {
+					m[i] = bytearray[i];
+				}
+
+				return msgpack.unpack(m);
+
 			} catch (e) {
 				throw new Error("[wampy] no msgpack encoder available!");
 			}
@@ -444,6 +466,10 @@
 		} else {
 			p = this._ws.protocol.split('.');
 			this._options.transportEncoding = p[2];
+		}
+
+		if (this._options.transportEncoding === 'msgpack') {
+			this._ws.binaryType = "arraybuffer";
 		}
 
 		// WAMP SPEC: [HELLO, Realm|uri, Details|dict]
@@ -760,7 +786,9 @@
 			this._url = url;
 		}
 
+		this._setWsProtocols(); // in case some one has changed settings
 		this._ws = getWebSocket(this._url, this._protocols);
+		this._initWsCallbacks();
 
 		return this;
 	};
