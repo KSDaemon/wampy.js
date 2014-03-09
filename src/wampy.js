@@ -382,20 +382,10 @@
 	 * @private
 	 */
 	Wampy.prototype._decode = function (msg) {
-		var m = [], i, l, bytearray;
-
 		if(this._options.transportEncoding === 'msgpack') {
 			try {
 
-				bytearray = new Uint8Array(msg);
-
-				l = bytearray.length;
-
-				for (i = 0; i < l; ++i) {
-					m[i] = bytearray[i];
-				}
-
-				return msgpack.unpack(m);
+				return msgpack.unpack(new Uint8Array(msg));
 
 			} catch (e) {
 				throw new Error("[wampy] no msgpack encoder available!");
