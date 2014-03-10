@@ -8,6 +8,7 @@ Table of Contents
 
 * [Description](#description)
 * [Usage example](#usage-example)
+* [Quick comparison to other libs](#comparison-table)
 * [Installation](#installation)
 * [Methods](#methods)
 	* [Constructor](#constructor)
@@ -59,6 +60,13 @@ ws.publish('system.monitor.update');
 
 ws.publish('client.message', 'Hi guys!');
 ```
+
+[Back to TOC](#table-of-contents)
+
+Quick comparison to other libs
+==============================
+
+TBD
 
 [Back to TOC](#table-of-contents)
 
