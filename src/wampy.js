@@ -14,7 +14,11 @@
  *
  */
 
-;(function(window, undefined) {
+;( // Module boilerplate to support browser globals and browserify and AMD.
+	typeof define === "function" ? function (m) { define("Wampy", m); } :
+	typeof exports === "object" ? function (m) { module.exports = m(); } :
+	function(m){ this.Wampy = m(); }
+)(function () {
 
 	var WAMP_MSG_SPEC = {
 		HELLO: 1,
@@ -1337,6 +1341,6 @@
 
 	};
 
-	window.Wampy = Wampy;
+	return Wampy;
 
-})(window);
+});
