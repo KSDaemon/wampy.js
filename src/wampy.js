@@ -363,7 +363,7 @@
 
 		if(this._options.transportEncoding === 'msgpack') {
 			try {
-				bytearray = new Uint8Array(msgpack.pack(msg));
+				bytearray = new Uint8Array(msgpack.encode(msg));
 
 				return bytearray.buffer;
 
@@ -385,7 +385,7 @@
 		if(this._options.transportEncoding === 'msgpack') {
 			try {
 
-				return msgpack.unpack(new Uint8Array(msg));
+				return msgpack.decode(msg);
 
 			} catch (e) {
 				throw new Error("[wampy] no msgpack encoder available!");
