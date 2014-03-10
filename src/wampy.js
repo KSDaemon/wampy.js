@@ -58,7 +58,12 @@
 		NON_EXIST_SUBSCRIBE_EVENT: { code: 10, description: "Received event for non existent subscription!" },
 		NO_DEALER: { code: 11, description: "Server doesn't provide dealer role!" },
 		NON_EXIST_CALL_RESULT: { code: 12, description: "Received rpc result for non existent call!" },
-		NON_EXIST_CALL_ERROR: { code: 13, description: "Received rpc call error for non existent call!" }
+		NON_EXIST_CALL_ERROR: { code: 13, description: "Received rpc call error for non existent call!" },
+		RPC_ALREADY_REGISTERED: { code: 14, description: "RPC already registered!" },
+		NON_EXIST_RPC_REG: { code: 15, description: "Received rpc registration confirmation for non existent rpc!" },
+		NON_EXIST_RPC_UNREG: { code: 16, description: "Received rpc unregistration confirmation for non existent rpc!" },
+		NON_EXIST_RPC_ERROR: { code: 17, description: "Received error for non existent rpc!" },
+		NON_EXIST_RPC_INVOCATION: { code: 18, description: "Received invocation for non existent rpc!" }
 	};
 
 	function getServerUrl (url) {
@@ -144,7 +149,8 @@
 			"roles": {
 				"publisher": {},
 				"subscriber": {},
-				"caller": {}
+				"caller": {},
+				"callee": {}
 			}
 		};
 
@@ -223,6 +229,13 @@
 		 * @private
 		 */
 		this._subscriptions = {};
+
+		/**
+		 * Stored RPC Registrations
+		 * @type {object}
+		 * @private
+		 */
+		this._rpcRegs = {};
 
 		/**
 		 * Options hash-table
@@ -421,6 +434,7 @@
 		this._subscriptions = {};
 		this._requests = {};
 		this._calls = {};
+		this._rpcRegs = {};
 
 		// Just keep attrs that are have to be present
 		this._cache = {
@@ -485,7 +499,7 @@
 	};
 
 	Wampy.prototype._wsOnMessage = function (event) {
-		var data, id, i, d;
+		var data, id, i, d, result, msg;
 
 		console.log("[wampy] websocket message received", event.data);
 
@@ -558,8 +572,19 @@
 						}
 						break;
 					case WAMP_MSG_SPEC.REGISTER:
-						break;
 					case WAMP_MSG_SPEC.UNREGISTER:
+						// WAMP SPEC: [ERROR, REGISTER, REGISTER.Request|id, Details|dict, Error|uri]
+						if(this._requests[data[2]]) {
+
+							if(this._requests[data[2]].callbacks.onError) {
+								this._requests[data[2]].callbacks['onError'](data[4]);
+							}
+
+							delete this._requests[data[2]];
+
+						} else {
+							this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_ERROR;
+						}
 						break;
 					case WAMP_MSG_SPEC.INVOCATION:
 						break;
@@ -653,7 +678,6 @@
 							// WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
 							d = data[5];
 							break;
-
 					}
 
 					i = this._subscriptions[data[1]].callbacks.length;
@@ -694,16 +718,88 @@
 				// WAMP SPEC:
 				break;
 			case WAMP_MSG_SPEC.REGISTERED:
-				// WAMP SPEC:
+				// WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
+				if(this._requests[data[1]]) {
+					this._rpcRegs[this._requests[data[1]].topic] = this._rpcRegs[data[2]] = {
+						id: data[2],
+						callbacks: [this._requests[data[1]].callbacks.rpc]
+					};
+
+					if(this._requests[data[1]].callbacks.onSuccess) {
+						this._requests[data[1]].callbacks['onSuccess']();
+					}
+
+					delete this._requests[data[1]];
+
+				} else {
+					this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_REG;
+				}
 				break;
 			case WAMP_MSG_SPEC.UNREGISTER:
 				// WAMP SPEC:
 				break;
 			case WAMP_MSG_SPEC.UNREGISTERED:
-				// WAMP SPEC:
+				// WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
+				if(this._requests[data[1]]) {
+					id = this._rpcRegs[this._requests[data[1]].topic].id;
+					delete this._rpcRegs[this._requests[data[1]].topic];
+					delete this._rpcRegs[id];
+
+					if(this._requests[data[1]].callbacks.onSuccess) {
+						this._requests[data[1]].callbacks['onSuccess']();
+					}
+
+					delete this._requests[data[1]];
+				} else {
+					this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG;
+				}
 				break;
 			case WAMP_MSG_SPEC.INVOCATION:
-				// WAMP SPEC:
+				if(this._rpcRegs[data[1]]) {
+
+					switch (data.length) {
+						case 4:
+							// WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict]
+							d = null;
+							break;
+						case 5:
+							// WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list]
+							d = data[4];
+							break;
+						case 6:
+							// WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
+							d = data[5];
+							break;
+					}
+
+					try {
+						result = this._rpcRegs[data[1]].callbacks[0](d);
+
+						// WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
+
+						if(result instanceof Array) {
+							msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, result];
+						} else if(typeof result === 'object') {
+							msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [], result];
+						} else if(result === undefined) {
+							msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+						} else {    // single value
+							msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [result]];
+						}
+
+						this._send(msg);
+
+					} catch (e) {
+						this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], {}, "wamp.error.invocation_exception"]);
+					}
+
+
+				} else {
+					// WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
+					this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], {}, "wamp.error.no_such_procedure"]);
+					this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION;
+				}
+
 				break;
 			case WAMP_MSG_SPEC.INTERRUPT:
 				// WAMP SPEC:
@@ -834,11 +930,21 @@
 
 		if(!this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
 			return this;
 		}
 
 		if(!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
 			return this;
 		}
 
@@ -848,6 +954,11 @@
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
 			return this;
 		}
 
@@ -895,6 +1006,11 @@
 
 		if(!this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
 			return this;
 		}
 
@@ -934,6 +1050,11 @@
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
 			return this;
 		}
 
@@ -956,11 +1077,21 @@
 
 		if(!this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
 			return this;
 		}
 
 		if(!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
 			return this;
 		}
 
@@ -1016,11 +1147,21 @@
 
 		if(!this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
 			return this;
 		}
 
 		if(!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
 			return this;
 		}
 
@@ -1030,6 +1171,11 @@
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
 			return this;
 		}
 
@@ -1056,6 +1202,142 @@
 		return this;
 	};
 
+	/**
+	 * RPC registration for invocation
+	 * @param {string} topicURI
+	 * @param {function|object} callbacks - if it is a function - it will be treated as rpc itself
+	 *                          or it can be hash table of callbacks:
+	 *                          { rpc: registered procedure
+	 *                            onSuccess: will be called on successful registration
+	 *                            onError: will be called if registration would be aborted }
+	 * @returns {Wampy}
+	 */
+	Wampy.prototype.register = function (topicURI, callbacks) {
+		var reqId;
+
+		if(!this._cache.server_wamp_features.roles.dealer) {
+			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
+			return this;
+		}
+
+		if(!this._validateURI(topicURI)) {
+			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
+			return this;
+		}
+
+		if(typeof callbacks === 'function') {
+			callbacks = { rpc: callbacks};
+		} else if(typeof callbacks === 'object' && callbacks.rpc !== undefined) {
+
+		} else {
+			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
+			return this;
+		}
+
+		if (!this._rpcRegs[topicURI]) {   // no such registration
+
+			do {
+				reqId = generateId();
+			} while (reqId in this._requests);
+
+			this._requests[reqId] = {
+				topic: topicURI,
+				callbacks: callbacks
+			};
+
+			// WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
+			this._send([WAMP_MSG_SPEC.REGISTER, reqId, {}, topicURI]);
+			this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		} else {    // already have registration with such topicURI
+			this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
+		}
+
+		return this;
+
+	};
+
+	/**
+	 * RPC unregistration for invocation
+	 * @param {string} topicURI
+	 * @param {function|object} callbacks - if it is a function, it will be called on successful unregistration
+	 *                          or it can be hash table of callbacks:
+	 *                          { onSuccess: will be called on successful unregistration
+	 *                            onError: will be called if unregistration would be aborted }
+	 * @returns {Wampy}
+	 */
+	Wampy.prototype.unregister = function (topicURI, callbacks) {
+		var reqId;
+
+		if(!this._cache.server_wamp_features.roles.dealer) {
+			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
+			return this;
+		}
+
+		if(!this._validateURI(topicURI)) {
+			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
+			return this;
+		}
+
+		if(typeof callbacks === 'function') {
+			callbacks = { onSuccess: callbacks};
+		}
+
+		if (this._rpcRegs[topicURI]) {   // there is such registration
+
+			do {
+				reqId = generateId();
+			} while (reqId in this._requests);
+
+			this._requests[reqId] = {
+				topic: topicURI,
+				callbacks: callbacks
+			};
+
+			// WAMP SPEC: [UNREGISTER, Request|id, REGISTERED.Registration|id]
+			this._send([WAMP_MSG_SPEC.UNREGISTER, reqId, this._rpcRegs[topicURI].id]);
+			this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		} else {    // already have registration with such topicURI
+			this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
+
+			if(typeof callbacks === 'object' && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
+		}
+
+		return this;
+
+	};
 
 	window.Wampy = Wampy;
 
