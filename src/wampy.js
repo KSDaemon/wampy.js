@@ -755,7 +755,7 @@
 				}
 				break;
 			case WAMP_MSG_SPEC.INVOCATION:
-				if(this._rpcRegs[data[1]]) {
+				if(this._rpcRegs[data[2]]) {
 
 					switch (data.length) {
 						case 4:
@@ -773,26 +773,24 @@
 					}
 
 					try {
-						result = this._rpcRegs[data[1]].callbacks[0](d);
-
-						// WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
-
-						if(result instanceof Array) {
-							msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, result];
-						} else if(typeof result === 'object') {
-							msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [], result];
-						} else if(result === undefined) {
-							msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-						} else {    // single value
-							msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [result]];
-						}
-
-						this._send(msg);
-
+						result = this._rpcRegs[data[2]].callbacks[0](d);
 					} catch (e) {
 						this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], {}, "wamp.error.invocation_exception"]);
+						return ;
 					}
 
+					// WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
+					if(result instanceof Array) {
+						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, result];
+					} else if(typeof result === 'object') {
+						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [], result];
+					} else if(result === undefined) {
+						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+					} else {    // single value
+						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [result]];
+					}
+
+					this._send(msg);
 
 				} else {
 					// WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
