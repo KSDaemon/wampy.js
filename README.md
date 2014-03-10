@@ -28,9 +28,9 @@ Description
 
 Wampy.js is client-side javascript library. It implements 3 roles: publisher, subscriber and caller from [WAMP](http://wamp.ws) v2 specification on top
 of WebSocket object, also provides additional features like autoreconnecting and use of Chaining Pattern.
-It has no external dependencies (by default) and is easy to use.
+It has no external dependencies (by default) and is easy to use. Also it's compatible with AMD and browserify.
 
-Wampy supports msgpack as serializer, but you need to include [javascript msgpack library](http://msgpack.org) as dependency.
+Wampy supports msgpack as serializer, but you need to include msgpack.js as dependency.
 
 For v1 WAMP implementation, please see tag v0.1.0.
 
