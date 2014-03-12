@@ -53,21 +53,22 @@
 		URI_ERROR: { code: 1, description: "Topic URI doesn't meet requirements!" },
 		NO_BROKER: { code: 2, description: "Server doesn't provide broker role!" },
 		NO_CALLBACK_SPEC: { code: 3, description: "No required callback function specified!" },
-		NON_EXIST_SUBSCRIBE_CONFIRM: { code: 4, description: "Received subscribe confirmation to non existent subscription!" },
-		NON_EXIST_SUBSCRIBE_ERROR: { code: 5, description: "Received error for non existent subscription!" },
-		NON_EXIST_UNSUBSCRIBE: { code: 6, description: "Trying to unsubscribe from non existent subscription!" },
-		NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: { code: 7, description: "Received unsubscribe confirmation to non existent subscription!" },
-		NON_EXIST_PUBLISH_ERROR: { code: 8, description: "Received error for non existent publication!" },
-		NON_EXIST_PUBLISH_PUBLISHED: { code: 9, description: "Received publish confirmation for non existent publication!" },
-		NON_EXIST_SUBSCRIBE_EVENT: { code: 10, description: "Received event for non existent subscription!" },
-		NO_DEALER: { code: 11, description: "Server doesn't provide dealer role!" },
-		NON_EXIST_CALL_RESULT: { code: 12, description: "Received rpc result for non existent call!" },
-		NON_EXIST_CALL_ERROR: { code: 13, description: "Received rpc call error for non existent call!" },
-		RPC_ALREADY_REGISTERED: { code: 14, description: "RPC already registered!" },
-		NON_EXIST_RPC_REG: { code: 15, description: "Received rpc registration confirmation for non existent rpc!" },
-		NON_EXIST_RPC_UNREG: { code: 16, description: "Received rpc unregistration confirmation for non existent rpc!" },
-		NON_EXIST_RPC_ERROR: { code: 17, description: "Received error for non existent rpc!" },
-		NON_EXIST_RPC_INVOCATION: { code: 18, description: "Received invocation for non existent rpc!" }
+		INVALID_PARAM: { code: 4, description: "Invalid parameter(s) specified!" },
+		NON_EXIST_SUBSCRIBE_CONFIRM: { code: 5, description: "Received subscribe confirmation to non existent subscription!" },
+		NON_EXIST_SUBSCRIBE_ERROR: { code: 6, description: "Received error for non existent subscription!" },
+		NON_EXIST_UNSUBSCRIBE: { code: 7, description: "Trying to unsubscribe from non existent subscription!" },
+		NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: { code: 8, description: "Received unsubscribe confirmation to non existent subscription!" },
+		NON_EXIST_PUBLISH_ERROR: { code: 9, description: "Received error for non existent publication!" },
+		NON_EXIST_PUBLISH_PUBLISHED: { code: 10, description: "Received publish confirmation for non existent publication!" },
+		NON_EXIST_SUBSCRIBE_EVENT: { code: 11, description: "Received event for non existent subscription!" },
+		NO_DEALER: { code: 12, description: "Server doesn't provide dealer role!" },
+		NON_EXIST_CALL_RESULT: { code: 13, description: "Received rpc result for non existent call!" },
+		NON_EXIST_CALL_ERROR: { code: 14, description: "Received rpc call error for non existent call!" },
+		RPC_ALREADY_REGISTERED: { code: 15, description: "RPC already registered!" },
+		NON_EXIST_RPC_REG: { code: 16, description: "Received rpc registration confirmation for non existent rpc!" },
+		NON_EXIST_RPC_UNREG: { code: 17, description: "Received rpc unregistration confirmation for non existent rpc!" },
+		NON_EXIST_RPC_ERROR: { code: 18, description: "Received error for non existent rpc!" },
+		NON_EXIST_RPC_INVOCATION: { code: 19, description: "Received invocation for non existent rpc!" }
 	};
 
 	function getServerUrl (url) {
@@ -150,11 +151,16 @@
 		 * @private
 		 */
 		this._wamp_features = {
-			"roles": {
-				"publisher": {},
-				"subscriber": {},
-				"caller": {},
-				"callee": {}
+			agent: "Wampy.js " + this.version,
+			roles: {
+				publisher: {
+					features: {
+						subscriber_blackwhite_listing: true
+					}
+				},
+				subscriber: {},
+				caller: {},
+				callee: {}
 			}
 		};
 
@@ -322,7 +328,7 @@
 	/* Internal utils methods */
 
 	/**
-	 * Merge argument objects in first on
+	 * Merge argument objects into one
 	 * @returns {Object}
 	 * @private
 	 */
@@ -1072,15 +1078,19 @@
 	 * @param {object} callbacks - optional hash table of callbacks:
 	 *                          { onSuccess: will be called when publishing would be confirmed
 	 *                            onError: will be called if publishing would be aborted }
+	 * @param {object} blackwhiteList - optional parameter. Must include any or all of the options:
+	 *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
+	 *                                     even though they may be subscribed
+	 *                            eligible: integer|array WAMP session id(s) that are allowed to receive a published event }
 	 * @returns {Wampy}
 	 */
-	Wampy.prototype.publish = function (topicURI, payload, callbacks) {
-		var reqId, msg;
+	Wampy.prototype.publish = function (topicURI, payload, callbacks, blackwhiteList) {
+		var reqId, msg, options = {}, err = false;
 
 		if(!this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(callbacks && typeof callbacks === 'object' && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1090,11 +1100,53 @@
 		if(!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(callbacks && typeof callbacks === 'object' && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
+		}
+
+		if (callbacks && typeof callbacks === 'object') {
+			options.acknowledge = true;
+		}
+
+		if(blackwhiteList !== undefined) {
+
+			if(typeof blackwhiteList === 'object') {
+				if(blackwhiteList.exclude){
+					if(blackwhiteList.exclude instanceof Array) {
+						options.exclude = blackwhiteList.exclude;
+					} else if(typeof blackwhiteList.exclude === 'number') {
+						options.exclude = [blackwhiteList.exclude];
+					} else {
+						err = true;
+					}
+				}
+
+				if(blackwhiteList.eligible){
+					if(blackwhiteList.eligible instanceof Array) {
+						options.eligible = blackwhiteList.eligible;
+					} else if(typeof blackwhiteList.eligible === 'number') {
+						options.eligible = [blackwhiteList.eligible];
+					} else {
+						err = true;
+					}
+				}
+
+			} else {
+				err = true;
+			}
+
+			if(err) {
+				this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
+
+				if(callbacks && typeof callbacks === 'object' && callbacks.onError) {
+					callbacks['onError'](this._cache.opStatus.description);
+				}
+
+				return this;
+			}
 		}
 
 		do {
@@ -1104,14 +1156,14 @@
 		switch (arguments.length) {
 			case 1:
 				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
-				msg = [WAMP_MSG_SPEC.PUBLISH, reqId, {}, topicURI];
+				msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI];
 				break;
 			case 2:
 				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
 				if(payload instanceof Array) {
-					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, {}, topicURI, payload];
+					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, payload];
 				} else {    // assume it's a hash-table
-					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, {}, topicURI, [], payload];
+					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [], payload];
 				}
 				break;
 			default:
@@ -1122,9 +1174,9 @@
 
 				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
 				if(payload instanceof Array) {
-					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, { acknowledge: true }, topicURI, payload];
+					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, payload];
 				} else {    // assume it's a hash-table
-					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, { acknowledge: true }, topicURI, [], payload];
+					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [], payload];
 				}
 				break;
 		}

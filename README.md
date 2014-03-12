@@ -244,7 +244,7 @@ ws.unsubscribe('chat.message.received');
 
 [Back to TOC](#table-of-contents)
 
-publish(topicURI[, payload[, callbacks]])
+publish(topicURI[, payload[, callbacks[, blackwhiteList]]])
 -----------------------------------------------
 
 Publish a new event to topic. Supports chaining.
@@ -256,6 +256,9 @@ Must meet a WAMP Spec URI requirements.
 * callbacks. Optional hash table of callbacks:
            { onSuccess: will be called when publishing would be confirmed
              onError: will be called if publishing would be aborted }
+* blackwhiteList. Optional parameter. Must include any or all of the options:
+           { exclude: integer|array WAMP session id(s) that won't receive a published event, even though they may be subscribed
+             eligible: integer|array WAMP session id(s) that are allowed to receive a published event }
 
 ```javascript
 ws.publish('user.logged.in');
