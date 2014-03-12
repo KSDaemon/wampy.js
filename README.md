@@ -271,6 +271,7 @@ ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
   onSuccess: function () { console.log('User successfully modified'); },
   onError: function (err) { console.log('User modification failed', err); }
 });
+ws.publish('chat.message.received', ['Private message'], null, { eligible: 123456789 });
 ```
 
 [Back to TOC](#table-of-contents)
