@@ -257,8 +257,9 @@ Must meet a WAMP Spec URI requirements.
            { onSuccess: will be called when publishing would be confirmed
              onError: will be called if publishing would be aborted }
 * blackwhiteList. Optional parameter. Must include any or all of the options:
-           { exclude: integer|array WAMP session id(s) that won't receive a published event, even though they may be subscribed
-             eligible: integer|array WAMP session id(s) that are allowed to receive a published event }
+           { exclude:    integer|array WAMP session id(s) that won't receive a published event, even though they may be subscribed
+             eligible:   integer|array WAMP session id(s) that are allowed to receive a published event
+             exclude_me: bool flag of receiving publishing event by initiator }
 
 ```javascript
 ws.publish('user.logged.in');

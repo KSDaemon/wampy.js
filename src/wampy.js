@@ -155,7 +155,8 @@
 			roles: {
 				publisher: {
 					features: {
-						subscriber_blackwhite_listing: true
+						subscriber_blackwhite_listing: true,
+						publisher_exclusion: true
 					}
 				},
 				subscriber: {},
@@ -1081,7 +1082,8 @@
 	 * @param {object} blackwhiteList - optional parameter. Must include any or all of the options:
 	 *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
 	 *                                     even though they may be subscribed
-	 *                            eligible: integer|array WAMP session id(s) that are allowed to receive a published event }
+	 *                            eligible: integer|array WAMP session id(s) that are allowed to receive a published event
+	  *                           exclude_me: bool flag of receiving publishing event by initiator }
 	 * @returns {Wampy}
 	 */
 	Wampy.prototype.publish = function (topicURI, payload, callbacks, blackwhiteList) {
@@ -1132,6 +1134,10 @@
 					} else {
 						err = true;
 					}
+				}
+
+				if(blackwhiteList.exclude_me){
+					options.exclude_me = blackwhiteList.exclude_me !== false;
 				}
 
 			} else {
