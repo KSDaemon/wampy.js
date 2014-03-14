@@ -11,7 +11,7 @@ Table of Contents
 * [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Installation](#installation)
 * [Methods](#methods)
-	* [Constructor](#constructorurloptions)
+	* [Constructor](#constructorurl-options)
 	* [options](#optionsopts)
 	* [getOpStatus](#getopstatus)
 	* [connect](#connecturl)
