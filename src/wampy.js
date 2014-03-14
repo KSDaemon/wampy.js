@@ -346,6 +346,36 @@
 	};
 
 	/**
+	 * Check if value is array
+	 * @param obj
+	 * @returns {boolean}
+	 * @private
+	 */
+	Wampy.prototype._isArray = function(obj) {
+		return (!!obj) && (obj.constructor === Array);
+	};
+
+	/**
+	 * Check if value is object
+	 * @param obj
+	 * @returns {boolean}
+	 * @private
+	 */
+	Wampy.prototype._isObject = function(obj) {
+		return obj === Object(obj) && Object.prototype.toString.call(obj) !== '[object Array]'
+	};
+
+	/**
+	 * Check if value is object literal
+	 * @param obj
+	 * @returns {boolean}
+	 * @private
+	 */
+	Wampy.prototype._isPlainObject = function(obj) {
+		return (!!obj) && (obj.constructor === Object);
+	};
+
+	/**
 	 * Fix websocket protocols based on options
 	 * @private
 	 */
@@ -791,9 +821,9 @@
 					}
 
 					// WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
-					if(result instanceof Array) {
+					if(this._isArray(result)) {
 						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, result];
-					} else if(typeof result === 'object') {
+					} else if(this._isPlainObject(result)) {
 						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [], result];
 					} else if(result === undefined) {
 						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
@@ -853,7 +883,7 @@
 	Wampy.prototype.options = function (opts) {
 		if (opts === undefined) {
 			return this._options;
-		} else if (typeof opts === 'object') {
+		} else if (this._isPlainObject(opts)) {
 			this._options = this._merge(this._options, opts);
 			return this;
 		}
@@ -940,7 +970,7 @@
 		if(!this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -950,7 +980,7 @@
 		if(!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -959,12 +989,12 @@
 
 		if(typeof callbacks === 'function') {
 			callbacks = { onEvent: callbacks};
-		} else if(typeof callbacks === 'object' && callbacks.onEvent !== undefined) {
+		} else if(this._isPlainObject(callbacks) && callbacks.onEvent !== undefined) {
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1016,7 +1046,7 @@
 		if(!this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1060,7 +1090,7 @@
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1074,8 +1104,7 @@
 	/**
 	 * Publish a event to topic
 	 * @param {string} topicURI
-	 * @param {Array|object} payload - optional parameter.
-	 *                      Can be either an array or hash-table
+	 * @param {string|number|Array|object} payload - optional parameter.
 	 * @param {object} callbacks - optional hash table of callbacks:
 	 *                          { onSuccess: will be called when publishing would be confirmed
 	 *                            onError: will be called if publishing would be aborted }
@@ -1092,7 +1121,7 @@
 		if(!this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
-			if(callbacks && typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1102,22 +1131,22 @@
 		if(!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(callbacks && typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if (callbacks && typeof callbacks === 'object') {
+		if (this._isPlainObject(callbacks)) {
 			options.acknowledge = true;
 		}
 
 		if(blackwhiteList !== undefined) {
 
-			if(typeof blackwhiteList === 'object') {
+			if(this._isPlainObject(blackwhiteList)) {
 				if(blackwhiteList.exclude){
-					if(blackwhiteList.exclude instanceof Array) {
+					if(this._isArray(blackwhiteList.exclude)) {
 						options.exclude = blackwhiteList.exclude;
 					} else if(typeof blackwhiteList.exclude === 'number') {
 						options.exclude = [blackwhiteList.exclude];
@@ -1127,7 +1156,7 @@
 				}
 
 				if(blackwhiteList.eligible){
-					if(blackwhiteList.eligible instanceof Array) {
+					if(this._isArray(blackwhiteList.eligible)) {
 						options.eligible = blackwhiteList.eligible;
 					} else if(typeof blackwhiteList.eligible === 'number') {
 						options.eligible = [blackwhiteList.eligible];
@@ -1147,7 +1176,7 @@
 			if(err) {
 				this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
-				if(callbacks && typeof callbacks === 'object' && callbacks.onError) {
+				if(this._isPlainObject(callbacks) && callbacks.onError) {
 					callbacks['onError'](this._cache.opStatus.description);
 				}
 
@@ -1166,10 +1195,12 @@
 				break;
 			case 2:
 				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-				if(payload instanceof Array) {
+				if(this._isArray(payload)) {
 					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, payload];
-				} else {    // assume it's a hash-table
+				} else if(this._isPlainObject(payload)) {
 					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [], payload];
+				} else {    // assume it's a single value
+					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [payload]];
 				}
 				break;
 			default:
@@ -1179,10 +1210,12 @@
 						};
 
 				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-				if(payload instanceof Array) {
+				if(this._isArray(payload)) {
 					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, payload];
-				} else {    // assume it's a hash-table
+				} else if(this._isPlainObject(payload)) {
 					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [], payload];
+				} else {    // assume it's a single value
+					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [payload]];
 				}
 				break;
 		}
@@ -1195,7 +1228,7 @@
 	/**
 	 * Remote Procedure Call
 	 * @param {string} topicURI
-	 * @param {Array|object} payload - can be either an array or hash-table or null
+	 * @param {string|number|Array|object} payload - can be either a value of any type or null
 	 * @param {function|object} callbacks - if it is a function - it will be treated as result callback function
 	 *                          or it can be hash table of callbacks:
 	 *                          { onSuccess: will be called with result on successful call
@@ -1208,7 +1241,7 @@
 		if(!this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1218,7 +1251,7 @@
 		if(!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1227,12 +1260,12 @@
 
 		if(typeof callbacks === 'function') {
 			callbacks = { onSuccess: callbacks};
-		} else if(typeof callbacks === 'object' && callbacks.onSuccess !== undefined) {
+		} else if(this._isPlainObject(callbacks) && callbacks.onSuccess !== undefined) {
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1250,10 +1283,12 @@
 		if(!payload) {
 			msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI];
 		} else {
-			if(payload instanceof Array) {
+			if(this._isArray(payload)) {
 				msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI, payload];
-			} else {    // assume it's a hash-table
+			} else if(this._isPlainObject(payload)) {
 				msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI, [], payload];
+			} else {    // assume it's a single value
+				msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI, [payload]];
 			}
 		}
 
@@ -1278,7 +1313,7 @@
 		if(!this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1288,7 +1323,7 @@
 		if(!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1297,12 +1332,12 @@
 
 		if(typeof callbacks === 'function') {
 			callbacks = { rpc: callbacks};
-		} else if(typeof callbacks === 'object' && callbacks.rpc !== undefined) {
+		} else if(this._isPlainObject(callbacks) && callbacks.rpc !== undefined) {
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1326,7 +1361,7 @@
 		} else {    // already have registration with such topicURI
 			this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1351,7 +1386,7 @@
 		if(!this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1361,7 +1396,7 @@
 		if(!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1389,7 +1424,7 @@
 		} else {    // already have registration with such topicURI
 			this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
 
-			if(typeof callbacks === 'object' && callbacks.onError) {
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
