@@ -8,7 +8,7 @@ Table of Contents
 
 * [Description](#description)
 * [Usage example](#usage-example)
-* [Quick comparison to other libs](#comparison-table)
+* [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Installation](#installation)
 * [Methods](#methods)
 	* [Constructor](#constructor)
@@ -107,7 +107,7 @@ To use Wampy simply add wampy.(min.)?js file to your page.
 Methods
 ========
 
-Constructor([url[, options]])
+Constructor ([url[, options]])
 ------------------------------------------
 
 Wampy constructor can take 2 parameters:
