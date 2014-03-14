@@ -40,7 +40,10 @@ Wampy.js supports next WAMP roles and features:
 	* publisher exclusion
 	* publisher identification
 * subscriber: basic profile.
-* caller: basic profile.
+* caller: advanced profile with features:
+	* callee blackwhite listing.
+	* caller exclusion.
+	* caller identification.
 * callee: basic profile.
 
 Wampy default serializer is JSON, but it also supports msgpack as serializer, but you need to include msgpack.js as dependency.
@@ -108,12 +111,13 @@ Constructor([url[, options]])
 ------------------------------------------
 
 Wampy constructor can take 2 parameters:
-* url to wamp server - optional. If its undefined, page-schema://page-server:page-port/ws will be used.
+
+* **url** to wamp server - optional. If its undefined, page-schema://page-server:page-port/ws will be used.
 Can be in forms of:
 	* fully qualified url: schema://server:port/path
 	* server:port/path. In this case page schema will be used.
 	* /path. In this case page schema, server, port will be used.
-* options hash-table - optional. See description.
+* **options** hash-table - optional. See description.
 
 ```javascript
 ws = new Wampy();
@@ -181,7 +185,7 @@ ws.getOpStatus();
 connect([url])
 ---------------------------
 
-Connects to wamp server. url parameter is the same as specified in [Constructor](#constructor).
+Connects to wamp server. **url** parameter is the same as specified in [Constructor](#constructor).
 Supports chaining.
 
 ```javascript
@@ -223,11 +227,11 @@ Subscribes for topicURI events. Supports chaining.
 
 Parameters:
 
-* topicURI. Required. A string that identifies the topic.
+* **topicURI**. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-* callbacks. If it is a function - it will be treated as published event callback
+* **callbacks**. If it is a function - it will be treated as published event callback
              or it can be hash table of callbacks:
-             
+
            { onSuccess: will be called when subscribe would be confirmed
              onError: will be called if subscribe would be aborted
              onEvent: will be called on receiving published event }
@@ -251,11 +255,11 @@ Unsubscribe from topicURI events. Supports chaining.
 
 Parameters:
 
-* topicURI. Required. A string that identifies the topic.
+* **topicURI**. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-* callbacks. If it is a function - it will be treated as published event callback to remove
+* **callbacks**. If it is a function - it will be treated as published event callback to remove
              or it can be hash table of callbacks:
-             
+
            { onSuccess: will be called when unsubscribe would be confirmed
              onError: will be called if unsubscribe would be aborted
              onEvent: published event callback to remove }
@@ -277,14 +281,14 @@ Publish a new event to topic. Supports chaining.
 
 Parameters:
 
-* topicURI. Required. A string that identifies the topic.
+* **topicURI**. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-* payload. Publishing event data. Optional. May be any single value or array or hash-table object or null.
-* callbacks. Optional hash table of callbacks:
+* **payload**. Publishing event data. Optional. May be any single value or array or hash-table object or null.
+* **callbacks**. Optional hash table of callbacks:
 
            { onSuccess: will be called when publishing would be confirmed
              onError: will be called if publishing would be aborted }
-* advancedOptions. Optional parameter. Must include any or all of the options:
+* **advancedOptions**. Optional parameter. Must include any or all of the options:
 
            { exclude:    integer|array WAMP session id(s) that won't receive a published event, even though they may be subscribed
              eligible:   integer|array WAMP session id(s) that are allowed to receive a published event
@@ -308,21 +312,30 @@ ws.publish('chat.message.received', ['Private message'], null, { eligible: 12345
 
 [Back to TOC](#table-of-contents)
 
-call(topicURI[, payload[, callbacks]])
+call(topicURI[, payload[, callbacks[, advancedOptions]]])
 -----------------------------------------------
 
 Make a RPC call to topicURI. Supports chaining.
 
 Parameters:
 
-* topicURI. Required. A string that identifies the remote procedure to be called.
+* **topicURI**. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
-* payload. RPC data. Optional. May be any single value or array or hash-table object or null.
-* callbacks. If it is a function - it will be treated as result callback function
+* **payload**. RPC data. Optional. May be any single value or array or hash-table object or null.
+* **callbacks**. If it is a function - it will be treated as result callback function
              or it can be hash table of callbacks:
-             
+
            { onSuccess: will be called with result on successful call
              onError: will be called if invocation would be aborted }
+* **advancedOptions**. Optional parameter. Must include any or all of the options:
+
+           { exclude: integer|array WAMP session id(s) providing an explicit list of (potential)
+                      Callees that a call won't be forwarded to, even though they might be registered
+             eligible: integer|array WAMP session id(s) providing an explicit list of (potential)
+                       Callees that are (potentially) forwarded the call issued
+             exclude_me: bool flag of potentially forwarding call to caller if he is registered as callee
+             disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
+                           to endpoints of a routed call }
 
 ```javascript
 ws.call('server.time', null, function (data) { console.log('Server time is ' + d[0]); });
@@ -355,11 +368,11 @@ RPC registration for invocation.
 
 Parameters:
 
-* topicURI. Required. A string that identifies the remote procedure to be called.
+* **topicURI**. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
-* callbacks. Required. If it is a function - it will be treated as rpc itself
+* **callbacks**. Required. If it is a function - it will be treated as rpc itself
              or it can be hash table of callbacks:
-             
+
            { rpc: registered procedure
              onSuccess: will be called on successful registration
              onError: will be called if registration would be aborted }
@@ -390,11 +403,11 @@ RPC unregistration from invocations
 
 Parameters:
 
-* topicURI. Required. A string that identifies the remote procedure to be called.
+* **topicURI**. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
-* callbacks. Optional. If it is a function - it will be called on successful unregistration
+* **callbacks**. Optional. If it is a function - it will be called on successful unregistration
              or it can be hash table of callbacks:
-             
+
            { onSuccess: will be called on successful unregistration
              onError: will be called if unregistration would be aborted }
 

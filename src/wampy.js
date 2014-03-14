@@ -161,8 +161,18 @@
 					}
 				},
 				subscriber: {},
-				caller: {},
-				callee: {}
+				caller: {
+					features: {
+						callee_blackwhite_listing: true,
+						caller_exclusion: true,
+						caller_identification: true
+					}
+				},
+				callee: {
+					features: {
+						caller_identification: true
+					}
+				}
 			}
 		};
 
@@ -1113,9 +1123,9 @@
 	 *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
 	 *                                     even though they may be subscribed
 	 *                            eligible: integer|array WAMP session id(s) that are allowed to receive a published event
-	  *                           exclude_me: bool flag of receiving publishing event by initiator
-	   *                          disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
-	   *                                   to receivers of a published event }
+	 *                            exclude_me: bool flag of receiving publishing event by initiator
+	 *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
+	 *                                   to receivers of a published event }
 	 * @returns {Wampy}
 	 */
 	Wampy.prototype.publish = function (topicURI, payload, callbacks, advancedOptions) {
@@ -1240,10 +1250,18 @@
 	 *                          or it can be hash table of callbacks:
 	 *                          { onSuccess: will be called with result on successful call
 	 *                            onError: will be called if invocation would be aborted }
+	 * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+	 *                          { exclude: integer|array WAMP session id(s) providing an explicit list of (potential)
+	 *                                  Callees that a call won't be forwarded to, even though they might be registered
+	 *                            eligible: integer|array WAMP session id(s) providing an explicit list of (potential)
+	 *                                  Callees that are (potentially) forwarded the call issued
+	 *                            exclude_me: bool flag of potentially forwarding call to caller if he is registered as callee
+	 *                            disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
+	 *                                   to endpoints of a routed call }
 	 * @returns {Wampy}
 	 */
-	Wampy.prototype.call = function (topicURI, payload, callbacks) {
-		var reqId, msg;
+	Wampy.prototype.call = function (topicURI, payload, callbacks, advancedOptions) {
+		var reqId, msg, options = {}, err = false;
 
 		if(!this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
@@ -1279,6 +1297,52 @@
 			return this;
 		}
 
+		if(advancedOptions !== undefined) {
+
+			if(this._isPlainObject(advancedOptions)) {
+				if(advancedOptions.exclude){
+					if(this._isArray(advancedOptions.exclude)) {
+						options.exclude = advancedOptions.exclude;
+					} else if(typeof advancedOptions.exclude === 'number') {
+						options.exclude = [advancedOptions.exclude];
+					} else {
+						err = true;
+					}
+				}
+
+				if(advancedOptions.eligible){
+					if(this._isArray(advancedOptions.eligible)) {
+						options.eligible = advancedOptions.eligible;
+					} else if(typeof advancedOptions.eligible === 'number') {
+						options.eligible = [advancedOptions.eligible];
+					} else {
+						err = true;
+					}
+				}
+
+				if(advancedOptions.exclude_me) {
+					options.exclude_me = advancedOptions.exclude_me !== false;
+				}
+
+				if(advancedOptions.disclose_me) {
+					options.disclose_me = advancedOptions.disclose_me === true;
+				}
+
+			} else {
+				err = true;
+			}
+
+			if(err) {
+				this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
+
+				if(this._isPlainObject(callbacks) && callbacks.onError) {
+					callbacks['onError'](this._cache.opStatus.description);
+				}
+
+				return this;
+			}
+		}
+
 		do {
 			reqId = generateId();
 		} while (reqId in this._requests || reqId in this._calls);
@@ -1288,14 +1352,14 @@
 
 		//WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
 		if(!payload) {
-			msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI];
+			msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
 		} else {
 			if(this._isArray(payload)) {
-				msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI, payload];
+				msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI, payload];
 			} else if(this._isPlainObject(payload)) {
-				msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI, [], payload];
+				msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI, [], payload];
 			} else {    // assume it's a single value
-				msg = [WAMP_MSG_SPEC.CALL, reqId, {}, topicURI, [payload]];
+				msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI, [payload]];
 			}
 		}
 
