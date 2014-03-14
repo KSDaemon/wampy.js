@@ -11,18 +11,18 @@ Table of Contents
 * [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Installation](#installation)
 * [Methods](#methods)
-	* [Constructor](#constructor)
-	* [options](#options)
-	* [getOpStatus](#getOpStatus)
-	* [connect](#connect)
+	* [Constructor](#constructorurloptions)
+	* [options](#optionsopts)
+	* [getOpStatus](#getopstatus)
+	* [connect](#connecturl)
 	* [disconnect](#disconnect)
 	* [abort](#abort)
-	* [subscribe](#subscribe)
-	* [unsubscribe](#unsubscribe)
-	* [publish](#publish)
-	* [call](#call)
-	* [register](#register)
-	* [unregister](#unregister)
+	* [subscribe](#subscribetopicuri-callbacks)
+	* [unsubscribe](#unsubscribetopicuri-callbacks)
+	* [publish](#publishtopicuri-payload-callbacks-advancedoptions)
+	* [call](#calltopicuri-payload-callbacks-advancedoptions)
+	* [register](#registertopicuri-callbacks)
+	* [unregister](#unregistertopicuri-callbacks)
 * [Copyright and License](#copyright-and-license)
 * [See Also](#see-also)
 
@@ -107,7 +107,7 @@ To use Wampy simply add wampy.(min.)?js file to your page.
 Methods
 ========
 
-Constructor ([url[, options]])
+Constructor([url[, options]])
 ------------------------------------------
 
 Wampy constructor can take 2 parameters:
