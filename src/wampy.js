@@ -1116,7 +1116,7 @@
 		if(blackwhiteList !== undefined) {
 
 			if(typeof blackwhiteList === 'object') {
-				if(blackwhiteList.exclude){
+				if(blackwhiteList.exclude) {
 					if(blackwhiteList.exclude instanceof Array) {
 						options.exclude = blackwhiteList.exclude;
 					} else if(typeof blackwhiteList.exclude === 'number') {
@@ -1126,7 +1126,7 @@
 					}
 				}
 
-				if(blackwhiteList.eligible){
+				if(blackwhiteList.eligible) {
 					if(blackwhiteList.eligible instanceof Array) {
 						options.eligible = blackwhiteList.eligible;
 					} else if(typeof blackwhiteList.eligible === 'number') {
@@ -1136,7 +1136,7 @@
 					}
 				}
 
-				if(blackwhiteList.exclude_me){
+				if(blackwhiteList.exclude_me) {
 					options.exclude_me = blackwhiteList.exclude_me !== false;
 				}
 
