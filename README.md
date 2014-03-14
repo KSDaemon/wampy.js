@@ -34,9 +34,11 @@ WebSocket object, also provides additional features like autoreconnecting and us
 It has no external dependencies (by default) and is easy to use. Also it's compatible with AMD and browserify.
 
 Wampy.js supports next WAMP roles and features:
+
 * publisher: advanced profile with features:
-	* subscriber blackwhite listing
+    * subscriber blackwhite listing
 	* publisher exclusion
+	* publisher identification
 * subscriber: basic profile.
 * caller: basic profile.
 * callee: basic profile.
@@ -126,21 +128,23 @@ options([opts])
 ---------------
 
 .options() method can be called in two forms:
+
 * without parameters it will return current options
 * with one parameter as hash-table it will set new options. Support chaining.
 
 Options attributes description:
-* autoReconnect. Default value: true. Enable autoreconnecting.
-* reconnectInterval. Default value: 2000 (ms). Reconnection Interval in ms.
-* maxRetries. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
+
+* **autoReconnect**. Default value: true. Enable autoreconnecting.
+* **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
+* **maxRetries**. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
 will be called
-* transportEncoding. Default value: json. Transport serializer to use. Supported 2 values: json|msgpack.
+* **transportEncoding**. Default value: json. Transport serializer to use. Supported 2 values: json|msgpack.
 For using msgpack you need to include msgpack javascript library, and also wamp server, that also supports it.
-* realm. Default value: window.location.hostname. WAMP Realm to join on server. See WAMP spec for additional info.
-* onConnect. Default value: undefined. Callback function. Fired when connection to wamp server is established.
-* onClose. Default value: undefined. Callback function. Fired on closing connection to wamp server.
-* onError. Default value: undefined. Callback function. Fired on error in websocket communication.
-* onReconnect. Default value: undefined. Callback function. Fired every time on reconnection attempt.
+* **realm**. Default value: window.location.hostname. WAMP Realm to join on server. See WAMP spec for additional info.
+* **onConnect**. Default value: undefined. Callback function. Fired when connection to wamp server is established.
+* **onClose**. Default value: undefined. Callback function. Fired on closing connection to wamp server.
+* **onError**. Default value: undefined. Callback function. Fired on error in websocket communication.
+* **onReconnect**. Default value: undefined. Callback function. Fired every time on reconnection attempt.
 
 ```javascript
 ws.options();
@@ -218,10 +222,12 @@ subscribe(topicURI, callbacks)
 Subscribes for topicURI events. Supports chaining.
 
 Parameters:
+
 * topicURI. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
 * callbacks. If it is a function - it will be treated as published event callback
              or it can be hash table of callbacks:
+             
            { onSuccess: will be called when subscribe would be confirmed
              onError: will be called if subscribe would be aborted
              onEvent: will be called on receiving published event }
@@ -244,14 +250,16 @@ unsubscribe(topicURI[, callbacks])
 Unsubscribe from topicURI events. Supports chaining.
 
 Parameters:
+
 * topicURI. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
 * callbacks. If it is a function - it will be treated as published event callback to remove
              or it can be hash table of callbacks:
+             
            { onSuccess: will be called when unsubscribe would be confirmed
              onError: will be called if unsubscribe would be aborted
              onEvent: published event callback to remove }
-             or it can be not specified, in this case all callbacks and subscription will be removed.
+or it can be not specified, in this case all callbacks and subscription will be removed.
 
 ```javascript
 var f1 = function (data) { ... };
@@ -262,22 +270,26 @@ ws.unsubscribe('chat.message.received');
 
 [Back to TOC](#table-of-contents)
 
-publish(topicURI[, payload[, callbacks[, blackwhiteList]]])
+publish(topicURI[, payload[, callbacks[, advancedOptions]]])
 -----------------------------------------------
 
 Publish a new event to topic. Supports chaining.
 
 Parameters:
+
 * topicURI. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
 * payload. Publishing event data. Optional. May be any single value or array or hash-table object or null.
 * callbacks. Optional hash table of callbacks:
+
            { onSuccess: will be called when publishing would be confirmed
              onError: will be called if publishing would be aborted }
-* blackwhiteList. Optional parameter. Must include any or all of the options:
+* advancedOptions. Optional parameter. Must include any or all of the options:
+
            { exclude:    integer|array WAMP session id(s) that won't receive a published event, even though they may be subscribed
              eligible:   integer|array WAMP session id(s) that are allowed to receive a published event
-             exclude_me: bool flag of receiving publishing event by initiator (if it is subscribed to this topic) }
+             exclude_me: bool flag of receiving publishing event by initiator (if it is subscribed to this topic)
+             disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID) to receivers of a published event }
 
 ```javascript
 ws.publish('user.logged.in');
@@ -302,11 +314,13 @@ call(topicURI[, payload[, callbacks]])
 Make a RPC call to topicURI. Supports chaining.
 
 Parameters:
+
 * topicURI. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
 * payload. RPC data. Optional. May be any single value or array or hash-table object or null.
 * callbacks. If it is a function - it will be treated as result callback function
              or it can be hash table of callbacks:
+             
            { onSuccess: will be called with result on successful call
              onError: will be called if invocation would be aborted }
 
@@ -340,10 +354,12 @@ register(topicURI, callbacks)
 RPC registration for invocation.
 
 Parameters:
+
 * topicURI. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
 * callbacks. Required. If it is a function - it will be treated as rpc itself
              or it can be hash table of callbacks:
+             
            { rpc: registered procedure
              onSuccess: will be called on successful registration
              onError: will be called if registration would be aborted }
@@ -373,10 +389,12 @@ unregister(topicURI, callbacks)
 RPC unregistration from invocations
 
 Parameters:
+
 * topicURI. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
 * callbacks. Optional. If it is a function - it will be called on successful unregistration
              or it can be hash table of callbacks:
+             
            { onSuccess: will be called on successful unregistration
              onError: will be called if unregistration would be aborted }
 
