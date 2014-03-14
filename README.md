@@ -21,17 +21,27 @@ Table of Contents
 	* [unsubscribe](#unsubscribe)
 	* [publish](#publish)
 	* [call](#call)
+	* [register](#register)
+	* [unregister](#unregister)
 * [Copyright and License](#copyright-and-license)
 * [See Also](#see-also)
 
 Description
 ===========
 
-Wampy.js is client-side javascript library. It implements 3 roles: publisher, subscriber and caller from [WAMP](http://wamp.ws) v2 specification on top
-of WebSocket object, also provides additional features like autoreconnecting and use of Chaining Pattern.
+Wampy.js is client-side javascript library. It implements [WAMP](http://wamp.ws) v2 specification on top of
+WebSocket object, also provides additional features like autoreconnecting and use of Chaining Pattern.
 It has no external dependencies (by default) and is easy to use. Also it's compatible with AMD and browserify.
 
-Wampy supports msgpack as serializer, but you need to include msgpack.js as dependency.
+Wampy.js supports next WAMP roles and features:
+* publisher: advanced profile with features:
+	* subscriber blackwhite listing
+	* publisher exclusion
+* subscriber: basic profile.
+* caller: basic profile.
+* callee: basic profile.
+
+Wampy default serializer is JSON, but it also supports msgpack as serializer, but you need to include msgpack.js as dependency.
 
 For v1 WAMP implementation, please see tag v0.1.0.
 
@@ -66,7 +76,15 @@ ws.publish('client.message', 'Hi guys!');
 Quick comparison to other libs
 ==============================
 
-TBD
+| Topic         | Wampy.js | AutobahnJS  |
+|-------------- | -------- | ----------- |
+| Runs on | browser | browser and NodeJS |
+| Dependencies | msgpack.js (optional), jDataView (optional) | when.js, CryptoJS (optional) |
+| Creating connection | var connection = new Wampy('ws://127.0.0.1:9000/', { realm: 'realm1' }); | var connection = new autobahn.Connection({url: 'ws://127.0.0.1:9000/', realm: 'realm1'}); |
+| Opening a connection | connection opens on creating an instance, or can be opened by: connection.connect() | connection.open(); |
+| Connection Callbacks | Wampy supports next callbacks: onConnect, onClose, onError, onReconnect. Callbacks can be specified via options object passed to constructor, or via .options() method. | AutobahnJS provides two callbacks: connection.onopen = function (session) { } and connection.onclose = function (reason/string, details/dict) { } |
+| WAMP API methods with parameters | While using Wampy you don't have to explicitly specify the payload type (single value, array, object), just pass it to api method. <br/>For example:<br/>ws.publish('chat.message.received', 'user message');<br/>ws.publish('chat.message.received', ['user message1', 'user message2']);<br/>ws.publish('chat.message.received', { message: 'user message'});<br/>Also Wampy is clever enough to understand some specific options, for example, if you specify a success or error callback to publish method, Wampy will automatically set acknowledge flag to true.  | In AutobahnJS you need to use only arrays and objects, as it's specified in WAMP, and also choose right argument position.<br/>For example:<br/>session.publish('com.myapp.hello', ['Hello, world!']);<br/>session.publish('com.myapp.hello', [], {message: 'Hello, world!'});<br/>Also you need to explicitly provide additional options, like {acknowledge: true} |
+| Chaining support | Wampy supports methods chaining.<br/>connection.subscribe(...).publish(...).call(...) |  |
 
 [Back to TOC](#table-of-contents)
 
@@ -98,7 +116,7 @@ Can be in forms of:
 ```javascript
 ws = new Wampy();
 ws = new Wampy('/my-socket-path');
-ws = new Wampy('https://socket.server.com:5000/ws', { autoReconnect: false });
+ws = new Wampy('ws://socket.server.com:5000/ws', { autoReconnect: false });
 ws = new Wampy({ reconnectInterval: 1*1000 });
 ```
 
@@ -165,7 +183,7 @@ Supports chaining.
 ```javascript
 ws.connect();
 ws.connect('/my-socket-path');
-ws.connect('https://socket.server.com:5000/ws');
+ws.connect('wss://socket.server.com:5000/ws');
 ```
 
 [Back to TOC](#table-of-contents)
@@ -252,18 +270,19 @@ Publish a new event to topic. Supports chaining.
 Parameters:
 * topicURI. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-* payload. Publishing event data. Optional. Must be array or hash-table object or null.
+* payload. Publishing event data. Optional. May be any single value or array or hash-table object or null.
 * callbacks. Optional hash table of callbacks:
            { onSuccess: will be called when publishing would be confirmed
              onError: will be called if publishing would be aborted }
 * blackwhiteList. Optional parameter. Must include any or all of the options:
            { exclude:    integer|array WAMP session id(s) that won't receive a published event, even though they may be subscribed
              eligible:   integer|array WAMP session id(s) that are allowed to receive a published event
-             exclude_me: bool flag of receiving publishing event by initiator }
+             exclude_me: bool flag of receiving publishing event by initiator (if it is subscribed to this topic) }
 
 ```javascript
 ws.publish('user.logged.in');
-ws.publish('chat.message.received', ['user message']);
+ws.publish('chat.message.received', 'user message');
+ws.publish('chat.message.received', ['user message1', 'user message2']);
 ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
 ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
   onSuccess: function () { console.log('User successfully modified'); }
@@ -285,7 +304,7 @@ Make a RPC call to topicURI. Supports chaining.
 Parameters:
 * topicURI. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
-* payload. RPC data. Optional. Must be array or hash-table object or null.
+* payload. RPC data. Optional. May be any single value or array or hash-table object or null.
 * callbacks. If it is a function - it will be treated as result callback function
              or it can be hash table of callbacks:
            { onSuccess: will be called with result on successful call
@@ -309,6 +328,67 @@ ws.call('restore.backup', { backupFile: 'backup.zip' }, {
 	},
 	onError: function (err) {
 		console.log('Restore failed!',err);
+	}
+});
+```
+
+[Back to TOC](#table-of-contents)
+
+register(topicURI, callbacks)
+-----------------------------------------------
+
+RPC registration for invocation.
+
+Parameters:
+* topicURI. Required. A string that identifies the remote procedure to be called.
+Must meet a WAMP Spec URI requirements.
+* callbacks. Required. If it is a function - it will be treated as rpc itself
+             or it can be hash table of callbacks:
+           { rpc: registered procedure
+             onSuccess: will be called on successful registration
+             onError: will be called if registration would be aborted }
+
+```javascript
+var sqrt_f = function (x) { return x*x; };
+
+
+ws.register('sqrt.value', sqrt_f);
+
+ws.register('sqrt.value', {
+	rpc: sqrt_f,
+	onSuccess: function (data) {
+		console.log('RPC successfully registered');
+	},
+	onError: function (err) {
+		console.log('RPC registration failed!',err);
+	}
+});
+```
+
+[Back to TOC](#table-of-contents)
+
+unregister(topicURI, callbacks)
+-----------------------------------------------
+
+RPC unregistration from invocations
+
+Parameters:
+* topicURI. Required. A string that identifies the remote procedure to be called.
+Must meet a WAMP Spec URI requirements.
+* callbacks. Optional. If it is a function - it will be called on successful unregistration
+             or it can be hash table of callbacks:
+           { onSuccess: will be called on successful unregistration
+             onError: will be called if unregistration would be aborted }
+
+```javascript
+ws.unregister('sqrt.value');
+
+ws.unregister('sqrt.value', {
+	onSuccess: function (data) {
+		console.log('RPC successfully unregistered');
+	},
+	onError: function (err) {
+		console.log('RPC unregistration failed!',err);
 	}
 });
 ```
