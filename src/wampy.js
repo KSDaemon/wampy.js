@@ -156,7 +156,8 @@
 				publisher: {
 					features: {
 						subscriber_blackwhite_listing: true,
-						publisher_exclusion: true
+						publisher_exclusion: true,
+						publisher_identification: true
 					}
 				},
 				subscriber: {},
@@ -1108,14 +1109,16 @@
 	 * @param {object} callbacks - optional hash table of callbacks:
 	 *                          { onSuccess: will be called when publishing would be confirmed
 	 *                            onError: will be called if publishing would be aborted }
-	 * @param {object} blackwhiteList - optional parameter. Must include any or all of the options:
+	 * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
 	 *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
 	 *                                     even though they may be subscribed
 	 *                            eligible: integer|array WAMP session id(s) that are allowed to receive a published event
-	  *                           exclude_me: bool flag of receiving publishing event by initiator }
+	  *                           exclude_me: bool flag of receiving publishing event by initiator
+	   *                          disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
+	   *                                   to receivers of a published event }
 	 * @returns {Wampy}
 	 */
-	Wampy.prototype.publish = function (topicURI, payload, callbacks, blackwhiteList) {
+	Wampy.prototype.publish = function (topicURI, payload, callbacks, advancedOptions) {
 		var reqId, msg, options = {}, err = false;
 
 		if(!this._cache.server_wamp_features.roles.broker) {
@@ -1142,31 +1145,35 @@
 			options.acknowledge = true;
 		}
 
-		if(blackwhiteList !== undefined) {
+		if(advancedOptions !== undefined) {
 
-			if(this._isPlainObject(blackwhiteList)) {
-				if(blackwhiteList.exclude){
-					if(this._isArray(blackwhiteList.exclude)) {
-						options.exclude = blackwhiteList.exclude;
-					} else if(typeof blackwhiteList.exclude === 'number') {
-						options.exclude = [blackwhiteList.exclude];
+			if(this._isPlainObject(advancedOptions)) {
+				if(advancedOptions.exclude){
+					if(this._isArray(advancedOptions.exclude)) {
+						options.exclude = advancedOptions.exclude;
+					} else if(typeof advancedOptions.exclude === 'number') {
+						options.exclude = [advancedOptions.exclude];
 					} else {
 						err = true;
 					}
 				}
 
-				if(blackwhiteList.eligible){
-					if(this._isArray(blackwhiteList.eligible)) {
-						options.eligible = blackwhiteList.eligible;
-					} else if(typeof blackwhiteList.eligible === 'number') {
-						options.eligible = [blackwhiteList.eligible];
+				if(advancedOptions.eligible){
+					if(this._isArray(advancedOptions.eligible)) {
+						options.eligible = advancedOptions.eligible;
+					} else if(typeof advancedOptions.eligible === 'number') {
+						options.eligible = [advancedOptions.eligible];
 					} else {
 						err = true;
 					}
 				}
 
-				if(blackwhiteList.exclude_me) {
-					options.exclude_me = blackwhiteList.exclude_me !== false;
+				if(advancedOptions.exclude_me) {
+					options.exclude_me = advancedOptions.exclude_me !== false;
+				}
+
+				if(advancedOptions.disclose_me) {
+					options.disclose_me = advancedOptions.disclose_me === true;
 				}
 
 			} else {
