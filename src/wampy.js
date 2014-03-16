@@ -91,10 +91,6 @@
 		}
 	};
 
-	function generateId () {
-		return Math.floor(Math.random() * 9007199254740992);
-	};
-
 	function getWebSocket (url, protocols) {
 		var parsedUrl = getServerUrl(url);
 
@@ -191,7 +187,7 @@
 			/**
 			 * Server WAMP roles and features
 			 */
-			server_wamp_features: {},
+			server_wamp_features: { roles: {} },
 
 			/**
 			 * Are we in state of saying goodbye
@@ -338,6 +334,20 @@
 	};
 
 	/* Internal utils methods */
+	/**
+	 * Get the new unique request id
+	 * @returns {number}
+	 * @private
+	 */
+	Wampy.prototype._getReqId = function () {
+		var reqId;
+
+		do {
+			reqId = Math.floor(Math.random() * 9007199254740992);
+		} while (reqId in this._requests);
+
+		return reqId;
+	};
 
 	/**
 	 * Merge argument objects into one
@@ -1014,9 +1024,7 @@
 
 		if (!this._subscriptions[topicURI]) {   // no such subscription
 
-			do {
-				reqId = generateId();
-			} while (reqId in this._requests);
+			reqId = this._getReqId();
 
 			this._requests[reqId] = {
 				topic: topicURI,
@@ -1066,9 +1074,7 @@
 
 		if (this._subscriptions[topicURI]) {
 
-			do {
-				reqId = generateId();
-			} while (reqId in this._requests);
+			reqId = this._getReqId();
 
 			if(callbacks === undefined) {
 				this._subscriptions[topicURI].callbacks = [];
@@ -1201,9 +1207,7 @@
 			}
 		}
 
-		do {
-			reqId = generateId();
-		} while (reqId in this._requests);
+		reqId = this._getReqId();
 
 		switch (arguments.length) {
 			case 1:
@@ -1344,11 +1348,10 @@
 		}
 
 		do {
-			reqId = generateId();
-		} while (reqId in this._requests || reqId in this._calls);
+			reqId = this._getReqId();
+		} while (reqId in this._calls);
 
 		this._calls[reqId] = callbacks;
-
 
 		//WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
 		if(!payload) {
@@ -1417,9 +1420,7 @@
 
 		if (!this._rpcRegs[topicURI]) {   // no such registration
 
-			do {
-				reqId = generateId();
-			} while (reqId in this._requests);
+			reqId = this._getReqId();
 
 			this._requests[reqId] = {
 				topic: topicURI,
@@ -1480,9 +1481,7 @@
 
 		if (this._rpcRegs[topicURI]) {   // there is such registration
 
-			do {
-				reqId = generateId();
-			} while (reqId in this._requests);
+			reqId = this._getReqId();
 
 			this._requests[reqId] = {
 				topic: topicURI,

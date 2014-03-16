@@ -92,6 +92,8 @@ Quick comparison to other libs
 | Method callbacks | Most of the API methods take a **callbacks** parameter, which is hash-table of posible callbacks | AutobahnJS make use of **Deffered** object, and most of API methods return a deferred object, so you can specify callbacks using .then() method |
 | Chaining support | Wampy supports methods chaining.<br/>connection.subscribe(...).publish(...).call(...) |  |
 
+Which one library to use - choice is yours!
+
 [Back to TOC](#table-of-contents)
 
 Installation
