@@ -343,7 +343,12 @@
 		var reqId;
 
 		do {
-			reqId = Math.floor(Math.random() * 9007199254740992);
+			/* Lua doesn't understand such a big numbers, so wiola WAMP server sends approx numbers
+			 * and all corelated requests are broken. This will be fixed in Lua 5.3.
+			 * For now, i think it's not a big problem to reduce range.
+			 */
+//			reqId = Math.floor(Math.random() * 9007199254740992);
+			reqId = Math.floor(Math.random() * 100000000000000);
 		} while (reqId in this._requests);
 
 		return reqId;
