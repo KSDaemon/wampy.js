@@ -953,7 +953,7 @@
 			// need to send goodbye message to server
 			this._cache.isSayingGoodbye = true;
 			this._send([WAMP_MSG_SPEC.GOODBYE, {}, "wamp.error.system_shutdown"]);
-		} else {
+		} else if (this._ws){
 			this._ws.close();
 		}
 
