@@ -1191,11 +1191,11 @@
 					}
 				}
 
-				if(advancedOptions.exclude_me) {
+				if(advancedOptions.hasOwnProperty("exclude_me")) {
 					options.exclude_me = advancedOptions.exclude_me !== false;
 				}
 
-				if(advancedOptions.disclose_me) {
+				if(advancedOptions.hasOwnProperty("disclose_me")) {
 					options.disclose_me = advancedOptions.disclose_me === true;
 				}
 
@@ -1331,11 +1331,11 @@
 					}
 				}
 
-				if(advancedOptions.exclude_me) {
+				if(advancedOptions.hasOwnProperty("exclude_me")) {
 					options.exclude_me = advancedOptions.exclude_me !== false;
 				}
 
-				if(advancedOptions.disclose_me) {
+				if(advancedOptions.hasOwnProperty("disclose_me")) {
 					options.disclose_me = advancedOptions.disclose_me === true;
 				}
 
