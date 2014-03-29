@@ -125,7 +125,7 @@
 		 * @type {string}
 		 * @private
 		 */
-		this.version = 'v2.0.0';
+		this.version = 'v2.0.1';
 
 		/**
 		 * WS Url
@@ -1361,7 +1361,7 @@
 		this._calls[reqId] = callbacks;
 
 		//WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
-		if(!payload) {
+		if(payload === null) {
 			msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
 		} else {
 			if(this._isArray(payload)) {
