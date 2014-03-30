@@ -125,7 +125,7 @@
 		 * @type {string}
 		 * @private
 		 */
-		this.version = 'v2.0.1';
+		this.version = 'v2.0.2';
 
 		/**
 		 * WS Url
@@ -143,7 +143,7 @@
 
 		/**
 		 * WAMP features, supported by Wampy
-		 * @type {{}}
+		 * @type {object}
 		 * @private
 		 */
 		this._wamp_features = {
@@ -249,11 +249,25 @@
 		this._subscriptions = {};
 
 		/**
+		 * Stored Pub/Sub topics
+		 * @type {Array}
+		 * @private
+		 */
+		this._subsTopics = [];
+
+		/**
 		 * Stored RPC Registrations
 		 * @type {object}
 		 * @private
 		 */
 		this._rpcRegs = {};
+
+		/**
+		 * Stored RPC names
+		 * @type {Array}
+		 * @private
+		 */
+		this._rpcNames = [];
 
 		/**
 		 * Options hash-table
@@ -499,9 +513,11 @@
 	Wampy.prototype._resetState = function () {
 		this._wsQueue = [];
 		this._subscriptions = {};
+		this._subsTopics = [];
 		this._requests = {};
 		this._calls = {};
 		this._rpcRegs = {};
+		this._rpcNames = [];
 
 		// Just keep attrs that are have to be present
 		this._cache = {
@@ -528,16 +544,8 @@
 
 		console.log("[wampy] websocket connected");
 
-		if (this._ws.protocol instanceof Array) {
-			// Server supports more than one subprotocol.
-			// Right now available 2: json, msgpack
-			// Both are supported by Wampy
-			// For msgpack - requires msgpack lib
-			// So we will use protocol from options
-		} else {
-			p = this._ws.protocol.split('.');
-			this._options.transportEncoding = p[2];
-		}
+		p = this._ws.protocol.split('.');
+		this._options.transportEncoding = p[2];
 
 		if (this._options.transportEncoding === 'msgpack') {
 			this._ws.binaryType = "arraybuffer";
@@ -575,12 +583,28 @@
 		switch (data[0]) {
 			case WAMP_MSG_SPEC.WELCOME:
 				// WAMP SPEC: [WELCOME, Session|id, Details|dict]
+
+				if(this._cache.sessionId) {
+					// There was reconnection
+					i = 1;
+					this._cache.reconnectingAttempts = 0;
+				}
+				else {
+					i = 0;
+				}
+
 				this._cache.sessionId = data[1];
 				this._cache.server_wamp_features = data[2];
 
 				// Firing onConnect event on real connection to WAMP server
 				if (this._options.onConnect) {
 					this._options.onConnect();
+				}
+
+				if (i === 1) {
+					// Let's renew all previous state
+					this._renewSubscriptions();
+					this._renewRegistrations();
 				}
 
 				// Send local queue if there is something out there
@@ -690,6 +714,8 @@
 						callbacks: [this._requests[data[1]].callbacks.onEvent]
 					};
 
+					this._subsTopics.push(this._requests[data[1]].topic);
+
 					if(this._requests[data[1]].callbacks.onSuccess) {
 						this._requests[data[1]].callbacks['onSuccess']();
 					}
@@ -706,6 +732,11 @@
 					id = this._subscriptions[this._requests[data[1]].topic].id;
 					delete this._subscriptions[this._requests[data[1]].topic];
 					delete this._subscriptions[id];
+
+					i = this._subsTopics.indexOf(this._requests[data[1]].topic);
+					if (i >= 0) {
+						this._subsTopics.splice(i, 1);
+					}
 
 					if(this._requests[data[1]].callbacks.onSuccess) {
 						this._requests[data[1]].callbacks['onSuccess']();
@@ -792,6 +823,8 @@
 						callbacks: [this._requests[data[1]].callbacks.rpc]
 					};
 
+					this._rpcNames.push(this._requests[data[1]].topic);
+
 					if(this._requests[data[1]].callbacks.onSuccess) {
 						this._requests[data[1]].callbacks['onSuccess']();
 					}
@@ -811,6 +844,11 @@
 					id = this._rpcRegs[this._requests[data[1]].topic].id;
 					delete this._rpcRegs[this._requests[data[1]].topic];
 					delete this._rpcRegs[id];
+
+					i = this._rpcNames.indexOf(this._requests[data[1]].topic);
+					if (i >= 0) {
+						this._rpcNames.splice(i, 1);
+					}
 
 					if(this._requests[data[1]].callbacks.onSuccess) {
 						this._requests[data[1]].callbacks['onSuccess']();
@@ -893,6 +931,37 @@
 		this._cache.reconnectingAttempts++;
 		this._ws = getWebSocket(this._url, this._protocols);
 		this._initWsCallbacks();
+	};
+
+	Wampy.prototype._renewSubscriptions = function () {
+		var subs = this._subscriptions,
+			st = this._subsTopics,
+			s, i;
+
+		this._subscriptions = {};
+		this._subsTopics = [];
+
+		s = st.length;
+		while (s--) {
+			i = subs[st[s]].callbacks.length;
+			while (i--) {
+				this.subscribe(st[s], subs[st[s]].callbacks[i]);
+			}
+		}
+	};
+
+	Wampy.prototype._renewRegistrations = function () {
+		var rpcs = this._rpcRegs,
+			rn = this._rpcNames,
+			r;
+
+		this._rpcRegs = {};
+		this._rpcNames = [];
+
+		r = rn.length;
+		while (r--) {
+			this.register(rn[r], { rpc: rpcs[rn[r]].callbacks[0] });
+		}
 	};
 
 	/* Wampy public API */

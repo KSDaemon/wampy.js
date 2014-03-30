@@ -141,7 +141,8 @@ options([opts])
 
 Options attributes description:
 
-* **autoReconnect**. Default value: true. Enable autoreconnecting.
+* **autoReconnect**. Default value: true. Enable autoreconnecting. In case of connection failure, Wampy will try to reconnect to WAMP server, and if you were subscribed to any topics,
+or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.
 * **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
 * **maxRetries**. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
 will be called
