@@ -460,5 +460,6 @@ See Also
 ========
 
 * [WAMP specification](http://wamp.ws)
+* [Wiola](http://ksdaemon.github.io/wiola/) - WAMP in Lua on top of nginx/openresty
 
 [Back to TOC](#table-of-contents)
