@@ -105,6 +105,12 @@ To use Wampy simply add wampy.(min.)?js file to your page.
 <script src="wampy.js"></script>
 ```
 
+In case, you want to use msgpack, you also need to include msgpack.js.
+
+```html
+<script src="msgpack.js"></script>
+```
+
 [Back to TOC](#table-of-contents)
 
 Methods
