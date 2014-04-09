@@ -10,7 +10,7 @@
  * Provides asynchronous RPC/PubSub over WebSocket.
  *
  * Copyright 2014 KSDaemon. Licensed under the MIT License.
- * See license text at http://www.opensource.org/licenses/mit-license.php
+ * See @license text at http://www.opensource.org/licenses/mit-license.php
  *
  */
 
@@ -125,7 +125,7 @@
 		 * @type {string}
 		 * @private
 		 */
-		this.version = 'v1.0.2';
+		this.version = 'v1.0.3';
 
 		/**
 		 * WS Url

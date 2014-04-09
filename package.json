@@ -1,0 +1,29 @@
+{
+  "name": "Wampy.js",
+  "version": "1.0.3",
+  "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
+  "author": "Konstantin Burkalev",
+  "devDependencies": {
+    "grunt": "~0.4.4",
+    "grunt-contrib-uglify": "^0.4.0"
+  },
+  "srcFileName": "wampy",
+  "main": "wampy.js",
+  "dependencies": {
+    "grunt": "~0.4.4",
+    "grunt-contrib-uglify": "~0.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/KSDaemon/wampy.js.git"
+  },
+  "keywords": [
+    "websocket",
+    "wamp"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/KSDaemon/wampy.js/issues"
+  },
+  "homepage": "https://github.com/KSDaemon/wampy.js"
+}
