@@ -357,8 +357,8 @@
 		var reqId;
 
 		do {
-			/* Lua doesn't understand such a big numbers, so wiola WAMP server sends approx numbers
-			 * and all corelated requests are broken. This will be fixed in Lua 5.3.
+			/* Lua (and cjson) outputs big numbers in scientific notation :(
+			 * Need to find a way of fixing that
 			 * For now, i think it's not a big problem to reduce range.
 			 */
 //			reqId = Math.floor(Math.random() * 9007199254740992);
