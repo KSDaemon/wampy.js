@@ -499,7 +499,7 @@
 			this._wsQueue.push(this._encode(msg));
 		}
 
-		if (this._ws.readyState === 1) {
+		if (this._ws.readyState === 1 && this._cache.sessionId) {
 			while (this._wsQueue.length) {
 				this._ws.send(this._wsQueue.shift());
 			}
@@ -552,7 +552,8 @@
 		}
 
 		// WAMP SPEC: [HELLO, Realm|uri, Details|dict]
-		this._send([WAMP_MSG_SPEC.HELLO, this._options.realm, this._wamp_features]);
+		// Sending directly 'cause it's a hello
+		this._ws.send(this._encode([WAMP_MSG_SPEC.HELLO, this._options.realm, this._wamp_features]));
 	};
 
 	Wampy.prototype._wsOnClose = function () {
@@ -560,7 +561,8 @@
 		console.log("[wampy] websocket disconnected");
 
 		// Automatic reconnection
-		if (this._cache.sessionId && this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries) {
+		if ((this._cache.sessionId || this._cache.reconnectingAttempts ) && this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries) {
+			this._cache.sessionId = null;
 			this._cache.timer = window.setTimeout(function () { self._wsReconnect.call(self); }, this._options.reconnectInterval);
 		} else {
 			// No reconnection needed or reached max retries count
@@ -584,7 +586,7 @@
 			case WAMP_MSG_SPEC.WELCOME:
 				// WAMP SPEC: [WELCOME, Session|id, Details|dict]
 
-				if(this._cache.sessionId) {
+				if(this._cache.reconnectingAttempts) {
 					// There was reconnection
 					i = 1;
 					this._cache.reconnectingAttempts = 0;
@@ -1064,7 +1066,7 @@
 	Wampy.prototype.subscribe = function (topicURI, callbacks) {
 		var reqId;
 
-		if(!this._cache.server_wamp_features.roles.broker) {
+		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
 			if(this._isPlainObject(callbacks) && callbacks.onError) {
@@ -1138,7 +1140,7 @@
 	Wampy.prototype.unsubscribe = function (topicURI, callbacks) {
 		var reqId, i = -1;
 
-		if(!this._cache.server_wamp_features.roles.broker) {
+		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
 			if(this._isPlainObject(callbacks) && callbacks.onError) {
@@ -1213,7 +1215,7 @@
 	Wampy.prototype.publish = function (topicURI, payload, callbacks, advancedOptions) {
 		var reqId, msg, options = {}, err = false;
 
-		if(!this._cache.server_wamp_features.roles.broker) {
+		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
 			if(this._isPlainObject(callbacks) && callbacks.onError) {
@@ -1343,7 +1345,7 @@
 	Wampy.prototype.call = function (topicURI, payload, callbacks, advancedOptions) {
 		var reqId, msg, options = {}, err = false;
 
-		if(!this._cache.server_wamp_features.roles.dealer) {
+		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
 			if(this._isPlainObject(callbacks) && callbacks.onError) {
@@ -1460,7 +1462,7 @@
 	Wampy.prototype.register = function (topicURI, callbacks) {
 		var reqId;
 
-		if(!this._cache.server_wamp_features.roles.dealer) {
+		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
 			if(this._isPlainObject(callbacks) && callbacks.onError) {
@@ -1531,7 +1533,7 @@
 	Wampy.prototype.unregister = function (topicURI, callbacks) {
 		var reqId;
 
-		if(!this._cache.server_wamp_features.roles.dealer) {
+		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
 			if(this._isPlainObject(callbacks) && callbacks.onError) {
