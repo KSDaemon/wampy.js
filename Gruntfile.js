@@ -7,13 +7,21 @@ module.exports = function(grunt) {
 				compress: true,
 				preserveComments: 'some'
 			},
-			build: {
-				src: 'src/<%= pkg.srcFileName %>.js',
-				dest: 'build/<%= pkg.srcFileName %>.min.js'
+			default: {
+				files: {
+					'build/wampy.min.js': ['src/wampy.js'],
+					'build/msgpack.min.js': ['src/msgpack/src/msgpack.js'],
+					'build/jdataview.min.js': ['src/jdataview/src/jdataview.js']
+				}
 			}
 		},
 		jshint: {
-			jshintrc: 'jshintrc.json'
+			options: {
+				jshintrc: 'jshintrc.json'
+			},
+			default: {
+				src: 'src/wampy.js'
+			}
 		}
 	});
 

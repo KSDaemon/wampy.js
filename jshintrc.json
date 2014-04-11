@@ -15,6 +15,15 @@
 	"strict": false,
 	"trailing": true,
 	"maxparams": 5,
+	"sub": true,
 	"devel": true,
-	"browser":true
+	"browser": true,
+
+	"globals": {
+		"MozWebSocket": false,
+		"msgpack": false,
+		"define": false,
+		"module": false
+	}
+
 }

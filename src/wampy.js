@@ -89,7 +89,7 @@
 			path = url[0] === '/' ? url : '/' + url;
 			return scheme + window.location.hostname + port + path;
 		}
-	};
+	}
 
 	function getWebSocket (url, protocols) {
 		var parsedUrl = getServerUrl(url);
@@ -111,7 +111,7 @@
 		} else {
 			return null;
 		}
-	};
+	}
 
 	/**
 	 * WAMP Client Class
@@ -402,7 +402,7 @@
 	 * @private
 	 */
 	Wampy.prototype._isObject = function(obj) {
-		return obj === Object(obj) && Object.prototype.toString.call(obj) !== '[object Array]'
+		return obj === Object(obj) && Object.prototype.toString.call(obj) !== '[object Array]';
 	};
 
 	/**
@@ -555,7 +555,7 @@
 		this._send([WAMP_MSG_SPEC.HELLO, this._options.realm, this._wamp_features]);
 	};
 
-	Wampy.prototype._wsOnClose = function (event) {
+	Wampy.prototype._wsOnClose = function () {
 		var self = this;
 		console.log("[wampy] websocket disconnected");
 
