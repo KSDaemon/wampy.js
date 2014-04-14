@@ -11,7 +11,12 @@ module.exports = function(grunt) {
 				files: {
 					'build/wampy.min.js': ['src/wampy.js'],
 					'build/msgpack.min.js': ['src/msgpack/src/msgpack.js'],
-					'build/jdataview.min.js': ['src/jdataview/src/jdataview.js']
+					'build/jdataview.min.js': ['src/jdataview/src/jdataview.js'],
+					'build/wampy-all.min.js': [
+						'src/jdataview/src/jdataview.js',
+						'src/msgpack/src/msgpack.js',
+						'src/wampy.js'
+					]
 				}
 			}
 		},

@@ -99,16 +99,17 @@ Which one library to use - choice is yours!
 Installation
 ============
 
-To use Wampy simply add wampy.(min.)?js file to your page.
+To use Wampy simply add wampy-all.min.js file to your page. It contains all the necessary
+libs: jdataview - for handling UInt64 data and msgpack encoder.
 
 ```html
-<script src="wampy.js"></script>
+<script src="wampy-all.min.js"></script>
 ```
 
-In case, you want to use msgpack, you also need to include msgpack.js.
+In case, you don't plan to use msgpack, just include clean wampy.min.js.
 
 ```html
-<script src="msgpack.js"></script>
+<script src="wampy.min.js"></script>
 ```
 
 [Back to TOC](#table-of-contents)
