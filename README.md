@@ -14,6 +14,7 @@ Table of Contents
 	* [Constructor](#constructorurl-options)
 	* [options](#optionsopts)
 	* [getOpStatus](#getopstatus)
+	* [getSessionId](#getsessionid)
 	* [connect](#connecturl)
 	* [disconnect](#disconnect)
 	* [abort](#abort)
@@ -189,6 +190,17 @@ ws.publish('system.monitor.update');
 ws.getOpStatus();
 // may return { code: 1, description: "Topic URI doesn't meet requirements!" }
 // or { code: 2, description: "Server doesn't provide broker role!" }
+```
+
+[Back to TOC](#table-of-contents)
+
+getSessionId()
+---------------
+
+Returns the WAMP Session ID.
+
+```javascript
+ws.getSessionId();
 ```
 
 [Back to TOC](#table-of-contents)

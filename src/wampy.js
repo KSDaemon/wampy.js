@@ -999,6 +999,15 @@
 	};
 
 	/**
+	 * Get the WAMP Session ID
+	 *
+	 * @returns Session ID
+	 */
+	Wampy.prototype.getSessionId = function () {
+		return this._cache.sessionId;
+	};
+
+	/**
 	 * Connect to server
 	 * @param {string} url New url (optional)
 	 * @returns {Wampy}
