@@ -561,7 +561,9 @@
 		console.log("[wampy] websocket disconnected");
 
 		// Automatic reconnection
-		if ((this._cache.sessionId || this._cache.reconnectingAttempts ) && this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries) {
+		if ((this._cache.sessionId || this._cache.reconnectingAttempts ) &&
+			this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries &&
+			!this._cache.isSayingGoodbye) {
 			this._cache.sessionId = null;
 			this._cache.timer = window.setTimeout(function () { self._wsReconnect.call(self); }, this._options.reconnectInterval);
 		} else {
@@ -626,6 +628,7 @@
 			case WAMP_MSG_SPEC.GOODBYE:
 				// WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
 				if(!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
+					this._cache.isSayingGoodbye = true;
 					this._send([WAMP_MSG_SPEC.GOODBYE, {}, "wamp.error.goodbye_and_out"]);
 				}
 				this._cache.sessionId = null;
