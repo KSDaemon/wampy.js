@@ -8,8 +8,8 @@
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
   "main": "build/wampy.min.js",
   "keywords": [
-    "['websocket'",
-    "'wamp']"
+    "websocket",
+    "wamp"
   ],
   "license": "MIT",
   "ignore": [
