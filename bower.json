@@ -6,7 +6,7 @@
     "Konstantin Burkalev <KSDaemon@ya.ru>"
   ],
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
-  "main": "src/wampy.js",
+  "main": "build/wampy.min.js",
   "keywords": [
     "['websocket'",
     "'wamp']"
