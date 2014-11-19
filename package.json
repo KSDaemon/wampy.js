@@ -1,5 +1,5 @@
 {
-  "name": "Wampy.js",
+  "name": "Wampy",
   "version": "1.0.4",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
   "author": "Konstantin Burkalev",
