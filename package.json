@@ -2,7 +2,7 @@
   "name": "wampy",
   "version": "1.0.4",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
-  "author": "Konstantin Burkalev",
+  "author": "Konstantin Burkalev <KSDaemon@ya.ru> (http://ksdaemon.ru)",
   "devDependencies": {
     "grunt": "~0.4.4",
     "grunt-contrib-uglify": "^0.4.0",
