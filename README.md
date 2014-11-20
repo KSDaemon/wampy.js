@@ -100,6 +100,14 @@ Which one library to use - choice is yours!
 Installation
 ============
 
+Wampy.js can be installed using bower or npm or just by file-copy :)
+
+```bash
+> bower install wampy.js
+# Or
+> npm install wampy
+```
+
 To use Wampy simply add wampy-all.min.js file to your page. It contains all the necessary
 libs: jdataview - for handling UInt64 data and msgpack encoder.
 
