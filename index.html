@@ -2,9 +2,9 @@
 <html>
 
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Wampy.js : Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation" />
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Wampy.js : Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation">
 
     <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
@@ -32,12 +32,12 @@
     <div id="main_content_wrap" class="outer">
       <section id="main_content" class="inner">
         <h1>
-<a name="wampyjs" class="anchor" href="#wampyjs"><span class="octicon octicon-link"></span></a>wampy.js</h1>
+<a id="wampyjs" class="anchor" href="#wampyjs" aria-hidden="true"><span class="octicon octicon-link"></span></a>wampy.js</h1>
 
 <p>Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation</p>
 
 <h1>
-<a name="table-of-contents" class="anchor" href="#table-of-contents"><span class="octicon octicon-link"></span></a>Table of Contents</h1>
+<a id="table-of-contents" class="anchor" href="#table-of-contents" aria-hidden="true"><span class="octicon octicon-link"></span></a>Table of Contents</h1>
 
 <ul>
 <li><a href="#description">Description</a></li>
@@ -64,8 +64,10 @@
 </li>
 <li><a href="#copyright-and-license">Copyright and License</a></li>
 <li><a href="#see-also">See Also</a></li>
-</ul><h1>
-<a name="description" class="anchor" href="#description"><span class="octicon octicon-link"></span></a>Description</h1>
+</ul>
+
+<h1>
+<a id="description" class="anchor" href="#description" aria-hidden="true"><span class="octicon octicon-link"></span></a>Description</h1>
 
 <p>Wampy.js is client-side javascript library. It implements <a href="http://wamp.ws">WAMP</a> v2 specification on top of
 WebSocket object, also provides additional features like autoreconnecting and use of Chaining Pattern.
@@ -92,46 +94,49 @@ It has no external dependencies (by default) and is easy to use. Also it's compa
 </ul>
 </li>
 <li>callee: basic profile.</li>
-</ul><p>Wampy default serializer is JSON, but it also supports msgpack as serializer, but you need to include msgpack.js as dependency.</p>
+</ul>
+
+<p>Wampy default serializer is JSON, but it also supports msgpack as serializer, but you need to include msgpack.js as dependency.</p>
 
 <p>For v1 WAMP implementation, please see tag v0.1.0.</p>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h1>
-<a name="usage-example" class="anchor" href="#usage-example"><span class="octicon octicon-link"></span></a>Usage example</h1>
+<a id="usage-example" class="anchor" href="#usage-example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage example</h1>
 
-<div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">ws</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Wampy</span><span class="p">(</span><span class="s1">'/ws/'</span><span class="p">);</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">(</span><span class="s1">'system.monitor.update'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Received system.monitor.update event!'</span><span class="p">);</span> <span class="p">})</span>
-  <span class="p">.</span><span class="nx">subscribe</span><span class="p">(</span><span class="s1">'client.message'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Received client.message event!'</span><span class="p">);</span> <span class="p">})</span>
+<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> ws <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Wampy</span>(<span class="pl-s1"><span class="pl-pds">'</span>/ws/<span class="pl-pds">'</span></span>);
+ws.subscribe(<span class="pl-s1"><span class="pl-pds">'</span>system.monitor.update<span class="pl-pds">'</span></span>, <span class="pl-st">function</span> (<span class="pl-vpf">data</span>) { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Received system.monitor.update event!<span class="pl-pds">'</span></span>); })
+  .subscribe(<span class="pl-s1"><span class="pl-pds">'</span>client.message<span class="pl-pds">'</span></span>, <span class="pl-st">function</span> (<span class="pl-vpf">data</span>) { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Received client.message event!<span class="pl-pds">'</span></span>); })
 
-<span class="nx">ws</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s1">'get.server.time'</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="p">{</span>
-    <span class="nx">onSuccess</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">stime</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'RPC successfully called'</span><span class="p">);</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Server time is '</span> <span class="o">+</span> <span class="nx">stime</span><span class="p">);</span>
-    <span class="p">},</span>
-    <span class="nx">onError</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'RPC call failed with error '</span> <span class="o">+</span> <span class="nx">err</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">});</span>
+ws.<span class="pl-s3">call</span>(<span class="pl-s1"><span class="pl-pds">'</span>get.server.time<span class="pl-pds">'</span></span>, <span class="pl-c1">null</span>, {
+    <span class="pl-en">onSuccess</span>: <span class="pl-st">function</span> (<span class="pl-vpf">stime</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>RPC successfully called<span class="pl-pds">'</span></span>);
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Server time is <span class="pl-pds">'</span></span> <span class="pl-k">+</span> stime);
+    },
+    <span class="pl-en">onError</span>: <span class="pl-st">function</span> (<span class="pl-vpf">err</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>RPC call failed with error <span class="pl-pds">'</span></span> <span class="pl-k">+</span> err);
+    }
+});
 
-<span class="c1">// Somewhere else for example</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'system.monitor.update'</span><span class="p">);</span>
+<span class="pl-c">// Somewhere else for example</span>
+ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>system.monitor.update<span class="pl-pds">'</span></span>);
 
-<span class="nx">ws</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'client.message'</span><span class="p">,</span> <span class="s1">'Hi guys!'</span><span class="p">);</span>
-</pre></div>
+ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>client.message<span class="pl-pds">'</span></span>, <span class="pl-s1"><span class="pl-pds">'</span>Hi guys!<span class="pl-pds">'</span></span>);</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h1>
-<a name="quick-comparison-to-other-libs" class="anchor" href="#quick-comparison-to-other-libs"><span class="octicon octicon-link"></span></a>Quick comparison to other libs</h1>
+<a id="quick-comparison-to-other-libs" class="anchor" href="#quick-comparison-to-other-libs" aria-hidden="true"><span class="octicon octicon-link"></span></a>Quick comparison to other libs</h1>
 
 <table>
-<thead><tr>
+<thead>
+<tr>
 <th>Topic</th>
 <th>Wampy.js</th>
 <th>AutobahnJS</th>
-</tr></thead>
+</tr>
+</thead>
 <tbody>
 <tr>
 <td>Runs on</td>
@@ -174,30 +179,37 @@ It has no external dependencies (by default) and is easy to use. Also it's compa
 <td></td>
 </tr>
 </tbody>
-</table><p>Which one library to use - choice is yours!</p>
+</table>
+
+<p>Which one library to use - choice is yours!</p>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h1>
-<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h1>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h1>
 
-<p>To use Wampy simply add wampy.(min.)?js file to your page.</p>
+<p>Wampy.js can be installed using bower or npm or just by file-copy :)</p>
 
-<div class="highlight highlight-html"><pre><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"wampy.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
-</pre></div>
+<div class="highlight highlight-bash"><pre><span class="pl-k">&gt;</span> bower install wampy.js
+<span class="pl-c"># Or</span>
+<span class="pl-k">&gt;</span> npm install wampy</pre></div>
 
-<p>In case, you want to use msgpack, you also need to include msgpack.js.</p>
+<p>To use Wampy simply add wampy-all.min.js file to your page. It contains all the necessary
+libs: jdataview - for handling UInt64 data and msgpack encoder.</p>
 
-<div class="highlight highlight-html"><pre><span class="nt">&lt;script </span><span class="na">src=</span><span class="s">"msgpack.js"</span><span class="nt">&gt;&lt;/script&gt;</span>
-</pre></div>
+<div class="highlight highlight-html"><pre>&lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s1"><span class="pl-pds">"</span>wampy-all.min.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;</pre></div>
+
+<p>In case, you don't plan to use msgpack, just include clean wampy.min.js.</p>
+
+<div class="highlight highlight-html"><pre>&lt;<span class="pl-ent">script</span> <span class="pl-e">src</span>=<span class="pl-s1"><span class="pl-pds">"</span>wampy.min.js<span class="pl-pds">"</span></span>&gt;&lt;/<span class="pl-ent">script</span>&gt;</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h1>
-<a name="methods" class="anchor" href="#methods"><span class="octicon octicon-link"></span></a>Methods</h1>
+<a id="methods" class="anchor" href="#methods" aria-hidden="true"><span class="octicon octicon-link"></span></a>Methods</h1>
 
 <h2>
-<a name="constructorurl-options" class="anchor" href="#constructorurl-options"><span class="octicon octicon-link"></span></a>Constructor([url[, options]])</h2>
+<a id="constructorurl-options" class="anchor" href="#constructorurl-options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Constructor([url[, options]])</h2>
 
 <p>Wampy constructor can take 2 parameters:</p>
 
@@ -214,23 +226,26 @@ Can be in forms of:
 </li>
 <li>
 <strong>options</strong> hash-table - optional. See description.</li>
-</ul><div class="highlight highlight-javascript"><pre><span class="nx">ws</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Wampy</span><span class="p">();</span>
-<span class="nx">ws</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Wampy</span><span class="p">(</span><span class="s1">'/my-socket-path'</span><span class="p">);</span>
-<span class="nx">ws</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Wampy</span><span class="p">(</span><span class="s1">'ws://socket.server.com:5000/ws'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">autoReconnect</span><span class="o">:</span> <span class="kc">false</span> <span class="p">});</span>
-<span class="nx">ws</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Wampy</span><span class="p">({</span> <span class="nx">reconnectInterval</span><span class="o">:</span> <span class="mi">1</span><span class="o">*</span><span class="mi">1000</span> <span class="p">});</span>
-</pre></div>
+</ul>
+
+<div class="highlight highlight-javascript"><pre>ws <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Wampy</span>();
+ws <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Wampy</span>(<span class="pl-s1"><span class="pl-pds">'</span>/my-socket-path<span class="pl-pds">'</span></span>);
+ws <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Wampy</span>(<span class="pl-s1"><span class="pl-pds">'</span>ws://socket.server.com:5000/ws<span class="pl-pds">'</span></span>, { autoReconnect<span class="pl-k">:</span> <span class="pl-c1">false</span> });
+ws <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">Wampy</span>({ reconnectInterval<span class="pl-k">:</span> <span class="pl-c1">1</span><span class="pl-k">*</span><span class="pl-c1">1000</span> });</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="optionsopts" class="anchor" href="#optionsopts"><span class="octicon octicon-link"></span></a>options([opts])</h2>
+<a id="optionsopts" class="anchor" href="#optionsopts" aria-hidden="true"><span class="octicon octicon-link"></span></a>options([opts])</h2>
 
 <p>.options() method can be called in two forms:</p>
 
 <ul>
 <li>without parameters it will return current options</li>
 <li>with one parameter as hash-table it will set new options. Support chaining.</li>
-</ul><p>Options attributes description:</p>
+</ul>
+
+<p>Options attributes description:</p>
 
 <ul>
 <li>
@@ -254,73 +269,70 @@ For using msgpack you need to include msgpack javascript library, and also wamp 
 <strong>onError</strong>. Default value: undefined. Callback function. Fired on error in websocket communication.</li>
 <li>
 <strong>onReconnect</strong>. Default value: undefined. Callback function. Fired every time on reconnection attempt.</li>
-</ul><div class="highlight highlight-javascript"><pre><span class="nx">ws</span><span class="p">.</span><span class="nx">options</span><span class="p">();</span>
+</ul>
 
-<span class="nx">ws</span><span class="p">.</span><span class="nx">options</span><span class="p">({</span>
-    <span class="nx">reconnectInterval</span><span class="o">:</span> <span class="mi">1000</span><span class="p">,</span>
-    <span class="nx">maxRetries</span><span class="o">:</span> <span class="mi">999</span><span class="p">,</span>
-    <span class="nx">onConnect</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Yahoo! We are online!'</span><span class="p">);</span> <span class="p">},</span>
-    <span class="nx">onClose</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'See you next time!'</span><span class="p">);</span> <span class="p">},</span>
-    <span class="nx">onError</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Breakdown happened'</span><span class="p">);</span> <span class="p">},</span>
-    <span class="nx">onReconnect</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Reconnecting...'</span><span class="p">);</span> <span class="p">}</span>
-<span class="p">});</span>
-</pre></div>
+<div class="highlight highlight-javascript"><pre>ws.<span class="pl-sc">options</span>();
+
+ws.<span class="pl-sc">options</span>({
+    reconnectInterval<span class="pl-k">:</span> <span class="pl-c1">1000</span>,
+    maxRetries<span class="pl-k">:</span> <span class="pl-c1">999</span>,
+    <span class="pl-en">onConnect</span>: <span class="pl-st">function</span> () { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Yahoo! We are online!<span class="pl-pds">'</span></span>); },
+    <span class="pl-en">onClose</span>: <span class="pl-st">function</span> () { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>See you next time!<span class="pl-pds">'</span></span>); },
+    <span class="pl-en">onError</span>: <span class="pl-st">function</span> () { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Breakdown happened<span class="pl-pds">'</span></span>); },
+    <span class="pl-en">onReconnect</span>: <span class="pl-st">function</span> () { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Reconnecting...<span class="pl-pds">'</span></span>); }
+});</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="getopstatus" class="anchor" href="#getopstatus"><span class="octicon octicon-link"></span></a>getOpStatus()</h2>
+<a id="getopstatus" class="anchor" href="#getopstatus" aria-hidden="true"><span class="octicon octicon-link"></span></a>getOpStatus()</h2>
 
 <p>Returns the status of last operation. Wampy is developed in a such way, that every operation returns <strong>this</strong> even
 in case of error to suport chaining. But if you want to know status of last operation, you can call .getOpStatus().
 This method returns an object with 2 attributes: code and description. Code is integer, and value &gt; 0 means error.
 Description is a description of code.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="nx">ws</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'system.monitor.update'</span><span class="p">);</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">getOpStatus</span><span class="p">();</span>
-<span class="c1">// may return { code: 1, description: "Topic URI doesn't meet requirements!" }</span>
-<span class="c1">// or { code: 2, description: "Server doesn't provide broker role!" }</span>
-</pre></div>
+<div class="highlight highlight-javascript"><pre>ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>system.monitor.update<span class="pl-pds">'</span></span>);
+ws.getOpStatus();
+<span class="pl-c">// may return { code: 1, description: "Topic URI doesn't meet requirements!" }</span>
+<span class="pl-c">// or { code: 2, description: "Server doesn't provide broker role!" }</span></pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="connecturl" class="anchor" href="#connecturl"><span class="octicon octicon-link"></span></a>connect([url])</h2>
+<a id="connecturl" class="anchor" href="#connecturl" aria-hidden="true"><span class="octicon octicon-link"></span></a>connect([url])</h2>
 
 <p>Connects to wamp server. <strong>url</strong> parameter is the same as specified in <a href="#constructor">Constructor</a>.
 Supports chaining.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="nx">ws</span><span class="p">.</span><span class="nx">connect</span><span class="p">();</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s1">'/my-socket-path'</span><span class="p">);</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">connect</span><span class="p">(</span><span class="s1">'wss://socket.server.com:5000/ws'</span><span class="p">);</span>
-</pre></div>
+<div class="highlight highlight-javascript"><pre>ws.connect();
+ws.connect(<span class="pl-s1"><span class="pl-pds">'</span>/my-socket-path<span class="pl-pds">'</span></span>);
+ws.connect(<span class="pl-s1"><span class="pl-pds">'</span>wss://socket.server.com:5000/ws<span class="pl-pds">'</span></span>);</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="disconnect" class="anchor" href="#disconnect"><span class="octicon octicon-link"></span></a>disconnect()</h2>
+<a id="disconnect" class="anchor" href="#disconnect" aria-hidden="true"><span class="octicon octicon-link"></span></a>disconnect()</h2>
 
 <p>Disconnects from wamp server. Clears all queues, subscription, calls. Supports chaining.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="nx">ws</span><span class="p">.</span><span class="nx">disconnect</span><span class="p">();</span>
-</pre></div>
+<div class="highlight highlight-javascript"><pre>ws.disconnect();</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="abort" class="anchor" href="#abort"><span class="octicon octicon-link"></span></a>abort()</h2>
+<a id="abort" class="anchor" href="#abort" aria-hidden="true"><span class="octicon octicon-link"></span></a>abort()</h2>
 
 <p>Aborts WAMP session and closes a websocket connection. If it is called on handshake stage - it sends a abort message
 to wamp server (as described in spec).
 Also clears all queues, subscription, calls. Supports chaining.</p>
 
-<div class="highlight highlight-javascript"><pre><span class="nx">ws</span><span class="p">.</span><span class="nx">abort</span><span class="p">();</span>
-</pre></div>
+<div class="highlight highlight-javascript"><pre>ws.<span class="pl-s3">abort</span>();</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="subscribetopicuri-callbacks" class="anchor" href="#subscribetopicuri-callbacks"><span class="octicon octicon-link"></span></a>subscribe(topicURI, callbacks)</h2>
+<a id="subscribetopicuri-callbacks" class="anchor" href="#subscribetopicuri-callbacks" aria-hidden="true"><span class="octicon octicon-link"></span></a>subscribe(topicURI, callbacks)</h2>
 
 <p>Subscribes for topicURI events. Supports chaining.</p>
 
@@ -339,19 +351,20 @@ Must meet a WAMP Spec URI requirements.</li>
      onEvent: will be called on receiving published event }
 </code></pre>
 </li>
-</ul><div class="highlight highlight-javascript"><pre><span class="nx">ws</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">(</span><span class="s1">'chat.message.received'</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">msg</span><span class="p">)</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Received new chat message!'</span><span class="p">);</span> <span class="p">});</span>
+</ul>
 
-<span class="nx">ws</span><span class="p">.</span><span class="nx">subscribe</span><span class="p">(</span><span class="s1">'some.another.topic'</span><span class="p">,</span> <span class="p">{</span>
-   <span class="nx">onSuccess</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Successfully subscribed to topic'</span><span class="p">);</span> <span class="p">},</span>
-   <span class="nx">onError</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Subscription error:'</span> <span class="o">+</span> <span class="nx">err</span><span class="p">);</span> <span class="p">},</span>
-   <span class="nx">onEvent</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Received topic event'</span><span class="p">);</span> <span class="p">}</span>
-<span class="p">});</span>
-</pre></div>
+<div class="highlight highlight-javascript"><pre>ws.subscribe(<span class="pl-s1"><span class="pl-pds">'</span>chat.message.received<span class="pl-pds">'</span></span>, <span class="pl-st">function</span> (<span class="pl-vpf">msg</span>) { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Received new chat message!<span class="pl-pds">'</span></span>); });
+
+ws.subscribe(<span class="pl-s1"><span class="pl-pds">'</span>some.another.topic<span class="pl-pds">'</span></span>, {
+   <span class="pl-en">onSuccess</span>: <span class="pl-st">function</span> () { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Successfully subscribed to topic<span class="pl-pds">'</span></span>); },
+   <span class="pl-en">onError</span>: <span class="pl-st">function</span> (<span class="pl-vpf">err</span>) { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Subscription error:<span class="pl-pds">'</span></span> <span class="pl-k">+</span> err); },
+   <span class="pl-en">onEvent</span>: <span class="pl-st">function</span> (<span class="pl-vpf">data</span>) { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Received topic event<span class="pl-pds">'</span></span>); }
+});</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="unsubscribetopicuri-callbacks" class="anchor" href="#unsubscribetopicuri-callbacks"><span class="octicon octicon-link"></span></a>unsubscribe(topicURI[, callbacks])</h2>
+<a id="unsubscribetopicuri-callbacks" class="anchor" href="#unsubscribetopicuri-callbacks" aria-hidden="true"><span class="octicon octicon-link"></span></a>unsubscribe(topicURI[, callbacks])</h2>
 
 <p>Unsubscribe from topicURI events. Supports chaining.</p>
 
@@ -372,16 +385,17 @@ Must meet a WAMP Spec URI requirements.</li>
 
 <p>or it can be not specified, in this case all callbacks and subscription will be removed.</p>
 </li>
-</ul><div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">f1</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span> <span class="p">...</span> <span class="p">};</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">unsubscribe</span><span class="p">(</span><span class="s1">'subscribed.topic'</span><span class="p">,</span> <span class="nx">f1</span><span class="p">);</span>
+</ul>
 
-<span class="nx">ws</span><span class="p">.</span><span class="nx">unsubscribe</span><span class="p">(</span><span class="s1">'chat.message.received'</span><span class="p">);</span>
-</pre></div>
+<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> <span class="pl-en">f1</span> <span class="pl-k">=</span> <span class="pl-st">function</span> (<span class="pl-vpf">data</span>) { ... };
+ws.unsubscribe(<span class="pl-s1"><span class="pl-pds">'</span>subscribed.topic<span class="pl-pds">'</span></span>, f1);
+
+ws.unsubscribe(<span class="pl-s1"><span class="pl-pds">'</span>chat.message.received<span class="pl-pds">'</span></span>);</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="publishtopicuri-payload-callbacks-advancedoptions" class="anchor" href="#publishtopicuri-payload-callbacks-advancedoptions"><span class="octicon octicon-link"></span></a>publish(topicURI[, payload[, callbacks[, advancedOptions]]])</h2>
+<a id="publishtopicuri-payload-callbacks-advancedoptions" class="anchor" href="#publishtopicuri-payload-callbacks-advancedoptions" aria-hidden="true"><span class="octicon octicon-link"></span></a>publish(topicURI[, payload[, callbacks[, advancedOptions]]])</h2>
 
 <p>Publish a new event to topic. Supports chaining.</p>
 
@@ -409,24 +423,25 @@ Must meet a WAMP Spec URI requirements.</li>
      disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID) to receivers of a published event }
 </code></pre>
 </li>
-</ul><div class="highlight highlight-javascript"><pre><span class="nx">ws</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'user.logged.in'</span><span class="p">);</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'chat.message.received'</span><span class="p">,</span> <span class="s1">'user message'</span><span class="p">);</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'chat.message.received'</span><span class="p">,</span> <span class="p">[</span><span class="s1">'user message1'</span><span class="p">,</span> <span class="s1">'user message2'</span><span class="p">]);</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'user.modified'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">field1</span><span class="o">:</span> <span class="s1">'field1'</span><span class="p">,</span> <span class="nx">field2</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">field3</span><span class="o">:</span> <span class="mi">123</span> <span class="p">});</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'user.modified'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">field1</span><span class="o">:</span> <span class="s1">'field1'</span><span class="p">,</span> <span class="nx">field2</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">field3</span><span class="o">:</span> <span class="mi">123</span> <span class="p">},</span> <span class="p">{</span>
-  <span class="nx">onSuccess</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'User successfully modified'</span><span class="p">);</span> <span class="p">}</span>
-<span class="p">});</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'user.modified'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">field1</span><span class="o">:</span> <span class="s1">'field1'</span><span class="p">,</span> <span class="nx">field2</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span> <span class="nx">field3</span><span class="o">:</span> <span class="mi">123</span> <span class="p">},</span> <span class="p">{</span>
-  <span class="nx">onSuccess</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'User successfully modified'</span><span class="p">);</span> <span class="p">},</span>
-  <span class="nx">onError</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'User modification failed'</span><span class="p">,</span> <span class="nx">err</span><span class="p">);</span> <span class="p">}</span>
-<span class="p">});</span>
-<span class="nx">ws</span><span class="p">.</span><span class="nx">publish</span><span class="p">(</span><span class="s1">'chat.message.received'</span><span class="p">,</span> <span class="p">[</span><span class="s1">'Private message'</span><span class="p">],</span> <span class="kc">null</span><span class="p">,</span> <span class="p">{</span> <span class="nx">eligible</span><span class="o">:</span> <span class="mi">123456789</span> <span class="p">});</span>
-</pre></div>
+</ul>
+
+<div class="highlight highlight-javascript"><pre>ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>user.logged.in<span class="pl-pds">'</span></span>);
+ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>chat.message.received<span class="pl-pds">'</span></span>, <span class="pl-s1"><span class="pl-pds">'</span>user message<span class="pl-pds">'</span></span>);
+ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>chat.message.received<span class="pl-pds">'</span></span>, [<span class="pl-s1"><span class="pl-pds">'</span>user message1<span class="pl-pds">'</span></span>, <span class="pl-s1"><span class="pl-pds">'</span>user message2<span class="pl-pds">'</span></span>]);
+ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>user.modified<span class="pl-pds">'</span></span>, { field1<span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>field1<span class="pl-pds">'</span></span>, field2<span class="pl-k">:</span> <span class="pl-c1">true</span>, field3<span class="pl-k">:</span> <span class="pl-c1">123</span> });
+ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>user.modified<span class="pl-pds">'</span></span>, { field1<span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>field1<span class="pl-pds">'</span></span>, field2<span class="pl-k">:</span> <span class="pl-c1">true</span>, field3<span class="pl-k">:</span> <span class="pl-c1">123</span> }, {
+  <span class="pl-en">onSuccess</span>: <span class="pl-st">function</span> () { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>User successfully modified<span class="pl-pds">'</span></span>); }
+});
+ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>user.modified<span class="pl-pds">'</span></span>, { field1<span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>field1<span class="pl-pds">'</span></span>, field2<span class="pl-k">:</span> <span class="pl-c1">true</span>, field3<span class="pl-k">:</span> <span class="pl-c1">123</span> }, {
+  <span class="pl-en">onSuccess</span>: <span class="pl-st">function</span> () { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>User successfully modified<span class="pl-pds">'</span></span>); },
+  <span class="pl-en">onError</span>: <span class="pl-st">function</span> (<span class="pl-vpf">err</span>) { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>User modification failed<span class="pl-pds">'</span></span>, err); }
+});
+ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>chat.message.received<span class="pl-pds">'</span></span>, [<span class="pl-s1"><span class="pl-pds">'</span>Private message<span class="pl-pds">'</span></span>], <span class="pl-c1">null</span>, { eligible<span class="pl-k">:</span> <span class="pl-c1">123456789</span> });</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="calltopicuri-payload-callbacks-advancedoptions" class="anchor" href="#calltopicuri-payload-callbacks-advancedoptions"><span class="octicon octicon-link"></span></a>call(topicURI[, payload[, callbacks[, advancedOptions]]])</h2>
+<a id="calltopicuri-payload-callbacks-advancedoptions" class="anchor" href="#calltopicuri-payload-callbacks-advancedoptions" aria-hidden="true"><span class="octicon octicon-link"></span></a>call(topicURI[, payload[, callbacks[, advancedOptions]]])</h2>
 
 <p>Make a RPC call to topicURI. Supports chaining.</p>
 
@@ -458,31 +473,32 @@ Must meet a WAMP Spec URI requirements.</li>
                    to endpoints of a routed call }
 </code></pre>
 </li>
-</ul><div class="highlight highlight-javascript"><pre><span class="nx">ws</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s1">'server.time'</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span> <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Server time is '</span> <span class="o">+</span> <span class="nx">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span> <span class="p">});</span>
+</ul>
 
-<span class="nx">ws</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s1">'start.migration'</span><span class="p">,</span> <span class="kc">null</span><span class="p">,</span> <span class="p">{</span>
-    <span class="nx">onSuccess</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'RPC successfully called'</span><span class="p">);</span>
-    <span class="p">},</span>
-    <span class="nx">onError</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'RPC call failed!'</span><span class="p">,</span><span class="nx">err</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">});</span>
+<div class="highlight highlight-javascript"><pre>ws.<span class="pl-s3">call</span>(<span class="pl-s1"><span class="pl-pds">'</span>server.time<span class="pl-pds">'</span></span>, <span class="pl-c1">null</span>, <span class="pl-st">function</span> (<span class="pl-vpf">data</span>) { <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Server time is <span class="pl-pds">'</span></span> <span class="pl-k">+</span> d[<span class="pl-c1">0</span>]); });
 
-<span class="nx">ws</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="s1">'restore.backup'</span><span class="p">,</span> <span class="p">{</span> <span class="nx">backupFile</span><span class="o">:</span> <span class="s1">'backup.zip'</span> <span class="p">},</span> <span class="p">{</span>
-    <span class="nx">onSuccess</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Backup successfully restored'</span><span class="p">);</span>
-    <span class="p">},</span>
-    <span class="nx">onError</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'Restore failed!'</span><span class="p">,</span><span class="nx">err</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">});</span>
-</pre></div>
+ws.<span class="pl-s3">call</span>(<span class="pl-s1"><span class="pl-pds">'</span>start.migration<span class="pl-pds">'</span></span>, <span class="pl-c1">null</span>, {
+    <span class="pl-en">onSuccess</span>: <span class="pl-st">function</span> (<span class="pl-vpf">data</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>RPC successfully called<span class="pl-pds">'</span></span>);
+    },
+    <span class="pl-en">onError</span>: <span class="pl-st">function</span> (<span class="pl-vpf">err</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>RPC call failed!<span class="pl-pds">'</span></span>,err);
+    }
+});
+
+ws.<span class="pl-s3">call</span>(<span class="pl-s1"><span class="pl-pds">'</span>restore.backup<span class="pl-pds">'</span></span>, { backupFile<span class="pl-k">:</span> <span class="pl-s1"><span class="pl-pds">'</span>backup.zip<span class="pl-pds">'</span></span> }, {
+    <span class="pl-en">onSuccess</span>: <span class="pl-st">function</span> (<span class="pl-vpf">data</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Backup successfully restored<span class="pl-pds">'</span></span>);
+    },
+    <span class="pl-en">onError</span>: <span class="pl-st">function</span> (<span class="pl-vpf">err</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>Restore failed!<span class="pl-pds">'</span></span>,err);
+    }
+});</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="registertopicuri-callbacks" class="anchor" href="#registertopicuri-callbacks"><span class="octicon octicon-link"></span></a>register(topicURI, callbacks)</h2>
+<a id="registertopicuri-callbacks" class="anchor" href="#registertopicuri-callbacks" aria-hidden="true"><span class="octicon octicon-link"></span></a>register(topicURI, callbacks)</h2>
 
 <p>RPC registration for invocation.</p>
 
@@ -501,26 +517,27 @@ Must meet a WAMP Spec URI requirements.</li>
      onError: will be called if registration would be aborted }
 </code></pre>
 </li>
-</ul><div class="highlight highlight-javascript"><pre><span class="kd">var</span> <span class="nx">sqrt_f</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">x</span><span class="o">*</span><span class="nx">x</span><span class="p">;</span> <span class="p">};</span>
+</ul>
+
+<div class="highlight highlight-javascript"><pre><span class="pl-s">var</span> <span class="pl-en">sqrt_f</span> <span class="pl-k">=</span> <span class="pl-st">function</span> (<span class="pl-vpf">x</span>) { <span class="pl-k">return</span> x<span class="pl-k">*</span>x; };
 
 
-<span class="nx">ws</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="s1">'sqrt.value'</span><span class="p">,</span> <span class="nx">sqrt_f</span><span class="p">);</span>
+ws.register(<span class="pl-s1"><span class="pl-pds">'</span>sqrt.value<span class="pl-pds">'</span></span>, sqrt_f);
 
-<span class="nx">ws</span><span class="p">.</span><span class="nx">register</span><span class="p">(</span><span class="s1">'sqrt.value'</span><span class="p">,</span> <span class="p">{</span>
-    <span class="nx">rpc</span><span class="o">:</span> <span class="nx">sqrt_f</span><span class="p">,</span>
-    <span class="nx">onSuccess</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'RPC successfully registered'</span><span class="p">);</span>
-    <span class="p">},</span>
-    <span class="nx">onError</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'RPC registration failed!'</span><span class="p">,</span><span class="nx">err</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">});</span>
-</pre></div>
+ws.register(<span class="pl-s1"><span class="pl-pds">'</span>sqrt.value<span class="pl-pds">'</span></span>, {
+    rpc<span class="pl-k">:</span> sqrt_f,
+    <span class="pl-en">onSuccess</span>: <span class="pl-st">function</span> (<span class="pl-vpf">data</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>RPC successfully registered<span class="pl-pds">'</span></span>);
+    },
+    <span class="pl-en">onError</span>: <span class="pl-st">function</span> (<span class="pl-vpf">err</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>RPC registration failed!<span class="pl-pds">'</span></span>,err);
+    }
+});</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
-<a name="unregistertopicuri-callbacks" class="anchor" href="#unregistertopicuri-callbacks"><span class="octicon octicon-link"></span></a>unregister(topicURI, callbacks)</h2>
+<a id="unregistertopicuri-callbacks" class="anchor" href="#unregistertopicuri-callbacks" aria-hidden="true"><span class="octicon octicon-link"></span></a>unregister(topicURI, callbacks)</h2>
 
 <p>RPC unregistration from invocations</p>
 
@@ -538,22 +555,23 @@ Must meet a WAMP Spec URI requirements.</li>
      onError: will be called if unregistration would be aborted }
 </code></pre>
 </li>
-</ul><div class="highlight highlight-javascript"><pre><span class="nx">ws</span><span class="p">.</span><span class="nx">unregister</span><span class="p">(</span><span class="s1">'sqrt.value'</span><span class="p">);</span>
+</ul>
 
-<span class="nx">ws</span><span class="p">.</span><span class="nx">unregister</span><span class="p">(</span><span class="s1">'sqrt.value'</span><span class="p">,</span> <span class="p">{</span>
-    <span class="nx">onSuccess</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'RPC successfully unregistered'</span><span class="p">);</span>
-    <span class="p">},</span>
-    <span class="nx">onError</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">err</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'RPC unregistration failed!'</span><span class="p">,</span><span class="nx">err</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">});</span>
-</pre></div>
+<div class="highlight highlight-javascript"><pre>ws.unregister(<span class="pl-s1"><span class="pl-pds">'</span>sqrt.value<span class="pl-pds">'</span></span>);
+
+ws.unregister(<span class="pl-s1"><span class="pl-pds">'</span>sqrt.value<span class="pl-pds">'</span></span>, {
+    <span class="pl-en">onSuccess</span>: <span class="pl-st">function</span> (<span class="pl-vpf">data</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>RPC successfully unregistered<span class="pl-pds">'</span></span>);
+    },
+    <span class="pl-en">onError</span>: <span class="pl-st">function</span> (<span class="pl-vpf">err</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>RPC unregistration failed!<span class="pl-pds">'</span></span>,err);
+    }
+});</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h1>
-<a name="copyright-and-license" class="anchor" href="#copyright-and-license"><span class="octicon octicon-link"></span></a>Copyright and License</h1>
+<a id="copyright-and-license" class="anchor" href="#copyright-and-license" aria-hidden="true"><span class="octicon octicon-link"></span></a>Copyright and License</h1>
 
 <p>Wampy.js library is licensed under the MIT License (MIT).</p>
 
@@ -579,13 +597,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h1>
-<a name="see-also" class="anchor" href="#see-also"><span class="octicon octicon-link"></span></a>See Also</h1>
+<a id="see-also" class="anchor" href="#see-also" aria-hidden="true"><span class="octicon octicon-link"></span></a>See Also</h1>
 
 <ul>
 <li><a href="http://wamp.ws">WAMP specification</a></li>
 <li>
 <a href="http://ksdaemon.github.io/wiola/">Wiola</a> - WAMP in Lua on top of nginx/openresty</li>
-</ul><p><a href="#table-of-contents">Back to TOC</a></p>
+</ul>
+
+<p><a href="#table-of-contents">Back to TOC</a></p>
       </section>
     </div>
 
