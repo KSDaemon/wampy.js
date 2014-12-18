@@ -1112,7 +1112,8 @@
 			return this;
 		}
 
-		if (!this._subscriptions[topicURI]) {   // no such subscription
+		if (!this._subscriptions[topicURI] || !this._subscriptions[topicURI].callbacks.length) {
+			// no such subscription or processing unsubscribing
 
 			reqId = this._getReqId();
 
@@ -1508,7 +1509,8 @@
 			return this;
 		}
 
-		if (!this._rpcRegs[topicURI]) {   // no such registration
+		if (!this._rpcRegs[topicURI] || !this._rpcRegs[topicURI].callbacks.length) {
+			// no such registration or processing unregistering
 
 			reqId = this._getReqId();
 
