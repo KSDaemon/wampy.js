@@ -499,7 +499,7 @@
 			this._wsQueue.push(this._encode(msg));
 		}
 
-		if (this._ws.readyState === 1 && this._cache.sessionId) {
+		if (this._ws && this._ws.readyState === 1 && this._cache.sessionId) {
 			while (this._wsQueue.length) {
 				this._ws.send(this._wsQueue.shift());
 			}
