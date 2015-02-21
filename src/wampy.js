@@ -162,7 +162,8 @@
 						callee_blackwhite_listing: true,
 						caller_exclusion: true,
 						caller_identification: true,
-						progressive_call_results: true
+						progressive_call_results: true,
+						call_canceling: true
 					}
 				},
 				callee: {
@@ -1468,6 +1469,70 @@
 		this._send(msg);
 		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
 		return this;
+	};
+
+	/**
+	 * RPC invocation cancelling
+	 *
+	 * @param {string} topicURI
+	 * @param {int} reqId RPC call request ID
+	 * @param {function|object} callbacks - if it is a function - it will be called if successfully sent canceling message
+	 *                          or it can be hash table of callbacks:
+	 *                          { onSuccess: will be called if successfully sent canceling message
+	 *                            onError: will be called if some error occured }
+	 * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+	 *                          { mode: string|one of the possible modes:
+	 *                                  "skip" | "kill" | "killnowait". Skip is default.
+	  *                          }
+	 *
+	 * @returns {Wampy}
+	 */
+	Wampy.prototype.cancel = function (topicURI, reqId, callbacks, advancedOptions) {
+		var options = {};
+
+		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
+			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
+
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
+			return this;
+		}
+
+		if(!this._validateURI(topicURI)) {
+			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+
+			if(this._isPlainObject(callbacks) && callbacks.onError) {
+				callbacks['onError'](this._cache.opStatus.description);
+			}
+
+			return this;
+		}
+
+		if(advancedOptions !== undefined) {
+
+			if(this._isPlainObject(advancedOptions)) {
+
+				if(advancedOptions.hasOwnProperty("mode")) {
+					options.mode = /skip|kill|killnowait/.test(advancedOptions.mode) ? advancedOptions.mode : "skip" ;
+				}
+
+			} else {
+				options.mode = "skip";
+			}
+		}
+
+		//WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
+		this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
+		
+		if(callbacks.onSuccess) {
+			callbacks['onSuccess']();
+		}
+
+		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		return this;
+
 	};
 
 	/**
