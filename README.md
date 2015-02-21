@@ -370,7 +370,9 @@ Must meet a WAMP Spec URI requirements.
                        Callees that are (potentially) forwarded the call issued
              exclude_me: bool flag of potentially forwarding call to caller if he is registered as callee
              disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
-                           to endpoints of a routed call }
+                        to endpoints of a routed call
+             receive_progress: bool flag for receiving progressive results. In this case onSuccess function
+                        will be called every time on receiving result }
 
 ```javascript
 ws.call('server.time', null, function (data) { console.log('Server time is ' + d[0]); });

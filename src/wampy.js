@@ -1361,7 +1361,8 @@
 	 *                            exclude_me: bool flag of potentially forwarding call to caller if he is registered as callee
 	 *                            disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
 	 *                                   to endpoints of a routed call
-	 *                            receive_progress: bool flag for receiving progressive results }
+	 *                            receive_progress: bool flag for receiving progressive results. In this case onSuccess function
+	 *                                   will be called every time on receiving result }
 	 * @returns {Wampy}
 	 */
 	Wampy.prototype.call = function (topicURI, payload, callbacks, advancedOptions) {
