@@ -200,7 +200,7 @@
 			/**
 			 * Status of last operation
 			 */
-			opStatus: { code: 0, description: 'Success!' },
+			opStatus: { code: 0, description: 'Success!', reqId: 0 },
 
 			/**
 			 * Timer for reconnection
@@ -1000,6 +1000,7 @@
 	 *      code: 0 - if operation was successful
 	 *      code > 0 - if error occurred
 	 *      description contains details about error
+	 *      reqId: last send request ID
 	 */
 	Wampy.prototype.getOpStatus = function () {
 		return this._cache.opStatus;
@@ -1141,6 +1142,7 @@
 		}
 
 		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		this._cache.opStatus.reqId = reqId;
 		return this;
 	};
 
@@ -1210,6 +1212,7 @@
 		}
 
 		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		this._cache.opStatus.reqId = reqId;
 		return this;
 	};
 
@@ -1338,6 +1341,7 @@
 
 		this._send(msg);
 		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		this._cache.opStatus.reqId = reqId;
 		return this;
 	};
 
@@ -1468,6 +1472,7 @@
 
 		this._send(msg);
 		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		this._cache.opStatus.reqId = reqId;
 		return this;
 	};
 
@@ -1525,12 +1530,13 @@
 
 		//WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
 		this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
-		
+
 		if(callbacks.onSuccess) {
 			callbacks['onSuccess']();
 		}
 
 		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+		this._cache.opStatus.reqId = reqId;
 		return this;
 
 	};
@@ -1595,6 +1601,7 @@
 			// WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
 			this._send([WAMP_MSG_SPEC.REGISTER, reqId, {}, topicURI]);
 			this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+			this._cache.opStatus.reqId = reqId;
 		} else {    // already have registration with such topicURI
 			this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
 
@@ -1656,6 +1663,7 @@
 			// WAMP SPEC: [UNREGISTER, Request|id, REGISTERED.Registration|id]
 			this._send([WAMP_MSG_SPEC.UNREGISTER, reqId, this._rpcRegs[topicURI].id]);
 			this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+			this._cache.opStatus.reqId = reqId;
 		} else {    // already have registration with such topicURI
 			this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
 
