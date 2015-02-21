@@ -1483,7 +1483,7 @@
 	 * @param {function|object} callbacks - if it is a function - it will be called if successfully sent canceling message
 	 *                          or it can be hash table of callbacks:
 	 *                          { onSuccess: will be called if successfully sent canceling message
-	 *                            onError: will be called if some error occured }
+	 *                            onError: will be called if some error occurred }
 	 * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
 	 *                          { mode: string|one of the possible modes:
 	 *                                  "skip" | "kill" | "killnowait". Skip is default.

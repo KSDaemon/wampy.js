@@ -22,6 +22,7 @@ Table of Contents
 	* [unsubscribe](#unsubscribetopicuri-callbacks)
 	* [publish](#publishtopicuri-payload-callbacks-advancedoptions)
 	* [call](#calltopicuri-payload-callbacks-advancedoptions)
+	* [cancel](#cancelreqId-callbacks-advancedOptions)
 	* [register](#registertopicuri-callbacks)
 	* [unregister](#unregistertopicuri-callbacks)
 * [Copyright and License](#copyright-and-license)
@@ -190,14 +191,17 @@ getOpStatus()
 
 Returns the status of last operation. Wampy is developed in a such way, that every operation returns **this** even
 in case of error to suport chaining. But if you want to know status of last operation, you can call .getOpStatus().
-This method returns an object with 2 attributes: code and description. Code is integer, and value > 0 means error.
+This method returns an object with 2 or 3 attributes: code and description and possible request ID . 
+Code is integer, and value > 0 means error.
 Description is a description of code.
+Request ID is integer and may be useful in some cases (call canceling for example).
 
 ```javascript
 ws.publish('system.monitor.update');
 ws.getOpStatus();
 // may return { code: 1, description: "Topic URI doesn't meet requirements!" }
 // or { code: 2, description: "Server doesn't provide broker role!" }
+// or { code: 0, description: "Success!", reqId: 1565723572 }
 ```
 
 [Back to TOC](#table-of-contents)
@@ -241,8 +245,8 @@ ws.disconnect();
 abort()
 ------------
 
-Aborts WAMP session and closes a websocket connection. If it is called on handshake stage - it sends a abort message
-to wamp server (as described in spec).
+Aborts WAMP session and closes a websocket connection.  Supports chaining. 
+If it is called on handshake stage - it sends a abort message to wamp server (as described in spec).
 Also clears all queues, subscription, calls. Supports chaining.
 
 ```javascript
@@ -392,10 +396,43 @@ ws.call('restore.backup', { backupFile: 'backup.zip' }, {
 
 [Back to TOC](#table-of-contents)
 
+cancel(reqId, callbacks, advancedOptions)
+-----------------------------------------------
+
+RPC invocation cancelling. Supports chaining.
+
+Parameters:
+
+* **reqId**. Required. Request ID of RPC call that need to be canceled.
+* **callbacks**. Optional. If it is a function - it will be called if successfully sent canceling message
+            or it can be hash table of callbacks:
+
+          { onSuccess: will be called if successfully sent canceling message
+            onError: will be called if some error occurred }
+* **advancedOptions**. Optional parameter. Must include any or all of the options:
+
+          { mode: string|one of the possible modes:
+                  "skip" | "kill" | "killnowait". Skip is default. }
+
+```javascript
+ws.call('start.migration', null, {
+	onSuccess: function (data) {
+		console.log('RPC successfully called');
+	},
+	onError: function (err) {
+		console.log('RPC call failed!',err);
+	}
+});
+status = ws.getOpStatus();
+
+ws.cancel(status.reqId);
+
+```
+                  
 register(topicURI, callbacks)
 -----------------------------------------------
 
-RPC registration for invocation.
+RPC registration for invocation. Supports chaining.
 
 Parameters:
 
@@ -430,7 +467,7 @@ ws.register('sqrt.value', {
 unregister(topicURI, callbacks)
 -----------------------------------------------
 
-RPC unregistration from invocations
+RPC unregistration from invocations. Supports chaining.
 
 Parameters:
 
