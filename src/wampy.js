@@ -125,7 +125,7 @@
 		 * @type {string}
 		 * @private
 		 */
-		this.version = 'v1.0.4';
+		this.version = 'v1.0.5';
 
 		/**
 		 * WS Url
@@ -161,7 +161,8 @@
 					features: {
 						callee_blackwhite_listing: true,
 						caller_exclusion: true,
-						caller_identification: true
+						caller_identification: true,
+						progressive_call_results: true
 					}
 				},
 				callee: {
@@ -811,7 +812,9 @@
 					}
 
 					this._calls[data[1]]['onSuccess'](d);
-					delete this._calls[data[1]];
+					if (!(data[2].progress && data[2].progress === true)) {  // We receive final result (progressive or not)
+						delete this._calls[data[1]];
+					}
 
 				} else {
 					this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_CALL_RESULT;
@@ -1352,7 +1355,8 @@
 	 *                                  Callees that are (potentially) forwarded the call issued
 	 *                            exclude_me: bool flag of potentially forwarding call to caller if he is registered as callee
 	 *                            disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
-	 *                                   to endpoints of a routed call }
+	 *                                   to endpoints of a routed call
+	 *                            receive_progress: bool flag for receiving progressive results }
 	 * @returns {Wampy}
 	 */
 	Wampy.prototype.call = function (topicURI, payload, callbacks, advancedOptions) {
@@ -1421,6 +1425,10 @@
 
 				if(advancedOptions.hasOwnProperty("disclose_me")) {
 					options.disclose_me = advancedOptions.disclose_me === true;
+				}
+
+				if(advancedOptions.hasOwnProperty("receive_progress")) {
+					options.receive_progress = advancedOptions.receive_progress === true;
 				}
 
 			} else {
