@@ -1479,7 +1479,6 @@
 	/**
 	 * RPC invocation cancelling
 	 *
-	 * @param {string} topicURI
 	 * @param {int} reqId RPC call request ID
 	 * @param {function|object} callbacks - if it is a function - it will be called if successfully sent canceling message
 	 *                          or it can be hash table of callbacks:
@@ -1492,8 +1491,8 @@
 	 *
 	 * @returns {Wampy}
 	 */
-	Wampy.prototype.cancel = function (topicURI, reqId, callbacks, advancedOptions) {
-		var options = {};
+	Wampy.prototype.cancel = function (reqId, callbacks, advancedOptions) {
+		var options = { mode: "skip" };
 
 		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
@@ -1505,8 +1504,8 @@
 			return this;
 		}
 
-		if(!this._validateURI(topicURI)) {
-			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+		if(!reqId) {
+			this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
 			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
@@ -1516,15 +1515,10 @@
 		}
 
 		if(advancedOptions !== undefined) {
-
 			if(this._isPlainObject(advancedOptions)) {
-
 				if(advancedOptions.hasOwnProperty("mode")) {
 					options.mode = /skip|kill|killnowait/.test(advancedOptions.mode) ? advancedOptions.mode : "skip" ;
 				}
-
-			} else {
-				options.mode = "skip";
 			}
 		}
 
