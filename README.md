@@ -430,7 +430,7 @@ status = ws.getOpStatus();
 ws.cancel(status.reqId);
 
 ```
-                  
+
 register(topicURI, callbacks)
 -----------------------------------------------
 
