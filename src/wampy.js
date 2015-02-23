@@ -68,7 +68,8 @@
 		NON_EXIST_RPC_REG: { code: 16, description: "Received rpc registration confirmation for non existent rpc!" },
 		NON_EXIST_RPC_UNREG: { code: 17, description: "Received rpc unregistration confirmation for non existent rpc!" },
 		NON_EXIST_RPC_ERROR: { code: 18, description: "Received error for non existent rpc!" },
-		NON_EXIST_RPC_INVOCATION: { code: 19, description: "Received invocation for non existent rpc!" }
+		NON_EXIST_RPC_INVOCATION: { code: 19, description: "Received invocation for non existent rpc!" },
+		NON_EXIST_RPC_REQ_ID: { code: 20, description: "No RPC calls in action with specified request ID!" }
 	};
 
 	function getServerUrl (url) {
@@ -1505,8 +1506,8 @@
 			return this;
 		}
 
-		if(!reqId) {
-			this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
+		if(!reqId || !this._calls[reqId]) {
+			this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID;
 
 			if(this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
