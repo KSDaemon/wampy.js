@@ -66,6 +66,8 @@
 
     "disallowTrailingComma": true,
 
+    "requireMultipleVarDecl": true,
+
     "disallowSpacesInCallExpression": true,
 
     "disallowSpaceBeforeBinaryOperators": [

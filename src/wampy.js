@@ -49,27 +49,90 @@
     };
 
     var WAMP_ERROR_MSG = {
-        SUCCESS: { code: 0, description: 'Success!' },
-        URI_ERROR: { code: 1, description: 'Topic URI doesn\'t meet requirements!' },
-        NO_BROKER: { code: 2, description: 'Server doesn\'t provide broker role!' },
-        NO_CALLBACK_SPEC: { code: 3, description: 'No required callback function specified!' },
-        INVALID_PARAM: { code: 4, description: 'Invalid parameter(s) specified!' },
-        NON_EXIST_SUBSCRIBE_CONFIRM: { code: 5, description: 'Received subscribe confirmation to non existent subscription!' },
-        NON_EXIST_SUBSCRIBE_ERROR: { code: 6, description: 'Received error for non existent subscription!' },
-        NON_EXIST_UNSUBSCRIBE: { code: 7, description: 'Trying to unsubscribe from non existent subscription!' },
-        NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: { code: 8, description: 'Received unsubscribe confirmation to non existent subscription!' },
-        NON_EXIST_PUBLISH_ERROR: { code: 9, description: 'Received error for non existent publication!' },
-        NON_EXIST_PUBLISH_PUBLISHED: { code: 10, description: 'Received publish confirmation for non existent publication!' },
-        NON_EXIST_SUBSCRIBE_EVENT: { code: 11, description: 'Received event for non existent subscription!' },
-        NO_DEALER: { code: 12, description: 'Server doesn\'t provide dealer role!' },
-        NON_EXIST_CALL_RESULT: { code: 13, description: 'Received rpc result for non existent call!' },
-        NON_EXIST_CALL_ERROR: { code: 14, description: 'Received rpc call error for non existent call!' },
-        RPC_ALREADY_REGISTERED: { code: 15, description: 'RPC already registered!' },
-        NON_EXIST_RPC_REG: { code: 16, description: 'Received rpc registration confirmation for non existent rpc!' },
-        NON_EXIST_RPC_UNREG: { code: 17, description: 'Received rpc unregistration confirmation for non existent rpc!' },
-        NON_EXIST_RPC_ERROR: { code: 18, description: 'Received error for non existent rpc!' },
-        NON_EXIST_RPC_INVOCATION: { code: 19, description: 'Received invocation for non existent rpc!' },
-        NON_EXIST_RPC_REQ_ID: { code: 20, description: 'No RPC calls in action with specified request ID!' }
+        SUCCESS: {
+            code: 0,
+            description: 'Success!'
+        },
+        URI_ERROR: {
+            code: 1,
+            description: 'Topic URI doesn\'t meet requirements!'
+        },
+        NO_BROKER: {
+            code: 2,
+            description: 'Server doesn\'t provide broker role!'
+        },
+        NO_CALLBACK_SPEC: {
+            code: 3,
+            description: 'No required callback function specified!'
+        },
+        INVALID_PARAM: {
+            code: 4,
+            description: 'Invalid parameter(s) specified!'
+        },
+        NON_EXIST_SUBSCRIBE_CONFIRM: {
+            code: 5,
+            description: 'Received subscribe confirmation to non existent subscription!'
+        },
+        NON_EXIST_SUBSCRIBE_ERROR: {
+            code: 6,
+            description: 'Received error for non existent subscription!'
+        },
+        NON_EXIST_UNSUBSCRIBE: {
+            code: 7,
+            description: 'Trying to unsubscribe from non existent subscription!'
+        },
+        NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: {
+            code: 8,
+            description: 'Received unsubscribe confirmation to non existent subscription!'
+        },
+        NON_EXIST_PUBLISH_ERROR: {
+            code: 9,
+            description: 'Received error for non existent publication!'
+        },
+        NON_EXIST_PUBLISH_PUBLISHED: {
+            code: 10,
+            description: 'Received publish confirmation for non existent publication!'
+        },
+        NON_EXIST_SUBSCRIBE_EVENT: {
+            code: 11,
+            description: 'Received event for non existent subscription!'
+        },
+        NO_DEALER: {
+            code: 12,
+            description: 'Server doesn\'t provide dealer role!'
+        },
+        NON_EXIST_CALL_RESULT: {
+            code: 13,
+            description: 'Received rpc result for non existent call!'
+        },
+        NON_EXIST_CALL_ERROR: {
+            code: 14,
+            description: 'Received rpc call error for non existent call!'
+        },
+        RPC_ALREADY_REGISTERED: {
+            code: 15,
+            description: 'RPC already registered!'
+        },
+        NON_EXIST_RPC_REG: {
+            code: 16,
+            description: 'Received rpc registration confirmation for non existent rpc!'
+        },
+        NON_EXIST_RPC_UNREG: {
+            code: 17,
+            description: 'Received rpc unregistration confirmation for non existent rpc!'
+        },
+        NON_EXIST_RPC_ERROR: {
+            code: 18,
+            description: 'Received error for non existent rpc!'
+        },
+        NON_EXIST_RPC_INVOCATION: {
+            code: 19,
+            description: 'Received invocation for non existent rpc!'
+        },
+        NON_EXIST_RPC_REQ_ID: {
+            code: 20,
+            description: 'No RPC calls in action with specified request ID!'
+        }
     };
 
     function getServerUrl(url) {
@@ -568,7 +631,9 @@
             this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries &&
             !this._cache.isSayingGoodbye) {
             this._cache.sessionId = null;
-            this._cache.timer = window.setTimeout(function () { self._wsReconnect.call(self); }, this._options.reconnectInterval);
+            this._cache.timer = window.setTimeout(function () {
+                self._wsReconnect.call(self);
+            }, this._options.reconnectInterval);
         } else {
             // No reconnection needed or reached max retries count
             if (this._options.onClose) {
@@ -640,7 +705,8 @@
 
                 break;
             case WAMP_MSG_SPEC.ERROR:
-                // WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict, Error|uri, (Arguments|list, ArgumentsKw|dict)]
+                // WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict,
+                //             Error|uri, (Arguments|list, ArgumentsKw|dict)]
                 switch (data[1]) {
                     case WAMP_MSG_SPEC.SUBSCRIBE:
                     case WAMP_MSG_SPEC.UNSUBSCRIBE:
@@ -695,11 +761,13 @@
                                     d = null;
                                     break;
                                 case 6:
-                                    // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict, Error|uri, Arguments|list]
+                                    // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
+                                    //             Error|uri, Arguments|list]
                                     d = data[5];
                                     break;
                                 case 7:
-                                    // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict, Error|uri, Arguments|list, ArgumentsKw|dict]
+                                    // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
+                                    //             Error|uri, Arguments|list, ArgumentsKw|dict]
                                     d = data[6];
                                     break;
                             }
@@ -776,11 +844,13 @@
                             d = null;
                             break;
                         case 5:
-                            // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list]
+                            // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
+                            //             Details|dict, PUBLISH.Arguments|list]
                             d = data[4];
                             break;
                         case 6:
-                            // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
+                            // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
+                            //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
                             d = data[5];
                             break;
                     }
@@ -807,13 +877,15 @@
                             d = data[3];
                             break;
                         case 5:
-                            // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
+                            // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
+                            //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
                             d = data[4];
                             break;
                     }
 
                     this._calls[data[1]].onSuccess(d);
-                    if (!(data[2].progress && data[2].progress === true)) {  // We receive final result (progressive or not)
+                    if (!(data[2].progress && data[2].progress === true)) {
+                        // We receive final result (progressive or not)
                         delete this._calls[data[1]];
                     }
 
@@ -877,11 +949,13 @@
                             d = null;
                             break;
                         case 5:
-                            // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list]
+                            // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
+                            //             Details|dict, CALL.Arguments|list]
                             d = data[4];
                             break;
                         case 6:
-                            // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
+                            // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
+                            //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
                             d = data[5];
                             break;
                     }
@@ -889,7 +963,8 @@
                     try {
                         result = this._rpcRegs[data[2]].callbacks[0](d);
                     } catch (e) {
-                        this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], {}, 'wamp.error.invocation_exception']);
+                        this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
+                                    data[1], {}, 'wamp.error.invocation_exception']);
                         return ;
                     }
 
@@ -908,7 +983,8 @@
 
                 } else {
                     // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
-                    this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], {}, 'wamp.error.no_such_procedure']);
+                    this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
+                                data[1], {}, 'wamp.error.no_such_procedure']);
                     this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION;
                 }
 
@@ -1225,11 +1301,12 @@
      *                            onError: will be called if publishing would be aborted }
      * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
      *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
-     *                                     even though they may be subscribed
-     *                            eligible: integer|array WAMP session id(s) that are allowed to receive a published event
+     *                                      even though they may be subscribed
+     *                            eligible: integer|array WAMP session id(s) that are allowed
+     *                                      to receive a published event
      *                            exclude_me: bool flag of receiving publishing event by initiator
      *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
-     *                                   to receivers of a published event }
+     *                                      to receivers of a published event }
      * @returns {Wampy}
      */
     Wampy.prototype.publish = function (topicURI, payload, callbacks, advancedOptions) {
@@ -1483,8 +1560,8 @@
      * RPC invocation cancelling
      *
      * @param {int} reqId RPC call request ID
-     * @param {function|object} callbacks - if it is a function - it will be called if successfully sent canceling message
-     *                          or it can be hash table of callbacks:
+     * @param {function|object} callbacks - if it is a function - it will be called if successfully
+     *                          sent canceling message or it can be hash table of callbacks:
      *                          { onSuccess: will be called if successfully sent canceling message
      *                            onError: will be called if some error occurred }
      * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
