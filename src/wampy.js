@@ -647,7 +647,7 @@
 						if (this._requests[data[2]]) {
 
 							if (this._requests[data[2]].callbacks.onError) {
-								this._requests[data[2]].callbacks['onError'](data[4]);
+								this._requests[data[2]].callbacks.onError(data[4]);
 							}
 
 							delete this._requests[data[2]];
@@ -660,7 +660,7 @@
 						if (this._requests[data[2]]) {
 
 							if (this._requests[data[2]].callbacks.onError) {
-								this._requests[data[2]].callbacks['onError'](data[4]);
+								this._requests[data[2]].callbacks.onError(data[4]);
 							}
 
 							delete this._requests[data[2]];
@@ -675,7 +675,7 @@
 						if (this._requests[data[2]]) {
 
 							if (this._requests[data[2]].callbacks.onError) {
-								this._requests[data[2]].callbacks['onError'](data[4]);
+								this._requests[data[2]].callbacks.onError(data[4]);
 							}
 
 							delete this._requests[data[2]];
@@ -687,7 +687,7 @@
 					case WAMP_MSG_SPEC.INVOCATION:
 						break;
 					case WAMP_MSG_SPEC.CALL:
-						if (this._calls[data[2]]['onError']) {
+						if (this._calls[data[2]].onError) {
 
 							switch (data.length) {
 								case 5:
@@ -704,7 +704,7 @@
 									break;
 							}
 
-							this._calls[data[2]]['onError'](d);
+							this._calls[data[2]].onError(d);
 							delete this._calls[data[2]];
 
 						} else {
@@ -724,7 +724,7 @@
 					this._subsTopics.push(this._requests[data[1]].topic);
 
 					if (this._requests[data[1]].callbacks.onSuccess) {
-						this._requests[data[1]].callbacks['onSuccess']();
+						this._requests[data[1]].callbacks.onSuccess();
 					}
 
 					delete this._requests[data[1]];
@@ -746,7 +746,7 @@
 					}
 
 					if (this._requests[data[1]].callbacks.onSuccess) {
-						this._requests[data[1]].callbacks['onSuccess']();
+						this._requests[data[1]].callbacks.onSuccess();
 					}
 
 					delete this._requests[data[1]];
@@ -758,7 +758,7 @@
 				// WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
 				if (this._requests[data[1]]) {
 					if (this._requests[data[1]].callbacks.onSuccess) {
-						this._requests[data[1]].callbacks['onSuccess']();
+						this._requests[data[1]].callbacks.onSuccess();
 					}
 
 					delete this._requests[data[1]];
@@ -812,7 +812,7 @@
 							break;
 					}
 
-					this._calls[data[1]]['onSuccess'](d);
+					this._calls[data[1]].onSuccess(d);
 					if (!(data[2].progress && data[2].progress === true)) {  // We receive final result (progressive or not)
 						delete this._calls[data[1]];
 					}
@@ -835,7 +835,7 @@
 					this._rpcNames.push(this._requests[data[1]].topic);
 
 					if (this._requests[data[1]].callbacks.onSuccess) {
-						this._requests[data[1]].callbacks['onSuccess']();
+						this._requests[data[1]].callbacks.onSuccess();
 					}
 
 					delete this._requests[data[1]];
@@ -860,7 +860,7 @@
 					}
 
 					if (this._requests[data[1]].callbacks.onSuccess) {
-						this._requests[data[1]].callbacks['onSuccess']();
+						this._requests[data[1]].callbacks.onSuccess();
 					}
 
 					delete this._requests[data[1]];
@@ -1087,7 +1087,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1097,21 +1097,21 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
 		if (typeof callbacks === 'function') {
-			callbacks = { onEvent: callbacks};
+			callbacks = { onEvent: callbacks };
 		} else if (this._isPlainObject(callbacks) && callbacks.onEvent !== undefined) {
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1137,7 +1137,7 @@
 			}
 
 			if (callbacks.onSuccess) {
-				callbacks['onSuccess']();
+				callbacks.onSuccess();
 			}
 		}
 
@@ -1163,7 +1163,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1205,7 +1205,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1239,7 +1239,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1249,7 +1249,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1298,7 +1298,7 @@
 				this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
 				if (this._isPlainObject(callbacks) && callbacks.onError) {
-					callbacks['onError'](this._cache.opStatus.description);
+					callbacks.onError(this._cache.opStatus.description);
 				}
 
 				return this;
@@ -1354,15 +1354,17 @@
 	 *                          { onSuccess: will be called with result on successful call
 	 *                            onError: will be called if invocation would be aborted }
 	 * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
-	 *                          { exclude: integer|array WAMP session id(s) providing an explicit list of (potential)
-	 *                                  Callees that a call won't be forwarded to, even though they might be registered
-	 *                            eligible: integer|array WAMP session id(s) providing an explicit list of (potential)
-	 *                                  Callees that are (potentially) forwarded the call issued
-	 *                            exclude_me: bool flag of potentially forwarding call to caller if he is registered as callee
+	 *                          { exclude: integer|array WAMP session id(s) providing an explicit list of
+	 *                                  (potential) Callees that a call won't be forwarded to, even though
+	 *                                  they might be registered
+	 *                            eligible: integer|array WAMP session id(s) providing an explicit list of
+	 *                                  (potential) Callees that are (potentially) forwarded the call issued
+	 *                            exclude_me: bool flag of potentially forwarding call to caller
+	 *                                  if he is registered as callee
 	 *                            disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
-	 *                                   to endpoints of a routed call
-	 *                            receive_progress: bool flag for receiving progressive results. In this case onSuccess function
-	 *                                   will be called every time on receiving result }
+	 *                                  to endpoints of a routed call
+	 *                            receive_progress: bool flag for receiving progressive results. In this case
+	 *                                  onSuccess function will be called every time on receiving result }
 	 * @returns {Wampy}
 	 */
 	Wampy.prototype.call = function (topicURI, payload, callbacks, advancedOptions) {
@@ -1372,7 +1374,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1382,21 +1384,21 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
 		if (typeof callbacks === 'function') {
-			callbacks = { onSuccess: callbacks};
+			callbacks = { onSuccess: callbacks };
 		} else if (this._isPlainObject(callbacks) && callbacks.onSuccess !== undefined) {
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1445,7 +1447,7 @@
 				this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
 				if (this._isPlainObject(callbacks) && callbacks.onError) {
-					callbacks['onError'](this._cache.opStatus.description);
+					callbacks.onError(this._cache.opStatus.description);
 				}
 
 				return this;
@@ -1499,7 +1501,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1509,7 +1511,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1527,7 +1529,7 @@
 		this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
 
 		if (callbacks.onSuccess) {
-			callbacks['onSuccess']();
+			callbacks.onSuccess();
 		}
 
 		this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
@@ -1553,7 +1555,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1563,21 +1565,21 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
 		if (typeof callbacks === 'function') {
-			callbacks = { rpc: callbacks};
+			callbacks = { rpc: callbacks };
 		} else if (this._isPlainObject(callbacks) && callbacks.rpc !== undefined) {
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1601,7 +1603,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 		}
@@ -1626,7 +1628,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
@@ -1636,14 +1638,14 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
 		if (typeof callbacks === 'function') {
-			callbacks = { onSuccess: callbacks};
+			callbacks = { onSuccess: callbacks };
 		}
 
 		if (this._rpcRegs[topicURI]) {   // there is such registration
@@ -1663,7 +1665,7 @@
 			this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
 
 			if (this._isPlainObject(callbacks) && callbacks.onError) {
-				callbacks['onError'](this._cache.opStatus.description);
+				callbacks.onError(this._cache.opStatus.description);
 			}
 
 		}
