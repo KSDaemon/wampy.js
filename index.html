@@ -51,6 +51,7 @@
 <li><a href="#constructorurl-options">Constructor</a></li>
 <li><a href="#optionsopts">options</a></li>
 <li><a href="#getopstatus">getOpStatus</a></li>
+<li><a href="#getsessionid">getSessionId</a></li>
 <li><a href="#connecturl">connect</a></li>
 <li><a href="#disconnect">disconnect</a></li>
 <li><a href="#abort">abort</a></li>
@@ -58,6 +59,7 @@
 <li><a href="#unsubscribetopicuri-callbacks">unsubscribe</a></li>
 <li><a href="#publishtopicuri-payload-callbacks-advancedoptions">publish</a></li>
 <li><a href="#calltopicuri-payload-callbacks-advancedoptions">call</a></li>
+<li><a href="#cancelreqId-callbacks-advancedOptions">cancel</a></li>
 <li><a href="#registertopicuri-callbacks">register</a></li>
 <li><a href="#unregistertopicuri-callbacks">unregister</a></li>
 </ul>
@@ -289,13 +291,25 @@ ws.<span class="pl-sc">options</span>({
 
 <p>Returns the status of last operation. Wampy is developed in a such way, that every operation returns <strong>this</strong> even
 in case of error to suport chaining. But if you want to know status of last operation, you can call .getOpStatus().
-This method returns an object with 2 attributes: code and description. Code is integer, and value &gt; 0 means error.
-Description is a description of code.</p>
+This method returns an object with 2 or 3 attributes: code and description and possible request ID . 
+Code is integer, and value &gt; 0 means error.
+Description is a description of code.
+Request ID is integer and may be useful in some cases (call canceling for example).</p>
 
 <div class="highlight highlight-javascript"><pre>ws.publish(<span class="pl-s1"><span class="pl-pds">'</span>system.monitor.update<span class="pl-pds">'</span></span>);
 ws.getOpStatus();
 <span class="pl-c">// may return { code: 1, description: "Topic URI doesn't meet requirements!" }</span>
-<span class="pl-c">// or { code: 2, description: "Server doesn't provide broker role!" }</span></pre></div>
+<span class="pl-c">// or { code: 2, description: "Server doesn't provide broker role!" }</span>
+<span class="pl-c">// or { code: 0, description: "Success!", reqId: 1565723572 }</span></pre></div>
+
+<p><a href="#table-of-contents">Back to TOC</a></p>
+
+<h2>
+<a id="getsessionid" class="anchor" href="#getsessionid" aria-hidden="true"><span class="octicon octicon-link"></span></a>getSessionId()</h2>
+
+<p>Returns the WAMP Session ID.</p>
+
+<div class="highlight highlight-javascript"><pre>ws.getSessionId();</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
@@ -323,8 +337,8 @@ ws.connect(<span class="pl-s1"><span class="pl-pds">'</span>wss://socket.server.
 <h2>
 <a id="abort" class="anchor" href="#abort" aria-hidden="true"><span class="octicon octicon-link"></span></a>abort()</h2>
 
-<p>Aborts WAMP session and closes a websocket connection. If it is called on handshake stage - it sends a abort message
-to wamp server (as described in spec).
+<p>Aborts WAMP session and closes a websocket connection.  Supports chaining. 
+If it is called on handshake stage - it sends a abort message to wamp server (as described in spec).
 Also clears all queues, subscription, calls. Supports chaining.</p>
 
 <div class="highlight highlight-javascript"><pre>ws.<span class="pl-s3">abort</span>();</pre></div>
@@ -470,7 +484,9 @@ Must meet a WAMP Spec URI requirements.</li>
                Callees that are (potentially) forwarded the call issued
      exclude_me: bool flag of potentially forwarding call to caller if he is registered as callee
      disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
-                   to endpoints of a routed call }
+                to endpoints of a routed call
+     receive_progress: bool flag for receiving progressive results. In this case onSuccess function
+                will be called every time on receiving result }
 </code></pre>
 </li>
 </ul>
@@ -498,9 +514,49 @@ ws.<span class="pl-s3">call</span>(<span class="pl-s1"><span class="pl-pds">'</s
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
 <h2>
+<a id="cancelreqid-callbacks-advancedoptions" class="anchor" href="#cancelreqid-callbacks-advancedoptions" aria-hidden="true"><span class="octicon octicon-link"></span></a>cancel(reqId, callbacks, advancedOptions)</h2>
+
+<p>RPC invocation cancelling. Supports chaining.</p>
+
+<p>Parameters:</p>
+
+<ul>
+<li>
+<strong>reqId</strong>. Required. Request ID of RPC call that need to be canceled.</li>
+<li>
+<p><strong>callbacks</strong>. Optional. If it is a function - it will be called if successfully sent canceling message
+        or it can be hash table of callbacks:</p>
+
+<pre><code>  { onSuccess: will be called if successfully sent canceling message
+    onError: will be called if some error occurred }
+</code></pre>
+</li>
+<li>
+<p><strong>advancedOptions</strong>. Optional parameter. Must include any or all of the options:</p>
+
+<pre><code>  { mode: string|one of the possible modes:
+          "skip" | "kill" | "killnowait". Skip is default. }
+</code></pre>
+</li>
+</ul>
+
+<div class="highlight highlight-javascript"><pre>ws.<span class="pl-s3">call</span>(<span class="pl-s1"><span class="pl-pds">'</span>start.migration<span class="pl-pds">'</span></span>, <span class="pl-c1">null</span>, {
+    <span class="pl-en">onSuccess</span>: <span class="pl-st">function</span> (<span class="pl-vpf">data</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>RPC successfully called<span class="pl-pds">'</span></span>);
+    },
+    <span class="pl-en">onError</span>: <span class="pl-st">function</span> (<span class="pl-vpf">err</span>) {
+        <span class="pl-en">console</span><span class="pl-s3">.log</span>(<span class="pl-s1"><span class="pl-pds">'</span>RPC call failed!<span class="pl-pds">'</span></span>,err);
+    }
+});
+status <span class="pl-k">=</span> ws.getOpStatus();
+
+ws.cancel(status.reqId);
+</pre></div>
+
+<h2>
 <a id="registertopicuri-callbacks" class="anchor" href="#registertopicuri-callbacks" aria-hidden="true"><span class="octicon octicon-link"></span></a>register(topicURI, callbacks)</h2>
 
-<p>RPC registration for invocation.</p>
+<p>RPC registration for invocation. Supports chaining.</p>
 
 <p>Parameters:</p>
 
@@ -539,7 +595,7 @@ ws.register(<span class="pl-s1"><span class="pl-pds">'</span>sqrt.value<span cla
 <h2>
 <a id="unregistertopicuri-callbacks" class="anchor" href="#unregistertopicuri-callbacks" aria-hidden="true"><span class="octicon octicon-link"></span></a>unregister(topicURI, callbacks)</h2>
 
-<p>RPC unregistration from invocations</p>
+<p>RPC unregistration from invocations. Supports chaining.</p>
 
 <p>Parameters:</p>
 
