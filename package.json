@@ -1,30 +1,30 @@
 {
-  "name": "wampy",
-  "version": "1.0.5",
-  "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
-  "author": "Konstantin Burkalev <KSDaemon@ya.ru> (http://ksdaemon.ru)",
-  "devDependencies": {
-    "grunt": "~0.4.5",
-    "grunt-contrib-concat": "^0.5.0",
-    "grunt-contrib-copy": "^0.8.0",
-    "grunt-contrib-jshint": "^0.11.0",
-    "grunt-contrib-uglify": "^0.8.0"
-  },
-  "main": "wampy.js",
-  "dependencies": {
-    "grunt": "~0.4.5"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/KSDaemon/wampy.js.git"
-  },
-  "keywords": [
-    "websocket",
-    "wamp"
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/KSDaemon/wampy.js/issues"
-  },
-  "homepage": "https://github.com/KSDaemon/wampy.js"
+    "name": "wampy",
+    "version": "1.0.5",
+    "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
+    "author": "Konstantin Burkalev <KSDaemon@ya.ru> (http://ksdaemon.ru)",
+    "devDependencies": {
+        "grunt": "~0.4.5",
+        "grunt-contrib-concat": "^0.5.0",
+        "grunt-contrib-copy": "^0.8.0",
+        "grunt-contrib-jshint": "^0.11.0",
+        "grunt-contrib-uglify": "^0.8.0"
+    },
+    "main": "wampy.js",
+    "dependencies": {
+        "grunt": "~0.4.5"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/KSDaemon/wampy.js.git"
+    },
+    "keywords": [
+        "websocket",
+        "wamp"
+    ],
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/KSDaemon/wampy.js/issues"
+    },
+    "homepage": "https://github.com/KSDaemon/wampy.js"
 }

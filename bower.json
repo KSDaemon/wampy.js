@@ -1,22 +1,22 @@
 {
-  "name": "Wampy.js",
-  "version": "1.0.5",
-  "homepage": "https://github.com/KSDaemon/wampy.js",
-  "authors": [
-    "Konstantin Burkalev <KSDaemon@ya.ru>"
-  ],
-  "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
-  "main": "build/wampy.min.js",
-  "keywords": [
-    "websocket",
-    "wamp"
-  ],
-  "license": "MIT",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests"
-  ]
+    "name": "Wampy.js",
+    "version": "1.0.5",
+    "homepage": "https://github.com/KSDaemon/wampy.js",
+    "authors": [
+        "Konstantin Burkalev <KSDaemon@ya.ru>"
+    ],
+    "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
+    "main": "build/wampy.min.js",
+    "keywords": [
+        "websocket",
+        "wamp"
+    ],
+    "license": "MIT",
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "test",
+        "tests"
+    ]
 }
