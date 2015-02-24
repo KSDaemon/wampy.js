@@ -15,9 +15,9 @@
  */
 
 ;( // Module boilerplate to support browser globals and browserify and AMD.
-	typeof define === "function" ? function (m) { define("Wampy", m); } :
-	typeof exports === "object" ? function (m) { module.exports = m(); } :
-	function(m){ this.Wampy = m(); }
+	typeof define === 'function' ? function (m) { define('Wampy', m); } :
+	typeof exports === 'object' ? function (m) { module.exports = m(); } :
+	function (m) { this.Wampy = m(); }
 )(function () {
 
 	var WAMP_MSG_SPEC = {
@@ -49,36 +49,36 @@
 	};
 
 	var WAMP_ERROR_MSG = {
-		SUCCESS:  { code: 0, description: "Success!" },
-		URI_ERROR: { code: 1, description: "Topic URI doesn't meet requirements!" },
-		NO_BROKER: { code: 2, description: "Server doesn't provide broker role!" },
-		NO_CALLBACK_SPEC: { code: 3, description: "No required callback function specified!" },
-		INVALID_PARAM: { code: 4, description: "Invalid parameter(s) specified!" },
-		NON_EXIST_SUBSCRIBE_CONFIRM: { code: 5, description: "Received subscribe confirmation to non existent subscription!" },
-		NON_EXIST_SUBSCRIBE_ERROR: { code: 6, description: "Received error for non existent subscription!" },
-		NON_EXIST_UNSUBSCRIBE: { code: 7, description: "Trying to unsubscribe from non existent subscription!" },
-		NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: { code: 8, description: "Received unsubscribe confirmation to non existent subscription!" },
-		NON_EXIST_PUBLISH_ERROR: { code: 9, description: "Received error for non existent publication!" },
-		NON_EXIST_PUBLISH_PUBLISHED: { code: 10, description: "Received publish confirmation for non existent publication!" },
-		NON_EXIST_SUBSCRIBE_EVENT: { code: 11, description: "Received event for non existent subscription!" },
-		NO_DEALER: { code: 12, description: "Server doesn't provide dealer role!" },
-		NON_EXIST_CALL_RESULT: { code: 13, description: "Received rpc result for non existent call!" },
-		NON_EXIST_CALL_ERROR: { code: 14, description: "Received rpc call error for non existent call!" },
-		RPC_ALREADY_REGISTERED: { code: 15, description: "RPC already registered!" },
-		NON_EXIST_RPC_REG: { code: 16, description: "Received rpc registration confirmation for non existent rpc!" },
-		NON_EXIST_RPC_UNREG: { code: 17, description: "Received rpc unregistration confirmation for non existent rpc!" },
-		NON_EXIST_RPC_ERROR: { code: 18, description: "Received error for non existent rpc!" },
-		NON_EXIST_RPC_INVOCATION: { code: 19, description: "Received invocation for non existent rpc!" },
-		NON_EXIST_RPC_REQ_ID: { code: 20, description: "No RPC calls in action with specified request ID!" }
+		SUCCESS: { code: 0, description: 'Success!' },
+		URI_ERROR: { code: 1, description: 'Topic URI doesn\'t meet requirements!' },
+		NO_BROKER: { code: 2, description: 'Server doesn\'t provide broker role!' },
+		NO_CALLBACK_SPEC: { code: 3, description: 'No required callback function specified!' },
+		INVALID_PARAM: { code: 4, description: 'Invalid parameter(s) specified!' },
+		NON_EXIST_SUBSCRIBE_CONFIRM: { code: 5, description: 'Received subscribe confirmation to non existent subscription!' },
+		NON_EXIST_SUBSCRIBE_ERROR: { code: 6, description: 'Received error for non existent subscription!' },
+		NON_EXIST_UNSUBSCRIBE: { code: 7, description: 'Trying to unsubscribe from non existent subscription!' },
+		NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: { code: 8, description: 'Received unsubscribe confirmation to non existent subscription!' },
+		NON_EXIST_PUBLISH_ERROR: { code: 9, description: 'Received error for non existent publication!' },
+		NON_EXIST_PUBLISH_PUBLISHED: { code: 10, description: 'Received publish confirmation for non existent publication!' },
+		NON_EXIST_SUBSCRIBE_EVENT: { code: 11, description: 'Received event for non existent subscription!' },
+		NO_DEALER: { code: 12, description: 'Server doesn\'t provide dealer role!' },
+		NON_EXIST_CALL_RESULT: { code: 13, description: 'Received rpc result for non existent call!' },
+		NON_EXIST_CALL_ERROR: { code: 14, description: 'Received rpc call error for non existent call!' },
+		RPC_ALREADY_REGISTERED: { code: 15, description: 'RPC already registered!' },
+		NON_EXIST_RPC_REG: { code: 16, description: 'Received rpc registration confirmation for non existent rpc!' },
+		NON_EXIST_RPC_UNREG: { code: 17, description: 'Received rpc unregistration confirmation for non existent rpc!' },
+		NON_EXIST_RPC_ERROR: { code: 18, description: 'Received error for non existent rpc!' },
+		NON_EXIST_RPC_INVOCATION: { code: 19, description: 'Received invocation for non existent rpc!' },
+		NON_EXIST_RPC_REQ_ID: { code: 20, description: 'No RPC calls in action with specified request ID!' }
 	};
 
-	function getServerUrl (url) {
+	function getServerUrl(url) {
 		var scheme, port, path;
 
 		if (!url) {
 			scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-			port = window.location.port !== "" ? ':' + window.location.port : '';
-			return scheme + window.location.hostname + port + "/ws";
+			port = window.location.port !== '' ? ':' + window.location.port : '';
+			return scheme + window.location.hostname + port + '/ws';
 		} else if (/^ws/.test(url)) {   // ws scheme is specified
 			return url;
 		} else if (/:\d{1,5}/.test(url)) {  // port is specified
@@ -86,23 +86,23 @@
 			return scheme + url;
 		} else {    // just path on current server
 			scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-			port = window.location.port !== "" ? ':' + window.location.port : '';
+			port = window.location.port !== '' ? ':' + window.location.port : '';
 			path = url[0] === '/' ? url : '/' + url;
 			return scheme + window.location.hostname + port + path;
 		}
 	}
 
-	function getWebSocket (url, protocols) {
+	function getWebSocket(url, protocols) {
 		var parsedUrl = getServerUrl(url);
 
-		if ("WebSocket" in window) {
+		if ('WebSocket' in window) {
 		// Chrome, MSIE, newer Firefox
 			if (protocols) {
 				return new WebSocket(parsedUrl, protocols);
 			} else {
 				return new WebSocket(parsedUrl);
 			}
-		} else if ("MozWebSocket" in window) {
+		} else if ('MozWebSocket' in window) {
 			// older versions of Firefox
 			if (protocols) {
 				return new MozWebSocket(parsedUrl, protocols);
@@ -148,7 +148,7 @@
 		 * @private
 		 */
 		this._wamp_features = {
-			agent: "Wampy.js " + this.version,
+			agent: 'Wampy.js ' + this.version,
 			roles: {
 				publisher: {
 					features: {
@@ -394,7 +394,7 @@
 	 * @returns {boolean}
 	 * @private
 	 */
-	Wampy.prototype._isArray = function(obj) {
+	Wampy.prototype._isArray = function (obj) {
 		return (!!obj) && (obj.constructor === Array);
 	};
 
@@ -404,7 +404,7 @@
 	 * @returns {boolean}
 	 * @private
 	 */
-	Wampy.prototype._isObject = function(obj) {
+	Wampy.prototype._isObject = function (obj) {
 		return obj === Object(obj) && Object.prototype.toString.call(obj) !== '[object Array]';
 	};
 
@@ -414,7 +414,7 @@
 	 * @returns {boolean}
 	 * @private
 	 */
-	Wampy.prototype._isPlainObject = function(obj) {
+	Wampy.prototype._isPlainObject = function (obj) {
 		return (!!obj) && (obj.constructor === Object);
 	};
 
@@ -424,8 +424,8 @@
 	 */
 	Wampy.prototype._setWsProtocols = function () {
 
-		if(window.msgpack !== undefined) {
-			if(this._options.transportEncoding === 'msgpack') {
+		if (window.msgpack !== undefined) {
+			if (this._options.transportEncoding === 'msgpack') {
 				this._protocols = ['wamp.2.msgpack', 'wamp.2.json'];
 			} else {
 				this._protocols = ['wamp.2.json', 'wamp.2.msgpack'];
@@ -442,7 +442,7 @@
 	 */
 	Wampy.prototype._validateURI = function (uri) {
 		var re = /^([0-9a-z_]{2,}\.)*([0-9a-z_]{2,})$/;
-		if(!re.test(uri) || uri.indexOf('wamp') === 0) {
+		if (!re.test(uri) || uri.indexOf('wamp') === 0) {
 			return false;
 		} else {
 			return true;
@@ -458,14 +458,14 @@
 	Wampy.prototype._encode = function (msg) {
 		var bytearray;
 
-		if(this._options.transportEncoding === 'msgpack') {
+		if (this._options.transportEncoding === 'msgpack') {
 			try {
 				bytearray = new Uint8Array(msgpack.encode(msg));
 
 				return bytearray.buffer;
 
 			} catch (e) {
-				throw new Error("[wampy] no msgpack encoder available!");
+				throw new Error('[wampy] no msgpack encoder available!');
 			}
 		} else {
 			return JSON.stringify(msg);
@@ -479,13 +479,13 @@
 	 * @private
 	 */
 	Wampy.prototype._decode = function (msg) {
-		if(this._options.transportEncoding === 'msgpack') {
+		if (this._options.transportEncoding === 'msgpack') {
 			try {
 
 				return msgpack.decode(msg);
 
 			} catch (e) {
-				throw new Error("[wampy] no msgpack encoder available!");
+				throw new Error('[wampy] no msgpack encoder available!');
 			}
 		} else {
 			return JSON.parse(msg);
@@ -498,7 +498,7 @@
 	 * @private
 	 */
 	Wampy.prototype._send = function (msg) {
-		if(msg) {
+		if (msg) {
 			this._wsQueue.push(this._encode(msg));
 		}
 
@@ -545,13 +545,13 @@
 	Wampy.prototype._wsOnOpen = function () {
 		var p;
 
-		console.log("[wampy] websocket connected");
+		console.log('[wampy] websocket connected');
 
 		p = this._ws.protocol.split('.');
 		this._options.transportEncoding = p[2];
 
 		if (this._options.transportEncoding === 'msgpack') {
-			this._ws.binaryType = "arraybuffer";
+			this._ws.binaryType = 'arraybuffer';
 		}
 
 		// WAMP SPEC: [HELLO, Realm|uri, Details|dict]
@@ -561,10 +561,10 @@
 
 	Wampy.prototype._wsOnClose = function () {
 		var self = this;
-		console.log("[wampy] websocket disconnected");
+		console.log('[wampy] websocket disconnected');
 
 		// Automatic reconnection
-		if ((this._cache.sessionId || this._cache.reconnectingAttempts ) &&
+		if ((this._cache.sessionId || this._cache.reconnectingAttempts) &&
 			this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries &&
 			!this._cache.isSayingGoodbye) {
 			this._cache.sessionId = null;
@@ -583,7 +583,7 @@
 	Wampy.prototype._wsOnMessage = function (event) {
 		var data, id, i, d, result, msg;
 
-		console.log("[wampy] websocket message received", event.data);
+		console.log('[wampy] websocket message received', event.data);
 
 		data = this._decode(event.data);
 
@@ -591,12 +591,11 @@
 			case WAMP_MSG_SPEC.WELCOME:
 				// WAMP SPEC: [WELCOME, Session|id, Details|dict]
 
-				if(this._cache.reconnectingAttempts) {
+				if (this._cache.reconnectingAttempts) {
 					// There was reconnection
 					i = 1;
 					this._cache.reconnectingAttempts = 0;
-				}
-				else {
+				} else {
 					i = 0;
 				}
 
@@ -630,9 +629,9 @@
 				break;
 			case WAMP_MSG_SPEC.GOODBYE:
 				// WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
-				if(!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
+				if (!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
 					this._cache.isSayingGoodbye = true;
-					this._send([WAMP_MSG_SPEC.GOODBYE, {}, "wamp.error.goodbye_and_out"]);
+					this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.error.goodbye_and_out']);
 				}
 				this._cache.sessionId = null;
 				this._ws.close();
@@ -642,12 +641,12 @@
 				break;
 			case WAMP_MSG_SPEC.ERROR:
 				// WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict, Error|uri, (Arguments|list, ArgumentsKw|dict)]
-				switch(data[1]) {
+				switch (data[1]) {
 					case WAMP_MSG_SPEC.SUBSCRIBE:
 					case WAMP_MSG_SPEC.UNSUBSCRIBE:
-						if(this._requests[data[2]]) {
+						if (this._requests[data[2]]) {
 
-							if(this._requests[data[2]].callbacks.onError) {
+							if (this._requests[data[2]].callbacks.onError) {
 								this._requests[data[2]].callbacks['onError'](data[4]);
 							}
 
@@ -658,9 +657,9 @@
 						}
 						break;
 					case WAMP_MSG_SPEC.PUBLISH:
-						if(this._requests[data[2]]) {
+						if (this._requests[data[2]]) {
 
-							if(this._requests[data[2]].callbacks.onError) {
+							if (this._requests[data[2]].callbacks.onError) {
 								this._requests[data[2]].callbacks['onError'](data[4]);
 							}
 
@@ -673,9 +672,9 @@
 					case WAMP_MSG_SPEC.REGISTER:
 					case WAMP_MSG_SPEC.UNREGISTER:
 						// WAMP SPEC: [ERROR, REGISTER, REGISTER.Request|id, Details|dict, Error|uri]
-						if(this._requests[data[2]]) {
+						if (this._requests[data[2]]) {
 
-							if(this._requests[data[2]].callbacks.onError) {
+							if (this._requests[data[2]].callbacks.onError) {
 								this._requests[data[2]].callbacks['onError'](data[4]);
 							}
 
@@ -688,7 +687,7 @@
 					case WAMP_MSG_SPEC.INVOCATION:
 						break;
 					case WAMP_MSG_SPEC.CALL:
-						if(this._calls[data[2]]['onError']) {
+						if (this._calls[data[2]]['onError']) {
 
 							switch (data.length) {
 								case 5:
@@ -716,7 +715,7 @@
 				break;
 			case WAMP_MSG_SPEC.SUBSCRIBED:
 				// WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
-				if(this._requests[data[1]]) {
+				if (this._requests[data[1]]) {
 					this._subscriptions[this._requests[data[1]].topic] = this._subscriptions[data[2]] = {
 						id: data[2],
 						callbacks: [this._requests[data[1]].callbacks.onEvent]
@@ -724,7 +723,7 @@
 
 					this._subsTopics.push(this._requests[data[1]].topic);
 
-					if(this._requests[data[1]].callbacks.onSuccess) {
+					if (this._requests[data[1]].callbacks.onSuccess) {
 						this._requests[data[1]].callbacks['onSuccess']();
 					}
 
@@ -736,7 +735,7 @@
 				break;
 			case WAMP_MSG_SPEC.UNSUBSCRIBED:
 				// WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
-				if(this._requests[data[1]]) {
+				if (this._requests[data[1]]) {
 					id = this._subscriptions[this._requests[data[1]].topic].id;
 					delete this._subscriptions[this._requests[data[1]].topic];
 					delete this._subscriptions[id];
@@ -746,7 +745,7 @@
 						this._subsTopics.splice(i, 1);
 					}
 
-					if(this._requests[data[1]].callbacks.onSuccess) {
+					if (this._requests[data[1]].callbacks.onSuccess) {
 						this._requests[data[1]].callbacks['onSuccess']();
 					}
 
@@ -757,8 +756,8 @@
 				break;
 			case WAMP_MSG_SPEC.PUBLISHED:
 				// WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
-				if(this._requests[data[1]]) {
-					if(this._requests[data[1]].callbacks.onSuccess) {
+				if (this._requests[data[1]]) {
+					if (this._requests[data[1]].callbacks.onSuccess) {
 						this._requests[data[1]].callbacks['onSuccess']();
 					}
 
@@ -769,7 +768,7 @@
 				}
 				break;
 			case WAMP_MSG_SPEC.EVENT:
-				if(this._subscriptions[data[1]]) {
+				if (this._subscriptions[data[1]]) {
 
 					switch (data.length) {
 						case 4:
@@ -796,7 +795,7 @@
 				}
 				break;
 			case WAMP_MSG_SPEC.RESULT:
-				if(this._calls[data[1]]) {
+				if (this._calls[data[1]]) {
 
 					switch (data.length) {
 						case 3:
@@ -827,7 +826,7 @@
 				break;
 			case WAMP_MSG_SPEC.REGISTERED:
 				// WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
-				if(this._requests[data[1]]) {
+				if (this._requests[data[1]]) {
 					this._rpcRegs[this._requests[data[1]].topic] = this._rpcRegs[data[2]] = {
 						id: data[2],
 						callbacks: [this._requests[data[1]].callbacks.rpc]
@@ -835,7 +834,7 @@
 
 					this._rpcNames.push(this._requests[data[1]].topic);
 
-					if(this._requests[data[1]].callbacks.onSuccess) {
+					if (this._requests[data[1]].callbacks.onSuccess) {
 						this._requests[data[1]].callbacks['onSuccess']();
 					}
 
@@ -850,7 +849,7 @@
 				break;
 			case WAMP_MSG_SPEC.UNREGISTERED:
 				// WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
-				if(this._requests[data[1]]) {
+				if (this._requests[data[1]]) {
 					id = this._rpcRegs[this._requests[data[1]].topic].id;
 					delete this._rpcRegs[this._requests[data[1]].topic];
 					delete this._rpcRegs[id];
@@ -860,7 +859,7 @@
 						this._rpcNames.splice(i, 1);
 					}
 
-					if(this._requests[data[1]].callbacks.onSuccess) {
+					if (this._requests[data[1]].callbacks.onSuccess) {
 						this._requests[data[1]].callbacks['onSuccess']();
 					}
 
@@ -870,7 +869,7 @@
 				}
 				break;
 			case WAMP_MSG_SPEC.INVOCATION:
-				if(this._rpcRegs[data[2]]) {
+				if (this._rpcRegs[data[2]]) {
 
 					switch (data.length) {
 						case 4:
@@ -890,16 +889,16 @@
 					try {
 						result = this._rpcRegs[data[2]].callbacks[0](d);
 					} catch (e) {
-						this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], {}, "wamp.error.invocation_exception"]);
+						this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], {}, 'wamp.error.invocation_exception']);
 						return ;
 					}
 
 					// WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
-					if(this._isArray(result)) {
+					if (this._isArray(result)) {
 						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, result];
-					} else if(this._isPlainObject(result)) {
+					} else if (this._isPlainObject(result)) {
 						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [], result];
-					} else if(result === undefined) {
+					} else if (result === undefined) {
 						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
 					} else {    // single value
 						msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [result]];
@@ -909,7 +908,7 @@
 
 				} else {
 					// WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
-					this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], {}, "wamp.error.no_such_procedure"]);
+					this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], {}, 'wamp.error.no_such_procedure']);
 					this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION;
 				}
 
@@ -924,7 +923,7 @@
 	};
 
 	Wampy.prototype._wsOnError = function (error) {
-		console.log("[wampy] websocket error");
+		console.log('[wampy] websocket error');
 
 		if (this._options.onError) {
 			this._options.onError(error);
@@ -932,7 +931,7 @@
 	};
 
 	Wampy.prototype._wsReconnect = function () {
-		console.log("[wampy] websocket reconnecting...");
+		console.log('[wampy] websocket reconnecting...');
 
 		if (this._options.onReconnect) {
 			this._options.onReconnect();
@@ -1041,7 +1040,7 @@
 		if (this._cache.sessionId) {
 			// need to send goodbye message to server
 			this._cache.isSayingGoodbye = true;
-			this._send([WAMP_MSG_SPEC.GOODBYE, {}, "wamp.error.system_shutdown"]);
+			this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.error.system_shutdown']);
 		} else if (this._ws){
 			this._ws.close();
 		}
@@ -1058,8 +1057,8 @@
 	 */
 	Wampy.prototype.abort = function () {
 
-		if(!this._cache.sessionId && this._ws.readyState === 1) {
-			this._send([WAMP_MSG_SPEC.ABORT, {}, "wamp.error.abort"]);
+		if (!this._cache.sessionId && this._ws.readyState === 1) {
+			this._send([WAMP_MSG_SPEC.ABORT, {}, 'wamp.error.abort']);
 			this._cache.sessionId = null;
 		}
 
@@ -1084,34 +1083,34 @@
 	Wampy.prototype.subscribe = function (topicURI, callbacks) {
 		var reqId;
 
-		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
+		if (this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(!this._validateURI(topicURI)) {
+		if (!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(typeof callbacks === 'function') {
+		if (typeof callbacks === 'function') {
 			callbacks = { onEvent: callbacks};
-		} else if(this._isPlainObject(callbacks) && callbacks.onEvent !== undefined) {
+		} else if (this._isPlainObject(callbacks) && callbacks.onEvent !== undefined) {
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1137,7 +1136,7 @@
 				this._subscriptions[topicURI].callbacks.push(callbacks.onEvent);
 			}
 
-			if(callbacks.onSuccess) {
+			if (callbacks.onSuccess) {
 				callbacks['onSuccess']();
 			}
 		}
@@ -1160,10 +1159,10 @@
 	Wampy.prototype.unsubscribe = function (topicURI, callbacks) {
 		var reqId, i = -1;
 
-		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
+		if (this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1174,10 +1173,10 @@
 
 			reqId = this._getReqId();
 
-			if(callbacks === undefined) {
+			if (callbacks === undefined) {
 				this._subscriptions[topicURI].callbacks = [];
 				callbacks = {};
-			} else if(typeof callbacks === 'function') {
+			} else if (typeof callbacks === 'function') {
 				i = this._subscriptions[topicURI].callbacks.indexOf(callbacks);
 				callbacks = { onEvent: callbacks };
 			} else {
@@ -1205,7 +1204,7 @@
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1236,20 +1235,20 @@
 	Wampy.prototype.publish = function (topicURI, payload, callbacks, advancedOptions) {
 		var reqId, msg, options = {}, err = false;
 
-		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
+		if (this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(!this._validateURI(topicURI)) {
+		if (!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1260,34 +1259,34 @@
 			options.acknowledge = true;
 		}
 
-		if(advancedOptions !== undefined) {
+		if (advancedOptions !== undefined) {
 
-			if(this._isPlainObject(advancedOptions)) {
-				if(advancedOptions.exclude){
-					if(this._isArray(advancedOptions.exclude)) {
+			if (this._isPlainObject(advancedOptions)) {
+				if (advancedOptions.exclude){
+					if (this._isArray(advancedOptions.exclude)) {
 						options.exclude = advancedOptions.exclude;
-					} else if(typeof advancedOptions.exclude === 'number') {
+					} else if (typeof advancedOptions.exclude === 'number') {
 						options.exclude = [advancedOptions.exclude];
 					} else {
 						err = true;
 					}
 				}
 
-				if(advancedOptions.eligible){
-					if(this._isArray(advancedOptions.eligible)) {
+				if (advancedOptions.eligible){
+					if (this._isArray(advancedOptions.eligible)) {
 						options.eligible = advancedOptions.eligible;
-					} else if(typeof advancedOptions.eligible === 'number') {
+					} else if (typeof advancedOptions.eligible === 'number') {
 						options.eligible = [advancedOptions.eligible];
 					} else {
 						err = true;
 					}
 				}
 
-				if(advancedOptions.hasOwnProperty("exclude_me")) {
+				if (advancedOptions.hasOwnProperty('exclude_me')) {
 					options.exclude_me = advancedOptions.exclude_me !== false;
 				}
 
-				if(advancedOptions.hasOwnProperty("disclose_me")) {
+				if (advancedOptions.hasOwnProperty('disclose_me')) {
 					options.disclose_me = advancedOptions.disclose_me === true;
 				}
 
@@ -1295,10 +1294,10 @@
 				err = true;
 			}
 
-			if(err) {
+			if (err) {
 				this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
-				if(this._isPlainObject(callbacks) && callbacks.onError) {
+				if (this._isPlainObject(callbacks) && callbacks.onError) {
 					callbacks['onError'](this._cache.opStatus.description);
 				}
 
@@ -1315,9 +1314,9 @@
 				break;
 			case 2:
 				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-				if(this._isArray(payload)) {
+				if (this._isArray(payload)) {
 					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, payload];
-				} else if(this._isPlainObject(payload)) {
+				} else if (this._isPlainObject(payload)) {
 					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [], payload];
 				} else {    // assume it's a single value
 					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [payload]];
@@ -1330,9 +1329,9 @@
 						};
 
 				// WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-				if(this._isArray(payload)) {
+				if (this._isArray(payload)) {
 					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, payload];
-				} else if(this._isPlainObject(payload)) {
+				} else if (this._isPlainObject(payload)) {
 					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [], payload];
 				} else {    // assume it's a single value
 					msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [payload]];
@@ -1369,72 +1368,72 @@
 	Wampy.prototype.call = function (topicURI, payload, callbacks, advancedOptions) {
 		var reqId, msg, options = {}, err = false;
 
-		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
+		if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(!this._validateURI(topicURI)) {
+		if (!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(typeof callbacks === 'function') {
+		if (typeof callbacks === 'function') {
 			callbacks = { onSuccess: callbacks};
-		} else if(this._isPlainObject(callbacks) && callbacks.onSuccess !== undefined) {
+		} else if (this._isPlainObject(callbacks) && callbacks.onSuccess !== undefined) {
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(advancedOptions !== undefined) {
+		if (advancedOptions !== undefined) {
 
-			if(this._isPlainObject(advancedOptions)) {
-				if(advancedOptions.exclude){
-					if(this._isArray(advancedOptions.exclude)) {
+			if (this._isPlainObject(advancedOptions)) {
+				if (advancedOptions.exclude){
+					if (this._isArray(advancedOptions.exclude)) {
 						options.exclude = advancedOptions.exclude;
-					} else if(typeof advancedOptions.exclude === 'number') {
+					} else if (typeof advancedOptions.exclude === 'number') {
 						options.exclude = [advancedOptions.exclude];
 					} else {
 						err = true;
 					}
 				}
 
-				if(advancedOptions.eligible){
-					if(this._isArray(advancedOptions.eligible)) {
+				if (advancedOptions.eligible){
+					if (this._isArray(advancedOptions.eligible)) {
 						options.eligible = advancedOptions.eligible;
-					} else if(typeof advancedOptions.eligible === 'number') {
+					} else if (typeof advancedOptions.eligible === 'number') {
 						options.eligible = [advancedOptions.eligible];
 					} else {
 						err = true;
 					}
 				}
 
-				if(advancedOptions.hasOwnProperty("exclude_me")) {
+				if (advancedOptions.hasOwnProperty('exclude_me')) {
 					options.exclude_me = advancedOptions.exclude_me !== false;
 				}
 
-				if(advancedOptions.hasOwnProperty("disclose_me")) {
+				if (advancedOptions.hasOwnProperty('disclose_me')) {
 					options.disclose_me = advancedOptions.disclose_me === true;
 				}
 
-				if(advancedOptions.hasOwnProperty("receive_progress")) {
+				if (advancedOptions.hasOwnProperty('receive_progress')) {
 					options.receive_progress = advancedOptions.receive_progress === true;
 				}
 
@@ -1442,10 +1441,10 @@
 				err = true;
 			}
 
-			if(err) {
+			if (err) {
 				this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
-				if(this._isPlainObject(callbacks) && callbacks.onError) {
+				if (this._isPlainObject(callbacks) && callbacks.onError) {
 					callbacks['onError'](this._cache.opStatus.description);
 				}
 
@@ -1459,13 +1458,13 @@
 
 		this._calls[reqId] = callbacks;
 
-		//WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
-		if(payload === null) {
+		// WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
+		if (payload === null) {
 			msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
 		} else {
-			if(this._isArray(payload)) {
+			if (this._isArray(payload)) {
 				msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI, payload];
-			} else if(this._isPlainObject(payload)) {
+			} else if (this._isPlainObject(payload)) {
 				msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI, [], payload];
 			} else {    // assume it's a single value
 				msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI, [payload]];
@@ -1494,40 +1493,40 @@
 	 * @returns {Wampy}
 	 */
 	Wampy.prototype.cancel = function (reqId, callbacks, advancedOptions) {
-		var options = { mode: "skip" };
+		var options = { mode: 'skip' };
 
-		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
+		if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(!reqId || !this._calls[reqId]) {
+		if (!reqId || !this._calls[reqId]) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(advancedOptions !== undefined) {
-			if(this._isPlainObject(advancedOptions)) {
-				if(advancedOptions.hasOwnProperty("mode")) {
-					options.mode = /skip|kill|killnowait/.test(advancedOptions.mode) ? advancedOptions.mode : "skip" ;
+		if (advancedOptions !== undefined) {
+			if (this._isPlainObject(advancedOptions)) {
+				if (advancedOptions.hasOwnProperty('mode')) {
+					options.mode = /skip|kill|killnowait/.test(advancedOptions.mode) ? advancedOptions.mode : 'skip' ;
 				}
 			}
 		}
 
-		//WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
+		// WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
 		this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
 
-		if(callbacks.onSuccess) {
+		if (callbacks.onSuccess) {
 			callbacks['onSuccess']();
 		}
 
@@ -1550,34 +1549,34 @@
 	Wampy.prototype.register = function (topicURI, callbacks) {
 		var reqId;
 
-		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
+		if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(!this._validateURI(topicURI)) {
+		if (!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(typeof callbacks === 'function') {
+		if (typeof callbacks === 'function') {
 			callbacks = { rpc: callbacks};
-		} else if(this._isPlainObject(callbacks) && callbacks.rpc !== undefined) {
+		} else if (this._isPlainObject(callbacks) && callbacks.rpc !== undefined) {
 
 		} else {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1601,7 +1600,7 @@
 		} else {    // already have registration with such topicURI
 			this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
@@ -1623,27 +1622,27 @@
 	Wampy.prototype.unregister = function (topicURI, callbacks) {
 		var reqId;
 
-		if(this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
+		if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
 			this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(!this._validateURI(topicURI)) {
+		if (!this._validateURI(topicURI)) {
 			this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
 			return this;
 		}
 
-		if(typeof callbacks === 'function') {
+		if (typeof callbacks === 'function') {
 			callbacks = { onSuccess: callbacks};
 		}
 
@@ -1663,7 +1662,7 @@
 		} else {    // already have registration with such topicURI
 			this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
 
-			if(this._isPlainObject(callbacks) && callbacks.onError) {
+			if (this._isPlainObject(callbacks) && callbacks.onError) {
 				callbacks['onError'](this._cache.opStatus.description);
 			}
 
