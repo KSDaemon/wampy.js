@@ -656,14 +656,6 @@
             case WAMP_MSG_SPEC.WELCOME:
                 // WAMP SPEC: [WELCOME, Session|id, Details|dict]
 
-                if (this._cache.reconnectingAttempts) {
-                    // There was reconnection
-                    i = 1;
-                    this._cache.reconnectingAttempts = 0;
-                } else {
-                    i = 0;
-                }
-
                 this._cache.sessionId = data[1];
                 this._cache.server_wamp_features = data[2];
 
@@ -672,10 +664,15 @@
                     this._options.onConnect();
                 }
 
-                if (i === 1) {
+                if (this._cache.reconnectingAttempts) {
+                    // There was reconnection
+
+                    this._cache.reconnectingAttempts = 0;
+
                     // Let's renew all previous state
                     this._renewSubscriptions();
                     this._renewRegistrations();
+
                 }
 
                 // Send local queue if there is something out there
