@@ -750,26 +750,30 @@
                     case WAMP_MSG_SPEC.INVOCATION:
                         break;
                     case WAMP_MSG_SPEC.CALL:
-                        if (this._calls[data[2]].onError) {
+                        if (this._calls[data[2]]) {
 
-                            switch (data.length) {
-                                case 5:
-                                    // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict, Error|uri]
-                                    d = null;
-                                    break;
-                                case 6:
-                                    // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
-                                    //             Error|uri, Arguments|list]
-                                    d = data[5];
-                                    break;
-                                case 7:
-                                    // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
-                                    //             Error|uri, Arguments|list, ArgumentsKw|dict]
-                                    d = data[6];
-                                    break;
+                            if (this._calls[data[2]].onError) {
+
+                                switch (data.length) {
+                                    case 5:
+                                        // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict, Error|uri]
+                                        d = null;
+                                        break;
+                                    case 6:
+                                        // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
+                                        //             Error|uri, Arguments|list]
+                                        d = data[5];
+                                        break;
+                                    case 7:
+                                        // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
+                                        //             Error|uri, Arguments|list, ArgumentsKw|dict]
+                                        d = data[6];
+                                        break;
+                                }
+
+                                this._calls[data[2]].onError(d);
                             }
 
-                            this._calls[data[2]].onError(d);
                             delete this._calls[data[2]];
 
                         } else {
