@@ -1256,8 +1256,10 @@
             } else if (typeof callbacks === 'function') {
                 i = this._subscriptions[topicURI].callbacks.indexOf(callbacks);
                 callbacks = {};
-            } else if (callbacks.onEvent) {
+            } else if (callbacks.onEvent && typeof callbacks.onEvent === 'function') {
                 i = this._subscriptions[topicURI].callbacks.indexOf(callbacks.onEvent);
+            } else {
+                this._subscriptions[topicURI].callbacks = [];
             }
 
             if (i >= 0) {
