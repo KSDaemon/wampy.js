@@ -1226,8 +1226,8 @@
     /**
      * Unsubscribe from topic
      * @param {string} topicURI
-     * @param {function|object} callbacks - if it is a function - it will be treated as published event callback
-     *                          or it can be hash table of callbacks:
+     * @param {function|object} callbacks - if it is a function - it will be treated as
+     *                          published event callback to remove or it can be hash table of callbacks:
      *                          { onSuccess: will be called when unsubscribe would be confirmed
      *                            onError: will be called if unsubscribe would be aborted
      *                            onEvent: published event callback to remove }
@@ -1255,8 +1255,8 @@
                 callbacks = {};
             } else if (typeof callbacks === 'function') {
                 i = this._subscriptions[topicURI].callbacks.indexOf(callbacks);
-                callbacks = { onEvent: callbacks };
-            } else {
+                callbacks = {};
+            } else if (callbacks.onEvent) {
                 i = this._subscriptions[topicURI].callbacks.indexOf(callbacks.onEvent);
             }
 
