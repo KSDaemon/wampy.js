@@ -46,9 +46,9 @@
         INVOCATION: 68,
         INTERRUPT: 69,
         YIELD: 70
-    };
+    },
 
-    var WAMP_ERROR_MSG = {
+    WAMP_ERROR_MSG = {
         SUCCESS: {
             code: 0,
             description: 'Success!'
@@ -189,7 +189,7 @@
          * @type {string}
          * @private
          */
-        this.version = 'v1.0.5';
+        this.version = 'v1.0.6';
 
         /**
          * WS Url
