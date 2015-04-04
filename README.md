@@ -46,6 +46,7 @@ Wampy.js supports next WAMP roles and features:
 	* callee blackwhite listing.
 	* caller exclusion.
 	* caller identification.
+	* progressive call results.
 * callee: basic profile.
 
 Wampy default serializer is JSON, but it also supports msgpack as serializer, but you need to include msgpack.js as dependency.
