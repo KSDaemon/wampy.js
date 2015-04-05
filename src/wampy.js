@@ -14,8 +14,8 @@
  *
  */
 
-;( // Module boilerplate to support browser globals and browserify and AMD.
-    typeof define === 'function' ? function (m) { define('Wampy', m); } :
+// Module boilerplate to support browser globals and browserify and AMD.
+;(typeof define === 'function' ? function (m) { define('Wampy', m); } :
     typeof exports === 'object' ? function (m) { module.exports = m(); } :
     function (m) { this.Wampy = m(); }
 )(function () {
@@ -132,40 +132,63 @@
         NON_EXIST_RPC_REQ_ID: {
             code: 20,
             description: 'No RPC calls in action with specified request ID!'
+        },
+        NO_REALM: {
+            code: 21,
+            description: 'No realm specified!'
         }
-    };
+    },
 
-    function getServerUrl(url) {
-        var scheme, port, path;
+    isNode = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]');
+
+    function getServerUrlBrowser(url) {
+        var scheme, port;
 
         if (!url) {
             scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             port = window.location.port !== '' ? ':' + window.location.port : '';
             return scheme + window.location.hostname + port + '/ws';
-        } else if (/^ws/.test(url)) {   // ws scheme is specified
+        } else if (/^ws(s)?:\/\//.test(url)) {   // ws scheme is specified
             return url;
-        } else if (/:\d{1,5}/.test(url)) {  // port is specified
+        } else if (/:\d{1,5}/.test(url)) {  // no scheme, but port is specified
             scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             return scheme + url;
-        } else {    // just path on current server
+        } else if (url[0] === '/') {    // just path on current server
             scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             port = window.location.port !== '' ? ':' + window.location.port : '';
-            path = url[0] === '/' ? url : '/' + url;
-            return scheme + window.location.hostname + port + path;
+            return scheme + window.location.hostname + port + url;
+        } else {    // domain
+            scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+            return scheme + url;
+        }
+    }
+
+    function getServerUrlNode(url) {
+        if (/^ws(s)?:\/\//.test(url)) {   // ws scheme is specified
+            return url;
+        } else {
+            return null;
         }
     }
 
     function getWebSocket(url, protocols) {
-        var parsedUrl = getServerUrl(url);
+        var parsedUrl = isNode ? getServerUrlNode(url) : getServerUrlBrowser(url),
+            root = isNode ? global : window;
 
-        if ('WebSocket' in window) {
+        if (!parsedUrl) {
+            return null;
+        }
+
+        console.log('getWebSocket: parsedUrl: ', parsedUrl);
+
+        if ('WebSocket' in root) {
         // Chrome, MSIE, newer Firefox
             if (protocols) {
                 return new WebSocket(parsedUrl, protocols);
             } else {
                 return new WebSocket(parsedUrl);
             }
-        } else if ('MozWebSocket' in window) {
+        } else if ('MozWebSocket' in root) {
             // older versions of Firefox
             if (protocols) {
                 return new MozWebSocket(parsedUrl, protocols);
@@ -369,7 +392,7 @@
              * WAMP Realm to join
              * @type {string}
              */
-            realm: window.location.hostname,
+            realm: null,
 
             /**
              * onConnect callback
@@ -408,9 +431,13 @@
                 break;
         }
 
-        this._setWsProtocols();
-        this._ws = getWebSocket(this._url, this._protocols);
-        this._initWsCallbacks();
+        if (this._options.realm) {
+            this._setWsProtocols();
+            this._ws = getWebSocket(this._url, this._protocols);
+            this._initWsCallbacks();
+        } else {
+            this._cache.opStatus = WAMP_ERROR_MSG.NO_REALM;
+        }
     };
 
     /* Internal utils methods */
@@ -486,8 +513,9 @@
      * @private
      */
     Wampy.prototype._setWsProtocols = function () {
+        var root = isNode ? global : window;
 
-        if (window.msgpack !== undefined) {
+        if (root.msgpack !== undefined) {
             if (this._options.transportEncoding === 'msgpack') {
                 this._protocols = ['wamp.2.msgpack', 'wamp.2.json'];
             } else {
@@ -598,11 +626,12 @@
     Wampy.prototype._initWsCallbacks = function () {
         var self = this;
 
-        this._ws.onopen = function () { self._wsOnOpen.call(self); };
-        this._ws.onclose = function (event) { self._wsOnClose.call(self, event); };
-        this._ws.onmessage = function (event) { self._wsOnMessage.call(self, event); };
-        this._ws.onerror = function (error) { self._wsOnError.call(self, error); };
-
+        if (this._ws) {
+            this._ws.onopen = function () { self._wsOnOpen.call(self); };
+            this._ws.onclose = function (event) { self._wsOnClose.call(self, event); };
+            this._ws.onmessage = function (event) { self._wsOnMessage.call(self, event); };
+            this._ws.onerror = function (error) { self._wsOnError.call(self, error); };
+        }
     };
 
     Wampy.prototype._wsOnOpen = function () {
@@ -623,7 +652,8 @@
     };
 
     Wampy.prototype._wsOnClose = function () {
-        var self = this;
+        var self = this,
+            root = isNode ? global : window;
         console.log('[wampy] websocket disconnected');
 
         // Automatic reconnection
@@ -631,7 +661,7 @@
             this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries &&
             !this._cache.isSayingGoodbye) {
             this._cache.sessionId = null;
-            this._cache.timer = window.setTimeout(function () {
+            this._cache.timer = root.setTimeout(function () {
                 self._wsReconnect.call(self);
             }, this._options.reconnectInterval);
         } else {
@@ -1102,9 +1132,13 @@
             this._url = url;
         }
 
-        this._setWsProtocols(); // in case some one has changed settings
-        this._ws = getWebSocket(this._url, this._protocols);
-        this._initWsCallbacks();
+        if (this._options.realm) {
+            this._setWsProtocols(); // in case some one has changed settings
+            this._ws = getWebSocket(this._url, this._protocols);
+            this._initWsCallbacks();
+        } else {
+            this._cache.opStatus = WAMP_ERROR_MSG.NO_REALM;
+        }
 
         return this;
     };
