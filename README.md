@@ -59,7 +59,7 @@ Usage example
 =============
 
 ```javascript
-var ws = new Wampy('/ws/');
+var ws = new Wampy('/ws/', { realm: 'AppRealm' });
 ws.subscribe('system.monitor.update', function (data) { console.log('Received system.monitor.update event!'); })
   .subscribe('client.message', function (data) { console.log('Received client.message event!'); })
 
@@ -138,7 +138,7 @@ Can be in forms of:
 	* fully qualified url: schema://server:port/path
 	* server:port/path. In this case page schema will be used.
 	* /path. In this case page schema, server, port will be used.
-* **options** hash-table - optional. See description.
+* **options** hash-table. The only required field is `realm`. See description below.
 
 ```javascript
 ws = new Wampy();
@@ -166,7 +166,7 @@ or had registered some procedures, Wampy will resubscribe to that topics and rer
 will be called
 * **transportEncoding**. Default value: json. Transport serializer to use. Supported 2 values: json|msgpack.
 For using msgpack you need to include msgpack javascript library, and also wamp server, that also supports it.
-* **realm**. Default value: window.location.hostname. WAMP Realm to join on server. See WAMP spec for additional info.
+* **realm**. Default value: undefined. WAMP Realm to join on server. See WAMP spec for additional info.
 * **onConnect**. Default value: undefined. Callback function. Fired when connection to wamp server is established.
 * **onClose**. Default value: undefined. Callback function. Fired on closing connection to wamp server.
 * **onError**. Default value: undefined. Callback function. Fired on error in websocket communication.
