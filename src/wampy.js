@@ -183,8 +183,6 @@
             return null;
         }
 
-        console.log('getWebSocket: parsedUrl: ', parsedUrl);
-
         if ('WebSocket' in root) {
         // Chrome, MSIE, newer Firefox
             if (protocols) {
@@ -369,6 +367,12 @@
          */
         this._options = {
             /**
+             * Logging
+             * @type {boolean}
+             */
+            debug: false,
+
+            /**
              * Reconnecting flag
              * @type {boolean}
              */
@@ -449,6 +453,17 @@
     };
 
     /* Internal utils methods */
+    /**
+     * Internal logger
+     * @param obj
+     * @private
+     */
+    Wampy.prototype._log = function (obj) {
+        if (this._options.debug) {
+            console.log(obj);
+        }
+    };
+
     /**
      * Get the new unique request id
      * @returns {number}
@@ -645,7 +660,7 @@
     Wampy.prototype._wsOnOpen = function () {
         var p;
 
-        console.log('[wampy] websocket connected');
+        this._log('[wampy] websocket connected');
 
         p = this._ws.protocol.split('.');
         this._options.transportEncoding = p[2];
@@ -662,7 +677,7 @@
     Wampy.prototype._wsOnClose = function () {
         var self = this,
             root = isNode ? global : window;
-        console.log('[wampy] websocket disconnected');
+        this._log('[wampy] websocket disconnected');
 
         // Automatic reconnection
         if ((this._cache.sessionId || this._cache.reconnectingAttempts) &&
@@ -686,7 +701,7 @@
     Wampy.prototype._wsOnMessage = function (event) {
         var data, id, i, d, result, msg;
 
-        console.log('[wampy] websocket message received', event.data);
+        this._log('[wampy] websocket message received', event.data);
 
         data = this._decode(event.data);
 
@@ -1038,7 +1053,7 @@
     };
 
     Wampy.prototype._wsOnError = function (error) {
-        console.log('[wampy] websocket error');
+        this._log('[wampy] websocket error');
 
         if (this._options.onError) {
             this._options.onError(error);
@@ -1046,7 +1061,7 @@
     };
 
     Wampy.prototype._wsReconnect = function () {
-        console.log('[wampy] websocket reconnecting...');
+        this._log('[wampy] websocket reconnecting...');
 
         if (this._options.onReconnect) {
             this._options.onReconnect();
