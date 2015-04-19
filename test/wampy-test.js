@@ -108,11 +108,6 @@ var expect = require('chai').expect,
 root.WebSocket = root.WebSocket || WebSocket;
 
 describe('Wampy.js', function () {
-    var wampy;
-
-    before(function () {
-
-    })
 
     describe('Constructor', function () {
 
@@ -173,12 +168,50 @@ describe('Wampy.js', function () {
     });
 
     describe('Instance', function () {
+        var wampy;
 
-        it('allows to set different options');
+        before(function (done) {
+            wampy = new Wampy('ws://fake.server.org/ws/', {
+                    autoReconnect: false,
+                    reconnectInterval: 2000,
+                    maxRetries: 7,
+                    transportEncoding: 'json',
+                    realm: 'AppRealm',
+                    onConnect: function () {
+                        done();
+                    },
+                    onClose: function () {
+                        done();
+                    },
+                    onError: function () {
+                        done();
+                    },
+                    onReconnect: function () {
+                        done();
+                    }
+                });
+        });
 
-        it('allows to get different options');
+        it('allows to get and set different options', function () {
+            var options = wampy.options({
+                autoReconnect: true,
+                reconnectInterval: 1000,
+                maxRetries: 5,
+                transportEncoding: 'json'
+            }).options();
 
-        it('allows to get current WAMP Session ID');
+            expect(options.autoReconnect).to.be.true;
+            expect(options.reconnectInterval).to.be.equal(1000);
+            expect(options.maxRetries).to.be.equal(5);
+            expect(options.transportEncoding).to.be.equal('json');
+
+        });
+
+        it('allows to get current WAMP Session ID', function () {
+            var s = wampy.getSessionId();
+            expect(s).to.be.a('number');
+            expect(s).to.be.above(0);
+        });
 
         it('allows to disconnect from connected server');
 

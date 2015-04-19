@@ -103,6 +103,39 @@
                     }
                 }
             ]
+        ) },
+        { data: JSON.stringify(
+            [
+                WAMP_MSG_SPEC.WELCOME,
+                3,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        publisher: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        subscriber: {},
+                        caller: {
+                            features: {
+                                callee_blackwhite_listing: true,
+                                caller_exclusion: true,
+                                caller_identification: true,
+                                progressive_call_results: true,
+                                call_canceling: true
+                            }
+                        },
+                        callee: {
+                            features: {
+                                caller_identification: true
+                            }
+                        }
+                    }
+                }
+            ]
         ) }
     ],
 
