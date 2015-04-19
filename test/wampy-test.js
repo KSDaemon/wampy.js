@@ -6,10 +6,109 @@
 
 var expect = require('chai').expect,
     WebSocket = require('./fake-ws'),
-    Wampy = require('./../src/wampy');
+    Wampy = require('./../src/wampy'),
+    root = (typeof process === 'object' &&
+            Object.prototype.toString.call(process) === '[object process]') ?
+            global : window,
+    WAMP_ERROR_MSG = {
+        SUCCESS: {
+            code: 0,
+            description: 'Success!'
+        },
+        URI_ERROR: {
+            code: 1,
+            description: 'Topic URI doesn\'t meet requirements!'
+        },
+        NO_BROKER: {
+            code: 2,
+            description: 'Server doesn\'t provide broker role!'
+        },
+        NO_CALLBACK_SPEC: {
+            code: 3,
+            description: 'No required callback function specified!'
+        },
+        INVALID_PARAM: {
+            code: 4,
+            description: 'Invalid parameter(s) specified!'
+        },
+        NON_EXIST_SUBSCRIBE_CONFIRM: {
+            code: 5,
+            description: 'Received subscribe confirmation to non existent subscription!'
+        },
+        NON_EXIST_SUBSCRIBE_ERROR: {
+            code: 6,
+            description: 'Received error for non existent subscription!'
+        },
+        NON_EXIST_UNSUBSCRIBE: {
+            code: 7,
+            description: 'Trying to unsubscribe from non existent subscription!'
+        },
+        NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: {
+            code: 8,
+            description: 'Received unsubscribe confirmation to non existent subscription!'
+        },
+        NON_EXIST_PUBLISH_ERROR: {
+            code: 9,
+            description: 'Received error for non existent publication!'
+        },
+        NON_EXIST_PUBLISH_PUBLISHED: {
+            code: 10,
+            description: 'Received publish confirmation for non existent publication!'
+        },
+        NON_EXIST_SUBSCRIBE_EVENT: {
+            code: 11,
+            description: 'Received event for non existent subscription!'
+        },
+        NO_DEALER: {
+            code: 12,
+            description: 'Server doesn\'t provide dealer role!'
+        },
+        NON_EXIST_CALL_RESULT: {
+            code: 13,
+            description: 'Received rpc result for non existent call!'
+        },
+        NON_EXIST_CALL_ERROR: {
+            code: 14,
+            description: 'Received rpc call error for non existent call!'
+        },
+        RPC_ALREADY_REGISTERED: {
+            code: 15,
+            description: 'RPC already registered!'
+        },
+        NON_EXIST_RPC_REG: {
+            code: 16,
+            description: 'Received rpc registration confirmation for non existent rpc!'
+        },
+        NON_EXIST_RPC_UNREG: {
+            code: 17,
+            description: 'Received rpc unregistration confirmation for non existent rpc!'
+        },
+        NON_EXIST_RPC_ERROR: {
+            code: 18,
+            description: 'Received error for non existent rpc!'
+        },
+        NON_EXIST_RPC_INVOCATION: {
+            code: 19,
+            description: 'Received invocation for non existent rpc!'
+        },
+        NON_EXIST_RPC_REQ_ID: {
+            code: 20,
+            description: 'No RPC calls in action with specified request ID!'
+        },
+        NO_REALM: {
+            code: 21,
+            description: 'No realm specified!'
+        },
+        NO_WS_URL: {
+            code: 22,
+            description: 'No websocket URL specified or URL is incorrect!'
+        }
+    };
+
+root.WebSocket = root.WebSocket || WebSocket;
 
 describe('Wampy.js', function () {
-    var wampy = new Wampy('/ws/', { realm: 'AppRealm' });
+    var wampy;
 
     before(function () {
 
@@ -17,13 +116,59 @@ describe('Wampy.js', function () {
 
     describe('Constructor', function () {
 
-        it('allows to connect on instantiation if all required options specified');
+        it('allows to connect on instantiation if all required options specified', function (done) {
+            var wampy = new Wampy('ws://fake.server.org/ws/',
+                { realm: 'AppRealm',
+                  onConnect: done
+            });
+        });
 
-        it('disallows to connect on instantiation without url');
+        it('disallows to connect on instantiation without url', function () {
+            var wampy = new Wampy({ realm: 'AppRealm' }),
+                opStatus = wampy.getOpStatus();
 
-        it('disallows to connect on instantiation without realm');
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_URL);
+        });
 
-        it('allows to set different options on instantiation');
+        it('disallows to connect on instantiation without realm', function () {
+            var wampy = new Wampy('ws://fake.server.org/ws/'),
+                opStatus = wampy.getOpStatus();
+
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_REALM);
+        });
+
+        it('allows to set different options on instantiation', function (done) {
+            var wampy = new Wampy('ws://fake.server.org/ws/', {
+                    autoReconnect: true,
+                    reconnectInterval: 10000,
+                    maxRetries: 50,
+                    transportEncoding: 'json',
+                    realm: 'AppRealm',
+                    onConnect: function () {
+                        done();
+                    },
+                    onClose: function () {
+                        done();
+                    },
+                    onError: function () {
+                        done();
+                    },
+                    onReconnect: function () {
+                        done();
+                    }
+                }),
+                options = wampy.options();
+
+            expect(options.autoReconnect).to.be.true;
+            expect(options.reconnectInterval).to.be.equal(10000);
+            expect(options.maxRetries).to.be.equal(50);
+            expect(options.transportEncoding).to.be.equal('json');
+            expect(options.realm).to.be.equal('AppRealm');
+            expect(options.onConnect).to.be.a('function');
+            expect(options.onClose).to.be.a('function');
+            expect(options.onError).to.be.a('function');
+            expect(options.onReconnect).to.be.a('function');
+        });
 
     });
 
