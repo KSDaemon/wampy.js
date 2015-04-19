@@ -136,6 +136,10 @@
         NO_REALM: {
             code: 21,
             description: 'No realm specified!'
+        },
+        NO_WS_URL: {
+            code: 22,
+            description: 'No websocket URL specified or URL is incorrect!'
         }
     },
 
@@ -184,16 +188,16 @@
         if ('WebSocket' in root) {
         // Chrome, MSIE, newer Firefox
             if (protocols) {
-                return new WebSocket(parsedUrl, protocols);
+                return new root.WebSocket(parsedUrl, protocols);
             } else {
-                return new WebSocket(parsedUrl);
+                return new root.WebSocket(parsedUrl);
             }
         } else if ('MozWebSocket' in root) {
             // older versions of Firefox
             if (protocols) {
-                return new MozWebSocket(parsedUrl, protocols);
+                return new root.MozWebSocket(parsedUrl, protocols);
             } else {
-                return new MozWebSocket(parsedUrl);
+                return new root.MozWebSocket(parsedUrl);
             }
         } else {
             return null;
@@ -434,7 +438,11 @@
         if (this._options.realm) {
             this._setWsProtocols();
             this._ws = getWebSocket(this._url, this._protocols);
-            this._initWsCallbacks();
+            if (this._ws) {
+                this._initWsCallbacks();
+            } else {
+                this._cache.opStatus = WAMP_ERROR_MSG.NO_WS_URL;
+            }
         } else {
             this._cache.opStatus = WAMP_ERROR_MSG.NO_REALM;
         }
