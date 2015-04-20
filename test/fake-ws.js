@@ -136,6 +136,119 @@
                     }
                 }
             ]
+        ) },
+        { data: JSON.stringify(
+            [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        ) },
+        { data: JSON.stringify(
+            [
+                WAMP_MSG_SPEC.WELCOME,
+                4,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        publisher: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        subscriber: {},
+                        caller: {
+                            features: {
+                                callee_blackwhite_listing: true,
+                                caller_exclusion: true,
+                                caller_identification: true,
+                                progressive_call_results: true,
+                                call_canceling: true
+                            }
+                        },
+                        callee: {
+                            features: {
+                                caller_identification: true
+                            }
+                        }
+                    }
+                }
+            ]
+        ) },
+        { data: JSON.stringify(
+            [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        ) },
+        { data: JSON.stringify(
+            [
+                WAMP_MSG_SPEC.WELCOME,
+                5,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        publisher: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        subscriber: {},
+                        caller: {
+                            features: {
+                                callee_blackwhite_listing: true,
+                                caller_exclusion: true,
+                                caller_identification: true,
+                                progressive_call_results: true,
+                                call_canceling: true
+                            }
+                        },
+                        callee: {
+                            features: {
+                                caller_identification: true
+                            }
+                        }
+                    }
+                }
+            ]
+        ) },
+        { data: JSON.stringify(
+            [
+                WAMP_MSG_SPEC.WELCOME,
+                6,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        publisher: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        subscriber: {},
+                        caller: {
+                            features: {
+                                callee_blackwhite_listing: true,
+                                caller_exclusion: true,
+                                caller_identification: true,
+                                progressive_call_results: true,
+                                call_canceling: true
+                            }
+                        },
+                        callee: {
+                            features: {
+                                caller_identification: true
+                            }
+                        }
+                    }
+                }
+            ]
         ) }
     ],
 
@@ -159,22 +272,26 @@
         var self = this;
 
         root.setTimeout(function () {
-            self.readyState = 1;
-            self.protocols = 'wamp.2.json';
+            self.readyState = 1;    // Open
+            self.protocol = 'wamp.2.json';
             self.onopen();
-        }, 1);
+        }, 5);
 
     };
 
     WebSocket.prototype.close = function (code, reason) {
-
+        var self = this;
+        this.readyState = 3;    // Closed
+        root.setTimeout(function () {
+            self.onclose();
+        }, 5);
     };
 
     WebSocket.prototype.send = function (data) {
         var self = this;
         root.setTimeout(function () {
-            self.onmessage(testData.shift())
-        }, 1);
+            self.onmessage(testData.shift());
+        }, 5);
     };
 
     return WebSocket;

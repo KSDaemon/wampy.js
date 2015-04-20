@@ -112,10 +112,11 @@ describe('Wampy.js', function () {
     describe('Constructor', function () {
 
         it('allows to connect on instantiation if all required options specified', function (done) {
-            var wampy = new Wampy('ws://fake.server.org/ws/',
-                { realm: 'AppRealm',
-                  onConnect: done
-            });
+            var wampy = new Wampy('ws://fake.server.org/ws/', {
+                    debug: true,
+                    realm: 'AppRealm',
+                    onConnect: done
+                });
         });
 
         it('disallows to connect on instantiation without url', function () {
@@ -134,23 +135,16 @@ describe('Wampy.js', function () {
 
         it('allows to set different options on instantiation', function (done) {
             var wampy = new Wampy('ws://fake.server.org/ws/', {
+                    debug: true,
                     autoReconnect: true,
                     reconnectInterval: 10000,
                     maxRetries: 50,
                     transportEncoding: 'json',
                     realm: 'AppRealm',
-                    onConnect: function () {
-                        done();
-                    },
-                    onClose: function () {
-                        done();
-                    },
-                    onError: function () {
-                        done();
-                    },
-                    onReconnect: function () {
-                        done();
-                    }
+                    onConnect: done,
+                    onClose: done,
+                    onError: done,
+                    onReconnect: done
                 }),
                 options = wampy.options();
 
@@ -172,23 +166,16 @@ describe('Wampy.js', function () {
 
         before(function (done) {
             wampy = new Wampy('ws://fake.server.org/ws/', {
+                    debug: true,
                     autoReconnect: false,
                     reconnectInterval: 2000,
                     maxRetries: 7,
                     transportEncoding: 'json',
                     realm: 'AppRealm',
-                    onConnect: function () {
-                        done();
-                    },
-                    onClose: function () {
-                        done();
-                    },
-                    onError: function () {
-                        done();
-                    },
-                    onReconnect: function () {
-                        done();
-                    }
+                    onConnect: function () { done(); },
+                    onClose: function () { done(); },
+                    onError: function () { done(); },
+                    onReconnect: function () { done(); }
                 });
         });
 
@@ -204,7 +191,10 @@ describe('Wampy.js', function () {
             expect(options.reconnectInterval).to.be.equal(1000);
             expect(options.maxRetries).to.be.equal(5);
             expect(options.transportEncoding).to.be.equal('json');
-
+            expect(options.onConnect).to.be.a('function');
+            expect(options.onClose).to.be.a('function');
+            expect(options.onError).to.be.a('function');
+            expect(options.onReconnect).to.be.a('function');
         });
 
         it('allows to get current WAMP Session ID', function () {
@@ -213,14 +203,48 @@ describe('Wampy.js', function () {
             expect(s).to.be.above(0);
         });
 
-        it('allows to disconnect from connected server');
+        it('allows to disconnect from connected server', function (done) {
+            wampy.options({ onClose: function () { done(); } });
+            wampy.disconnect();
+        });
 
-        it('allows to connect to same WAMP server');
+        it('allows to connect to same WAMP server', function (done) {
+            wampy.options({ onConnect: function () { done(); } });
+            wampy.connect();
+        });
+/*
+        it('allows to connect to different WAMP server', function (done) {
+            wampy.options({
+                onClose: function () {
+                    wampy.options({ onConnect: function () { done(); } })
+                    wampy.connect('ws://another.server.org/ws/');
+                }
+            }).disconnect();
+        }); */
+/*
+        it('allows to abort WebSocket/WAMP session establishment', function (done) {
+            wampy.options({
+                onClose: function () {
+                    wampy.connect('ws://anotherfake.server.org/ws/');
+                },
+                onConnect: function () { done(); }
+            });
+            wampy.disconnect();
 
-        it('allows to connect to different WAMP server');
+            //wampy.options({ onClose: function () { done(); } });
+            //wampy.connect('ws://anotherfake.server.org/ws/');
+            //wampy.abort();
 
-        it('allows to abort WebSocket/WAMP session establishment');
+            wampy.options({ onClose: function () {
+                wampy.connect('ws://anotherfake.server.org/ws/');
+                wampy.abort();
 
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.SUCCESS);
+
+            } });
+            wampy.disconnect();
+        });
+*/
         describe('PubSub module', function () {
 
             it('disallows to subscribe to topic with invalid URI');

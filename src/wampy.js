@@ -439,17 +439,7 @@
                 break;
         }
 
-        if (this._options.realm) {
-            this._setWsProtocols();
-            this._ws = getWebSocket(this._url, this._protocols);
-            if (this._ws) {
-                this._initWsCallbacks();
-            } else {
-                this._cache.opStatus = WAMP_ERROR_MSG.NO_WS_URL;
-            }
-        } else {
-            this._cache.opStatus = WAMP_ERROR_MSG.NO_REALM;
-        }
+        this.connect();
     };
 
     /* Internal utils methods */
@@ -458,9 +448,9 @@
      * @param obj
      * @private
      */
-    Wampy.prototype._log = function (obj) {
+    Wampy.prototype._log = function () {
         if (this._options.debug) {
-            console.log(obj);
+            console.log(arguments);
         }
     };
 
@@ -1156,9 +1146,13 @@
         }
 
         if (this._options.realm) {
-            this._setWsProtocols(); // in case some one has changed settings
+            this._setWsProtocols();
             this._ws = getWebSocket(this._url, this._protocols);
-            this._initWsCallbacks();
+            if (this._ws) {
+                this._initWsCallbacks();
+            } else {
+                this._cache.opStatus = WAMP_ERROR_MSG.NO_WS_URL;
+            }
         } else {
             this._cache.opStatus = WAMP_ERROR_MSG.NO_REALM;
         }
