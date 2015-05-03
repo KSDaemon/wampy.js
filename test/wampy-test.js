@@ -113,7 +113,6 @@ describe('Wampy.js', function () {
 
         it('allows to connect on instantiation if all required options specified', function (done) {
             var wampy = new Wampy('ws://fake.server.org/ws/', {
-                    debug: true,
                     realm: 'AppRealm',
                     onConnect: done
                 });
@@ -135,7 +134,6 @@ describe('Wampy.js', function () {
 
         it('allows to set different options on instantiation', function (done) {
             var wampy = new Wampy('ws://fake.server.org/ws/', {
-                    debug: true,
                     autoReconnect: true,
                     reconnectInterval: 10000,
                     maxRetries: 50,
@@ -212,44 +210,93 @@ describe('Wampy.js', function () {
             wampy.options({ onConnect: function () { done(); } });
             wampy.connect();
         });
-/*
+
         it('allows to connect to different WAMP server', function (done) {
             wampy.options({
                 onClose: function () {
-                    wampy.options({ onConnect: function () { done(); } })
-                    wampy.connect('ws://another.server.org/ws/');
-                }
+                    root.setTimeout(function () {
+                        wampy.connect('ws://another.server.org/ws/');
+                    }, 1);
+                },
+                onConnect: function () { done(); }
             }).disconnect();
-        }); */
-/*
+        });
+
         it('allows to abort WebSocket/WAMP session establishment', function (done) {
             wampy.options({
                 onClose: function () {
-                    wampy.connect('ws://anotherfake.server.org/ws/');
+                    root.setTimeout(function () {
+                        wampy.options({ onClose: done })
+                            .connect('ws://another.server.org/ws/')
+                            .abort();
+
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.SUCCESS);
+
+                    }, 1);
                 },
-                onConnect: function () { done(); }
-            });
-            wampy.disconnect();
+                onConnect: function () {
+                    done(new Error('We reach connection'));
+                }
+            }).disconnect();
 
-            //wampy.options({ onClose: function () { done(); } });
-            //wampy.connect('ws://anotherfake.server.org/ws/');
-            //wampy.abort();
-
-            wampy.options({ onClose: function () {
-                wampy.connect('ws://anotherfake.server.org/ws/');
-                wampy.abort();
-
-                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.SUCCESS);
-
-            } });
-            wampy.disconnect();
         });
-*/
+
         describe('PubSub module', function () {
 
-            it('disallows to subscribe to topic with invalid URI');
+            before(function (done) {
+                wampy.options({ onConnect: function () { done(); } })
+                     .connect();
+            });
 
-            it('disallows to subscribe to topic without specifying callback');
+            it('disallows to subscribe to topic if server does not provide BROKER role', function () {
+                wampy.subscribe('qwe.asd.zxc', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_BROKER);
+            });
+
+            it('disallows to unsubscribe from topic if server does not provide BROKER role', function () {
+                wampy.unsubscribe('qwe.asd.zxc');
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_BROKER);
+            });
+
+            it('disallows to publish to topic if server does not provide BROKER role', function () {
+                wampy.publish('qwe.asd.zxc', 'payload');
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_BROKER);
+            });
+
+            it('disallows to subscribe to topic with invalid URI', function (done) {
+                wampy.options({
+                    onClose: function () {
+                        root.setTimeout(function () {
+                            wampy.connect();
+                        }, 1);
+                    },
+                    onConnect: function () {
+
+                        wampy.subscribe('q.w.e', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        wampy.subscribe('qwe.asd.zxc.', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        wampy.subscribe('qwe.asd..zxc', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        wampy.subscribe('qq,ww,ee', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        wampy.subscribe('qq:www:ee', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+                        done();
+
+                    }
+                }).disconnect();
+
+            });
+
+            it('disallows to subscribe to topic without specifying callback', function () {
+                wampy.subscribe('qqq.www.eee');
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
+            });
 
             it('allows to subscribe to topic');
 
@@ -271,7 +318,22 @@ describe('Wampy.js', function () {
 
             it('allows to publish event with different advanced options');
 
-            it('disallows to publish event to topic with invalid URI');
+            it('disallows to publish event to topic with invalid URI', function () {
+                wampy.publish('q.w.e', 'payload');
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.publish('qwe.asd.zxc.', 'payload');
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.publish('qwe.asd..zxc', 'payload');
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.publish('qq,ww,ee', 'payload');
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.publish('qq:www:ee', 'payload');
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+            });
 
             it('allows to unsubscribe from topic only specified handler');
 
@@ -282,15 +344,56 @@ describe('Wampy.js', function () {
 
         describe('RPC module', function () {
 
+            it('disallows to call rpc if server does not provide DEALER role');
+
+            it('disallows to cancel rpc if server does not provide DEALER role');
+
+            it('disallows to register rpc if server does not provide DEALER role');
+
+            it('disallows to unregister rpc if server does not provide DEALER role');
+
+            it('disallows to register RPC with invalid URI', function () {
+                wampy.register('q.w.e', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.register('qwe.asd.zxc.', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.register('qwe.asd..zxc', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.register('qq,ww,ee', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.register('qq:www:ee', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+            });
+
             it('allows to register RPC');
 
             it('allows to register RPC with notification on registration');
 
-            it('disallows to register RPC with invalid URI');
+            it('disallows to call RPC with invalid URI', function () {
+                wampy.call('q.w.e', 'payload', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-            it('disallows to call RPC with invalid URI');
+                wampy.call('qwe.asd.zxc.', 'payload', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-            it('disallows to call RPC without specifying result handler');
+                wampy.call('qwe.asd..zxc', 'payload', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.call('qq,ww,ee', 'payload', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.call('qq:www:ee', 'payload', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+            });
+
+            it('disallows to call RPC without specifying result handler', function () {
+                wampy.call('qqq.www.eee', 'payload');
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
+            });
 
             it('allows to call RPC without payload');
 
