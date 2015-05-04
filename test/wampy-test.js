@@ -298,23 +298,55 @@ describe('Wampy.js', function () {
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
             });
 
-            it('allows to subscribe to topic');
+            it('allows to subscribe to topic', function () {
+                wampy.subscribe('subscribe.topic1', function (e) { });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
 
-            it('allows to subscribe to topic with notification on subscribing');
+            it('allows to subscribe to topic with notification on subscribing', function (done) {
+                wampy.subscribe('subscribe.topic2', {
+                    onSuccess: function () {
+                        done();
+                    },
+                    onError: function () { },
+                    onEvent: function () { }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
 
-            it('allows to setup multiple handlers to same topic');
+            it('allows to setup multiple handlers to same topic', function () {
+                wampy.subscribe('subscribe.topic2', function (e) { });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                wampy.subscribe('subscribe.topic2', function (e) { });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
 
-            it('allows to publish event without payload');
+            it('allows to publish event without payload', function (done) {
+                wampy.publish('publish.topic1', null, {
+                    onSuccess: function () { done(); }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
 
-            it('allows to publish event with int payload');
+            it('allows to publish event with int payload', function (done) {
+                wampy.publish('publish.topic1', 25, { onSuccess: function () { done(); } });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
 
-            it('allows to publish event with string payload');
+            it('allows to publish event with string payload', function (done) {
+                wampy.publish('publish.topic1', 'payload', { onSuccess: function () { done(); } });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
 
-            it('allows to publish event with array payload');
+            it('allows to publish event with array payload', function (done) {
+                wampy.publish('publish.topic1', [1, 2, 3, 4, 5], { onSuccess: function () { done(); } });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
 
-            it('allows to publish event with hash-table payload');
-
-            it('allows to publish event with notification on publishing');
+            it('allows to publish event with hash-table payload', function (done) {
+                wampy.publish('publish.topic1', { key1: 100, key2: 'string-key' }, { onSuccess: function () { done(); } });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
 
             it('allows to publish event with different advanced options');
 

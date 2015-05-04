@@ -38,8 +38,8 @@
     },
 
     sendData = [
-        { data: JSON.stringify(
-            [
+        {
+            data: [
                 WAMP_MSG_SPEC.WELCOME,
                 1,
                 {
@@ -63,9 +63,9 @@
                     }
                 }
             ]
-        ) },
-        { data: JSON.stringify(
-            [
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.WELCOME,
                 2,
                 {
@@ -89,9 +89,9 @@
                     }
                 }
             ]
-        ) },
-        { data: JSON.stringify(
-            [
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.WELCOME,
                 3,
                 {
@@ -115,16 +115,16 @@
                     }
                 }
             ]
-        ) },
-        { data: JSON.stringify(
-            [
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.GOODBYE,
                 {},
                 'wamp.error.goodbye_and_out'
             ]
-        ) },
-        { data: JSON.stringify(
-            [
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.WELCOME,
                 4,
                 {
@@ -148,16 +148,16 @@
                     }
                 }
             ]
-        ) },
-        { data: JSON.stringify(
-            [
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.GOODBYE,
                 {},
                 'wamp.error.goodbye_and_out'
             ]
-        ) },
-        { data: JSON.stringify(
-            [
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.WELCOME,
                 5,
                 {
@@ -181,28 +181,21 @@
                     }
                 }
             ]
-        ) },
-        { data: JSON.stringify(
-            [
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.GOODBYE,
                 {},
                 'wamp.error.goodbye_and_out'
             ]
-        ) },
-        { data: JSON.stringify(
-            [
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.WELCOME,
                 6,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {
-                        //broker: {
-                        //    features: {
-                        //        subscriber_blackwhite_listing: true,
-                        //        publisher_exclusion: true,
-                        //        publisher_identification: true
-                        //    }
-                        //},
                         dealer: {
                             features: {
                                 callee_blackwhite_listing: true,
@@ -214,18 +207,18 @@
                     }
                 }
             ]
-        ) },
-        { data: JSON.stringify(
-            [
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.GOODBYE,
                 {},
                 'wamp.error.goodbye_and_out'
             ]
-        ) },
-        { data: JSON.stringify(
-            [
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.WELCOME,
-                6,
+                7,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {
@@ -247,7 +240,70 @@
                     }
                 }
             ]
-        ) }
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                1
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                2
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                3
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                4
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                5
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                6
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                7
+            ],
+            from: [1],
+            to: [1]
+        }
     ],
 
     receivedData = [
@@ -307,7 +363,21 @@
     WebSocket.prototype.send = function (data) {
         var self = this;
         this.sendTimer = root.setTimeout(function () {
-            self.onmessage(sendData.shift());
+            var send_data, enc_data, rec_data, i;
+
+            rec_data = JSON.parse(data);
+            send_data = sendData.shift();
+
+            // Prepare answer (copy request id from request to answer, etc)
+            if (send_data.from) {
+                i = send_data.from.length;
+                while (i--) {
+                    send_data.data[send_data.to[i]] = rec_data[send_data.from[i]]
+                }
+            }
+
+            enc_data = { data: JSON.stringify(send_data.data) };
+            self.onmessage(enc_data);
         }, 5);
     };
 
