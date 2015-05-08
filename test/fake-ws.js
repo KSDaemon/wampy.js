@@ -261,9 +261,9 @@
         },
         {
             data: [
-                WAMP_MSG_SPEC.PUBLISHED,
+                WAMP_MSG_SPEC.SUBSCRIBED,
                 'RequestId',
-                3
+                3   // Subscription id need in next publish msg
             ],
             from: [1],
             to: [1]
@@ -275,13 +275,23 @@
                 4
             ],
             from: [1],
-            to: [1]
+            to: [1],
+            next: true
         },
         {
             data: [
-                WAMP_MSG_SPEC.PUBLISHED,
+                WAMP_MSG_SPEC.EVENT,
+                3,
+                4,
+                {},
+                null
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
                 'RequestId',
-                5
+                5   // Subscription id need in next publish msg
             ],
             from: [1],
             to: [1]
@@ -293,13 +303,159 @@
                 6
             ],
             from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                5,
+                6,
+                {},
+                [25]
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                7   // Subscription id need in next publish msg
+            ],
+            from: [1],
             to: [1]
         },
         {
             data: [
                 WAMP_MSG_SPEC.PUBLISHED,
                 'RequestId',
-                7
+                8
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                7,
+                8,
+                {},
+                ['payload']
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                9   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                10
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                9,
+                10,
+                {},
+                [1, 2, 3, 4, 5]
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                11   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                12
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                11,
+                12,
+                {},
+                { key1: 100, key2: 'string-key' }
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                13   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                14
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                13,
+                14,
+                {},
+                ['payload']
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                15   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                15,
+                16,
+                {},
+                ['payload']
+            ]
+        },
+        {
+            data: null  //TODO Dubbled messages - dirty hack, i don't know how to make it clean
+        },
+        {
+            data: null
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.UNSUBSCRIBED,
+                'RequestId'
             ],
             from: [1],
             to: [1]
@@ -368,16 +524,25 @@
             rec_data = JSON.parse(data);
             send_data = sendData.shift();
 
-            // Prepare answer (copy request id from request to answer, etc)
-            if (send_data.from) {
-                i = send_data.from.length;
-                while (i--) {
-                    send_data.data[send_data.to[i]] = rec_data[send_data.from[i]]
+            console.log('Data to send:', data);
+            if (send_data.data) {
+                // Prepare answer (copy request id from request to answer, etc)
+                if (send_data.from) {
+                    i = send_data.from.length;
+                    while (i--) {
+                        send_data.data[send_data.to[i]] = rec_data[send_data.from[i]]
+                    }
                 }
+
+                enc_data = { data: JSON.stringify(send_data.data) };
+                self.onmessage(enc_data);
             }
 
-            enc_data = { data: JSON.stringify(send_data.data) };
-            self.onmessage(enc_data);
+            // Send to client next message
+            if (send_data.next) {
+                self.send(null);
+            }
+
         }, 5);
     };
 

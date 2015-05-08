@@ -321,34 +321,104 @@ describe('Wampy.js', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish event without payload', function (done) {
-                wampy.publish('publish.topic1', null, {
-                    onSuccess: function () { done(); }
+            it('allows to publish/subscribe event without payload', function (done) {
+                wampy.subscribe('subscribe.topic3', function (e) {
+                    expect(e).to.be.null;
+                    done();
+                })
+                .publish('publish.topic3', null, {
+                    onSuccess: function () { }
+                },
+                {
+                    exclude_me: false
                 });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish event with int payload', function (done) {
-                wampy.publish('publish.topic1', 25, { onSuccess: function () { done(); } });
+            it('allows to publish/subscribe event with int payload', function (done) {
+                wampy.subscribe('subscribe.topic4', function (e) {
+                    expect(e).to.be.an('array');
+                    expect(e[0]).to.be.equal(25);
+                    done();
+                })
+                .publish('publish.topic4', 25, {
+                    onSuccess: function () { }
+                },
+                {
+                    exclude_me: false
+                });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish event with string payload', function (done) {
-                wampy.publish('publish.topic1', 'payload', { onSuccess: function () { done(); } });
+            it('allows to publish/subscribe event with string payload', function (done) {
+                wampy.subscribe('subscribe.topic5', function (e) {
+                    expect(e).to.be.an('array');
+                    expect(e[0]).to.be.equal('payload');
+                    done();
+                })
+                .publish('publish.topic4', 'payload', {
+                    onSuccess: function () { }
+                },
+                {
+                    exclude_me: false
+                });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish event with array payload', function (done) {
-                wampy.publish('publish.topic1', [1, 2, 3, 4, 5], { onSuccess: function () { done(); } });
+            it('allows to publish/subscribe event with array payload', function (done) {
+                wampy.subscribe('subscribe.topic6', function (e) {
+                    expect(e).to.be.an('array');
+                    expect(e).to.have.length(5);
+                    expect(e[0]).to.be.equal(1);
+                    expect(e[4]).to.be.equal(5);
+                    done();
+                })
+                .publish('publish.topic4', [1, 2, 3, 4, 5], {
+                    onSuccess: function () { }
+                },
+                {
+                    exclude_me: false
+                });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish event with hash-table payload', function (done) {
-                wampy.publish('publish.topic1', { key1: 100, key2: 'string-key' }, { onSuccess: function () { done(); } });
+            it('allows to publish/subscribe event with hash-table payload', function (done) {
+                var payload = { key1: 100, key2: 'string-key' };
+
+                wampy.subscribe('subscribe.topic7', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e).to.be.deep.equal(payload);
+                    done();
+                })
+                .publish('publish.topic4', payload, {
+                    onSuccess: function () { }
+                },
+                {
+                    exclude_me: false
+                });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish event with different advanced options');
+            it('allows to publish event with different advanced options', function (done) {
+                wampy.subscribe('subscribe.topic8', function (e) {
+                    expect(e).to.be.an('array');
+                    expect(e[0]).to.be.equal('payload');
+                    done();
+                })
+                .publish('publish.topic8', 'payload',
+                    {
+                        onSuccess: function () { },
+                        onError: function () { }
+                    },
+                    {
+                        exclude: [1234567],
+                        eligible: [wampy.getSessionId(), 7654321],
+                        exclude_me: false,
+                        disclose_me: true
+                    }
+                );
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
 
             it('disallows to publish event to topic with invalid URI', function () {
                 wampy.publish('q.w.e', 'payload');
@@ -367,11 +437,39 @@ describe('Wampy.js', function () {
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
             });
 
-            it('allows to unsubscribe from topic only specified handler');
+            it('allows to unsubscribe from topic only specified handler', function (done) {
 
-            it('allows to unsubscribe all handlers from topic');
+                var handler2 = function (e) { done(); },
+                    handler1 = function (e) { done('Called removed handler'); };
 
-            it('allows to unsubscribe from topic with notification on unsubscribing');
+                wampy.subscribe('subscribe.topic9', {
+                    onSuccess: function () {
+                        wampy.subscribe('subscribe.topic9', handler2)
+                        .unsubscribe('subscribe.topic9', handler1)
+                        .publish('subscribe.topic9', 'payload', null, { exclude_me: false });
+                    },
+                    onError: function () { },
+                    onEvent: handler1
+                });
+            });
+
+            it('allows to unsubscribe all handlers from topic', function () {
+                wampy.unsubscribe('subscribe.topic1');
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('allows to unsubscribe from topic with notification on unsubscribing', function (done) {
+                wampy.unsubscribe('subscribe.topic2', {
+                    onSuccess: function (e) { done(); }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('receives error when trying to unsubscribe from non existent subscription', function () {
+                wampy.unsubscribe('subscribe.topic2');
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE.code);
+            });
+
         });
 
         describe('RPC module', function () {
