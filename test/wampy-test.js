@@ -286,6 +286,7 @@ describe('Wampy.js', function () {
 
                         wampy.subscribe('qq:www:ee', function (e) { });
                         expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
                         done();
 
                     }
@@ -308,8 +309,8 @@ describe('Wampy.js', function () {
                     onSuccess: function () {
                         done();
                     },
-                    onError: function () { },
-                    onEvent: function () { }
+                    onError: function () { done('Error during subscribing'); },
+                    onEvent: function (e) { }
                 });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
@@ -474,34 +475,84 @@ describe('Wampy.js', function () {
 
         describe('RPC module', function () {
 
-            it('disallows to call rpc if server does not provide DEALER role');
-
-            it('disallows to cancel rpc if server does not provide DEALER role');
-
-            it('disallows to register rpc if server does not provide DEALER role');
-
-            it('disallows to unregister rpc if server does not provide DEALER role');
-
-            it('disallows to register RPC with invalid URI', function () {
-                wampy.register('q.w.e', function (e) { });
-                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                wampy.register('qwe.asd.zxc.', function (e) { });
-                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                wampy.register('qwe.asd..zxc', function (e) { });
-                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                wampy.register('qq,ww,ee', function (e) { });
-                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                wampy.register('qq:www:ee', function (e) { });
-                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+            before(function (done) {
+                wampy.options({ onClose: function () {
+                    root.setTimeout(function () {
+                        wampy.options({ onConnect: function () { done(); } })
+                            .connect();
+                    }, 1);
+                } }).disconnect();
             });
 
-            it('allows to register RPC');
+            it('disallows to call rpc if server does not provide DEALER role', function () {
+                wampy.call('call.rpc1', 'payload', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
+            });
 
-            it('allows to register RPC with notification on registration');
+            it('disallows to cancel rpc if server does not provide DEALER role', function () {
+                wampy.cancel(1234567, function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
+            });
+
+            it('disallows to register rpc if server does not provide DEALER role', function () {
+                wampy.register('call.rpc2', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
+            });
+
+            it('disallows to unregister rpc if server does not provide DEALER role', function () {
+                wampy.unregister('call.rpc3', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
+            });
+
+            it('disallows to register RPC with invalid URI', function (done) {
+                wampy.options({
+                    onClose: function () {
+                        root.setTimeout(function () {
+                            wampy.connect();
+                        }, 1);
+                    },
+                    onConnect: function () {
+
+                        wampy.register('q.w.e', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        wampy.register('qwe.asd.zxc.', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        wampy.register('qwe.asd..zxc', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        wampy.register('qq,ww,ee', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        wampy.register('qq:www:ee', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        done();
+
+                    }
+                }).disconnect();
+            });
+
+            it('allows to register RPC', function () {
+                wampy.register('register.rpc1', function (e) { });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('allows to register RPC with notification on registration', function (done) {
+                wampy.register('register.rpc2', {
+                    rpc: function (e) { },
+                    onSuccess: function () {
+                        done();
+                    },
+                    onError: function () { done('Error during RPC registration'); }
+                });
+            });
+
+            it('disallows to register RPC with same name', function () {
+                wampy.register('register.rpc2', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED);
+            });
 
             it('disallows to call RPC with invalid URI', function () {
                 wampy.call('q.w.e', 'payload', function (e) { });
