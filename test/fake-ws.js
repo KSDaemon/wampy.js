@@ -447,7 +447,7 @@
             ]
         },
         {
-            data: null  //TODO Dubbled messages - dirty hack, i don't know how to make it clean
+            data: null  // TODO Dubbled messages - dirty hack, i don't know how to make it clean
         },
         {
             data: null
@@ -535,6 +535,119 @@
             ],
             from: [1],
             to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [25]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                ['payload']
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [1, 2, 3, 4, 5]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                { key1: 100, key2: 'string-key' }
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                ['payload']
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { progress: true },
+                [1]
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { progress: true },
+                [25]
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { progress: true },
+                [50]
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { progress: true },
+                [75]
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [100]
+            ],
+            from: [1],
+            to: [1]
         }
     ],
 
@@ -600,7 +713,8 @@
             rec_data = JSON.parse(data);
             send_data = sendData.shift();
 
-            console.log('Data to send:', data);
+            console.log('Data to send to server:', data);
+            console.log('Data to send to client:', send_data.data);
             if (send_data.data) {
                 // Prepare answer (copy request id from request to answer, etc)
                 if (send_data.from) {
@@ -616,7 +730,7 @@
 
             // Send to client next message
             if (send_data.next) {
-                self.send(null);
+                self.send(data);
             }
 
         }, 5);

@@ -576,19 +576,83 @@ describe('Wampy.js', function () {
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
             });
 
-            it('allows to call RPC without payload');
+            it('allows to call RPC without payload', function (done) {
+                wampy.call('call.rpc1', null, function (e) {
+                    expect(e).to.be.null;
+                    done();
+                });
+            });
 
-            it('allows to call RPC with int payload');
+            it('allows to call RPC with int payload', function (done) {
+                wampy.call('call.rpc2', 25, function (e) {
+                    expect(e).to.be.an('array');
+                    expect(e[0]).to.be.equal(25);
+                    done();
+                });
+            });
 
-            it('allows to call RPC with string payload');
+            it('allows to call RPC with string payload', function (done) {
+                wampy.call('call.rpc3', 'payload', function (e) {
+                    expect(e).to.be.an('array');
+                    expect(e[0]).to.be.equal('payload');
+                    done();
+                });
+            });
 
-            it('allows to call RPC with array payload');
+            it('allows to call RPC with array payload', function (done) {
+                wampy.call('call.rpc4', [1, 2, 3, 4, 5], function (e) {
+                    expect(e).to.be.an('array');
+                    expect(e).to.have.length(5);
+                    expect(e[0]).to.be.equal(1);
+                    expect(e[4]).to.be.equal(5);
+                    done();
+                });
+            });
 
-            it('allows to call RPC with hash-table payload');
+            it('allows to call RPC with hash-table payload', function (done) {
+                var payload = { key1: 100, key2: 'string-key' };
 
-            it('allows to call RPC with different advanced options');
+                wampy.call('call.rpc5', {}, function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e).to.be.deep.equal(payload);
+                    done();
+                });
+            });
 
-            it('allows to call RPC with progressive result receiving');
+            it('allows to call RPC with different advanced options', function (done) {
+                wampy.call(
+                    'call.rpc6',
+                    'payload',
+                    function (e) {
+                        expect(e).to.be.an('array');
+                        expect(e[0]).to.be.equal('payload');
+                        done();
+                    },
+                    {
+                        exclude: [1234567],
+                        eligible: [wampy.getSessionId(), 7654321],
+                        exclude_me: false,
+                        disclose_me: true,
+                        receive_progress: false
+                    }
+                );
+            });
+
+            it('allows to call RPC with progressive result receiving', function (done) {
+                wampy.call(
+                    'call.rpc7',
+                    'progress',
+                    function (e) {
+                        expect(e).to.be.an('array');
+                        if (e[0] == 100) {
+                            done();
+                        }
+                    },
+                    {
+                        receive_progress: true
+                    }
+                );
+            });
 
             it('allows to cancel RPC invocation');
 
