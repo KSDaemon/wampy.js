@@ -81,7 +81,7 @@ var expect = require('chai').expect,
         },
         NON_EXIST_RPC_UNREG: {
             code: 17,
-            description: 'Received rpc unregistration confirmation for non existent rpc!'
+            description: 'Received rpc unregistration for non existent rpc!'
         },
         NON_EXIST_RPC_ERROR: {
             code: 18,
@@ -576,6 +576,11 @@ describe('Wampy.js', function () {
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
             });
 
+            it('disallows to unregister rpc if there is no such registration', function () {
+                wampy.unregister('call.rpc4', function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG);
+            });
+
             it('allows to call RPC without payload', function (done) {
                 wampy.call('call.rpc1', null, function (e) {
                     expect(e).to.be.null;
@@ -654,11 +659,60 @@ describe('Wampy.js', function () {
                 );
             });
 
-            it('allows to cancel RPC invocation');
+            it('allows to cancel RPC invocation', function (done) {
+                var reqId;
 
-            it('allows to unregister RPC');
+                wampy.call(
+                    'call.rpc8',
+                    'payload',
+                    {
+                        onSuccess: function (e) {
+                            expect(e).to.be.an('array');
 
-            it('allows to unregister RPC with notification on unregistering');
+                            wampy.cancel(
+                                reqId,
+                                {
+                                    onSuccess: function () {},
+                                    onError: function () { done('Error occured during call canceling'); }
+                                },
+                                {
+                                    mode: 'kill'
+                                }
+                            );
+                        },
+                        onError: function (e) {
+                            done();
+                        }
+                    },
+                    {
+                        receive_progress: true
+                    }
+                );
+
+                reqId = wampy.getOpStatus().reqId;
+            });
+
+            it('allows to unregister RPC', function (done) {
+                wampy.unregister('register.rpc1', function (e) {
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                    done();
+                });
+            });
+
+            it('allows to unregister RPC with notification on unregistering', function (done) {
+                wampy.unregister(
+                    'register.rpc2',
+                    {
+                        onSuccess: function (e) {
+                            expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                            done();
+                        },
+                        onError: function (e) {
+                            done('Error during RPC unregistration!');
+                        }
+                    }
+                );
+            });
         });
 
     });

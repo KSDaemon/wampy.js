@@ -37,6 +37,8 @@
         YIELD: 70
     },
 
+    TIMEOUT = 1,
+
     sendData = [
         {
             data: [
@@ -648,6 +650,43 @@
             ],
             from: [1],
             to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { progress: true },
+                [50]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                WAMP_MSG_SPEC.CALL,
+                'RequestId',
+                {},
+                'call.canceled'
+            ],
+            from: [1],
+            to: [2]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.UNREGISTERED,
+                'RequestId'
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.UNREGISTERED,
+                'RequestId'
+            ],
+            from: [1],
+            to: [1]
         }
     ],
 
@@ -685,7 +724,7 @@
             self.readyState = 1;    // Open
             self.protocol = 'wamp.2.json';
             self.onopen();
-        }, 5);
+        }, TIMEOUT);
 
     };
 
@@ -702,7 +741,7 @@
         }
         root.setTimeout(function () {
             self.onclose();
-        }, 5);
+        }, TIMEOUT);
     };
 
     WebSocket.prototype.send = function (data) {
@@ -733,7 +772,7 @@
                 self.send(data);
             }
 
-        }, 5);
+        }, TIMEOUT);
     };
 
     return WebSocket;
