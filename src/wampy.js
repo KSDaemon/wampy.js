@@ -119,7 +119,7 @@
         },
         NON_EXIST_RPC_UNREG: {
             code: 17,
-            description: 'Received rpc unregistration confirmation for non existent rpc!'
+            description: 'Received rpc unregistration for non existent rpc!'
         },
         NON_EXIST_RPC_ERROR: {
             code: 18,
@@ -1792,8 +1792,8 @@
             this._send([WAMP_MSG_SPEC.UNREGISTER, reqId, this._rpcRegs[topicURI].id]);
             this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
             this._cache.opStatus.reqId = reqId;
-        } else {    // already have registration with such topicURI
-            this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
+        } else {    // there is no registration with such topicURI
+            this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
                 callbacks.onError(this._cache.opStatus.description);
