@@ -26,5 +26,8 @@
   "bugs": {
     "url": "https://github.com/KSDaemon/wampy.js/issues"
   },
-  "homepage": "https://github.com/KSDaemon/wampy.js"
+  "homepage": "https://github.com/KSDaemon/wampy.js",
+  "scripts": {
+    "test": "mocha -R spec"
+  }
 }
