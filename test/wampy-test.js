@@ -164,7 +164,7 @@ describe('Wampy.js', function () {
 
         before(function (done) {
             wampy = new Wampy('ws://fake.server.org/ws/', {
-                    debug: true,
+                    debug: false,
                     autoReconnect: false,
                     reconnectInterval: 2000,
                     maxRetries: 7,
