@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/KSDaemon/wampy.js",
   "scripts": {
-    "test": "mocha -R spec"
+    "test": "mocha -R spec",
+    "cover": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec"
   }
 }
