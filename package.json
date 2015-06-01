@@ -11,9 +11,8 @@
     "grunt-contrib-copy": "^0.8.0",
     "grunt-contrib-jshint": "^0.11.0",
     "grunt-contrib-uglify": "^0.8.0",
-    "jscoverage": "^0.5.9",
-    "mocha": "^2.2.1",
-    "mocha-lcov-reporter": "0.0.2"
+    "istanbul": "^0.3.14",
+    "mocha": "^2.2.1"
   },
   "main": "wampy.js",
   "dependencies": {},
@@ -31,6 +30,7 @@
   },
   "homepage": "https://github.com/KSDaemon/wampy.js",
   "scripts": {
-    "test": "mocha -R spec"
+    "test": "mocha -R spec",
+    "test-travis": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec"
   }
 }
