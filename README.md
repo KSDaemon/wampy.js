@@ -7,7 +7,7 @@ Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side im
 [![Build Status][travis-image]][travis-url]
 [![Dependency Status][depstat-image]][depstat-url]
 [![DevDependency Status][depstat-dev-image]][depstat-dev-url]
-![license-image]
+[![MIT License][license-image]][license-url]
 
 [![Gitter Chat][gitter-image]][gitter-url]
 
@@ -555,3 +555,4 @@ See Also
 [gitter-image]: https://badges.gitter.im/Join%20Chat.svg
 
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg
+[license-url]: http://opensource.org/licenses/MIT
