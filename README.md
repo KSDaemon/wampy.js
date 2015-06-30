@@ -3,8 +3,13 @@ wampy.js
 
 Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation
 
-[![Build Status](https://travis-ci.org/KSDaemon/wampy.js.svg?branch=dev)](https://travis-ci.org/KSDaemon/wampy.js)
-[![Join the chat at https://gitter.im/KSDaemon/wampy.js](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/KSDaemon/wampy.js?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![NPM version][npm-image]][npm-url]
+[![Build Status][travis-image]][travis-url]
+[![Dependency Status][depstat-image]][depstat-url]
+[![DevDependency Status][depstat-dev-image]][depstat-dev-url]
+![license-image]
+
+[![Gitter Chat][gitter-image]][gitter-url]
 
 Table of Contents
 =================
@@ -533,3 +538,20 @@ See Also
 * [Wiola](http://ksdaemon.github.io/wiola/) - WAMP in Lua on top of nginx/openresty
 
 [Back to TOC](#table-of-contents)
+
+[npm-url]: https://www.npmjs.com/package/wampy
+[npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
+
+[travis-url]: https://travis-ci.org/KSDaemon/wampy.js
+[travis-image]: https://img.shields.io/travis/KSDaemon/wampy.js/master.svg?style=flat
+
+[depstat-url]: https://david-dm.org/KSDaemon/wampy.js
+[depstat-image]: https://david-dm.org/KSDaemon/wampy.js.svg?style=flat
+
+[depstat-dev-url]: https://david-dm.org/KSDaemon/wampy.js
+[depstat-dev-image]: https://david-dm.org/KSDaemon/wampy.js/dev-status.svg?style=flat
+
+[gitter-url]: https://gitter.im/KSDaemon/wampy.js
+[gitter-image]: https://badges.gitter.im/Join%20Chat.svg
+
+[license-image]: https://img.shields.io/badge/license-MIT-blue.svg
