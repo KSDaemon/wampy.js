@@ -689,7 +689,7 @@
     };
 
     Wampy.prototype._wsOnMessage = function (event) {
-        var data, id, i, d, result, msg;
+        var self = this, data, id, i, d, result, msg;
 
         this._log('[wampy] websocket message received', event.data);
 
@@ -1005,25 +1005,24 @@
                     }
 
                     try {
-                        result = this._rpcRegs[data[2]].callbacks[0](d);
+                        Promise.resolve(this._rpcRegs[data[2]].callbacks[0](d)).then(function (result) {
+                            // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
+                            if (self._isArray(result)) {
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, result];
+                            } else if (self._isPlainObject(result)) {
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [], result];
+                            } else if (result === undefined) {
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+                            } else {    // single value
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [result]];
+                            }
+
+                            self._send(msg);
+                        });
                     } catch (e) {
                         this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
                                     data[1], {}, 'wamp.error.invocation_exception']);
-                        return ;
                     }
-
-                    // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
-                    if (this._isArray(result)) {
-                        msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, result];
-                    } else if (this._isPlainObject(result)) {
-                        msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [], result];
-                    } else if (result === undefined) {
-                        msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-                    } else {    // single value
-                        msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [result]];
-                    }
-
-                    this._send(msg);
 
                 } else {
                     // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
