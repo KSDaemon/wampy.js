@@ -4,12 +4,12 @@
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
   "author": "Konstantin Burkalev <KSDaemon@ya.ru> (http://ksdaemon.ru)",
   "devDependencies": {
-    "chai": "^2.2.0",
+    "chai": "^3.2.0",
     "grunt": "~0.4.5",
     "grunt-contrib-concat": "^0.5.0",
     "grunt-contrib-copy": "^0.8.0",
     "grunt-contrib-jshint": "^0.11.0",
-    "grunt-contrib-uglify": "^0.8.0",
+    "grunt-contrib-uglify": "^0.9.1",
     "istanbul": "^0.3.14",
     "mocha": "^2.2.1"
   },
