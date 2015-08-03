@@ -473,6 +473,20 @@ ws.register('sqrt.value', {
 });
 ```
 
+Also wampy supports rpc with asynchronous code, such as some user interactions or xhr, using promises. For using this functionality in old browsers you should use polyfills, like [es6-promise](https://github.com/jakearchibald/es6-promise). Check brower support at [can i use](http://caniuse.com/#search=promise) site.
+
+```javascript
+var getUserName = function () { 
+    return new Promise(function (resolve, reject) {
+        /* Ask user to input his username somehow,
+           and resolve promise with user input at the end */
+        resolve(userInput);
+    });
+};
+
+ws.register('get.user.name', getUserName);
+```
+
 [Back to TOC](#table-of-contents)
 
 unregister(topicURI, callbacks)
