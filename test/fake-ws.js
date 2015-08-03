@@ -813,8 +813,8 @@
             rec_data = JSON.parse(data);
             send_data = sendData.shift();
 
-              console.log('Data to send to server:', data);
-              console.log('Data to send to client:', send_data.data);
+            // console.log('Data to send to server:', data);
+            // console.log('Data to send to client:', send_data.data);
             if (send_data.data) {
                 // Prepare answer (copy request id from request to answer, etc)
                 if (send_data.from) {
