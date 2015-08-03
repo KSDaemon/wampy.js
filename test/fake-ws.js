@@ -449,7 +449,7 @@
             ]
         },
         {
-            data: null  // TODO Dubbled messages - dirty hack, i don't know how to make it clean
+            data: null  // TODO Doubled messages - dirty hack, i don't know how to make it clean
         },
         {
             data: null
@@ -687,6 +687,67 @@
             ],
             from: [1],
             to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                21   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                21, // Registration ID
+                {},
+                [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                22   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                22, // Registration ID
+                {},
+                [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                WAMP_MSG_SPEC.CALL,
+                'RequestId',
+                {},
+                'wamp.error.invocation_exception'
+            ],
+            from: [2],
+            to: [2]
         }
     ],
 
@@ -752,8 +813,8 @@
             rec_data = JSON.parse(data);
             send_data = sendData.shift();
 
-            // console.log('Data to send to server:', data);
-            // console.log('Data to send to client:', send_data.data);
+              console.log('Data to send to server:', data);
+              console.log('Data to send to client:', send_data.data);
             if (send_data.data) {
                 // Prepare answer (copy request id from request to answer, etc)
                 if (send_data.from) {

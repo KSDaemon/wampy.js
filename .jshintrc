@@ -23,7 +23,9 @@
         "MozWebSocket": false,
         "msgpack": false,
         "define": false,
-        "module": false
+        "module": false,
+        "global": false,
+        "process": false
     }
 
 }

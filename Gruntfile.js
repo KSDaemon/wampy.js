@@ -19,7 +19,7 @@ module.exports = function (grunt) {
         },
         jshint: {
             options: {
-                jshintrc: 'jshintrc.json'
+                jshintrc: '.jshintrc'
             },
             default: {
                 src: 'src/wampy.js'

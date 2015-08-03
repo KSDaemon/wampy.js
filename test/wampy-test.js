@@ -713,6 +713,64 @@ describe('Wampy.js', function () {
                     }
                 );
             });
+
+            it('allows to invoke asynchronous RPC', function (done) {
+                wampy.register('register.rpc3', {
+                    rpc: function (e) {
+                        return new Promise(function (resolve, reject) {
+                            setTimeout(function () {
+                                resolve(100);
+                            }, 10);
+                        });
+                    },
+                    onSuccess: function (e) {
+                        wampy.call(
+                            'register.rpc3',
+                            100,
+                            function (e) {
+                                expect(e).to.be.an('array');
+                                expect(e[0]).to.be.equal(100);
+                                done();
+                            },
+                            { exclude_me: false }
+                        );
+                    },
+                    onError: function (e) {
+                        done('Error during RPC registration!');
+                    }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('allows to reject asynchronous RPC', function (done) {
+                wampy.register('register.rpc4', {
+                    rpc: function (e) {
+                        return new Promise(function (resolve, reject) {
+                            setTimeout(function () {
+                                reject('Rejecting promise rpc');
+                            }, 10);
+                        });
+                    },
+                    onSuccess: function (e) {
+                        wampy.call(
+                            'register.rpc4',
+                            100,
+                            {
+                                onSuccess: function () { },
+                                onError: function () {
+                                    done();
+                                }
+                            },
+                            { exclude_me: false }
+                        );
+                    },
+                    onError: function (e) {
+                        done('Error during RPC registration!');
+                    }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
         });
 
     });
