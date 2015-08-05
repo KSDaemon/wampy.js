@@ -13,7 +13,7 @@
     "istanbul": "^0.3.14",
     "mocha": "^2.2.1"
   },
-  "main": "wampy.js",
+  "main": "src/wampy.js",
   "dependencies": {},
   "repository": {
     "type": "git",
