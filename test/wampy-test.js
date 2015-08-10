@@ -367,6 +367,11 @@ describe('Wampy.js', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 wampy.subscribe('subscribe.topic2', function (e) { });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                wampy.subscribe('subscribe.topic2', {
+                    onEvent: function (e) { },
+                    onSuccess: function (e) { }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
             it('allows to publish/subscribe event without payload', function (done) {
@@ -607,14 +612,17 @@ describe('Wampy.js', function () {
 
             it('allows to unsubscribe from topic only specified handler', function (done) {
 
-                var handler2 = function (e) { done(); },
+                var handler3 = function (e) { done(); },
+                    handler2 = function (e) { done('Called removed handler'); },
                     handler1 = function (e) { done('Called removed handler'); };
 
                 wampy.subscribe('subscribe.topic9', {
                     onSuccess: function () {
                         wampy.subscribe('subscribe.topic9', handler2)
-                        .unsubscribe('subscribe.topic9', handler1)
-                        .publish('subscribe.topic9', 'payload', null, { exclude_me: false });
+                            .subscribe('subscribe.topic9', handler3)
+                            .unsubscribe('subscribe.topic9', handler1)
+                            .unsubscribe('subscribe.topic9', { onEvent: handler2 })
+                            .publish('subscribe.topic9', 'payload', null, { exclude_me: false });
                     },
                     onError: function () { },
                     onEvent: handler1
@@ -636,6 +644,13 @@ describe('Wampy.js', function () {
             it('receives error when trying to unsubscribe from non existent subscription', function () {
                 wampy.unsubscribe('subscribe.topic2');
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE.code);
+
+                wampy.unsubscribe('subscribe.topic2', {
+                    onSuccess: function (e) { },
+                    onError: function (e) {
+                        expect(e).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE.description);
+                    }
+                });
             });
 
         });
