@@ -126,6 +126,9 @@
             ]
         },
         {
+            data: null
+        },
+        {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
                 4,
@@ -190,6 +193,9 @@
                 {},
                 'wamp.error.goodbye_and_out'
             ]
+        },
+        {
+            data: null
         },
         {
             data: [

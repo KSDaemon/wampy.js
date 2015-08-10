@@ -206,6 +206,16 @@ describe('Wampy.js', function () {
             wampy.disconnect();
         });
 
+        it('allows to disconnect while connecting to server', function (done) {
+            wampy.options({ onClose: done })
+                .connect();
+
+            root.setTimeout(function () {
+                wampy.disconnect();
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.SUCCESS);
+            }, 5);
+        });
+
         it('allows to connect to same WAMP server', function (done) {
             wampy.options({ onConnect: function () { done(); } });
             wampy.connect();
@@ -227,15 +237,16 @@ describe('Wampy.js', function () {
                 onClose: function () {
                     root.setTimeout(function () {
                         wampy.options({ onClose: done })
-                            .connect('ws://another.server.org/ws/')
-                            .abort();
+                            .connect('ws://another.server.org/ws/');
 
-                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.SUCCESS);
+                        root.setTimeout(function () {
+                            wampy.abort();
+                        }, 5);
 
                     }, 1);
                 },
                 onConnect: function () {
-                    done(new Error('We reach connection'));
+                    done('We reach connection');
                 }
             }).disconnect();
 
