@@ -251,16 +251,43 @@ describe('Wampy.js', function () {
             it('disallows to subscribe to topic if server does not provide BROKER role', function () {
                 wampy.subscribe('qwe.asd.zxc', function (e) { });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_BROKER);
+
+                wampy.subscribe('qwe.asd.zxc',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
+                        }
+                    }
+                );
             });
 
             it('disallows to unsubscribe from topic if server does not provide BROKER role', function () {
                 wampy.unsubscribe('qwe.asd.zxc');
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_BROKER);
+
+                wampy.unsubscribe('qwe.asd.zxc',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
+                        }
+                    }
+                );
             });
 
             it('disallows to publish to topic if server does not provide BROKER role', function () {
                 wampy.publish('qwe.asd.zxc', 'payload');
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_BROKER);
+
+                wampy.publish('qwe.asd.zxc', 'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
+                        }
+                    }
+                );
             });
 
             it('disallows to subscribe to topic with invalid URI', function (done) {
@@ -287,6 +314,18 @@ describe('Wampy.js', function () {
                         wampy.subscribe('qq:www:ee', function (e) { });
                         expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
+                        wampy.subscribe('q.w.e', function (e) { });
+                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        wampy.subscribe('q.w.e',
+                            {
+                                onSuccess: function (e) { },
+                                onError: function (e) {
+                                    expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                                }
+                            }
+                        );
+
                         done();
 
                     }
@@ -294,9 +333,17 @@ describe('Wampy.js', function () {
 
             });
 
-            it('disallows to subscribe to topic without specifying callback', function () {
+            it('disallows to subscribe to topic without specifying callback', function (done) {
                 wampy.subscribe('qqq.www.eee');
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
+
+                wampy.subscribe('qqq.www.eee', { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
+
+                wampy.subscribe('qqq.www.eee', { onError: function (e) {
+                    expect(e).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
+                    done();
+                } });
             });
 
             it('allows to subscribe to topic', function () {
@@ -436,6 +483,15 @@ describe('Wampy.js', function () {
 
                 wampy.publish('qq:www:ee', 'payload');
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.publish('qq:www:ee', 'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                        }
+                    }
+                );
             });
 
             it('allows to unsubscribe from topic only specified handler', function (done) {
@@ -487,21 +543,59 @@ describe('Wampy.js', function () {
             it('disallows to call rpc if server does not provide DEALER role', function () {
                 wampy.call('call.rpc1', 'payload', function (e) { });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
+
+                wampy.call('call.rpc1', 'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                        }
+                    }
+                );
+
             });
 
             it('disallows to cancel rpc if server does not provide DEALER role', function () {
                 wampy.cancel(1234567, function (e) { });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
+
+                wampy.cancel(1234567, 'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                        }
+                    }
+                );
             });
 
             it('disallows to register rpc if server does not provide DEALER role', function () {
                 wampy.register('call.rpc2', function (e) { });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
+
+                wampy.register('call.rpc2',
+                    {
+                        rpc: function (e) {},
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                        }
+                    }
+                );
             });
 
             it('disallows to unregister rpc if server does not provide DEALER role', function () {
                 wampy.unregister('call.rpc3', function (e) { });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
+
+                wampy.unregister('call.rpc3',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                        }
+                    }
+                );
             });
 
             it('disallows to register RPC with invalid URI', function (done) {
@@ -527,6 +621,16 @@ describe('Wampy.js', function () {
 
                         wampy.register('qq:www:ee', function (e) { });
                         expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                        wampy.register('qq:www:ee',
+                            {
+                                rpc: function (e) {},
+                                onSuccess: function (e) { },
+                                onError: function (e) {
+                                    expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                                }
+                            }
+                        );
 
                         done();
 
