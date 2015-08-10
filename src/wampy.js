@@ -652,8 +652,9 @@
 
         this._log('[wampy] websocket connected');
 
-        p = this._ws.protocol.split('.');
-        this._options.transportEncoding = p[2];
+        if (this._ws.protocol) {
+            this._options.transportEncoding = this._ws.protocol.split('.')[2];
+        }
 
         if (this._options.transportEncoding === 'msgpack') {
             this._ws.binaryType = 'arraybuffer';
