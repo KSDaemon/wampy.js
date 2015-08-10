@@ -291,8 +291,7 @@
                 WAMP_MSG_SPEC.EVENT,
                 3,
                 4,
-                {},
-                null
+                {}
             ]
         },
         {
@@ -423,6 +422,7 @@
                 11,
                 12,
                 {},
+                [],
                 { key1: 100, key2: 'string-key' }
             ]
         },
@@ -442,6 +442,7 @@
                 11,
                 25,
                 {},
+                [],
                 { key1: 100, key2: 'string-key' }
             ]
         },
@@ -736,7 +737,7 @@
             data: [
                 WAMP_MSG_SPEC.REGISTERED,
                 'RequestId',
-                21   // Registration ID
+                22   // Registration ID
             ],
             from: [1],
             to: [1]
@@ -745,7 +746,35 @@
             data: [
                 WAMP_MSG_SPEC.INVOCATION,
                 'RequestId',
-                21, // Registration ID
+                22, // Registration ID
+                {}
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                23   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                23, // Registration ID
                 {},
                 [100]
             ],
@@ -766,6 +795,68 @@
             data: [
                 WAMP_MSG_SPEC.REGISTERED,
                 'RequestId',
+                24   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                24, // Registration ID
+                {},
+                [1, 2, 3, 4, 5]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [1, 2, 3, 4, 5]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                25   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                25, // Registration ID
+                {},
+                [],
+                { key1: 100, key2: 'string-key' }
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [],
+                { key1: 100, key2: 'string-key' }
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
                 22   // Registration ID
             ],
             from: [1],
@@ -775,7 +866,7 @@
             data: [
                 WAMP_MSG_SPEC.INVOCATION,
                 'RequestId',
-                22, // Registration ID
+                26, // Registration ID
                 {},
                 [100]
             ],
@@ -797,7 +888,7 @@
             data: [
                 WAMP_MSG_SPEC.REGISTERED,
                 'RequestId',
-                23   // Registration ID
+                27   // Registration ID
             ],
             from: [1],
             to: [1]

@@ -1089,8 +1089,35 @@ describe('Wampy.js', function () {
                 );
             });
 
-            it('allows to invoke asynchronous RPC', function (done) {
+            it('allows to invoke asynchronous RPC without value', function (done) {
                 wampy.register('register.rpc3', {
+                    rpc: function (e) {
+                        return new Promise(function (resolve, reject) {
+                            setTimeout(function () {
+                                resolve();
+                            }, 10);
+                        });
+                    },
+                    onSuccess: function (e) {
+                        wampy.call(
+                            'register.rpc3',
+                            null,
+                            function (e) {
+                                expect(e).to.be.null;
+                                done();
+                            },
+                            { exclude_me: false }
+                        );
+                    },
+                    onError: function (e) {
+                        done('Error during RPC registration!');
+                    }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('allows to invoke asynchronous RPC with single value', function (done) {
+                wampy.register('register.rpc4', {
                     rpc: function (e) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
@@ -1100,7 +1127,7 @@ describe('Wampy.js', function () {
                     },
                     onSuccess: function (e) {
                         wampy.call(
-                            'register.rpc3',
+                            'register.rpc4',
                             100,
                             function (e) {
                                 expect(e).to.be.an('array');
@@ -1117,8 +1144,67 @@ describe('Wampy.js', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
+            it('allows to invoke asynchronous RPC with array value', function (done) {
+                wampy.register('register.rpc5', {
+                    rpc: function (e) {
+                        return new Promise(function (resolve, reject) {
+                            setTimeout(function () {
+                                resolve([1, 2, 3, 4, 5]);
+                            }, 10);
+                        });
+                    },
+                    onSuccess: function (e) {
+                        wampy.call(
+                            'register.rpc5',
+                            [1, 2, 3, 4, 5],
+                            function (e) {
+                                expect(e).to.be.an('array');
+                                expect(e).to.have.length(5);
+                                expect(e[0]).to.be.equal(1);
+                                expect(e[4]).to.be.equal(5);
+                                done();
+                            },
+                            { exclude_me: false }
+                        );
+                    },
+                    onError: function (e) {
+                        done('Error during RPC registration!');
+                    }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('allows to invoke asynchronous RPC with hash-table value', function (done) {
+                var payload = { key1: 100, key2: 'string-key' };
+                wampy.register('register.rpc6', {
+                    rpc: function (e) {
+                        return new Promise(function (resolve, reject) {
+                            setTimeout(function () {
+                                resolve(payload);
+                            }, 10);
+                        });
+                    },
+                    onSuccess: function (e) {
+                        wampy.call(
+                            'register.rpc6',
+                            payload,
+                            function (e) {
+                                expect(e).to.be.an('object');
+                                expect(e).to.be.deep.equal(payload);
+                                done();
+                            },
+                            { exclude_me: false }
+                        );
+                    },
+                    onError: function (e) {
+                        done('Error during RPC registration!');
+                    }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
             it('allows to reject asynchronous RPC', function (done) {
-                wampy.register('register.rpc4', {
+                wampy.register('register.rpc7', {
                     rpc: function (e) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
@@ -1128,7 +1214,7 @@ describe('Wampy.js', function () {
                     },
                     onSuccess: function (e) {
                         wampy.call(
-                            'register.rpc4',
+                            'register.rpc7',
                             100,
                             {
                                 onSuccess: function () { },
@@ -1172,7 +1258,7 @@ describe('Wampy.js', function () {
 
             it('disallows to register RPC without providing rpc itself', function () {
                 wampy.register(
-                    'register.rpc5',
+                    'register.rpc8',
                     {
                         onSuccess: function (e) { },
                         onError: function (e) {
@@ -1183,10 +1269,10 @@ describe('Wampy.js', function () {
             });
 
             it('disallows to register RPC with the same name', function (done) {
-                wampy.register('register.rpc6', {
+                wampy.register('register.rpc9', {
                     rpc: function (e) { },
                     onSuccess: function (e) {
-                        wampy.register('register.rpc6', {
+                        wampy.register('register.rpc9', {
                             rpc: function (e) { },
                             onSuccess: function (e) { },
                             onError: function (e) {
