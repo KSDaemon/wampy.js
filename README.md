@@ -537,6 +537,8 @@ Wampy.js uses mocha and chai for tests and istanbul for code coverage. You can r
 
 ```
 
+[Back to TOC](#table-of-contents)
+
 Copyright and License
 =====================
 
