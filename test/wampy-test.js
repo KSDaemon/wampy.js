@@ -374,12 +374,7 @@ describe('Wampy.js', function () {
                     expect(e).to.be.null;
                     done();
                 })
-                .publish('publish.topic3', null, {
-                    onSuccess: function () { }
-                },
-                {
-                    exclude_me: false
-                });
+                .publish('subscribe.topic3');
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -389,12 +384,7 @@ describe('Wampy.js', function () {
                     expect(e[0]).to.be.equal(25);
                     done();
                 })
-                .publish('publish.topic4', 25, {
-                    onSuccess: function () { }
-                },
-                {
-                    exclude_me: false
-                });
+                .publish('subscribe.topic4', 25);
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -404,47 +394,47 @@ describe('Wampy.js', function () {
                     expect(e[0]).to.be.equal('payload');
                     done();
                 })
-                .publish('publish.topic4', 'payload', {
-                    onSuccess: function () { }
-                },
-                {
-                    exclude_me: false
-                });
+                .publish('subscribe.topic5', 'payload');
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
             it('allows to publish/subscribe event with array payload', function (done) {
+                var i = 0;
                 wampy.subscribe('subscribe.topic6', function (e) {
                     expect(e).to.be.an('array');
                     expect(e).to.have.length(5);
                     expect(e[0]).to.be.equal(1);
                     expect(e[4]).to.be.equal(5);
-                    done();
+
+                    if (i == 1) {
+                        done();
+                    } else {
+                        i++;
+                    }
                 })
-                .publish('publish.topic4', [1, 2, 3, 4, 5], {
-                    onSuccess: function () { }
-                },
-                {
-                    exclude_me: false
-                });
+                .publish('subscribe.topic6', [1, 2, 3, 4, 5]);
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+
+                wampy.publish('subscribe.topic6', [1, 2, 3, 4, 5], { exclude_me: false });
             });
 
             it('allows to publish/subscribe event with hash-table payload', function (done) {
-                var payload = { key1: 100, key2: 'string-key' };
+                var i = 0, payload = { key1: 100, key2: 'string-key' };
 
                 wampy.subscribe('subscribe.topic7', function (e) {
                     expect(e).to.be.an('object');
                     expect(e).to.be.deep.equal(payload);
-                    done();
+
+                    if (i == 1) {
+                        done();
+                    } else {
+                        i++;
+                    }
                 })
-                .publish('publish.topic4', payload, {
-                    onSuccess: function () { }
-                },
-                {
-                    exclude_me: false
-                });
+                .publish('subscribe.topic7', payload);
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+
+                wampy.publish('subscribe.topic7', payload, { exclude_me: false });
             });
 
             it('allows to publish event with different advanced options', function (done) {
@@ -453,7 +443,7 @@ describe('Wampy.js', function () {
                     expect(e[0]).to.be.equal('payload');
                     done();
                 })
-                .publish('publish.topic8', 'payload',
+                .publish('subscribe.topic8', 'payload',
                     {
                         onSuccess: function () { },
                         onError: function () { }
@@ -490,6 +480,127 @@ describe('Wampy.js', function () {
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                         }
+                    }
+                );
+            });
+
+            it('checks for valid advanced options during publishing to topic', function () {
+                wampy.publish(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    'string instead of object'
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.publish(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    123
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.publish(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    function () {}
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.publish(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    {
+                        exclude: 'string instead of number or array',
+                        eligible: 1234567
+                    }
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.publish(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    {
+                        exclude: {},
+                        eligible: 1234567
+                    }
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.publish(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    {
+                        exclude: 1234567,
+                        eligible: 'string instead of number or array'
+                    }
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.publish(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    {
+                        exclude: 1234567,
+                        eligible: {}
+                    }
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.publish(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
+                        }
+                    },
+                    {
+                        exclude: {},
+                        eligible: {}
+                    }
+                );
+
+                wampy.publish(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
+                        }
+                    },
+                    {
+                        exclude: 'invalid string',
+                        eligible: 'invalid string'
                     }
                 );
             });
@@ -673,11 +784,145 @@ describe('Wampy.js', function () {
 
                 wampy.call('qq:www:ee', 'payload', function (e) { });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                wampy.call('qq:www:ee', 'payload', {
+                    onSuccess: function (e) { },
+                    onError: function (e) {
+                        expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                    }
+                });
             });
 
             it('disallows to call RPC without specifying result handler', function () {
                 wampy.call('qqq.www.eee', 'payload');
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
+
+                wampy.call('qqq.www.eee', 'payload', {
+                    onError: function (e) {
+                        expect(e).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
+                    }
+                });
+            });
+
+            it('checks for valid advanced options on calling RPC', function () {
+                wampy.call(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    'string instead of object'
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.call(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    123
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.call(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    function () {}
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.call(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    {
+                        exclude: 'string instead of number or array',
+                        eligible: 1234567
+                    }
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.call(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    {
+                        exclude: {},
+                        eligible: 1234567
+                    }
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.call(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    {
+                        exclude: 1234567,
+                        eligible: 'string instead of number or array'
+                    }
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.call(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) { }
+                    },
+                    {
+                        exclude: 1234567,
+                        eligible: {}
+                    }
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                wampy.call(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
+                        }
+                    },
+                    {
+                        exclude: {},
+                        eligible: {}
+                    }
+                );
+
+                wampy.call(
+                    'qqq.www.eee',
+                    'payload',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
+                        }
+                    },
+                    {
+                        exclude: 'invalid string',
+                        eligible: 'invalid string'
+                    }
+                );
             });
 
             it('disallows to unregister rpc if there is no such registration', function () {

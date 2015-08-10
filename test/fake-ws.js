@@ -375,6 +375,25 @@
         },
         {
             data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                24
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                9,
+                24,
+                {},
+                [1, 2, 3, 4, 5]
+            ]
+        },
+        {
+            data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
                 'RequestId',
                 11   // Subscription id need in next publish msg
@@ -397,6 +416,25 @@
                 WAMP_MSG_SPEC.EVENT,
                 11,
                 12,
+                {},
+                { key1: 100, key2: 'string-key' }
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                25
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                11,
+                25,
                 {},
                 { key1: 100, key2: 'string-key' }
             ]
