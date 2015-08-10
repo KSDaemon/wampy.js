@@ -748,6 +748,15 @@
             ],
             from: [2],
             to: [2]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                23   // Registration ID
+            ],
+            from: [1],
+            to: [1]
         }
     ],
 

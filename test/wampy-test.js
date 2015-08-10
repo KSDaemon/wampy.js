@@ -559,7 +559,7 @@ describe('Wampy.js', function () {
                 wampy.cancel(1234567, function (e) { });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
 
-                wampy.cancel(1234567, 'payload',
+                wampy.cancel(1234567,
                     {
                         onSuccess: function (e) { },
                         onError: function (e) {
@@ -873,6 +873,76 @@ describe('Wampy.js', function () {
                     }
                 });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('calls error handler on trying to unregister non existent RPC', function () {
+                wampy.unregister(
+                    'register.nonexistent',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG.description);
+                        }
+                    }
+                );
+            });
+
+            it('disallows to unregister RPC with invalid URI', function () {
+                wampy.unregister(
+                    'q:w:e',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                        }
+                    }
+                );
+            });
+
+            it('disallows to register RPC without providing rpc itself', function () {
+                wampy.register(
+                    'register.rpc5',
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
+                        }
+                    }
+                );
+            });
+
+            it('disallows to register RPC with the same name', function (done) {
+                wampy.register('register.rpc6', {
+                    rpc: function (e) { },
+                    onSuccess: function (e) {
+                        wampy.register('register.rpc6', {
+                            rpc: function (e) { },
+                            onSuccess: function (e) { },
+                            onError: function (e) {
+                                expect(e).to.be.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED.description);
+                                done();
+                            }
+                        });
+                    },
+                    onError: function (e) {
+                        done('Error during RPC registration!');
+                    }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('disallows to cancel non existent rpc', function () {
+                wampy.cancel(1234567, function (e) { });
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID);
+
+                wampy.cancel(1234567,
+                    {
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID.description);
+                        }
+                    }
+                );
             });
 
         });
