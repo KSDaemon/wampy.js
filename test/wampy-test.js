@@ -252,6 +252,65 @@ describe('Wampy.js', function () {
 
         });
 
+        it('autoreconnects to WAMP server on network errors', function (done) {
+            var i = 0;
+            wampy.options({
+                onConnect: function () {
+                    wampy
+                        .subscribe('subscribe.reconnect1', {
+                            onSuccess: function () { },
+                            onError: function () { done('Error during subscribing'); },
+                            onEvent: function (e) { i++; }
+                        })
+                        .subscribe('subscribe.reconnect2', {
+                            onSuccess: function () { },
+                            onError: function () { done('Error during subscribing'); },
+                            onEvent: function (e) { i++; }
+                        })
+                        .register('register.reconnect1', {
+                            rpc: function (e) { i++; },
+                            onSuccess: function () { },
+                            onError: function () { done('Error during RPC registration'); }
+                        })
+                        .register('register.reconnect2', {
+                            rpc: function (e) { i++; },
+                            onSuccess: function () { },
+                            onError: function () { done('Error during RPC registration'); }
+                        })
+                        .register('register.reconnect3', {
+                            rpc: function (e) { i++; },
+                            onSuccess: function () { },
+                            onError: function () { done('Error during RPC registration'); }
+                        });
+
+                },
+                onReconnect: function () {
+                    wampy.options({
+                        onConnect: function () {
+                            var t = setInterval(function () {
+                                if (i == 5) {
+                                    clearInterval(t);
+                                    done();
+                                }
+                            }, 5);
+                        }
+                    });
+                }
+            }).connect();
+        });
+
+        it('allows to call handler on websocket errors', function (done) {
+            wampy.options({
+                onClose: function () {
+                    root.setTimeout(function () {
+                        wampy.connect();
+                    }, 1);
+                },
+                onConnect: function () { },
+                onError: done
+            }).disconnect();
+        });
+
         describe('PubSub module', function () {
 
             before(function (done) {

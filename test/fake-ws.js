@@ -200,6 +200,246 @@
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
+                28,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                callee_blackwhite_listing: true,
+                                caller_exclusion: true,
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                31
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                32
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                33   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                34   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                35   // Registration ID
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: null,
+            close: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                28,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                callee_blackwhite_listing: true,
+                                caller_exclusion: true,
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                36
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                37
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                38   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                39   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                40   // Registration ID
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                36,
+                777,
+                {}
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                37,
+                888,
+                {}
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                3800,
+                38, // Registration ID
+                {}
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                3900,
+                39, // Registration ID
+                {}
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                4000,
+                40, // Registration ID
+                {}
+            ]
+        },
+        {
+            data: null
+        },
+        {
+            data: null
+        },
+        {
+            data: null
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                555,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                callee_blackwhite_listing: true,
+                                caller_exclusion: true,
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            next: true
+        },
+        {
+            data: null,
+            abort: true
+        },
+        // Begin of PubSub module
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
                 6,
                 {
                     agent: 'Wampy.js test suite',
@@ -949,6 +1189,22 @@
         }, TIMEOUT);
     };
 
+    WebSocket.prototype.abort = function () {
+        var self = this;
+        this.readyState = 3;    // Closed
+        if (this.openTimer) {
+            root.clearTimeout(this.openTimer);
+            this.openTimer = null;
+        }
+        if (this.sendTimer) {
+            root.clearTimeout(this.sendTimer);
+            this.sendTimer = null;
+        }
+        root.setTimeout(function () {
+            self.onerror();
+        }, TIMEOUT);
+    };
+
     WebSocket.prototype.send = function (data) {
         var self = this;
         this.sendTimer = root.setTimeout(function () {
@@ -972,9 +1228,12 @@
                 self.onmessage(enc_data);
             }
 
-            // Send to client next message
-            if (send_data.next) {
+            if (send_data.next) {           // Send to client next message
                 self.send(data);
+            } else if (send_data.abort) {   // Abort ws connection
+                self.abort();
+            } else if (send_data.close) {   // Close ws connection
+                self.close();
             }
 
         }, TIMEOUT);
