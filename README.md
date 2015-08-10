@@ -33,6 +33,7 @@ Table of Contents
 	* [cancel](#cancelreqId-callbacks-advancedOptions)
 	* [register](#registertopicuri-callbacks)
 	* [unregister](#unregistertopicuri-callbacks)
+* [Tests and code coverage](#tests-and-code-coverage)
 * [Copyright and License](#copyright-and-license)
 * [See Also](#see-also)
 
@@ -518,6 +519,23 @@ ws.unregister('sqrt.value', {
 ```
 
 [Back to TOC](#table-of-contents)
+
+Tests and code coverage
+=======================
+
+Wampy.js uses mocha and chai for tests and istanbul for code coverage. You can run both from cli
+
+```bash
+# run tests with mocha (use your own favorite reporter)
+> mocha -R spec
+# or use standart npm test command
+> npm test
+
+# for code coverage report run
+> npm run-script cover
+# and then open coverage/lcov-report/index.html
+
+```
 
 Copyright and License
 =====================
