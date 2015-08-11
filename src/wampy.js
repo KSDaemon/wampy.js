@@ -214,7 +214,7 @@
          * @type {string}
          * @private
          */
-        this.version = 'v1.0.7';
+        this.version = 'v1.1.0';
 
         /**
          * WS Url
