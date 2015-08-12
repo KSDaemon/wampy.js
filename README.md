@@ -5,6 +5,7 @@ Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side im
 
 [![NPM version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
+[![Code coverage][coveralls-image]][coveralls-url]
 [![Dependency Status][depstat-image]][depstat-url]
 [![DevDependency Status][depstat-dev-image]][depstat-dev-url]
 [![MIT License][license-image]][license-url]
@@ -577,7 +578,10 @@ See Also
 [npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
 
 [travis-url]: https://travis-ci.org/KSDaemon/wampy.js
-[travis-image]: https://img.shields.io/travis/KSDaemon/wampy.js/master.svg?style=flat
+[travis-image]: https://img.shields.io/travis/KSDaemon/wampy.js/dev.svg?style=flat
+
+[coveralls-url]: https://coveralls.io/github/KSDaemon/wampy.js
+[coveralls-image]: https://img.shields.io/coveralls/KSDaemon/wampy.js/master.svg
 
 [depstat-url]: https://david-dm.org/KSDaemon/wampy.js
 [depstat-image]: https://david-dm.org/KSDaemon/wampy.js.svg?style=flat
