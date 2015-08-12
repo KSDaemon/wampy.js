@@ -581,7 +581,7 @@ See Also
 [travis-image]: https://img.shields.io/travis/KSDaemon/wampy.js/dev.svg?style=flat
 
 [coveralls-url]: https://coveralls.io/github/KSDaemon/wampy.js
-[coveralls-image]: https://img.shields.io/coveralls/KSDaemon/wampy.js/master.svg
+[coveralls-image]: https://img.shields.io/coveralls/KSDaemon/wampy.js/dev.svg?style=flat
 
 [depstat-url]: https://david-dm.org/KSDaemon/wampy.js
 [depstat-image]: https://david-dm.org/KSDaemon/wampy.js.svg?style=flat
