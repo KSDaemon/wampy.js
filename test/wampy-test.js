@@ -6,6 +6,7 @@
 
 var expect = require('chai').expect,
     WebSocket = require('./fake-ws'),
+    // ws = require('websocket').w3cwebsocket,
     Wampy = require('./../src/wampy'),
     root = (typeof process === 'object' &&
             Object.prototype.toString.call(process) === '[object process]') ?
@@ -105,8 +106,6 @@ var expect = require('chai').expect,
         }
     };
 
-root.WebSocket = root.WebSocket || WebSocket;
-
 describe('Wampy.js', function () {
 
     describe('Constructor', function () {
@@ -114,7 +113,8 @@ describe('Wampy.js', function () {
         it('allows to connect on instantiation if all required options specified', function (done) {
             var wampy = new Wampy('ws://fake.server.org/ws/', {
                     realm: 'AppRealm',
-                    onConnect: done
+                    onConnect: done,
+                    ws: WebSocket
                 });
         });
 
@@ -142,7 +142,8 @@ describe('Wampy.js', function () {
                     onConnect: done,
                     onClose: done,
                     onError: done,
-                    onReconnect: done
+                    onReconnect: done,
+                    ws: WebSocket
                 }),
                 options = wampy.options();
 
@@ -173,7 +174,8 @@ describe('Wampy.js', function () {
                     onConnect: function () { done(); },
                     onClose: function () { done(); },
                     onError: function () { done(); },
-                    onReconnect: function () { done(); }
+                    onReconnect: function () { done(); },
+                    ws: WebSocket
                 });
         });
 

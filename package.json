@@ -16,7 +16,9 @@
     "mocha-lcov-reporter": "0.0.2"
   },
   "main": "src/wampy.js",
-  "dependencies": {},
+  "dependencies": {
+    "websocket": "^1.0.22"
+  },
   "repository": {
     "type": "git",
     "url": "git://github.com/KSDaemon/wampy.js.git"

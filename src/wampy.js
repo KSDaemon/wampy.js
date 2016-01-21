@@ -175,31 +175,40 @@
         }
     }
 
-    function getWebSocket(url, protocols) {
-        var parsedUrl = isNode ? getServerUrlNode(url) : getServerUrlBrowser(url),
-            root = isNode ? global : window;
+    function getWebSocket(url, protocols, ws) {
+        var parsedUrl = isNode ? getServerUrlNode(url) : getServerUrlBrowser(url);
 
         if (!parsedUrl) {
             return null;
         }
 
-        if ('WebSocket' in root) {
-        // Chrome, MSIE, newer Firefox
+        if (ws) {   // User provided webSocket class
             if (protocols) {
-                return new root.WebSocket(parsedUrl, protocols);
+                return new ws(parsedUrl, protocols);
             } else {
-                return new root.WebSocket(parsedUrl);
+                return new ws(parsedUrl);
             }
-        } else if ('MozWebSocket' in root) {
-            // older versions of Firefox
-            if (protocols) {
-                return new root.MozWebSocket(parsedUrl, protocols);
-            } else {
-                return new root.MozWebSocket(parsedUrl);
-            }
-        } else {
+        } else if (isNode) {    // we're in node, but no webSocket provided
             return null;
+        } else {    // we're in browser
+            if ('WebSocket' in root) {
+                // Chrome, MSIE, newer Firefox
+                if (protocols) {
+                    return new window.WebSocket(parsedUrl, protocols);
+                } else {
+                    return new window.WebSocket(parsedUrl);
+                }
+            } else if ('MozWebSocket' in root) {
+                // older versions of Firefox
+                if (protocols) {
+                    return new window.MozWebSocket(parsedUrl, protocols);
+                } else {
+                    return new window.MozWebSocket(parsedUrl);
+                }
+            }
         }
+
+        return null;
     }
 
     /**
@@ -424,7 +433,13 @@
              * onReconnect callback
              * @type {function}
              */
-            onReconnect: null
+            onReconnect: null,
+
+            /**
+             * User provided WebSocket class
+             * @type {function}
+             */
+            ws: null
 
         };
 
@@ -1056,7 +1071,7 @@
         }
 
         this._cache.reconnectingAttempts++;
-        this._ws = getWebSocket(this._url, this._protocols);
+        this._ws = getWebSocket(this._url, this._protocols, this._options.ws);
         this._initWsCallbacks();
     };
 
@@ -1145,7 +1160,7 @@
 
         if (this._options.realm) {
             this._setWsProtocols();
-            this._ws = getWebSocket(this._url, this._protocols);
+            this._ws = getWebSocket(this._url, this._protocols, this._options.ws);
             if (this._ws) {
                 this._initWsCallbacks();
             } else {
