@@ -517,16 +517,6 @@
     };
 
     /**
-     * Check if value is object
-     * @param obj
-     * @returns {boolean}
-     * @private
-     */
-    Wampy.prototype._isObject = function (obj) {
-        return obj === Object(obj) && Object.prototype.toString.call(obj) !== '[object Array]';
-    };
-
-    /**
      * Check if value is object literal
      * @param obj
      * @returns {boolean}
