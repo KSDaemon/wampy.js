@@ -90,14 +90,14 @@
     "requireSpacesInsideObjectBrackets": "all",
 
     "requireDotNotation": true,
-    "disallowSpaceAfterObjectKeys": true,
+    "disallowSpaceAfterObjectKeys": { "allExcept": ["method"] },
     "disallowQuotedKeysInObjects": true,
 
     "maximumLineLength": {
         "value": 120,
         "allowUrlComments": true
     },
-    "requireSpaceAfterLineComment": { "allExcept": ["*", "#"] },
+    "requireSpaceAfterLineComment": false,
     "requireLineFeedAtFileEnd": true,
     "disallowMultipleLineBreaks": true,
     "disallowMixedSpacesAndTabs": true,
