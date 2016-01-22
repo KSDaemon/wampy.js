@@ -436,6 +436,40 @@
                 data: null,
                 abort: true
             },
+            {
+                data: [
+                    WAMP_MSG_SPEC.WELCOME,
+                    275,
+                    {
+                        agent: 'Wampy.js test suite',
+                        roles: {
+                            broker: {
+                                features: {
+                                    subscriber_blackwhite_listing: true,
+                                    publisher_exclusion: true,
+                                    publisher_identification: true
+                                }
+                            },
+                            dealer: {
+                                features: {
+                                    callee_blackwhite_listing: true,
+                                    caller_exclusion: true,
+                                    caller_identification: true,
+                                    progressive_call_results: true
+                                }
+                            }
+                        }
+                    }
+                ],
+                next: true
+            },
+            {
+                data: [
+                    WAMP_MSG_SPEC.ABORT,
+                    {},
+                    'wamp.error.abort'
+                ]
+            },
             // Begin of PubSub module
             {
                 data: [
@@ -747,6 +781,40 @@
                 from: [1],
                 to: [1]
             },
+            {
+                data: [
+                    WAMP_MSG_SPEC.ERROR,
+                    WAMP_MSG_SPEC.SUBSCRIBE,
+                    'RequestId',
+                    {},
+                    'wamp.subscribe.error'
+                ],
+                from: [1],
+                to: [2]
+            },
+            {
+                data: [
+                    WAMP_MSG_SPEC.ERROR,
+                    WAMP_MSG_SPEC.UNSUBSCRIBE,
+                    'RequestId',
+                    {},
+                    'wamp.unsubscribe.error'
+                ],
+                from: [1],
+                to: [2]
+            },
+            {
+                data: [
+                    WAMP_MSG_SPEC.ERROR,
+                    WAMP_MSG_SPEC.PUBLISH,
+                    'RequestId',
+                    {},
+                    'wamp.publish.error'
+                ],
+                from: [1],
+                to: [2]
+            },
+            // Begin of RPC module
             {
                 data: [
                     WAMP_MSG_SPEC.GOODBYE,
@@ -1132,6 +1200,28 @@
                 ],
                 from: [1],
                 to: [1]
+            },
+            {
+                data: [
+                    WAMP_MSG_SPEC.ERROR,
+                    WAMP_MSG_SPEC.REGISTER,
+                    'RequestId',
+                    {},
+                    'wamp.register.error'
+                ],
+                from: [1],
+                to: [2]
+            },
+            {
+                data: [
+                    WAMP_MSG_SPEC.ERROR,
+                    WAMP_MSG_SPEC.UNREGISTER,
+                    'RequestId',
+                    {},
+                    'wamp.unregister.error'
+                ],
+                from: [1],
+                to: [2]
             }
         ],
 

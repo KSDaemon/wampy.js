@@ -137,9 +137,9 @@
                 code: 21,
                 description: 'No realm specified!'
             },
-            NO_WS_URL: {
+            NO_WS_OR_URL: {
                 code: 22,
-                description: 'No websocket URL specified or URL is incorrect!'
+                description: 'No websocket provided or URL specified is incorrect!'
             }
         },
 
@@ -1154,7 +1154,7 @@
             if (this._ws) {
                 this._initWsCallbacks();
             } else {
-                this._cache.opStatus = WAMP_ERROR_MSG.NO_WS_URL;
+                this._cache.opStatus = WAMP_ERROR_MSG.NO_WS_OR_URL;
             }
         } else {
             this._cache.opStatus = WAMP_ERROR_MSG.NO_REALM;

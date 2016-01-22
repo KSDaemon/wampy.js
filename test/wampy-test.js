@@ -102,9 +102,9 @@ var expect = require('chai').expect,
             code: 21,
             description: 'No realm specified!'
         },
-        NO_WS_URL: {
+        NO_WS_OR_URL: {
             code: 22,
-            description: 'No websocket URL specified or URL is incorrect!'
+            description: 'No websocket provided or URL specified is incorrect!'
         }
     };
 
@@ -124,7 +124,7 @@ describe('Wampy.js', function () {
             var wampy = new Wampy({ realm: 'AppRealm' }),
                 opStatus = wampy.getOpStatus();
 
-            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_URL);
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
         });
 
         it('disallows to connect on instantiation without realm', function () {
@@ -313,6 +313,12 @@ describe('Wampy.js', function () {
                 onConnect: function () { },
                 onError: done
             }).disconnect();
+        });
+
+        it('calls error handler if server sends abort message', function (done) {
+            wampy.options({
+                onError: function (e) { done(); }
+            }).connect();
         });
 
         describe('PubSub module', function () {
@@ -724,6 +730,29 @@ describe('Wampy.js', function () {
                     onError: function (e) {
                         expect(e).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE.description);
                     }
+                });
+            });
+
+            it('fires error callback if error occurred during subscribing', function (done) {
+                wampy.subscribe('subscribe.topic10', {
+                    onSuccess: function () { },
+                    onError: function (e) { done(); },
+                    onEvent: function (e) { }
+                });
+            });
+
+            it('fires error callback if error occurred during unsubscribing', function (done) {
+                wampy.unsubscribe('subscribe.topic3', {
+                    onSuccess: function () { },
+                    onError: function (e) { done(); }
+                });
+
+            });
+
+            it('fires error callback if error occurred during publishing', function (done) {
+                wampy.publish('subscribe.topic4', null, {
+                    onSuccess: function () { },
+                    onError: function (e) { done(); }
                 });
             });
 
@@ -1363,6 +1392,22 @@ describe('Wampy.js', function () {
                         }
                     }
                 );
+            });
+
+            it('fires error callback if error occurred during registering', function (done) {
+                wampy.register('call.rpc10', {
+                    rpc: function () { },
+                    onSuccess: function () { },
+                    onError: function (e) { done(); }
+                });
+            });
+
+            it('fires error callback if error occurred during unregistering', function (done) {
+                wampy.unregister('call.rpc2', {
+                    onSuccess: function () { },
+                    onError: function (e) { done(); }
+                });
+
             });
 
         });
