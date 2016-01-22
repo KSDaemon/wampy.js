@@ -112,10 +112,10 @@ describe('Wampy.js', function () {
 
         it('allows to connect on instantiation if all required options specified', function (done) {
             var wampy = new Wampy('ws://fake.server.org/ws/', {
-                    realm: 'AppRealm',
-                    onConnect: done,
-                    ws: WebSocket
-                });
+                realm: 'AppRealm',
+                onConnect: done,
+                ws: WebSocket
+            });
         });
 
         it('disallows to connect on instantiation without url', function () {
@@ -165,18 +165,18 @@ describe('Wampy.js', function () {
 
         before(function (done) {
             wampy = new Wampy('ws://fake.server.org/ws/', {
-                    debug: false,
-                    autoReconnect: false,
-                    reconnectInterval: 2000,
-                    maxRetries: 7,
-                    transportEncoding: 'json',
-                    realm: 'AppRealm',
-                    onConnect: function () { done(); },
-                    onClose: function () { done(); },
-                    onError: function () { done(); },
-                    onReconnect: function () { done(); },
-                    ws: WebSocket
-                });
+                debug: false,
+                autoReconnect: false,
+                reconnectInterval: 2000,
+                maxRetries: 7,
+                transportEncoding: 'json',
+                realm: 'AppRealm',
+                onConnect: function () { done(); },
+                onClose: function () { done(); },
+                onError: function () { done(); },
+                onReconnect: function () { done(); },
+                ws: WebSocket
+            });
         });
 
         it('allows to get and set different options', function () {
@@ -1367,4 +1367,4 @@ describe('Wampy.js', function () {
 
     });
 
-})
+});
