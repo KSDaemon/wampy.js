@@ -19,7 +19,7 @@ Table of Contents
 * [Usage example](#usage-example)
 * [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Installation](#installation)
-* [Methods](#methods)
+* [API](#api)
 	* [Constructor](#constructorurl-options)
 	* [options](#optionsopts)
 	* [getOpStatus](#getopstatus)
@@ -135,8 +135,8 @@ In case, you don't plan to use msgpack, just include clean wampy.min.js.
 
 [Back to TOC](#table-of-contents)
 
-Methods
-========
+API
+===
 
 Constructor([url[, options]])
 ------------------------------------------
@@ -148,13 +148,23 @@ Can be in forms of:
 	* fully qualified url: schema://server:port/path
 	* server:port/path. In this case page schema will be used.
 	* /path. In this case page schema, server, port will be used.
-* **options** hash-table. The only required field is `realm`. See description below.
+* **options** hash-table. The only required field is `realm`.
+For node.js enviroment also necessary to specify `ws` - websocket module. See description below.
 
 ```javascript
+// in browser
 ws = new Wampy();
 ws = new Wampy('/my-socket-path');
 ws = new Wampy('ws://socket.server.com:5000/ws', { autoReconnect: false });
 ws = new Wampy({ reconnectInterval: 1*1000 });
+
+// in node.js
+w3cws = require('websocket').w3cwebsocket;
+ws = new Wampy(null, { ws: w3cws });
+ws = new Wampy('/my-socket-path', { ws: w3cws });
+ws = new Wampy('ws://socket.server.com:5000/ws', { autoReconnect: false, ws: w3cws });
+ws = new Wampy({ reconnectInterval: 1*1000, ws: w3cws });
+
 ```
 
 [Back to TOC](#table-of-contents)
@@ -174,13 +184,15 @@ or had registered some procedures, Wampy will resubscribe to that topics and rer
 * **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
 * **maxRetries**. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
 will be called
-* **transportEncoding**. Default value: json. Transport serializer to use. Supported 2 values: json|msgpack.
-For using msgpack you need to include msgpack javascript library, and also wamp server, that also supports it.
-* **realm**. Default value: undefined. WAMP Realm to join on server. See WAMP spec for additional info.
-* **onConnect**. Default value: undefined. Callback function. Fired when connection to wamp server is established.
-* **onClose**. Default value: undefined. Callback function. Fired on closing connection to wamp server.
-* **onError**. Default value: undefined. Callback function. Fired on error in websocket communication.
-* **onReconnect**. Default value: undefined. Callback function. Fired every time on reconnection attempt.
+* **transportEncoding**. Default value: json. Transport serializer to use. Supports 2 values: json|msgpack.
+For using msgpack you need to include msgpack javascript library, set up **msgpackCoder** option, and wamp server, that also supports it.
+* **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
+* **onConnect**. Default value: null. Callback function. Fired when connection to wamp server is established.
+* **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
+* **onError**. Default value: null. Callback function. Fired on error in websocket communication.
+* **onReconnect**. Default value: null. Callback function. Fired every time on reconnection attempt.
+* **ws**. Default value: null. User provided WebSocket class. Useful in node enviroment.
+* **msgpackCoder**. Default value: null. User provided msgpack class. Useful if you plan to use msgpack encoder instead of default json.
 
 ```javascript
 ws.options();
@@ -202,7 +214,7 @@ getOpStatus()
 
 Returns the status of last operation. Wampy is developed in a such way, that every operation returns **this** even
 in case of error to suport chaining. But if you want to know status of last operation, you can call .getOpStatus().
-This method returns an object with 2 or 3 attributes: code and description and possible request ID . 
+This method returns an object with 2 or 3 attributes: code and description and possible request ID .
 Code is integer, and value > 0 means error.
 Description is a description of code.
 Request ID is integer and may be useful in some cases (call canceling for example).
@@ -256,7 +268,7 @@ ws.disconnect();
 abort()
 ------------
 
-Aborts WAMP session and closes a websocket connection.  Supports chaining. 
+Aborts WAMP session and closes a websocket connection.  Supports chaining.
 If it is called on handshake stage - it sends a abort message to wamp server (as described in spec).
 Also clears all queues, subscription, calls. Supports chaining.
 
@@ -478,7 +490,7 @@ ws.register('sqrt.value', {
 Also wampy supports rpc with asynchronous code, such as some user interactions or xhr, using promises. For using this functionality in old browsers you should use polyfills, like [es6-promise](https://github.com/jakearchibald/es6-promise). Check brower support at [can i use](http://caniuse.com/#search=promise) site.
 
 ```javascript
-var getUserName = function () { 
+var getUserName = function () {
     return new Promise(function (resolve, reject) {
         /* Ask user to input his username somehow,
            and resolve promise with user input at the end */
@@ -569,8 +581,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 See Also
 ========
 
-* [WAMP specification](http://wamp.ws)
-* [Wiola](http://ksdaemon.github.io/wiola/) - WAMP in Lua on top of nginx/openresty
+* [WAMP specification](http://wamp-proto.org/)
+* [Wiola](http://ksdaemon.github.io/wiola/) - WAMP Router in Lua on top of nginx/openresty
+* [Loowy](https://github.com/KSDaemon/Loowy) - LUA WAMP client
 
 [Back to TOC](#table-of-contents)
 
