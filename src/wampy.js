@@ -15,137 +15,137 @@
  */
 
 // Module boilerplate to support browser globals and browserify and AMD.
-;(typeof define === 'function' ? function (m) { define('Wampy', m); } :
+(typeof define === 'function' ? function (m) { define('Wampy', m); } :
     typeof exports === 'object' ? function (m) { module.exports = m(); } :
     function (m) { this.Wampy = m(); }
 )(function () {
 
     var WAMP_MSG_SPEC = {
-        HELLO: 1,
-        WELCOME: 2,
-        ABORT: 3,
-        CHALLENGE: 4,
-        AUTHENTICATE: 5,
-        GOODBYE: 6,
-        HEARTBEAT: 7,
-        ERROR: 8,
-        PUBLISH: 16,
-        PUBLISHED: 17,
-        SUBSCRIBE: 32,
-        SUBSCRIBED: 33,
-        UNSUBSCRIBE: 34,
-        UNSUBSCRIBED: 35,
-        EVENT: 36,
-        CALL: 48,
-        CANCEL: 49,
-        RESULT: 50,
-        REGISTER: 64,
-        REGISTERED: 65,
-        UNREGISTER: 66,
-        UNREGISTERED: 67,
-        INVOCATION: 68,
-        INTERRUPT: 69,
-        YIELD: 70
-    },
+            HELLO: 1,
+            WELCOME: 2,
+            ABORT: 3,
+            CHALLENGE: 4,
+            AUTHENTICATE: 5,
+            GOODBYE: 6,
+            HEARTBEAT: 7,
+            ERROR: 8,
+            PUBLISH: 16,
+            PUBLISHED: 17,
+            SUBSCRIBE: 32,
+            SUBSCRIBED: 33,
+            UNSUBSCRIBE: 34,
+            UNSUBSCRIBED: 35,
+            EVENT: 36,
+            CALL: 48,
+            CANCEL: 49,
+            RESULT: 50,
+            REGISTER: 64,
+            REGISTERED: 65,
+            UNREGISTER: 66,
+            UNREGISTERED: 67,
+            INVOCATION: 68,
+            INTERRUPT: 69,
+            YIELD: 70
+        },
 
-    WAMP_ERROR_MSG = {
-        SUCCESS: {
-            code: 0,
-            description: 'Success!'
+        WAMP_ERROR_MSG = {
+            SUCCESS: {
+                code: 0,
+                description: 'Success!'
+            },
+            URI_ERROR: {
+                code: 1,
+                description: 'Topic URI doesn\'t meet requirements!'
+            },
+            NO_BROKER: {
+                code: 2,
+                description: 'Server doesn\'t provide broker role!'
+            },
+            NO_CALLBACK_SPEC: {
+                code: 3,
+                description: 'No required callback function specified!'
+            },
+            INVALID_PARAM: {
+                code: 4,
+                description: 'Invalid parameter(s) specified!'
+            },
+            NON_EXIST_SUBSCRIBE_CONFIRM: {
+                code: 5,
+                description: 'Received subscribe confirmation to non existent subscription!'
+            },
+            NON_EXIST_SUBSCRIBE_ERROR: {
+                code: 6,
+                description: 'Received error for non existent subscription!'
+            },
+            NON_EXIST_UNSUBSCRIBE: {
+                code: 7,
+                description: 'Trying to unsubscribe from non existent subscription!'
+            },
+            NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: {
+                code: 8,
+                description: 'Received unsubscribe confirmation to non existent subscription!'
+            },
+            NON_EXIST_PUBLISH_ERROR: {
+                code: 9,
+                description: 'Received error for non existent publication!'
+            },
+            NON_EXIST_PUBLISH_PUBLISHED: {
+                code: 10,
+                description: 'Received publish confirmation for non existent publication!'
+            },
+            NON_EXIST_SUBSCRIBE_EVENT: {
+                code: 11,
+                description: 'Received event for non existent subscription!'
+            },
+            NO_DEALER: {
+                code: 12,
+                description: 'Server doesn\'t provide dealer role!'
+            },
+            NON_EXIST_CALL_RESULT: {
+                code: 13,
+                description: 'Received rpc result for non existent call!'
+            },
+            NON_EXIST_CALL_ERROR: {
+                code: 14,
+                description: 'Received rpc call error for non existent call!'
+            },
+            RPC_ALREADY_REGISTERED: {
+                code: 15,
+                description: 'RPC already registered!'
+            },
+            NON_EXIST_RPC_REG: {
+                code: 16,
+                description: 'Received rpc registration confirmation for non existent rpc!'
+            },
+            NON_EXIST_RPC_UNREG: {
+                code: 17,
+                description: 'Received rpc unregistration for non existent rpc!'
+            },
+            NON_EXIST_RPC_ERROR: {
+                code: 18,
+                description: 'Received error for non existent rpc!'
+            },
+            NON_EXIST_RPC_INVOCATION: {
+                code: 19,
+                description: 'Received invocation for non existent rpc!'
+            },
+            NON_EXIST_RPC_REQ_ID: {
+                code: 20,
+                description: 'No RPC calls in action with specified request ID!'
+            },
+            NO_REALM: {
+                code: 21,
+                description: 'No realm specified!'
+            },
+            NO_WS_URL: {
+                code: 22,
+                description: 'No websocket URL specified or URL is incorrect!'
+            }
         },
-        URI_ERROR: {
-            code: 1,
-            description: 'Topic URI doesn\'t meet requirements!'
-        },
-        NO_BROKER: {
-            code: 2,
-            description: 'Server doesn\'t provide broker role!'
-        },
-        NO_CALLBACK_SPEC: {
-            code: 3,
-            description: 'No required callback function specified!'
-        },
-        INVALID_PARAM: {
-            code: 4,
-            description: 'Invalid parameter(s) specified!'
-        },
-        NON_EXIST_SUBSCRIBE_CONFIRM: {
-            code: 5,
-            description: 'Received subscribe confirmation to non existent subscription!'
-        },
-        NON_EXIST_SUBSCRIBE_ERROR: {
-            code: 6,
-            description: 'Received error for non existent subscription!'
-        },
-        NON_EXIST_UNSUBSCRIBE: {
-            code: 7,
-            description: 'Trying to unsubscribe from non existent subscription!'
-        },
-        NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: {
-            code: 8,
-            description: 'Received unsubscribe confirmation to non existent subscription!'
-        },
-        NON_EXIST_PUBLISH_ERROR: {
-            code: 9,
-            description: 'Received error for non existent publication!'
-        },
-        NON_EXIST_PUBLISH_PUBLISHED: {
-            code: 10,
-            description: 'Received publish confirmation for non existent publication!'
-        },
-        NON_EXIST_SUBSCRIBE_EVENT: {
-            code: 11,
-            description: 'Received event for non existent subscription!'
-        },
-        NO_DEALER: {
-            code: 12,
-            description: 'Server doesn\'t provide dealer role!'
-        },
-        NON_EXIST_CALL_RESULT: {
-            code: 13,
-            description: 'Received rpc result for non existent call!'
-        },
-        NON_EXIST_CALL_ERROR: {
-            code: 14,
-            description: 'Received rpc call error for non existent call!'
-        },
-        RPC_ALREADY_REGISTERED: {
-            code: 15,
-            description: 'RPC already registered!'
-        },
-        NON_EXIST_RPC_REG: {
-            code: 16,
-            description: 'Received rpc registration confirmation for non existent rpc!'
-        },
-        NON_EXIST_RPC_UNREG: {
-            code: 17,
-            description: 'Received rpc unregistration for non existent rpc!'
-        },
-        NON_EXIST_RPC_ERROR: {
-            code: 18,
-            description: 'Received error for non existent rpc!'
-        },
-        NON_EXIST_RPC_INVOCATION: {
-            code: 19,
-            description: 'Received invocation for non existent rpc!'
-        },
-        NON_EXIST_RPC_REQ_ID: {
-            code: 20,
-            description: 'No RPC calls in action with specified request ID!'
-        },
-        NO_REALM: {
-            code: 21,
-            description: 'No realm specified!'
-        },
-        NO_WS_URL: {
-            code: 22,
-            description: 'No websocket URL specified or URL is incorrect!'
-        }
-    },
 
-    isNode = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]');
+        isNode = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]');
 
-    function getServerUrlBrowser(url) {
+    function getServerUrlBrowser (url) {
         var scheme, port;
 
         if (!url) {
@@ -167,7 +167,7 @@
         }
     }
 
-    function getServerUrlNode(url) {
+    function getServerUrlNode (url) {
         if (/^ws(s)?:\/\//.test(url)) {   // ws scheme is specified
             return url;
         } else {
@@ -175,7 +175,7 @@
         }
     }
 
-    function getWebSocket(url, protocols, ws) {
+    function getWebSocket (url, protocols, ws) {
         var parsedUrl = isNode ? getServerUrlNode(url) : getServerUrlBrowser(url);
 
         if (!parsedUrl) {
@@ -230,7 +230,7 @@
          * @type {string}
          * @private
          */
-        this._url = (typeof arguments[0] === 'string') ? url : undefined;
+        this._url = (typeof arguments[0] === 'string') ? url : null;
 
         /**
          * WS protocols
@@ -439,8 +439,13 @@
              * User provided WebSocket class
              * @type {function}
              */
-            ws: null
+            ws: null,
 
+            /**
+             * User provided msgpack class
+             * @type {function}
+             */
+            msgpackCoder: null
         };
 
         switch (arguments.length) {
@@ -531,16 +536,13 @@
      * @private
      */
     Wampy.prototype._setWsProtocols = function () {
-        var root = isNode ? global : window;
-
-        if (root.msgpack !== undefined) {
+        if (this._options.msgpackCoder) {
             if (this._options.transportEncoding === 'msgpack') {
                 this._protocols = ['wamp.2.msgpack', 'wamp.2.json'];
             } else {
                 this._protocols = ['wamp.2.json', 'wamp.2.msgpack'];
             }
         }
-
     };
 
     /**
@@ -653,8 +655,6 @@
     };
 
     Wampy.prototype._wsOnOpen = function () {
-        var p;
-
         this._log('[wampy] websocket connected');
 
         if (this._ws.protocol) {
@@ -1016,7 +1016,7 @@
                             msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, result];
                         } else if (self._isPlainObject(result)) {
                             msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [], result];
-                        } else if (result === undefined) {
+                        } else if (typeof (result) === 'undefined') {
                             msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
                         } else {    // single value
                             msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [result]];
@@ -1108,7 +1108,7 @@
      * @returns {*}
      */
     Wampy.prototype.options = function (opts) {
-        if (opts === undefined) {
+        if (typeof (opts) === 'undefined') {
             return this._options;
         } else if (this._isPlainObject(opts)) {
             this._options = this._merge(this._options, opts);
@@ -1172,7 +1172,7 @@
             // need to send goodbye message to server
             this._cache.isSayingGoodbye = true;
             this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.error.system_shutdown']);
-        } else if (this._ws){
+        } else if (this._ws) {
             this._ws.close();
         }
 
@@ -1236,9 +1236,7 @@
 
         if (typeof callbacks === 'function') {
             callbacks = { onEvent: callbacks };
-        } else if (this._isPlainObject(callbacks) && callbacks.onEvent !== undefined) {
-
-        } else {
+        } else if (!this._isPlainObject(callbacks) || typeof (callbacks.onEvent) === 'undefined') {
             this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
@@ -1304,7 +1302,7 @@
 
             reqId = this._getReqId();
 
-            if (callbacks === undefined) {
+            if (typeof (callbacks) === 'undefined') {
                 this._subscriptions[topicURI].callbacks = [];
                 callbacks = {};
             } else if (typeof callbacks === 'function') {
@@ -1393,10 +1391,10 @@
             options.acknowledge = true;
         }
 
-        if (advancedOptions !== undefined) {
+        if (typeof (advancedOptions) !== 'undefined') {
 
             if (this._isPlainObject(advancedOptions)) {
-                if (advancedOptions.exclude){
+                if (advancedOptions.exclude) {
                     if (this._isArray(advancedOptions.exclude)) {
                         options.exclude = advancedOptions.exclude;
                     } else if (typeof advancedOptions.exclude === 'number') {
@@ -1406,7 +1404,7 @@
                     }
                 }
 
-                if (advancedOptions.eligible){
+                if (advancedOptions.eligible) {
                     if (this._isArray(advancedOptions.eligible)) {
                         options.eligible = advancedOptions.eligible;
                     } else if (typeof advancedOptions.eligible === 'number') {
@@ -1458,9 +1456,9 @@
                 break;
             default:
                 this._requests[reqId] = {
-                            topic: topicURI,
-                            callbacks: callbacks
-                        };
+                    topic: topicURI,
+                    callbacks: callbacks
+                };
 
                 // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
                 if (this._isArray(payload)) {
@@ -1526,9 +1524,7 @@
 
         if (typeof callbacks === 'function') {
             callbacks = { onSuccess: callbacks };
-        } else if (this._isPlainObject(callbacks) && callbacks.onSuccess !== undefined) {
-
-        } else {
+        } else if (!this._isPlainObject(callbacks) || typeof (callbacks.onSuccess) === 'undefined') {
             this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
@@ -1538,10 +1534,10 @@
             return this;
         }
 
-        if (advancedOptions !== undefined) {
+        if (typeof (advancedOptions) !== 'undefined') {
 
             if (this._isPlainObject(advancedOptions)) {
-                if (advancedOptions.exclude){
+                if (advancedOptions.exclude) {
                     if (this._isArray(advancedOptions.exclude)) {
                         options.exclude = advancedOptions.exclude;
                     } else if (typeof advancedOptions.exclude === 'number') {
@@ -1551,7 +1547,7 @@
                     }
                 }
 
-                if (advancedOptions.eligible){
+                if (advancedOptions.eligible) {
                     if (this._isArray(advancedOptions.eligible)) {
                         options.eligible = advancedOptions.eligible;
                     } else if (typeof advancedOptions.eligible === 'number') {
@@ -1651,7 +1647,7 @@
             return this;
         }
 
-        if (advancedOptions !== undefined) {
+        if (typeof (advancedOptions) !== 'undefined') {
             if (this._isPlainObject(advancedOptions)) {
                 if (advancedOptions.hasOwnProperty('mode')) {
                     options.mode = /skip|kill|killnowait/.test(advancedOptions.mode) ? advancedOptions.mode : 'skip' ;
@@ -1707,9 +1703,7 @@
 
         if (typeof callbacks === 'function') {
             callbacks = { rpc: callbacks };
-        } else if (this._isPlainObject(callbacks) && callbacks.rpc !== undefined) {
-
-        } else {
+        } else if (!this._isPlainObject(callbacks) || typeof (callbacks.rpc) === 'undefined') {
             this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
