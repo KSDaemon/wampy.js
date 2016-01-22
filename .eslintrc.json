@@ -19,7 +19,7 @@
         "computed-property-spacing": [1, "never"],
         "consistent-this": [1, "self"],
         "eol-last": 1,
-        "max-depth": [2, 4],
+        "max-depth": [2, 5],
         "max-nested-callbacks": [2, 5],
         "max-params": [2, 5],
         "no-trailing-spaces": [1, { "skipBlankLines": true }],

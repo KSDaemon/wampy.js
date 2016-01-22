@@ -43,9 +43,6 @@
     "requireSpacesInFunctionDeclaration": {
         "beforeOpeningCurlyBrace": true
     },
-    "disallowSpacesInFunctionDeclaration": {
-        "beforeOpeningRoundBrace": true
-    },
     "requireSpacesInAnonymousFunctionExpression": {
         "beforeOpeningRoundBrace": true,
         "beforeOpeningCurlyBrace": true
@@ -102,5 +99,6 @@
     "disallowMultipleLineBreaks": true,
     "disallowMixedSpacesAndTabs": true,
     "disallowTrailingWhitespace": true,
-    "validateLineBreaks": "LF"
+    "validateLineBreaks": "LF",
+    "excludeFiles": ["src/msgpack", "src/jdataview"]
 }
