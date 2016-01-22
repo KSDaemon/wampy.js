@@ -569,9 +569,9 @@
     Wampy.prototype._encode = function (msg) {
         var bytearray;
 
-        if (this._options.transportEncoding === 'msgpack') {
+        if (this._options.transportEncoding === 'msgpack' && this._options.msgpackCoder) {
             try {
-                bytearray = new Uint8Array(msgpack.encode(msg));
+                bytearray = new Uint8Array(this._options.msgpackCoder.encode(msg));
 
                 return bytearray.buffer;
 
@@ -590,10 +590,10 @@
      * @private
      */
     Wampy.prototype._decode = function (msg) {
-        if (this._options.transportEncoding === 'msgpack') {
+        if (this._options.transportEncoding === 'msgpack' && this._options.msgpackCoder) {
             try {
 
-                return msgpack.decode(msg);
+                return this._options.msgpackCoder.decode(msg);
 
             } catch (e) {
                 throw new Error('[wampy] no msgpack encoder available!');
