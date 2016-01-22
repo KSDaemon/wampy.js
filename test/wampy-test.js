@@ -7,6 +7,8 @@
 var expect = require('chai').expect,
     WebSocket = require('./fake-ws'),
     // ws = require('websocket').w3cwebsocket,
+    routerUrl = 'ws://fake.server.org/ws/',
+    anotherRouterUrl = 'ws://another.server.org/ws/',
     Wampy = require('./../src/wampy'),
     root = (typeof process === 'object' &&
             Object.prototype.toString.call(process) === '[object process]') ?
@@ -111,7 +113,7 @@ describe('Wampy.js', function () {
     describe('Constructor', function () {
 
         it('allows to connect on instantiation if all required options specified', function (done) {
-            var wampy = new Wampy('ws://fake.server.org/ws/', {
+            var wampy = new Wampy(routerUrl, {
                 realm: 'AppRealm',
                 onConnect: done,
                 ws: WebSocket
@@ -126,14 +128,14 @@ describe('Wampy.js', function () {
         });
 
         it('disallows to connect on instantiation without realm', function () {
-            var wampy = new Wampy('ws://fake.server.org/ws/'),
+            var wampy = new Wampy(routerUrl),
                 opStatus = wampy.getOpStatus();
 
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_REALM);
         });
 
         it('allows to set different options on instantiation', function (done) {
-            var wampy = new Wampy('ws://fake.server.org/ws/', {
+            var wampy = new Wampy(routerUrl, {
                     autoReconnect: true,
                     reconnectInterval: 10000,
                     maxRetries: 50,
@@ -164,7 +166,7 @@ describe('Wampy.js', function () {
         var wampy;
 
         before(function (done) {
-            wampy = new Wampy('ws://fake.server.org/ws/', {
+            wampy = new Wampy(routerUrl, {
                 debug: false,
                 autoReconnect: false,
                 reconnectInterval: 2000,
@@ -227,7 +229,7 @@ describe('Wampy.js', function () {
             wampy.options({
                 onClose: function () {
                     root.setTimeout(function () {
-                        wampy.connect('ws://another.server.org/ws/');
+                        wampy.connect(anotherRouterUrl);
                     }, 1);
                 },
                 onConnect: function () { done(); }
@@ -239,7 +241,7 @@ describe('Wampy.js', function () {
                 onClose: function () {
                     root.setTimeout(function () {
                         wampy.options({ onClose: done })
-                            .connect('ws://another.server.org/ws/');
+                            .connect(anotherRouterUrl);
 
                         root.setTimeout(function () {
                             wampy.abort();
