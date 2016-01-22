@@ -38,7 +38,8 @@
         "browser": true,
         "amd": true,
         "commonjs": true,
-        "node": true
+        "node": true,
+        "mocha": true
     },
     "ecmaFeatures": {
         "modules": true
