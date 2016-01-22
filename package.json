@@ -4,16 +4,16 @@
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
   "author": "Konstantin Burkalev <KSDaemon@ya.ru> (http://ksdaemon.ru)",
   "devDependencies": {
-    "chai": "^3.2.0",
-    "coveralls": "^2.11.3",
+    "chai": "^3.4.1",
+    "coveralls": "^2.11.6",
+    "grunt-contrib-copy": "^0.8.2",
+    "grunt-contrib-jshint": "^0.11.3",
+    "mocha": "^2.3.4",
     "grunt": "~0.4.5",
     "grunt-contrib-concat": "^0.5.0",
-    "grunt-contrib-copy": "^0.8.0",
-    "grunt-contrib-jshint": "^0.11.0",
-    "grunt-contrib-uglify": "^0.9.1",
-    "istanbul": "^0.3.14",
-    "mocha": "^2.2.1",
-    "mocha-lcov-reporter": "0.0.2"
+    "grunt-contrib-uglify": "^0.11.0",
+    "istanbul": "^0.4.2",
+    "mocha-lcov-reporter": "^1.0.0"
   },
   "main": "src/wampy.js",
   "dependencies": {
@@ -33,6 +33,9 @@
   },
   "homepage": "https://github.com/KSDaemon/wampy.js",
   "scripts": {
+    "build": "grunt",
+    "lint": "eslint src/wampy.js",
+    "lint:fix": "eslint --fix src/wampy.js",
     "test": "mocha -R spec",
     "cover": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec"
   }
