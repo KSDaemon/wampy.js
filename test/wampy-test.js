@@ -1380,7 +1380,7 @@ describe('Wampy.js', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('disallows to cancel non existent rpc', function () {
+            it('disallows to cancel non existent rpc invocation', function () {
                 wampy.cancel(1234567, function (e) { });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID);
 
@@ -1403,11 +1403,68 @@ describe('Wampy.js', function () {
             });
 
             it('fires error callback if error occurred during unregistering', function (done) {
-                wampy.unregister('call.rpc2', {
+                wampy.unregister('register.rpc9', {
                     onSuccess: function () { },
                     onError: function (e) { done(); }
                 });
 
+            });
+
+            it('fires error handler if error occurred during RPC call', function (done) {
+                var i = 0;
+                wampy.call('call.rpc1', null, {
+                    onSuccess: function (e) {
+                        done('Reached success. Check Server side');
+                    },
+                    onError: function (e) {
+                        //expect(e).to.be.null;
+
+                        //i++;
+                        //if (i === 3) {
+                            done();
+                        //}
+                    }
+                });
+
+                wampy.call(
+                    'call.rpc1',
+                    [1, 2, 3, 4, 5],
+                    {
+                        onSuccess: function (e) {
+                            done('Reached success. Check Server side');
+                        },
+                        onError: function (e) {
+                            expect(e).to.be.an('array');
+                            expect(e).to.have.length(5);
+                            expect(e[0]).to.be.equal(1);
+                            expect(e[4]).to.be.equal(5);
+
+                            i++;
+                            if (i === 3) {
+                                done();
+                            }
+                        }
+                    }
+                );
+
+                wampy.call(
+                    'call.rpc1',
+                    { k1: 1, k2: 2 },
+                    {
+                        onSuccess: function (e) {
+                            done('Reached success. Check Server side');
+                        },
+                        onError: function (e) {
+                            expect(e).to.be.an('object');
+                            expect(e).to.be.deep.equal({ k1: 1, k2: 2 });
+
+                            i++;
+                            if (i === 3) {
+                                done();
+                            }
+                        }
+                    }
+                );
             });
 
         });

@@ -1196,7 +1196,7 @@
                 data: [
                     WAMP_MSG_SPEC.REGISTERED,
                     'RequestId',
-                    27   // Registration ID
+                    297   // Registration ID
                 ],
                 from: [1],
                 to: [1]
@@ -1219,6 +1219,42 @@
                     'RequestId',
                     {},
                     'wamp.unregister.error'
+                ],
+                from: [1],
+                to: [2]
+            },
+            {
+                data: [
+                    WAMP_MSG_SPEC.ERROR,
+                    WAMP_MSG_SPEC.CALL,
+                    'RequestId',
+                    {},
+                    'call.error'
+                ],
+                from: [1],
+                to: [2]
+            },
+            {
+                data: [
+                    WAMP_MSG_SPEC.ERROR,
+                    WAMP_MSG_SPEC.CALL,
+                    'RequestId',
+                    {},
+                    'call.error',
+                    [1, 2, 3, 4, 5]
+                ],
+                from: [1],
+                to: [2]
+            },
+            {
+                data: [
+                    WAMP_MSG_SPEC.ERROR,
+                    WAMP_MSG_SPEC.CALL,
+                    'RequestId',
+                    {},
+                    'call.error',
+                    null,
+                    { k1: 1, k2: 2 }
                 ],
                 from: [1],
                 to: [2]
@@ -1303,8 +1339,8 @@
             rec_data = JSON.parse(data);
             send_data = sendData.shift();
 
-            // console.log('Data to send to server:', data);
-            // console.log('Data to send to client:', send_data.data);
+             console.log('Data to send to server:', data);
+             console.log('Data to send to client:', send_data.data);
             if (send_data.data) {
                 // Prepare answer (copy request id from request to answer, etc)
                 if (send_data.from) {
