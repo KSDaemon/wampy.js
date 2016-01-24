@@ -567,16 +567,12 @@
      * @private
      */
     Wampy.prototype._encode = function (msg) {
-        var bytearray;
 
         if (this._options.transportEncoding === 'msgpack' && this._options.msgpackCoder) {
             try {
-                bytearray = new Uint8Array(this._options.msgpackCoder.encode(msg));
-
-                return bytearray.buffer;
-
+                return this._options.msgpackCoder.encode(msg);
             } catch (e) {
-                throw new Error('[wampy] no msgpack encoder available!');
+                throw new Error('[wampy] msgpack encode exception!');
             }
         } else {
             return JSON.stringify(msg);
@@ -592,11 +588,9 @@
     Wampy.prototype._decode = function (msg) {
         if (this._options.transportEncoding === 'msgpack' && this._options.msgpackCoder) {
             try {
-
                 return this._options.msgpackCoder.decode(msg);
-
             } catch (e) {
-                throw new Error('[wampy] no msgpack encoder available!');
+                throw new Error('[wampy] msgpack decode exception!');
             }
         } else {
             return JSON.parse(msg);
@@ -708,11 +702,6 @@
                 this._cache.sessionId = data[1];
                 this._cache.server_wamp_features = data[2];
 
-                // Firing onConnect event on real connection to WAMP server
-                if (this._options.onConnect) {
-                    this._options.onConnect();
-                }
-
                 if (this._cache.reconnectingAttempts) {
                     // There was reconnection
 
@@ -722,6 +711,11 @@
                     this._renewSubscriptions();
                     this._renewRegistrations();
 
+                } else {
+                    // Firing onConnect event on real connection to WAMP server
+                    if (this._options.onConnect) {
+                        this._options.onConnect();
+                    }
                 }
 
                 // Send local queue if there is something out there
