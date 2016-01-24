@@ -148,8 +148,8 @@ Can be in forms of:
 	* fully qualified url: schema://server:port/path
 	* server:port/path. In this case page schema will be used.
 	* /path. In this case page schema, server, port will be used.
-* **options** hash-table. The only required field is `realm`.
-For node.js enviroment also necessary to specify `ws` - websocket module. See description below.
+* **options** hash-table. The only required field is `realm`. For node.js enviroment also necessary to specify `ws` - websocket module.
+See description below.
 
 ```javascript
 // in browser
@@ -166,6 +166,37 @@ ws = new Wampy('ws://socket.server.com:5000/ws', { autoReconnect: false, ws: w3c
 ws = new Wampy({ reconnectInterval: 1*1000, ws: w3cws });
 
 ```
+
+Json serializer will be used by default. If you want to use msgpack encoder, pass it through options,
+and set encoding type to 'msgpack'.
+
+```javascript
+// in browser
+ws = new Wampy('ws://socket.server.com:5000/ws', {
+    transportEncoding: 'msgpack',
+    msgpackCoder: msgpack
+});
+ws = new Wampy({
+    transportEncoding: 'msgpack',
+    msgpackCoder: msgpack
+});
+
+// in node.js
+w3cws = require('websocket').w3cwebsocket;
+msgpack = require('msgpack-lite')
+ws = new Wampy('ws://socket.server.com:5000/ws', {
+    ws: w3cws,
+    transportEncoding: 'msgpack',
+    msgpackCoder: msgpack
+});
+ws = new Wampy({
+    ws: w3cws,
+    transportEncoding: 'msgpack',
+    msgpackCoder: msgpack
+});
+
+```
+
 
 [Back to TOC](#table-of-contents)
 
