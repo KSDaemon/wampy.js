@@ -17,6 +17,7 @@
   },
   "main": "src/wampy.js",
   "dependencies": {
+    "msgpack-lite": "^0.1.15",
     "websocket": "^1.0.22"
   },
   "repository": {
