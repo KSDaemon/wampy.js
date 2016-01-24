@@ -5,110 +5,26 @@
  */
 
 var expect = require('chai').expect,
-    WebSocket = require('./fake-ws'),
-    // ws = require('websocket').w3cwebsocket,
     routerUrl = 'ws://fake.server.org/ws/',
     anotherRouterUrl = 'ws://another.server.org/ws/',
-    Wampy = require('./../src/wampy'),
+    WebSocket,
+    Wampy,
     root = (typeof process === 'object' &&
             Object.prototype.toString.call(process) === '[object process]') ?
             global : window,
-    WAMP_ERROR_MSG = {
-        SUCCESS: {
-            code: 0,
-            description: 'Success!'
-        },
-        URI_ERROR: {
-            code: 1,
-            description: 'Topic URI doesn\'t meet requirements!'
-        },
-        NO_BROKER: {
-            code: 2,
-            description: 'Server doesn\'t provide broker role!'
-        },
-        NO_CALLBACK_SPEC: {
-            code: 3,
-            description: 'No required callback function specified!'
-        },
-        INVALID_PARAM: {
-            code: 4,
-            description: 'Invalid parameter(s) specified!'
-        },
-        NON_EXIST_SUBSCRIBE_CONFIRM: {
-            code: 5,
-            description: 'Received subscribe confirmation to non existent subscription!'
-        },
-        NON_EXIST_SUBSCRIBE_ERROR: {
-            code: 6,
-            description: 'Received error for non existent subscription!'
-        },
-        NON_EXIST_UNSUBSCRIBE: {
-            code: 7,
-            description: 'Trying to unsubscribe from non existent subscription!'
-        },
-        NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: {
-            code: 8,
-            description: 'Received unsubscribe confirmation to non existent subscription!'
-        },
-        NON_EXIST_PUBLISH_ERROR: {
-            code: 9,
-            description: 'Received error for non existent publication!'
-        },
-        NON_EXIST_PUBLISH_PUBLISHED: {
-            code: 10,
-            description: 'Received publish confirmation for non existent publication!'
-        },
-        NON_EXIST_SUBSCRIBE_EVENT: {
-            code: 11,
-            description: 'Received event for non existent subscription!'
-        },
-        NO_DEALER: {
-            code: 12,
-            description: 'Server doesn\'t provide dealer role!'
-        },
-        NON_EXIST_CALL_RESULT: {
-            code: 13,
-            description: 'Received rpc result for non existent call!'
-        },
-        NON_EXIST_CALL_ERROR: {
-            code: 14,
-            description: 'Received rpc call error for non existent call!'
-        },
-        RPC_ALREADY_REGISTERED: {
-            code: 15,
-            description: 'RPC already registered!'
-        },
-        NON_EXIST_RPC_REG: {
-            code: 16,
-            description: 'Received rpc registration confirmation for non existent rpc!'
-        },
-        NON_EXIST_RPC_UNREG: {
-            code: 17,
-            description: 'Received rpc unregistration for non existent rpc!'
-        },
-        NON_EXIST_RPC_ERROR: {
-            code: 18,
-            description: 'Received error for non existent rpc!'
-        },
-        NON_EXIST_RPC_INVOCATION: {
-            code: 19,
-            description: 'Received invocation for non existent rpc!'
-        },
-        NON_EXIST_RPC_REQ_ID: {
-            code: 20,
-            description: 'No RPC calls in action with specified request ID!'
-        },
-        NO_REALM: {
-            code: 21,
-            description: 'No realm specified!'
-        },
-        NO_WS_OR_URL: {
-            code: 22,
-            description: 'No websocket provided or URL specified is incorrect!'
-        }
-    };
+    WAMP_ERROR_MSG = require('./wamp-error-msg.json');
 
-describe('Wampy.js', function () {
+describe('Wampy.js [with JSON encoder]', function () {
+    this.timeout(5000);
+
+    before(function () {
+        delete require.cache[require.resolve('./send-data')];
+        delete require.cache[require.resolve('./fake-ws')];
+        delete require.cache[require.resolve('./../src/wampy')];
+
+        WebSocket = require('./fake-ws'),
+        Wampy = require('./../src/wampy');
+    });
 
     describe('Constructor', function () {
 
@@ -168,15 +84,15 @@ describe('Wampy.js', function () {
         before(function (done) {
             wampy = new Wampy(routerUrl, {
                 debug: false,
-                autoReconnect: false,
+                autoReconnect: true,
                 reconnectInterval: 2000,
                 maxRetries: 7,
                 transportEncoding: 'json',
                 realm: 'AppRealm',
                 onConnect: function () { done(); },
-                onClose: function () { done(); },
-                onError: function () { done(); },
-                onReconnect: function () { done(); },
+                onClose: function () { done('Reached close'); },
+                onError: function () { done('Reached error'); },
+                onReconnect: function () { done('Reached reconnection'); },
                 ws: WebSocket
             });
         });
@@ -217,12 +133,12 @@ describe('Wampy.js', function () {
             root.setTimeout(function () {
                 wampy.disconnect();
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.SUCCESS);
-            }, 5);
+            }, 1);
         });
 
         it('allows to connect to same WAMP server', function (done) {
-            wampy.options({ onConnect: function () { done(); } });
-            wampy.connect();
+            wampy.options({ onConnect: done })
+                .connect();
         });
 
         it('allows to connect to different WAMP server', function (done) {
@@ -245,7 +161,7 @@ describe('Wampy.js', function () {
 
                         root.setTimeout(function () {
                             wampy.abort();
-                        }, 5);
+                        }, 1);
 
                     }, 1);
                 },
@@ -257,48 +173,49 @@ describe('Wampy.js', function () {
         });
 
         it('autoreconnects to WAMP server on network errors', function (done) {
-            var i = 0;
             wampy.options({
                 onConnect: function () {
                     wampy
                         .subscribe('subscribe.reconnect1', {
                             onSuccess: function () { },
                             onError: function () { done('Error during subscribing'); },
-                            onEvent: function (e) { i++; }
+                            onEvent: function (e) { }
                         })
                         .subscribe('subscribe.reconnect2', {
                             onSuccess: function () { },
                             onError: function () { done('Error during subscribing'); },
-                            onEvent: function (e) { i++; }
+                            onEvent: function (e) { }
                         })
                         .register('register.reconnect1', {
-                            rpc: function (e) { i++; },
+                            rpc: function (e) { },
                             onSuccess: function () { },
                             onError: function () { done('Error during RPC registration'); }
                         })
                         .register('register.reconnect2', {
-                            rpc: function (e) { i++; },
+                            rpc: function (e) { },
                             onSuccess: function () { },
                             onError: function () { done('Error during RPC registration'); }
                         })
                         .register('register.reconnect3', {
-                            rpc: function (e) { i++; },
+                            rpc: function (e) { },
                             onSuccess: function () { },
                             onError: function () { done('Error during RPC registration'); }
                         });
 
                 },
+                onClose: function () { },
+                onError: function () { },
                 onReconnect: function () {
-                    wampy.options({
-                        onConnect: function () {
-                            var t = setInterval(function () {
-                                if (i == 5) {
-                                    clearInterval(t);
-                                    done();
-                                }
-                            }, 5);
+                    var t = root.setInterval(function () {
+                        if (wampy._subsTopics.length === 2 && wampy._rpcNames.length === 3) {
+                            root.clearInterval(t);
+                            t = null;
+                            wampy.options({
+                                onReconnect: null
+                            });
+                            done();
                         }
-                    });
+                    }, 15);
                 }
             }).connect();
         });
@@ -459,7 +376,7 @@ describe('Wampy.js', function () {
                     expect(e).to.be.null;
                     done();
                 })
-                .publish('subscribe.topic3');
+                .publish('subscribe.topic3', null, { exclude_me: false });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -469,7 +386,7 @@ describe('Wampy.js', function () {
                     expect(e[0]).to.be.equal(25);
                     done();
                 })
-                .publish('subscribe.topic4', 25);
+                .publish('subscribe.topic4', 25, { exclude_me: false });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -479,47 +396,32 @@ describe('Wampy.js', function () {
                     expect(e[0]).to.be.equal('payload');
                     done();
                 })
-                .publish('subscribe.topic5', 'payload');
+                .publish('subscribe.topic5', 'payload', { exclude_me: false });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
             it('allows to publish/subscribe event with array payload', function (done) {
-                var i = 0;
                 wampy.subscribe('subscribe.topic6', function (e) {
                     expect(e).to.be.an('array');
                     expect(e).to.have.length(5);
                     expect(e[0]).to.be.equal(1);
                     expect(e[4]).to.be.equal(5);
-
-                    if (i == 1) {
-                        done();
-                    } else {
-                        i++;
-                    }
+                    done();
                 })
-                .publish('subscribe.topic6', [1, 2, 3, 4, 5]);
+                .publish('subscribe.topic6', [1, 2, 3, 4, 5], { exclude_me: false });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-
-                wampy.publish('subscribe.topic6', [1, 2, 3, 4, 5], { exclude_me: false });
             });
 
             it('allows to publish/subscribe event with hash-table payload', function (done) {
-                var i = 0, payload = { key1: 100, key2: 'string-key' };
+                var payload = { key1: 100, key2: 'string-key' };
 
                 wampy.subscribe('subscribe.topic7', function (e) {
                     expect(e).to.be.an('object');
                     expect(e).to.be.deep.equal(payload);
-
-                    if (i == 1) {
-                        done();
-                    } else {
-                        i++;
-                    }
+                    done();
                 })
-                .publish('subscribe.topic7', payload);
+                .publish('subscribe.topic7', payload, { exclude_me: false });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-
-                wampy.publish('subscribe.topic7', payload, { exclude_me: false });
             });
 
             it('allows to publish event with different advanced options', function (done) {
@@ -692,8 +594,8 @@ describe('Wampy.js', function () {
 
             it('allows to unsubscribe from topic only specified handler', function (done) {
 
-                var handler3 = function (e) { done(); },
-                    handler2 = function (e) { done('Called removed handler'); },
+                var handler3 = function (e) { done('Called removed handler'); },
+                    handler2 = function (e) { done(); },
                     handler1 = function (e) { done('Called removed handler'); };
 
                 wampy.subscribe('subscribe.topic9', {
@@ -701,7 +603,7 @@ describe('Wampy.js', function () {
                         wampy.subscribe('subscribe.topic9', handler2)
                             .subscribe('subscribe.topic9', handler3)
                             .unsubscribe('subscribe.topic9', handler1)
-                            .unsubscribe('subscribe.topic9', { onEvent: handler2 })
+                            .unsubscribe('subscribe.topic9', { onEvent: handler3 })
                             .publish('subscribe.topic9', 'payload', null, { exclude_me: false });
                     },
                     onError: function () { },
@@ -867,9 +769,10 @@ describe('Wampy.js', function () {
                 }).disconnect();
             });
 
-            it('allows to register RPC', function () {
+            it('allows to register RPC', function (done) {
                 wampy.register('register.rpc1', function (e) { });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                root.setTimeout(function () { done(); }, 10);
             });
 
             it('allows to register RPC with notification on registration', function (done) {
@@ -1113,7 +1016,7 @@ describe('Wampy.js', function () {
             it('allows to call RPC with progressive result receiving', function (done) {
                 wampy.call(
                     'call.rpc7',
-                    'progress',
+                    'payload',
                     function (e) {
                         expect(e).to.be.an('array');
                         if (e[0] == 100) {
@@ -1417,12 +1320,12 @@ describe('Wampy.js', function () {
                         done('Reached success. Check Server side');
                     },
                     onError: function (e) {
-                        //expect(e).to.be.null;
+                        expect(e).to.be.null;
 
-                        //i++;
-                        //if (i === 3) {
+                        i++;
+                        if (i === 3) {
                             done();
-                        //}
+                        }
                     }
                 });
 

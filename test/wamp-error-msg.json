@@ -1,0 +1,94 @@
+{
+    "SUCCESS": {
+        "code": 0,
+        "description": "Success!"
+    },
+    "URI_ERROR": {
+        "code": 1,
+        "description": "Topic URI doesn't meet requirements!"
+    },
+    "NO_BROKER": {
+        "code": 2,
+        "description": "Server doesn't provide broker role!"
+    },
+    "NO_CALLBACK_SPEC": {
+        "code": 3,
+        "description": "No required callback function specified!"
+    },
+    "INVALID_PARAM": {
+        "code": 4,
+        "description": "Invalid parameter(s) specified!"
+    },
+    "NON_EXIST_SUBSCRIBE_CONFIRM": {
+        "code": 5,
+        "description": "Received subscribe confirmation to non existent subscription!"
+    },
+    "NON_EXIST_SUBSCRIBE_ERROR": {
+        "code": 6,
+        "description": "Received error for non existent subscription!"
+    },
+    "NON_EXIST_UNSUBSCRIBE": {
+        "code": 7,
+        "description": "Trying to unsubscribe from non existent subscription!"
+    },
+    "NON_EXIST_SUBSCRIBE_UNSUBSCRIBED": {
+        "code": 8,
+        "description": "Received unsubscribe confirmation to non existent subscription!"
+    },
+    "NON_EXIST_PUBLISH_ERROR": {
+        "code": 9,
+        "description": "Received error for non existent publication!"
+    },
+    "NON_EXIST_PUBLISH_PUBLISHED": {
+        "code": 10,
+        "description": "Received publish confirmation for non existent publication!"
+    },
+    "NON_EXIST_SUBSCRIBE_EVENT": {
+        "code": 11,
+        "description": "Received event for non existent subscription!"
+    },
+    "NO_DEALER": {
+        "code": 12,
+        "description": "Server doesn't provide dealer role!"
+    },
+    "NON_EXIST_CALL_RESULT": {
+        "code": 13,
+        "description": "Received rpc result for non existent call!"
+    },
+    "NON_EXIST_CALL_ERROR": {
+        "code": 14,
+        "description": "Received rpc call error for non existent call!"
+    },
+    "RPC_ALREADY_REGISTERED": {
+        "code": 15,
+        "description": "RPC already registered!"
+    },
+    "NON_EXIST_RPC_REG": {
+        "code": 16,
+        "description": "Received rpc registration confirmation for non existent rpc!"
+    },
+    "NON_EXIST_RPC_UNREG": {
+        "code": 17,
+        "description": "Received rpc unregistration for non existent rpc!"
+    },
+    "NON_EXIST_RPC_ERROR": {
+        "code": 18,
+        "description": "Received error for non existent rpc!"
+    },
+    "NON_EXIST_RPC_INVOCATION": {
+        "code": 19,
+        "description": "Received invocation for non existent rpc!"
+    },
+    "NON_EXIST_RPC_REQ_ID": {
+        "code": 20,
+        "description": "No RPC calls in action with specified request ID!"
+    },
+    "NO_REALM": {
+        "code": 21,
+        "description": "No realm specified!"
+    },
+    "NO_WS_OR_URL": {
+        "code": 22,
+        "description": "No websocket provided or URL specified is incorrect!"
+    }
+}
