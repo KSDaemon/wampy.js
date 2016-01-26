@@ -41,17 +41,6 @@ var WAMP_MSG_SPEC = {
     openTimer = null,
     sendTimer = null,
 
-    receivedData = [
-        [WAMP_MSG_SPEC.HELLO, 'AppRealm', {}],
-        [WAMP_MSG_SPEC.HELLO, 'AppRealm', {}],
-        [WAMP_MSG_SPEC.HELLO, 'AppRealm', {}],
-        [WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.error.goodbye_and_out'],
-        [WAMP_MSG_SPEC.HELLO, 'AppRealm', {}],
-        [WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.error.goodbye_and_out'],
-        [WAMP_MSG_SPEC.HELLO, 'AppRealm', {}],
-        []
-    ],
-
     root = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]') ?
         global : window,
 
