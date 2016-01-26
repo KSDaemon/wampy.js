@@ -116,6 +116,45 @@ var WAMP_MSG_SPEC = {
                 'wamp.error.goodbye_and_out'
             ]
         },
+        // automatically sends goodbye message on server initiated disconnect
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                378,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                callee_blackwhite_listing: true,
+                                caller_exclusion: true,
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        },
+        {
+            data: null,
+            silent: true
+        },
         // allows to disconnect while connecting to server
         //{
         //    data: null,
@@ -449,7 +488,16 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.PUBLISHED,
                 'RequestId',
-                4
+                41
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                42
             ],
             from: [1],
             to: [1],
@@ -459,7 +507,16 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.EVENT,
                 3,
-                4,
+                41,
+                {}
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                3,
+                42,
                 {}
             ]
         },
@@ -477,7 +534,16 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.PUBLISHED,
                 'RequestId',
-                6
+                61
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                62
             ],
             from: [1],
             to: [1],
@@ -487,7 +553,17 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.EVENT,
                 5,
-                6,
+                61,
+                {},
+                [25]
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                5,
+                62,
                 {},
                 [25]
             ]
@@ -506,7 +582,16 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.PUBLISHED,
                 'RequestId',
-                8
+                81
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                82
             ],
             from: [1],
             to: [1],
@@ -516,7 +601,17 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.EVENT,
                 7,
-                8,
+                81,
+                {},
+                ['payload']
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                7,
+                82,
                 {},
                 ['payload']
             ]
@@ -535,7 +630,16 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.PUBLISHED,
                 'RequestId',
-                10
+                101
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                102
             ],
             from: [1],
             to: [1],
@@ -545,7 +649,17 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.EVENT,
                 9,
-                10,
+                101,
+                {},
+                [1, 2, 3, 4, 5]
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                9,
+                102,
                 {},
                 [1, 2, 3, 4, 5]
             ]
@@ -564,7 +678,16 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.PUBLISHED,
                 'RequestId',
-                12
+                121
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                122
             ],
             from: [1],
             to: [1],
@@ -574,7 +697,18 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.EVENT,
                 11,
-                12,
+                121,
+                {},
+                [],
+                { key1: 100, key2: 'string-key' }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                11,
+                122,
                 {},
                 [],
                 { key1: 100, key2: 'string-key' }

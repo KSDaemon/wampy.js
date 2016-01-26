@@ -7,6 +7,7 @@
 var expect = require('chai').expect,
     routerUrl = 'ws://fake.server.org/ws/',
     anotherRouterUrl = 'ws://another.server.org/ws/',
+    msgpack = require('msgpack-lite'),
     WebSocketModule = require('./fake-ws'),
     WebSocket = WebSocketModule.WebSocket,
     Wampy = require('./../src/wampy'),
@@ -33,12 +34,20 @@ describe('Wampy.js [with JSON encoder]', function () {
             var wampy = new Wampy(routerUrl, {
                 realm: 'AppRealm',
                 onConnect: done,
-                ws: WebSocket
+                ws: WebSocket,
+                msgpackCoder: msgpack
             });
         });
 
         it('disallows to connect on instantiation without url', function () {
             var wampy = new Wampy({ realm: 'AppRealm' }),
+                opStatus = wampy.getOpStatus();
+
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
+        });
+
+        it('disallows to connect on instantiation without websocket provided (in Node.js env)', function () {
+            var wampy = new Wampy(routerUrl, { realm: 'AppRealm' }),
                 opStatus = wampy.getOpStatus();
 
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
@@ -123,8 +132,13 @@ describe('Wampy.js [with JSON encoder]', function () {
         });
 
         it('allows to disconnect from connected server', function (done) {
-            wampy.options({ onClose: done })
+            wampy.options({ onConnect: null, onClose: done })
                 .disconnect();
+        });
+
+        it('automatically sends goodbye message on server initiated disconnect', function (done) {
+            wampy.options({ onConnect: null, onClose: done })
+                .connect();
         });
 
         it('allows to disconnect while connecting to server', function (done) {
@@ -357,11 +371,6 @@ describe('Wampy.js [with JSON encoder]', function () {
                 } });
             });
 
-            //it('allows to subscribe to topic', function () {
-            //    wampy.subscribe('subscribe.topic1', function (e) { });
-            //    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-            //});
-
             it('allows to subscribe to topic with notification on subscribing', function (done) {
                 wampy.subscribe('subscribe.topic2', {
                     onSuccess: done,
@@ -384,55 +393,89 @@ describe('Wampy.js [with JSON encoder]', function () {
             });
 
             it('allows to publish/subscribe event without payload', function (done) {
+                var i = 1;
                 wampy.subscribe('subscribe.topic3', function (e) {
                     expect(e).to.be.null;
-                    done();
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
                 })
-                .publish('subscribe.topic3', null, { exclude_me: false });
+                .publish('subscribe.topic3')
+                .publish('subscribe.topic3', null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
             it('allows to publish/subscribe event with int payload', function (done) {
+                var i = 1;
                 wampy.subscribe('subscribe.topic4', function (e) {
                     expect(e).to.be.an('array');
                     expect(e[0]).to.be.equal(25);
-                    done();
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
                 })
-                .publish('subscribe.topic4', 25, { exclude_me: false });
+                .publish('subscribe.topic4', 25)
+                .publish('subscribe.topic4', 25, null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
             it('allows to publish/subscribe event with string payload', function (done) {
+                var i = 1;
                 wampy.subscribe('subscribe.topic5', function (e) {
                     expect(e).to.be.an('array');
                     expect(e[0]).to.be.equal('payload');
-                    done();
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
                 })
-                .publish('subscribe.topic5', 'payload', { exclude_me: false });
+                .publish('subscribe.topic5', 'payload')
+                .publish('subscribe.topic5', 'payload', null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
             it('allows to publish/subscribe event with array payload', function (done) {
+                var i = 1;
                 wampy.subscribe('subscribe.topic6', function (e) {
                     expect(e).to.be.an('array');
                     expect(e).to.have.length(5);
                     expect(e[0]).to.be.equal(1);
                     expect(e[4]).to.be.equal(5);
-                    done();
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
                 })
-                .publish('subscribe.topic6', [1, 2, 3, 4, 5], { exclude_me: false });
+                .publish('subscribe.topic6', [1, 2, 3, 4, 5])
+                .publish('subscribe.topic6', [1, 2, 3, 4, 5], null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
             it('allows to publish/subscribe event with hash-table payload', function (done) {
-                var payload = { key1: 100, key2: 'string-key' };
+                var i = 1, payload = { key1: 100, key2: 'string-key' };
 
                 wampy.subscribe('subscribe.topic7', function (e) {
                     expect(e).to.be.an('object');
                     expect(e).to.be.deep.equal(payload);
-                    done();
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
                 })
-                .publish('subscribe.topic7', payload, { exclude_me: false });
+                .publish('subscribe.topic7', payload)
+                .publish('subscribe.topic7', payload, null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 

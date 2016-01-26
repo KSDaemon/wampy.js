@@ -78,12 +78,11 @@ var WAMP_MSG_SPEC = {
 
         this.protocol = '';
 
-        this.readyState = 3;    // Closed
+        this.readyState = 1;    // Closed
 
         var self = this;
 
         openTimer = root.setTimeout(function () {
-            self.readyState = 1;    // Open
             self.protocol = 'wamp.2.' + self.transportEncoding;
             self.onopen();
         }, TIMEOUT);
