@@ -26,7 +26,7 @@ module.exports = function (grunt) {
         },
         concat: {
             wampy: {
-                src: ['build/msgpack.min.js', 'build/wampy.min.js'],
+                src: ['build/msgpack5.min.js', 'build/wampy.min.js'],
                 dest: 'build/wampy-all.min.js'
             }
         },
@@ -34,8 +34,8 @@ module.exports = function (grunt) {
             main: {
                 files: [
                     {
-                        src: ['node_modules/msgpack-lite/dist/msgpack.min.js'],
-                        dest: 'build/msgpack.min.js'
+                        src: ['node_modules/msgpack5/dist/msgpack5.min.js'],
+                        dest: 'build/msgpack5.min.js'
                     }
                 ]
             }

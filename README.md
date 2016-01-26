@@ -41,7 +41,7 @@ Table of Contents
 Description
 ===========
 
-Wampy.js is client-side javascript library. It implements [WAMP](http://wamp.ws) v2 specification on top of
+Wampy.js is client-side javascript library. It implements [WAMP][] v2 specification on top of
 WebSocket object, also provides additional features like autoreconnecting and use of Chaining Pattern.
 It has no external dependencies (by default) and is easy to use. Also it's compatible with AMD and browserify.
 
@@ -59,9 +59,10 @@ Wampy.js supports next WAMP roles and features:
 	* progressive call results.
 * callee: basic profile.
 
-Wampy default serializer is JSON, but it also supports msgpack as serializer, but you need to include msgpack.js as dependency.
+Wampy default serializer is JSON, but it also supports msgpack as serializer.
+In that case you need to include msgpack5.js as dependency. See [msgpack5][] for more info.
 
-For v1 WAMP implementation, please see tag v0.1.0.
+For WAMP v1 implementation, please see tag v0.1.0.
 
 [Back to TOC](#table-of-contents)
 
@@ -97,7 +98,7 @@ Quick comparison to other libs
 | Topic         | Wampy.js | AutobahnJS  |
 |-------------- | -------- | ----------- |
 | Runs on | browser | browser and NodeJS |
-| Dependencies | msgpack.js (optional), jDataView (optional) | when.js, CryptoJS (optional) |
+| Dependencies | msgpack5.js (optional) | when.js, CryptoJS (optional) |
 | Creating connection | var connection = new Wampy('ws://127.0.0.1:9000/', { realm: 'realm1' }); | var connection = new autobahn.Connection({url: 'ws://127.0.0.1:9000/', realm: 'realm1'}); |
 | Opening a connection | connection opens on creating an instance, or can be opened by: connection.connect() | connection.open(); |
 | Connection Callbacks | Wampy supports next callbacks: onConnect, onClose, onError, onReconnect. Callbacks can be specified via options object passed to constructor, or via .options() method. | AutobahnJS provides two callbacks: connection.onopen = function (session) { } and connection.onclose = function (reason/string, details/dict) { } |
@@ -148,8 +149,8 @@ Can be in forms of:
 	* fully qualified url: schema://server:port/path
 	* server:port/path. In this case page schema will be used.
 	* /path. In this case page schema, server, port will be used.
-* **options** hash-table. The only required field is `realm`. For node.js enviroment also necessary to specify `ws` - websocket module.
-See description below.
+* **options** hash-table. The only required field is `realm`. For node.js enviroment also necessary to
+specify `ws` - websocket module. See description below.
 
 ```javascript
 // in browser
@@ -174,16 +175,16 @@ and set encoding type to 'msgpack'.
 // in browser
 ws = new Wampy('ws://socket.server.com:5000/ws', {
     transportEncoding: 'msgpack',
-    msgpackCoder: msgpack
+    msgpackCoder: msgpack5
 });
 ws = new Wampy({
     transportEncoding: 'msgpack',
-    msgpackCoder: msgpack
+    msgpackCoder: msgpack5
 });
 
 // in node.js
 w3cws = require('websocket').w3cwebsocket;
-msgpack = require('msgpack-lite')
+msgpack = require('msgpack5')();
 ws = new Wampy('ws://socket.server.com:5000/ws', {
     ws: w3cws,
     transportEncoding: 'msgpack',
@@ -210,20 +211,25 @@ options([opts])
 
 Options attributes description:
 
-* **autoReconnect**. Default value: true. Enable autoreconnecting. In case of connection failure, Wampy will try to reconnect to WAMP server, and if you were subscribed to any topics,
+* **autoReconnect**. Default value: true. Enable autoreconnecting. In case of connection failure, Wampy will
+try to reconnect to WAMP server, and if you were subscribed to any topics,
 or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.
 * **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
 * **maxRetries**. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
 will be called
 * **transportEncoding**. Default value: json. Transport serializer to use. Supports 2 values: json|msgpack.
-For using msgpack you need to include msgpack javascript library, set up **msgpackCoder** option, and wamp server, that also supports it.
+For using msgpack you need to provide [msgpack5][] javascript library, set up **msgpackCoder** option, and wamp server,
+that also supports it.
 * **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
 * **onConnect**. Default value: null. Callback function. Fired when connection to wamp server is established.
 * **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
 * **onError**. Default value: null. Callback function. Fired on error in websocket communication.
 * **onReconnect**. Default value: null. Callback function. Fired every time on reconnection attempt.
 * **ws**. Default value: null. User provided WebSocket class. Useful in node enviroment.
-* **msgpackCoder**. Default value: null. User provided msgpack class. Useful if you plan to use msgpack encoder instead of default json.
+* **msgpackCoder**. Default value: null. User provided msgpack class. Useful if you plan to use msgpack encoder
+instead of default json. Teoretically, any msgpack encoder with encode/decode methods should work.
+In practice, [msgpack5][] tested and works well with [Wiola][], [msgpack-lite](https://github.com/kawanet/msgpack-lite)
+doesn't work as expected. Feel free to research other variants.
 
 ```javascript
 ws.options();
@@ -379,10 +385,14 @@ Must meet a WAMP Spec URI requirements.
              onError: will be called if publishing would be aborted }
 * **advancedOptions**. Optional parameter. Must include any or all of the options:
 
-           { exclude:    integer|array WAMP session id(s) that won't receive a published event, even though they may be subscribed
-             eligible:   integer|array WAMP session id(s) that are allowed to receive a published event
-             exclude_me: bool flag of receiving publishing event by initiator (if it is subscribed to this topic)
-             disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID) to receivers of a published event }
+           { exclude:    integer|array WAMP session id(s) that won't receive a published event,
+                         even though they may be subscribed
+             eligible:   integer|array WAMP session id(s) that are allowed to receive
+                         a published event
+             exclude_me: bool flag of receiving publishing event by initiator
+                         (if it is subscribed to this topic)
+             disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
+                         to receivers of a published event }
 
 ```javascript
 ws.publish('user.logged.in');
@@ -518,7 +528,10 @@ ws.register('sqrt.value', {
 });
 ```
 
-Also wampy supports rpc with asynchronous code, such as some user interactions or xhr, using promises. For using this functionality in old browsers you should use polyfills, like [es6-promise](https://github.com/jakearchibald/es6-promise). Check brower support at [can i use](http://caniuse.com/#search=promise) site.
+Also wampy supports rpc with asynchronous code, such as some user interactions or xhr, using promises.
+For using this functionality in old browsers you should use polyfills,
+like [es6-promise](https://github.com/jakearchibald/es6-promise). Check brower support
+at [can i use](http://caniuse.com/#search=promise) site.
 
 ```javascript
 var getUserName = function () {
@@ -612,11 +625,18 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 See Also
 ========
 
-* [WAMP specification](http://wamp-proto.org/)
-* [Wiola](http://ksdaemon.github.io/wiola/) - WAMP Router in Lua on top of nginx/openresty
+* [WAMP specification][]
+* [Wiola][] - WAMP Router in Lua on top of nginx/openresty
 * [Loowy](https://github.com/KSDaemon/Loowy) - LUA WAMP client
+* [msgpack5][] - A msgpack v5 implementation for node.js and the browser,
+with extension point support.
 
 [Back to TOC](#table-of-contents)
+
+[WAMP]: http://wamp-proto.org/
+[WAMP specification]: http://wamp-proto.org/
+[Wiola]: http://ksdaemon.github.io/wiola/
+[msgpack5]: https://github.com/mcollina/msgpack5
 
 [npm-url]: https://www.npmjs.com/package/wampy
 [npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
