@@ -121,8 +121,7 @@ Wampy.js can be installed using bower or npm or just by file-copy :)
 > npm install wampy
 ```
 
-To use Wampy simply add wampy-all.min.js file to your page. It contains all the necessary
-libs: jdataview - for handling UInt64 data and msgpack encoder.
+To use Wampy simply add wampy-all.min.js file to your page. It contains msgpack encoder plus wampy itself.
 
 ```html
 <script src="wampy-all.min.js"></script>
