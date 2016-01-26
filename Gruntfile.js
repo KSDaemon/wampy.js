@@ -12,8 +12,7 @@ module.exports = function (grunt) {
             },
             default: {
                 files: {
-                    'build/wampy.min.js': ['src/wampy.js'],
-                    'build/msgpack.min.js': ['src/msgpack/src/msgpack.js']
+                    'build/wampy.min.js': ['src/wampy.js']
                 }
             }
         },
@@ -27,7 +26,7 @@ module.exports = function (grunt) {
         },
         concat: {
             wampy: {
-                src: ['build/jdataview.min.js', 'build/msgpack.min.js', 'build/wampy.min.js'],
+                src: ['build/msgpack.min.js', 'build/wampy.min.js'],
                 dest: 'build/wampy-all.min.js'
             }
         },
@@ -35,8 +34,8 @@ module.exports = function (grunt) {
             main: {
                 files: [
                     {
-                        src: ['src/jdataview/dist/browser/jdataview.js'],
-                        dest: 'build/jdataview.min.js'
+                        src: ['node_modules/msgpack-lite/dist/msgpack.min.js'],
+                        dest: 'build/msgpack.min.js'
                     }
                 ]
             }
