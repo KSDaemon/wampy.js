@@ -475,7 +475,7 @@
              * Need to find a way of fixing that
              * For now, i think it's not a big problem to reduce range.
              */
-//          reqId = Math.floor(Math.random() * 9007199254740992);
+//          reqId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);    // 9007199254740992
             reqId = Math.floor(Math.random() * 100000000000000);
         } while (reqId in this._requests);
 
@@ -576,7 +576,7 @@
     Wampy.prototype._decode = function (msg) {
         if (this._options.transportEncoding === 'msgpack' && this._options.msgpackCoder) {
             try {
-                return this._options.msgpackCoder.decode(msg);
+                return this._options.msgpackCoder.decode(new Uint8Array(msg));
             } catch (e) {
                 throw new Error('[wampy] msgpack decode exception!');
             }

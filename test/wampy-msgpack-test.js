@@ -7,7 +7,7 @@
 var expect = require('chai').expect,
     routerUrl = 'ws://fake.server.org/ws/',
     anotherRouterUrl = 'ws://another.server.org/ws/',
-    msgpack = require('msgpack-lite'),
+    msgpack = require('msgpack5')(),
     WebSocketModule = require('./fake-ws'),
     WebSocket = WebSocketModule.WebSocket,
     Wampy = require('./../src/wampy'),

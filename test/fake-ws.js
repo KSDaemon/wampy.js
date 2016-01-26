@@ -51,7 +51,7 @@ var WAMP_MSG_SPEC = {
 
         if (this.transportEncoding === 'msgpack') {
             this.binaryType = 'arraybuffer';
-            this.encoder = require('msgpack-lite');
+            this.encoder = require('msgpack5')();
             this.encode = this.encoder.encode;
             this.decode = this.encoder.decode;
         } else {
