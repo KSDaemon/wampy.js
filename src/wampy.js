@@ -183,28 +183,16 @@
         }
 
         if (ws) {   // User provided webSocket class
-            if (protocols) {
-                return new ws(parsedUrl, protocols);
-            } else {
-                return new ws(parsedUrl);
-            }
+            return new ws(parsedUrl, protocols);
         } else if (isNode) {    // we're in node, but no webSocket provided
             return null;
         } else {    // we're in browser
             if ('WebSocket' in root) {
                 // Chrome, MSIE, newer Firefox
-                if (protocols) {
-                    return new window.WebSocket(parsedUrl, protocols);
-                } else {
-                    return new window.WebSocket(parsedUrl);
-                }
+                return new window.WebSocket(parsedUrl, protocols);
             } else if ('MozWebSocket' in root) {
                 // older versions of Firefox
-                if (protocols) {
-                    return new window.MozWebSocket(parsedUrl, protocols);
-                } else {
-                    return new window.MozWebSocket(parsedUrl);
-                }
+                return new window.MozWebSocket(parsedUrl, protocols);
             }
         }
 
@@ -869,7 +857,7 @@
             case WAMP_MSG_SPEC.PUBLISHED:
                 // WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
                 if (this._requests[data[1]]) {
-                    if (this._requests[data[1]].callbacks.onSuccess) {
+                    if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
                         this._requests[data[1]].callbacks.onSuccess();
                     }
 
@@ -950,7 +938,7 @@
 
                     this._rpcNames.push(this._requests[data[1]].topic);
 
-                    if (this._requests[data[1]].callbacks.onSuccess) {
+                    if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
                         this._requests[data[1]].callbacks.onSuccess();
                     }
 
@@ -975,7 +963,7 @@
                         this._rpcNames.splice(i, 1);
                     }
 
-                    if (this._requests[data[1]].callbacks.onSuccess) {
+                    if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
                         this._requests[data[1]].callbacks.onSuccess();
                     }
 
