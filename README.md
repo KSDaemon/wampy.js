@@ -104,6 +104,7 @@ Quick comparison to other libs
 | WAMP API methods with parameters | While using Wampy you don't have to explicitly specify the payload type (single value, array, object), just pass it to api method. <br/>For example:<br/>ws.publish('chat.message.received', 'user message');<br/>ws.publish('chat.message.received', ['user message1', 'user message2']);<br/>ws.publish('chat.message.received', { message: 'user message'});<br/>Also Wampy is clever enough to understand some specific options, for example, if you specify a success or error callback to publish method, Wampy will automatically set acknowledge flag to true.  | In AutobahnJS you need to use only arrays and objects, as it's specified in WAMP, and also choose right argument position.<br/>For example:<br/>session.publish('com.myapp.hello', ['Hello, world!']);<br/>session.publish('com.myapp.hello', [], {message: 'Hello, world!'});<br/>Also you need to explicitly provide additional options, like {acknowledge: true} |
 | Method callbacks | Most of the API methods take a **callbacks** parameter, which is hash-table of posible callbacks | AutobahnJS make use of **Deffered** object, and most of API methods return a deferred object, so you can specify callbacks using .then() method |
 | Chaining support | Wampy supports methods chaining.<br/>connection.subscribe(...).publish(...).call(...) |  |
+| Transport encoders | json, msgpack (optional) | json |
 
 Which one library to use - choice is yours!
 
