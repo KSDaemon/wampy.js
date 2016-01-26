@@ -27,6 +27,7 @@ var WAMP_MSG_SPEC = {
     },
 
     sendData = [
+        // allows to connect on instantiation if all required options specified
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
@@ -53,6 +54,7 @@ var WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // allows to set different options on instantiation
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
@@ -79,6 +81,7 @@ var WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // Instance before hook
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
@@ -105,6 +108,7 @@ var WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // allows to disconnect from connected server
         {
             data: [
                 WAMP_MSG_SPEC.GOODBYE,
@@ -112,6 +116,12 @@ var WAMP_MSG_SPEC = {
                 'wamp.error.goodbye_and_out'
             ]
         },
+        // allows to disconnect while connecting to server
+        //{
+        //    data: null,
+        //    silent: true
+        //},
+        // allows to connect to same WAMP server
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
@@ -138,6 +148,7 @@ var WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // allows to connect to different WAMP server
         {
             data: [
                 WAMP_MSG_SPEC.GOODBYE,
@@ -148,7 +159,7 @@ var WAMP_MSG_SPEC = {
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
-                5,
+                475,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {
@@ -171,6 +182,7 @@ var WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // allows to abort WebSocket/WAMP session establishment
         {
             data: [
                 WAMP_MSG_SPEC.GOODBYE,
@@ -178,6 +190,11 @@ var WAMP_MSG_SPEC = {
                 'wamp.error.goodbye_and_out'
             ]
         },
+        //{
+        //    data: null,
+        //    silent: true
+        //},
+        // autoreconnects to WAMP server on network errors
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
@@ -323,65 +340,26 @@ var WAMP_MSG_SPEC = {
         },
         {
             data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                311
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call handler on websocket errors
+        {
+            data: [
                 WAMP_MSG_SPEC.GOODBYE,
                 {},
                 'wamp.error.goodbye_and_out'
             ]
         },
         {
-            data: [
-                WAMP_MSG_SPEC.WELCOME,
-                555,
-                {
-                    agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
-                }
-            ],
+            data: null,
             abort: true
         },
-        {
-            data: [
-                WAMP_MSG_SPEC.WELCOME,
-                275,
-                {
-                    agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
-                }
-            ],
-            next: true
-        },
+        // calls error handler if server sends abort message
         {
             data: [
                 WAMP_MSG_SPEC.ABORT,
@@ -390,10 +368,11 @@ var WAMP_MSG_SPEC = {
             ]
         },
         // Begin of PubSub module
+        // disallows to subscribe to topic if server does not provide BROKER role
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
-                6,
+                65,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {
@@ -409,6 +388,7 @@ var WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // disallows to subscribe to topic with invalid URI
         {
             data: [
                 WAMP_MSG_SPEC.GOODBYE,
@@ -442,15 +422,10 @@ var WAMP_MSG_SPEC = {
                 }
             ]
         },
-        {
-            data: [
-                WAMP_MSG_SPEC.SUBSCRIBED,
-                'RequestId',
-                1
-            ],
-            from: [1],
-            to: [1]
-        },
+        //{
+        //    data: null,
+        //    silent: true
+        //},
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,

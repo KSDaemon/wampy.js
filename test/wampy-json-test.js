@@ -7,23 +7,24 @@
 var expect = require('chai').expect,
     routerUrl = 'ws://fake.server.org/ws/',
     anotherRouterUrl = 'ws://another.server.org/ws/',
-    WebSocket,
-    Wampy,
+    WebSocketModule = require('./fake-ws'),
+    WebSocket = WebSocketModule.WebSocket,
+    Wampy = require('./../src/wampy'),
     root = (typeof process === 'object' &&
             Object.prototype.toString.call(process) === '[object process]') ?
             global : window,
     WAMP_ERROR_MSG = require('./wamp-error-msg.json');
 
 describe('Wampy.js [with JSON encoder]', function () {
-    this.timeout(5000);
+    this.timeout(0);
 
     before(function () {
-        delete require.cache[require.resolve('./send-data')];
-        delete require.cache[require.resolve('./fake-ws')];
-        delete require.cache[require.resolve('./../src/wampy')];
+        WebSocketModule.startTimers();
+    });
 
-        WebSocket = require('./fake-ws'),
-        Wampy = require('./../src/wampy');
+    after(function () {
+        WebSocketModule.clearTimers();
+        WebSocketModule.resetCursor();
     });
 
     describe('Constructor', function () {
@@ -122,18 +123,19 @@ describe('Wampy.js [with JSON encoder]', function () {
         });
 
         it('allows to disconnect from connected server', function (done) {
-            wampy.options({ onClose: function () { done(); } });
-            wampy.disconnect();
+            wampy.options({ onClose: done })
+                .disconnect();
         });
 
         it('allows to disconnect while connecting to server', function (done) {
-            wampy.options({ onClose: done })
-                .connect();
+            wampy.options({
+                onConnect: function () { done('Reached onConnect'); },
+                onClose: done
+            }).connect();
 
             root.setTimeout(function () {
                 wampy.disconnect();
-                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.SUCCESS);
-            }, 1);
+            }, 10);
         });
 
         it('allows to connect to same WAMP server', function (done) {
@@ -148,7 +150,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                         wampy.connect(anotherRouterUrl);
                     }, 1);
                 },
-                onConnect: function () { done(); }
+                onConnect: done
             }).disconnect();
         });
 
@@ -169,7 +171,6 @@ describe('Wampy.js [with JSON encoder]', function () {
                     done('We reach connection');
                 }
             }).disconnect();
-
         });
 
         it('autoreconnects to WAMP server on network errors', function (done) {
@@ -210,30 +211,39 @@ describe('Wampy.js [with JSON encoder]', function () {
                         if (wampy._subsTopics.length === 2 && wampy._rpcNames.length === 3) {
                             root.clearInterval(t);
                             t = null;
-                            wampy.options({
-                                onReconnect: null
-                            });
-                            done();
+                            wampy.options({ onReconnect: null })
+                                .subscribe('subscribe.reconnection.check', {
+                                    onSuccess: done,
+                                    onError: function () { done('Error during subscribing'); },
+                                    onEvent: function (e) { }
+                                });
                         }
-                    }, 15);
+                    }, 1);
                 }
             }).connect();
         });
 
         it('allows to call handler on websocket errors', function (done) {
             wampy.options({
+                autoReconnect: false,
                 onClose: function () {
                     root.setTimeout(function () {
                         wampy.connect();
                     }, 1);
                 },
-                onConnect: function () { },
-                onError: done
+                onConnect: function () {
+                    done('We reach connection');
+                },
+                onReconnect: null,
+                onError: function () {
+                    done();
+                }
             }).disconnect();
         });
 
         it('calls error handler if server sends abort message', function (done) {
             wampy.options({
+                onClose: null,
                 onError: function (e) { done(); }
             }).connect();
         });
@@ -241,8 +251,13 @@ describe('Wampy.js [with JSON encoder]', function () {
         describe('PubSub module', function () {
 
             before(function (done) {
-                wampy.options({ onConnect: function () { done(); } })
-                     .connect();
+                wampy.options({
+                    onConnect: done,
+                    onClose: null,
+                    onReconnect: null,
+                    onError: null
+                })
+                    .connect();
             });
 
             it('disallows to subscribe to topic if server does not provide BROKER role', function () {
@@ -291,46 +306,46 @@ describe('Wampy.js [with JSON encoder]', function () {
                 wampy.options({
                     onClose: function () {
                         root.setTimeout(function () {
-                            wampy.connect();
-                        }, 1);
-                    },
-                    onConnect: function () {
+                            wampy.options({
+                                onConnect: function () {
 
-                        wampy.subscribe('q.w.e', function (e) { });
-                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+                                    wampy.subscribe('q.w.e', function (e) { });
+                                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                        wampy.subscribe('qwe.asd.zxc.', function (e) { });
-                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+                                    wampy.subscribe('qwe.asd.zxc.', function (e) { });
+                                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                        wampy.subscribe('qwe.asd..zxc', function (e) { });
-                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+                                    wampy.subscribe('qwe.asd..zxc', function (e) { });
+                                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                        wampy.subscribe('qq,ww,ee', function (e) { });
-                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+                                    wampy.subscribe('qq,ww,ee', function (e) { });
+                                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                        wampy.subscribe('qq:www:ee', function (e) { });
-                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+                                    wampy.subscribe('qq:www:ee', function (e) { });
+                                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                        wampy.subscribe('q.w.e', function (e) { });
-                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+                                    wampy.subscribe('q.w.e', function (e) { });
+                                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                        wampy.subscribe('q.w.e',
-                            {
-                                onSuccess: function (e) { },
-                                onError: function (e) {
-                                    expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                                    wampy.subscribe('q.w.e',
+                                        {
+                                            onSuccess: function (e) { },
+                                            onError: function (e) {
+                                                expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                                            }
+                                        }
+                                    );
+
+                                    done();
+
                                 }
-                            }
-                        );
-
-                        done();
-
+                            }).connect();
+                        }, 1);
                     }
                 }).disconnect();
-
             });
 
-            it('disallows to subscribe to topic without specifying callback', function (done) {
+            it('disallows to subscribe to topic without specifying callback', function () {
                 wampy.subscribe('qqq.www.eee');
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
 
@@ -339,20 +354,17 @@ describe('Wampy.js [with JSON encoder]', function () {
 
                 wampy.subscribe('qqq.www.eee', { onError: function (e) {
                     expect(e).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
-                    done();
                 } });
             });
 
-            it('allows to subscribe to topic', function () {
-                wampy.subscribe('subscribe.topic1', function (e) { });
-                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-            });
+            //it('allows to subscribe to topic', function () {
+            //    wampy.subscribe('subscribe.topic1', function (e) { });
+            //    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            //});
 
             it('allows to subscribe to topic with notification on subscribing', function (done) {
                 wampy.subscribe('subscribe.topic2', {
-                    onSuccess: function () {
-                        done();
-                    },
+                    onSuccess: done,
                     onError: function () { done('Error during subscribing'); },
                     onEvent: function (e) { }
                 });
@@ -612,7 +624,7 @@ describe('Wampy.js [with JSON encoder]', function () {
             });
 
             it('allows to unsubscribe all handlers from topic', function () {
-                wampy.unsubscribe('subscribe.topic1');
+                wampy.unsubscribe('subscribe.topic9');
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -1090,7 +1102,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 resolve();
-                            }, 10);
+                            }, 1);
                         });
                     },
                     onSuccess: function (e) {
@@ -1117,7 +1129,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 resolve(100);
-                            }, 10);
+                            }, 1);
                         });
                     },
                     onSuccess: function (e) {
@@ -1145,7 +1157,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 resolve([1, 2, 3, 4, 5]);
-                            }, 10);
+                            }, 1);
                         });
                     },
                     onSuccess: function (e) {
@@ -1176,7 +1188,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 resolve(payload);
-                            }, 10);
+                            }, 1);
                         });
                     },
                     onSuccess: function (e) {
@@ -1204,7 +1216,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 reject('Rejecting promise rpc');
-                            }, 10);
+                            }, 1);
                         });
                     },
                     onSuccess: function (e) {
