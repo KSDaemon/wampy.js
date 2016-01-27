@@ -19,6 +19,7 @@ Table of Contents
 * [Usage example](#usage-example)
 * [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Installation](#installation)
+* [Updating versions](#updating-versions)
 * [API](#api)
 	* [Constructor](#constructorurl-options)
 	* [options](#optionsopts)
@@ -135,6 +136,11 @@ In case, you don't plan to use msgpack, just include clean wampy.min.js.
 ```
 
 [Back to TOC](#table-of-contents)
+
+Updating versions
+=================
+
+Please refer to [Migrating.md](Migrating.md) for instructions on upgrading major versions.
 
 API
 ===
