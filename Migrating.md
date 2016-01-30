@@ -8,7 +8,7 @@ Migrating from 1.x to 2.x versions
 now you should explicitly pass a msgpack instance via options.
 2. From 2.0.0 version, in node.js enviroment you need to explicitly provide a websocket instance.
 
-All necessary libs are included. See examples below.
+All necessary libs are included or added as dependencies. See examples below.
 
 ```javascript
 
