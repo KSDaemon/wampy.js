@@ -7,7 +7,7 @@ module.exports = function (grunt) {
                 compress: {
                     drop_console: true
                 },
-                preserveComments: 'some',
+                preserveComments: false,
                 sourceMap: true
             },
             default: {
