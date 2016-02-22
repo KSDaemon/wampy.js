@@ -400,6 +400,12 @@
             realm: null,
 
             /**
+             * Custom attributes to send to router on hello
+             * @type {object}
+             */
+            helloCustomDetails: null,
+
+            /**
              * onConnect callback
              * @type {function}
              */
@@ -649,7 +655,11 @@
 
         // WAMP SPEC: [HELLO, Realm|uri, Details|dict]
         // Sending directly 'cause it's a hello msg and no sessionId check is needed
-        this._ws.send(this._encode([WAMP_MSG_SPEC.HELLO, this._options.realm, this._wamp_features]));
+        this._ws.send(this._encode([
+            WAMP_MSG_SPEC.HELLO,
+            this._options.realm,
+            this._merge(this._options.helloCustomDetails, this._wamp_features)
+        ]));
     };
 
     Wampy.prototype._wsOnClose = function () {

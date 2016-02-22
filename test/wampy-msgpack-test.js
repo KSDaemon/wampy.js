@@ -62,18 +62,24 @@ describe('Wampy.js [with msgpack encoder]', function () {
         });
 
         it('allows to set different options on instantiation', function (done) {
-            var wampy = new Wampy(routerUrl, {
-                    autoReconnect: true,
-                    reconnectInterval: 10000,
-                    maxRetries: 50,
-                    realm: 'AppRealm',
-                    onConnect: done,
-                    onClose: done,
-                    onError: done,
-                    onReconnect: done,
-                    ws: WebSocket,
-                    transportEncoding: 'msgpack',
-                    msgpackCoder: msgpack
+            var helloCustomDetails = {
+                    customFiled1: 25,
+                    customFiled2: 'string',
+                    customFiled3: [1, 2, 3, 4, 5]
+                },
+                wampy = new Wampy(routerUrl, {
+                    autoReconnect     : true,
+                    reconnectInterval : 10000,
+                    maxRetries        : 50,
+                    realm             : 'AppRealm',
+                    helloCustomDetails: helloCustomDetails,
+                    onConnect         : done,
+                    onClose           : done,
+                    onError           : done,
+                    onReconnect       : done,
+                    ws                : WebSocket,
+                    transportEncoding : 'msgpack',
+                    msgpackCoder      : msgpack
                 }),
                 options = wampy.options();
 
@@ -82,6 +88,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
             expect(options.maxRetries).to.be.equal(50);
             expect(options.transportEncoding).to.be.equal('msgpack');
             expect(options.realm).to.be.equal('AppRealm');
+            expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onConnect).to.be.a('function');
             expect(options.onClose).to.be.a('function');
             expect(options.onError).to.be.a('function');
@@ -112,17 +119,24 @@ describe('Wampy.js [with msgpack encoder]', function () {
         });
 
         it('allows to get and set different options', function () {
-            var options = wampy.options({
-                autoReconnect: true,
-                reconnectInterval: 1000,
-                maxRetries: 5,
-                transportEncoding: 'msgpack'
-            }).options();
+            var helloCustomDetails = {
+                    customFiled1: 25,
+                    customFiled2: 'string',
+                    customFiled3: [1, 2, 3, 4, 5]
+                },
+                options = wampy.options({
+                    autoReconnect     : true,
+                    reconnectInterval : 1000,
+                    maxRetries        : 5,
+                    transportEncoding : 'msgpack',
+                    helloCustomDetails: helloCustomDetails
+                }).options();
 
             expect(options.autoReconnect).to.be.true;
             expect(options.reconnectInterval).to.be.equal(1000);
             expect(options.maxRetries).to.be.equal(5);
             expect(options.transportEncoding).to.be.equal('msgpack');
+            expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onConnect).to.be.a('function');
             expect(options.onClose).to.be.a('function');
             expect(options.onError).to.be.a('function');

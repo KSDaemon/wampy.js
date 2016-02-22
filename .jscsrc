@@ -87,7 +87,7 @@
     "requireSpacesInsideObjectBrackets": "all",
 
     "requireDotNotation": true,
-    "disallowSpaceAfterObjectKeys": { "allExcept": ["method"] },
+    "disallowSpaceAfterObjectKeys": false,
     "disallowQuotedKeysInObjects": true,
 
     "maximumLineLength": {
