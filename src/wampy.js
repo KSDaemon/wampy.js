@@ -187,10 +187,10 @@
         } else if (isNode) {    // we're in node, but no webSocket provided
             return null;
         } else {    // we're in browser
-            if ('WebSocket' in root) {
+            if ('WebSocket' in window) {
                 // Chrome, MSIE, newer Firefox
                 return new window.WebSocket(parsedUrl, protocols);
-            } else if ('MozWebSocket' in root) {
+            } else if ('MozWebSocket' in window) {
                 // older versions of Firefox
                 return new window.MozWebSocket(parsedUrl, protocols);
             }
