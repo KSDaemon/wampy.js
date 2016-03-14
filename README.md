@@ -42,7 +42,7 @@ Table of Contents
 Description
 ===========
 
-Wampy.js is client-side javascript library. It implements [WAMP][] v2 specification on top of
+Wampy.js is javascript library, that runs both in browser and node.js enviroments. It implements [WAMP][] v2 specification on top of
 WebSocket object, also provides additional features like autoreconnecting and use of Chaining Pattern.
 It has no external dependencies (by default) and is easy to use. Also it's compatible with AMD and browserify.
 
