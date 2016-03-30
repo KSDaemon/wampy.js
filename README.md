@@ -145,6 +145,8 @@ Please refer to [Migrating.md](Migrating.md) for instructions on upgrading major
 API
 ===
 
+Below is a description of exposed public API. Btw, wampy has a type definitions, available at [DefinitelyTyped.org][].
+
 Constructor([url[, options]])
 ------------------------------------------
 
@@ -665,3 +667,5 @@ with extension point support.
 
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: http://opensource.org/licenses/MIT
+
+[DefinitelyTyped.org]: http://definitelytyped.org/
