@@ -70,7 +70,7 @@
 <h1>
 <a id="description" class="anchor" href="#description" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Description</h1>
 
-<p>Wampy.js is client-side javascript library. It implements <a href="http://wamp-proto.org/">WAMP</a> v2 specification on top of
+<p>Wampy.js is javascript library, that runs both in browser and node.js enviroments. It implements <a href="http://wamp-proto.org/">WAMP</a> v2 specification on top of
 WebSocket object, also provides additional features like autoreconnecting and use of Chaining Pattern.
 It has no external dependencies (by default) and is easy to use. Also it's compatible with AMD and browserify.</p>
 
@@ -220,6 +220,8 @@ In that case you need to include msgpack5.js as dependency. See <a href="https:/
 <h1>
 <a id="api" class="anchor" href="#api" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>API</h1>
 
+<p>Below is a description of exposed public API. Btw, wampy has a type definitions, available at <a href="http://definitelytyped.org/">DefinitelyTyped.org</a>.</p>
+
 <h2>
 <a id="constructorurl-options" class="anchor" href="#constructorurl-options" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Constructor([url[, options]])</h2>
 
@@ -313,6 +315,8 @@ For using msgpack you need to provide <a href="https://github.com/mcollina/msgpa
 that also supports it.</li>
 <li>
 <strong>realm</strong>. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.</li>
+<li>
+<strong>helloCustomDetails</strong>. Default value: null. Custom attributes to send to router on hello.</li>
 <li>
 <strong>onConnect</strong>. Default value: null. Callback function. Fired when connection to wamp server is established.</li>
 <li>
