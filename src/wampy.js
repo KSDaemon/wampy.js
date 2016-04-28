@@ -430,6 +430,12 @@
             onReconnect: null,
 
             /**
+             * onReconnectSuccess callback
+             * @type {function}
+             */
+            onReconnectSuccess: null,
+
+            /**
              * User provided WebSocket class
              * @type {function}
              */
@@ -704,6 +710,10 @@
                     // There was reconnection
 
                     this._cache.reconnectingAttempts = 0;
+
+                    if (this._options.onReconnectSuccess) {
+                        this._options.onReconnectSuccess();
+                    }
 
                     // Let's renew all previous state
                     this._renewSubscriptions();

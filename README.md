@@ -234,6 +234,7 @@ that also supports it.
 * **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
 * **onError**. Default value: null. Callback function. Fired on error in websocket communication.
 * **onReconnect**. Default value: null. Callback function. Fired every time on reconnection attempt.
+* **onReconnectSuccess**. Default value: null. Callback function. Fired every time when reconnection succeeded.
 * **ws**. Default value: null. User provided WebSocket class. Useful in node enviroment.
 * **msgpackCoder**. Default value: null. User provided msgpack class. Useful if you plan to use msgpack encoder
 instead of default json. Teoretically, any msgpack encoder with encode/decode methods should work.
@@ -249,7 +250,8 @@ ws.options({
 	onConnect: function () { console.log('Yahoo! We are online!'); },
 	onClose: function () { console.log('See you next time!'); },
 	onError: function () { console.log('Breakdown happened'); },
-	onReconnect: function () { console.log('Reconnecting...'); }
+	onReconnect: function () { console.log('Reconnecting...'); },
+	onReconnectSuccess: function () { console.log('Reconnection succeeded...'); }
 });
 ```
 

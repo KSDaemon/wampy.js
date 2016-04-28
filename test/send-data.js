@@ -386,6 +386,86 @@ var WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
+
+
+
+        // allows to call handler when autoreconnect to WAMP server succeeded
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                28423,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                callee_blackwhite_listing: true,
+                                caller_exclusion: true,
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            close: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                4558,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                callee_blackwhite_listing: true,
+                                caller_exclusion: true,
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         // allows to call handler on websocket errors
         {
             data: [

@@ -77,6 +77,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                     onClose           : done,
                     onError           : done,
                     onReconnect       : done,
+                    onReconnectSuccess: done,
                     ws                : WebSocket
                 }),
                 options = wampy.options();
@@ -91,6 +92,7 @@ describe('Wampy.js [with JSON encoder]', function () {
             expect(options.onClose).to.be.a('function');
             expect(options.onError).to.be.a('function');
             expect(options.onReconnect).to.be.a('function');
+            expect(options.onReconnectSuccess).to.be.a('function');
         });
 
     });
@@ -110,6 +112,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                 onClose: function () { done('Reached close'); },
                 onError: function () { done('Reached error'); },
                 onReconnect: function () { done('Reached reconnection'); },
+                onReconnectSuccess: function () { done('Reached reconnection success'); },
                 ws: WebSocket
             });
         });
@@ -137,6 +140,7 @@ describe('Wampy.js [with JSON encoder]', function () {
             expect(options.onClose).to.be.a('function');
             expect(options.onError).to.be.a('function');
             expect(options.onReconnect).to.be.a('function');
+            expect(options.onReconnectSuccess).to.be.a('function');
         });
 
         it('allows to get current WAMP Session ID', function () {
@@ -247,8 +251,26 @@ describe('Wampy.js [with JSON encoder]', function () {
                                 });
                         }
                     }, 1);
-                }
+                },
+                onReconnectSuccess: function () { }
             }).connect();
+        });
+
+        it('allows to call handler when autoreconnect to WAMP server succeeded', function (done) {
+            wampy.options({
+                autoReconnect: true,
+                onClose: function () {
+                    root.setTimeout(function () {
+                        wampy.connect();
+                    }, 1);
+                },
+                onConnect: null,
+                onReconnect: null,
+                onReconnectSuccess: function () {
+                    done();
+                },
+                onError: null
+            }).disconnect();
         });
 
         it('allows to call handler on websocket errors', function (done) {
