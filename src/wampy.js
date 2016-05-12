@@ -249,7 +249,8 @@
                         caller_exclusion: true,
                         caller_identification: true,
                         progressive_call_results: true,
-                        call_canceling: true
+                        call_canceling: true,
+                        call_timeout: true
                     }
                 },
                 callee: {
@@ -1502,7 +1503,8 @@
      *                            disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
      *                                  to endpoints of a routed call
      *                            receive_progress: bool flag for receiving progressive results. In this case
-     *                                  onSuccess function will be called every time on receiving result }
+     *                                  onSuccess function will be called every time on receiving result
+     *                            timeout: integer timeout (in ms) for the call to finish }
      * @returns {Wampy}
      */
     Wampy.prototype.call = function (topicURI, payload, callbacks, advancedOptions) {
@@ -1573,6 +1575,10 @@
 
                 if (advancedOptions.hasOwnProperty('receive_progress')) {
                     options.receive_progress = advancedOptions.receive_progress === true;
+                }
+
+                if (advancedOptions.hasOwnProperty('timeout') && typeof advancedOptions.timeout === 'number') {
+                    options.timeout = advancedOptions.timeout;
                 }
 
             } else {

@@ -447,7 +447,8 @@ Must meet a WAMP Spec URI requirements.
              disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
                         to endpoints of a routed call
              receive_progress: bool flag for receiving progressive results. In this case onSuccess function
-                        will be called every time on receiving result }
+                        will be called every time on receiving result
+             timeout: integer timeout (in ms) for the call to finish }
 
 ```javascript
 ws.call('server.time', null, function (data) { console.log('Server time is ' + d[0]); });
@@ -533,7 +534,6 @@ on last result message.
 
 ```javascript
 var sqrt_f = function (x) { return [{}, x*x]; };
-
 
 ws.register('sqrt.value', sqrt_f);
 
