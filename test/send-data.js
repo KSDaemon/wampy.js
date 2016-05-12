@@ -44,8 +44,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -71,8 +69,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -98,8 +94,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -133,8 +127,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -177,8 +169,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -211,8 +201,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -250,8 +238,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -322,8 +308,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -413,8 +397,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -440,8 +422,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -450,22 +430,6 @@ var WAMP_MSG_SPEC = {
                 }
             ]
         },
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         // allows to call handler on websocket errors
         {
             data: [
@@ -497,8 +461,6 @@ var WAMP_MSG_SPEC = {
                     roles: {
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -531,8 +493,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }
@@ -941,8 +901,6 @@ var WAMP_MSG_SPEC = {
                         },
                         dealer: {
                             features: {
-                                callee_blackwhite_listing: true,
-                                caller_exclusion: true,
                                 caller_identification: true,
                                 progressive_call_results: true
                             }

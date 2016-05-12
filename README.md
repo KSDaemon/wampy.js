@@ -439,12 +439,7 @@ Must meet a WAMP Spec URI requirements.
              onError: will be called if invocation would be aborted }
 * **advancedOptions**. Optional parameter. Must include any or all of the options:
 
-           { exclude: integer|array WAMP session id(s) providing an explicit list of (potential)
-                      Callees that a call won't be forwarded to, even though they might be registered
-             eligible: integer|array WAMP session id(s) providing an explicit list of (potential)
-                       Callees that are (potentially) forwarded the call issued
-             exclude_me: bool flag of potentially forwarding call to caller if he is registered as callee
-             disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
+           { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
                         to endpoints of a routed call
              receive_progress: bool flag for receiving progressive results. In this case onSuccess function
                         will be called every time on receiving result

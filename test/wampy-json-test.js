@@ -958,8 +958,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                         onError: function (e) { }
                     },
                     {
-                        exclude: 'string instead of number or array',
-                        eligible: 1234567
+                        timeout: 'string instead of number'
                     }
                 );
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
@@ -972,8 +971,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                         onError: function (e) { }
                     },
                     {
-                        exclude: {},
-                        eligible: 1234567
+                        timeout: {}
                     }
                 );
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
@@ -986,55 +984,10 @@ describe('Wampy.js [with JSON encoder]', function () {
                         onError: function (e) { }
                     },
                     {
-                        exclude: 1234567,
-                        eligible: 'string instead of number or array'
+                        timeout: true
                     }
                 );
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
-
-                wampy.call(
-                    'qqq.www.eee',
-                    'payload',
-                    {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
-                    },
-                    {
-                        exclude: 1234567,
-                        eligible: {}
-                    }
-                );
-                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
-
-                wampy.call(
-                    'qqq.www.eee',
-                    'payload',
-                    {
-                        onSuccess: function (e) { },
-                        onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
-                        }
-                    },
-                    {
-                        exclude: {},
-                        eligible: {}
-                    }
-                );
-
-                wampy.call(
-                    'qqq.www.eee',
-                    'payload',
-                    {
-                        onSuccess: function (e) { },
-                        onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
-                        }
-                    },
-                    {
-                        exclude: 'invalid string',
-                        eligible: 'invalid string'
-                    }
-                );
             });
 
             it('disallows to unregister rpc if there is no such registration', function () {
@@ -1095,9 +1048,6 @@ describe('Wampy.js [with JSON encoder]', function () {
                         done();
                     },
                     {
-                        exclude: [1234567],
-                        eligible: [wampy.getSessionId(), 7654321],
-                        exclude_me: false,
                         disclose_me: true,
                         receive_progress: false
                     }

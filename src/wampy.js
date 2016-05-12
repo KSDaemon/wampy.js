@@ -245,8 +245,6 @@
                 subscriber: {},
                 caller: {
                     features: {
-                        callee_blackwhite_listing: true,
-                        caller_exclusion: true,
                         caller_identification: true,
                         progressive_call_results: true,
                         call_canceling: true,
@@ -1493,14 +1491,7 @@
      *                          { onSuccess: will be called with result on successful call
      *                            onError: will be called if invocation would be aborted }
      * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
-     *                          { exclude: integer|array WAMP session id(s) providing an explicit list of
-     *                                  (potential) Callees that a call won't be forwarded to, even though
-     *                                  they might be registered
-     *                            eligible: integer|array WAMP session id(s) providing an explicit list of
-     *                                  (potential) Callees that are (potentially) forwarded the call issued
-     *                            exclude_me: bool flag of potentially forwarding call to caller
-     *                                  if he is registered as callee
-     *                            disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
+     *                          { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
      *                                  to endpoints of a routed call
      *                            receive_progress: bool flag for receiving progressive results. In this case
      *                                  onSuccess function will be called every time on receiving result
@@ -1545,30 +1536,6 @@
         if (typeof (advancedOptions) !== 'undefined') {
 
             if (this._isPlainObject(advancedOptions)) {
-                if (advancedOptions.exclude) {
-                    if (this._isArray(advancedOptions.exclude)) {
-                        options.exclude = advancedOptions.exclude;
-                    } else if (typeof advancedOptions.exclude === 'number') {
-                        options.exclude = [advancedOptions.exclude];
-                    } else {
-                        err = true;
-                    }
-                }
-
-                if (advancedOptions.eligible) {
-                    if (this._isArray(advancedOptions.eligible)) {
-                        options.eligible = advancedOptions.eligible;
-                    } else if (typeof advancedOptions.eligible === 'number') {
-                        options.eligible = [advancedOptions.eligible];
-                    } else {
-                        err = true;
-                    }
-                }
-
-                if (advancedOptions.hasOwnProperty('exclude_me')) {
-                    options.exclude_me = advancedOptions.exclude_me !== false;
-                }
-
                 if (advancedOptions.hasOwnProperty('disclose_me')) {
                     options.disclose_me = advancedOptions.disclose_me === true;
                 }
@@ -1577,8 +1544,12 @@
                     options.receive_progress = advancedOptions.receive_progress === true;
                 }
 
-                if (advancedOptions.hasOwnProperty('timeout') && typeof advancedOptions.timeout === 'number') {
-                    options.timeout = advancedOptions.timeout;
+                if (advancedOptions.hasOwnProperty('timeout')) {
+                    if (typeof advancedOptions.timeout === 'number') {
+                        options.timeout = advancedOptions.timeout;
+                    } else {
+                        err = true;
+                    }
                 }
 
             } else {
