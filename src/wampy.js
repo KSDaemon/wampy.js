@@ -1012,18 +1012,22 @@
                             break;
                     }
 
-                    Promise.resolve(this._rpcRegs[data[2]].callbacks[0](d)).then(function (result) {
+                    Promise.resolve(this._rpcRegs[data[2]].callbacks[0](d, data[3])).then(function (results) {
                         // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
-                        if (self._isArray(result)) {
-                            msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, result];
-                        } else if (self._isPlainObject(result)) {
-                            msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [], result];
-                        } else if (typeof (result) === 'undefined') {
-                            msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-                        } else {    // single value
-                            msg = [WAMP_MSG_SPEC.YIELD, data[1], {}, [result]];
-                        }
 
+                        if (results) {
+                            if (self._isArray(results[1])) {
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], results[1]];
+                            } else if (self._isPlainObject(results[1])) {
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], [], results[1]];
+                            } else if (typeof (results[1]) === 'undefined') {
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0]];
+                            } else {    // single value
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], [results[1]]];
+                            }
+                        } else {
+                            msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+                        }
                         self._send(msg);
                     }, function (e) {
                         self._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,

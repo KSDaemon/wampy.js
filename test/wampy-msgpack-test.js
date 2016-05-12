@@ -1184,7 +1184,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
             it('allows to invoke asynchronous RPC without value', function (done) {
                 wampy.register('register.rpc3', {
-                    rpc: function (e) {
+                    rpc: function (e, o) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 resolve();
@@ -1211,10 +1211,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
             it('allows to invoke asynchronous RPC with single value', function (done) {
                 wampy.register('register.rpc4', {
-                    rpc: function (e) {
+                    rpc: function (e, o) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
-                                resolve(100);
+                                resolve([{}, 100]);
                             }, 1);
                         });
                     },
@@ -1239,10 +1239,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
             it('allows to invoke asynchronous RPC with array value', function (done) {
                 wampy.register('register.rpc5', {
-                    rpc: function (e) {
+                    rpc: function (e, o) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
-                                resolve([1, 2, 3, 4, 5]);
+                                resolve([{}, [1, 2, 3, 4, 5]]);
                             }, 1);
                         });
                     },
@@ -1270,10 +1270,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
             it('allows to invoke asynchronous RPC with hash-table value', function (done) {
                 var payload = { key1: 100, key2: 'string-key' };
                 wampy.register('register.rpc6', {
-                    rpc: function (e) {
+                    rpc: function (e, o) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
-                                resolve(payload);
+                                resolve([{}, payload]);
                             }, 1);
                         });
                     },
