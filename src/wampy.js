@@ -1362,7 +1362,15 @@
      * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
      *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
      *                                      even though they may be subscribed
+     *                            exclude_authid: string|array Authentication id(s) that won't receive
+     *                                      a published event, even though they may be subscribed
+     *                            exclude_authrole: string|array Authentication role(s) that won't receive
+     *                                      a published event, even though they may be subscribed
      *                            eligible: integer|array WAMP session id(s) that are allowed
+     *                                      to receive a published event
+     *                            eligible_authid: string|array Authentication id(s) that are allowed
+     *                                      to receive a published event
+     *                            eligible_authrole: string|array Authentication role(s) that are allowed
      *                                      to receive a published event
      *                            exclude_me: bool flag of receiving publishing event by initiator
      *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
@@ -1400,7 +1408,7 @@
 
             if (this._isPlainObject(advancedOptions)) {
                 if (advancedOptions.exclude) {
-                    if (this._isArray(advancedOptions.exclude)) {
+                    if (this._isArray(advancedOptions.exclude) && advancedOptions.exclude.length) {
                         options.exclude = advancedOptions.exclude;
                     } else if (typeof advancedOptions.exclude === 'number') {
                         options.exclude = [advancedOptions.exclude];
@@ -1409,11 +1417,51 @@
                     }
                 }
 
+                if (advancedOptions.exclude_authid) {
+                    if (this._isArray(advancedOptions.exclude_authid) && advancedOptions.exclude_authid.length) {
+                        options.exclude_authid = advancedOptions.exclude_authid;
+                    } else if (typeof advancedOptions.exclude_authid === 'string') {
+                        options.exclude_authid = [advancedOptions.exclude_authid];
+                    } else {
+                        err = true;
+                    }
+                }
+
+                if (advancedOptions.exclude_authrole) {
+                    if (this._isArray(advancedOptions.exclude_authrole) && advancedOptions.exclude_authrole.length) {
+                        options.exclude_authrole = advancedOptions.exclude_authrole;
+                    } else if (typeof advancedOptions.exclude_authrole === 'string') {
+                        options.exclude_authrole = [advancedOptions.exclude_authrole];
+                    } else {
+                        err = true;
+                    }
+                }
+
                 if (advancedOptions.eligible) {
-                    if (this._isArray(advancedOptions.eligible)) {
+                    if (this._isArray(advancedOptions.eligible) && advancedOptions.eligible.length) {
                         options.eligible = advancedOptions.eligible;
                     } else if (typeof advancedOptions.eligible === 'number') {
                         options.eligible = [advancedOptions.eligible];
+                    } else {
+                        err = true;
+                    }
+                }
+
+                if (advancedOptions.eligible_authid) {
+                    if (this._isArray(advancedOptions.eligible_authid) && advancedOptions.eligible_authid.length) {
+                        options.eligible_authid = advancedOptions.eligible_authid;
+                    } else if (typeof advancedOptions.eligible_authid === 'string') {
+                        options.eligible_authid = [advancedOptions.eligible_authid];
+                    } else {
+                        err = true;
+                    }
+                }
+
+                if (advancedOptions.eligible_authrole) {
+                    if (this._isArray(advancedOptions.eligible_authrole) && advancedOptions.eligible_authrole.length) {
+                        options.eligible_authrole = advancedOptions.eligible_authrole;
+                    } else if (typeof advancedOptions.eligible_authrole === 'string') {
+                        options.eligible_authrole = [advancedOptions.eligible_authrole];
                     } else {
                         err = true;
                     }

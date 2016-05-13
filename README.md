@@ -398,8 +398,14 @@ Must meet a WAMP Spec URI requirements.
 
            { exclude:    integer|array WAMP session id(s) that won't receive a published event,
                          even though they may be subscribed
-             eligible:   integer|array WAMP session id(s) that are allowed to receive
-                         a published event
+             exclude_authid: string|array Authentication id(s) that won't receive
+                         a published event, even though they may be subscribed
+             exclude_authrole: string|array Authentication role(s) that won't receive
+                         a published event, even though they may be subscribed
+             eligible: integer|array WAMP session id(s) that are allowed to receive a published event
+             eligible_authid: string|array Authentication id(s) that are allowed to receive a published event
+             eligible_authrole: string|array Authentication role(s) that are allowed
+                         to receive a published event
              exclude_me: bool flag of receiving publishing event by initiator
                          (if it is subscribed to this topic)
              disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)

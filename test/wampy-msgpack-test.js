@@ -612,7 +612,11 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     },
                     {
                         exclude: 'string instead of number or array',
-                        eligible: 1234567
+                        eligible: 1234567,
+                        exclude_authid: 1234567,
+                        exclude_authrole: 1234567,
+                        eligible_authid: 1234567,
+                        eligible_authrole: 1234567
                     }
                 );
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
@@ -626,7 +630,11 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     },
                     {
                         exclude: {},
-                        eligible: 1234567
+                        eligible: 1234567,
+                        exclude_authid: {},
+                        exclude_authrole: false,
+                        eligible_authid: {},
+                        eligible_authrole: true
                     }
                 );
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
@@ -640,7 +648,11 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     },
                     {
                         exclude: 1234567,
-                        eligible: 'string instead of number or array'
+                        eligible: 'string instead of number or array',
+                        exclude_authid: [],
+                        exclude_authrole: [],
+                        eligible_authid: [],
+                        eligible_authrole: []
                     }
                 );
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
@@ -654,7 +666,11 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     },
                     {
                         exclude: 1234567,
-                        eligible: {}
+                        eligible: [],
+                        exclude_authid: 'asdfsdafdsaf',
+                        exclude_authrole: 'role-one',
+                        eligible_authid: 'sadfdfdfdsa',
+                        eligible_authrole: 'role-two'
                     }
                 );
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
@@ -670,7 +686,11 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     },
                     {
                         exclude: {},
-                        eligible: {}
+                        eligible: {},
+                        exclude_authid: ['asdfsdafdsaf', 'sddfdfsfdf'],
+                        exclude_authrole: ['role-one', 'role-three'],
+                        eligible_authid: ['sadfdfdfdsa', 'dsafdfhdfgh'],
+                        eligible_authrole: ['role-two', 'role-four']
                     }
                 );
 
@@ -1056,7 +1076,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     },
                     {
                         disclose_me: true,
-                        receive_progress: false
+                        receive_progress: false,
+                        timeout: 5000
                     }
                 );
             });
