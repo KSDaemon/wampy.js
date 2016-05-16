@@ -230,6 +230,8 @@ For using msgpack you need to provide [msgpack5][] javascript library, set up **
 that also supports it.
 * **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
 * **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
+* **onChallenge**. Default value: null. Callback function. Fired when wamp server requests authentication during session establishment.
+* **authid**. Default value: null. Authentication (user) id to use in challenge.
 * **onConnect**. Default value: null. Callback function. Fired when connection to wamp server is established.
 * **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
 * **onError**. Default value: null. Callback function. Fired on error in websocket communication.

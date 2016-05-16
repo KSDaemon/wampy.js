@@ -140,6 +140,10 @@
             NO_WS_OR_URL: {
                 code: 22,
                 description: 'No websocket provided or URL specified is incorrect!'
+            },
+            NO_CRA_CB_OR_ID: {
+                code: 23,
+                description: 'No onChallenge callback or authid was provided for authentication!'
             }
         },
 
@@ -226,6 +230,12 @@
          * @private
          */
         this._protocols = ['wamp.2.json'];
+
+        /**
+         * Supported authentication methods
+         * @type {array}
+         */
+        this._authmethods = ['wampcra'];
 
         /**
          * WAMP features, supported by Wampy
@@ -403,6 +413,18 @@
              * @type {object}
              */
             helloCustomDetails: null,
+
+            /**
+             * onChallenge callback
+             * @type {function}
+             */
+            onChallenge: null,
+
+            /**
+             * Authentication id to use in challenge
+             * @type {string}
+             */
+            authid: null,
 
             /**
              * onConnect callback
@@ -648,6 +670,13 @@
     };
 
     Wampy.prototype._wsOnOpen = function () {
+        var options = this._merge(this._options.helloCustomDetails, this._wamp_features);
+
+        if (this._options.authid) {
+            options.authmethods = this._authmethods;
+            options.authid = this._options.authid;
+        }
+
         this._log('[wampy] websocket connected');
 
         if (this._ws.protocol) {
@@ -660,11 +689,7 @@
 
         // WAMP SPEC: [HELLO, Realm|uri, Details|dict]
         // Sending directly 'cause it's a hello msg and no sessionId check is needed
-        this._ws.send(this._encode([
-            WAMP_MSG_SPEC.HELLO,
-            this._options.realm,
-            this._merge(this._options.helloCustomDetails, this._wamp_features)
-        ]));
+        this._ws.send(this._encode([WAMP_MSG_SPEC.HELLO, this._options.realm, options]));
     };
 
     Wampy.prototype._wsOnClose = function () {
@@ -737,7 +762,36 @@
                 this._ws.close();
                 break;
             case WAMP_MSG_SPEC.CHALLENGE:
+                // WAMP SPEC: [CHALLENGE, AuthMethod|string, Extra|dict]
 
+                if (this._options.authid && typeof this._options.onChallenge === 'function') {
+
+                    Promise.resolve(this._options.onChallenge(data[1], data[2])).then(function (key) {
+
+                        self._send([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]);
+
+                    }, function (e) {
+                        self._send([
+                            WAMP_MSG_SPEC.ABORT,
+                            { message: 'Exception in onChallenge handler raised!' },
+                            'wamp.error.cannot_authenticate'
+                        ]);
+                    });
+
+                } else {
+
+                    if (this._options.onError) {
+                        this._options.onError(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description);
+                    }
+                    this._send([
+                        WAMP_MSG_SPEC.ABORT,
+                        { message: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description },
+                        'wamp.error.cannot_authenticate'
+                    ]);
+                    this._ws.close();
+                    this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
+
+                }
                 break;
             case WAMP_MSG_SPEC.GOODBYE:
                 // WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
@@ -1154,13 +1208,20 @@
         }
 
         if (this._options.realm) {
+
+            if (this._options.authid && typeof this._options.onChallenge !== 'function') {
+                this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
+                return this;
+            }
+
             this._setWsProtocols();
             this._ws = getWebSocket(this._url, this._protocols, this._options.ws);
-            if (this._ws) {
-                this._initWsCallbacks();
-            } else {
+            if (!this._ws) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_WS_OR_URL;
+                return this;
             }
+            this._initWsCallbacks();
+
         } else {
             this._cache.opStatus = WAMP_ERROR_MSG.NO_REALM;
         }
