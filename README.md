@@ -206,7 +206,6 @@ ws = new Wampy({
 
 ```
 
-
 [Back to TOC](#table-of-contents)
 
 options([opts])
@@ -230,7 +229,11 @@ For using msgpack you need to provide [msgpack5][] javascript library, set up **
 that also supports it.
 * **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
 * **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
-* **onChallenge**. Default value: null. Callback function. Fired when wamp server requests authentication during session establishment.
+* **onChallenge**. Default value: null. Callback function.
+Is fired when wamp server requests authentication during session establishment.
+This function receives two arguments: auth method ('wampcra' for now only) and challenge details.
+Function should return computed signature, based on challenge details.
+See [WAMP Spec CRA][] for more info.
 * **authid**. Default value: null. Authentication (user) id to use in challenge.
 * **onConnect**. Default value: null. Callback function. Fired when connection to wamp server is established.
 * **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
@@ -660,6 +663,7 @@ with extension point support.
 [WAMP specification]: http://wamp-proto.org/
 [Wiola]: http://ksdaemon.github.io/wiola/
 [msgpack5]: https://github.com/mcollina/msgpack5
+[WAMP Spec CRA]: https://tools.ietf.org/html/draft-oberstet-hybi-tavendo-wamp-02#section-13.7.2.3
 
 [npm-url]: https://www.npmjs.com/package/wampy
 [npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
