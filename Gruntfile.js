@@ -16,14 +16,6 @@ module.exports = function (grunt) {
                 }
             }
         },
-        jshint: {
-            options: {
-                jshintrc: '.jshintrc'
-            },
-            default: {
-                src: 'src/wampy.js'
-            }
-        },
         concat: {
             wampy: {
                 src: ['build/msgpack5.min.js', 'build/wampy.min.js'],
@@ -43,10 +35,8 @@ module.exports = function (grunt) {
     });
 
     grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-copy');
 
-    grunt.registerTask('test', ['jshint']);
     grunt.registerTask('default', ['uglify', 'copy', 'concat']);
 };
