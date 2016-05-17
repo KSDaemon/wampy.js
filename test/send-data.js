@@ -77,6 +77,51 @@ var WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // allows to use Challenge Response Authentication while connecting to server
+        {
+            data: [
+                WAMP_MSG_SPEC.CHALLENGE,
+                'wampcra',
+                {
+                    challenge: '{ "nonce": "LHRTC9zeOIrt_9U3", ' +
+                                '"authprovider": "userdb", ' +
+                                '"authid": "user1", ' +
+                                '"timestamp": "2014-06-22T16:36:25.448Z", ' +
+                                '"authrole": "user", ' +
+                                '"authmethod": "wampcra", ' +
+                                '"session": 123454321 }'
+                }
+            ]
+
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                123454321,
+                {
+                    agent       : 'Wampy.js test suite',
+                    authid      : 'user1',
+                    authrole    : 'user',
+                    authmethod  : 'wampcra',
+                    authprovider: 'userdb',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
         // Instance before hook
         {
             data: [
@@ -109,6 +154,48 @@ var WAMP_MSG_SPEC = {
                 {},
                 'wamp.error.goodbye_and_out'
             ]
+        },
+        // calls onError handler if authentication using CRA fails
+        {
+            data: [
+                WAMP_MSG_SPEC.CHALLENGE,
+                'wampcra',
+                {
+                    challenge: '{ "nonce": "LHRTC9zeOIrt_9U3", ' +
+                                '"authprovider": "userdb", ' +
+                                '"authid": "user1", ' +
+                                '"timestamp": "2014-06-22T16:36:25.448Z", ' +
+                                '"authrole": "user", ' +
+                                '"authmethod": "wampcra", ' +
+                                '"session": 523454325 }'
+                }
+            ]
+
+        },
+        {
+            data: null,
+            silent: true
+        },
+        // calls onError handler if server requests authentication, but no credentials were provided
+        {
+            data: [
+                WAMP_MSG_SPEC.CHALLENGE,
+                'wampcra',
+                {
+                    challenge: '{ "nonce": "LHRTC9zeOIrt_9U3", ' +
+                                '"authprovider": "userdb", ' +
+                                '"authid": "user1", ' +
+                                '"timestamp": "2014-06-22T16:36:25.448Z", ' +
+                                '"authrole": "user", ' +
+                                '"authmethod": "wampcra", ' +
+                                '"session": 523454325 }'
+                }
+            ]
+
+        },
+        {
+            data: null,
+            silent: true
         },
         // automatically sends goodbye message on server initiated disconnect
         {
@@ -1118,6 +1205,35 @@ var WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
+        // allows to invoke asynchronous RPC without value but with extra options
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                22   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                22, // Registration ID
+                {}
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1],
+            to: [1]
+        },
         // allows to invoke asynchronous RPC with single value
         {
             data: [
@@ -1213,12 +1329,12 @@ var WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
-        // allows to reject asynchronous RPC
+        // calls error handler if asynchronous RPC was rejected
         {
             data: [
                 WAMP_MSG_SPEC.REGISTERED,
                 'RequestId',
-                22   // Registration ID
+                222   // Registration ID
             ],
             from: [1],
             to: [1]
@@ -1227,7 +1343,62 @@ var WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.INVOCATION,
                 'RequestId',
-                26, // Registration ID
+                222, // Registration ID
+                {},
+                [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                WAMP_MSG_SPEC.CALL,
+                'RequestId',
+                {},
+                'wamp.error.invocation_exception'
+            ],
+            from: [2],
+            to: [2]
+        },
+        // calls error handler if asynchronous RPC raised exception
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                223   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                223, // Registration ID
+                {},
+                [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                WAMP_MSG_SPEC.CALL,
+                'RequestId',
+                {},
+                'wamp.error.invocation_exception'
+            ],
+            from: [2],
+            to: [2]
+        },
+        // calls error handler on trying to call nonexistent RPC
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                9879, // Registration ID
                 {},
                 [100]
             ],

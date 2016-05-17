@@ -61,6 +61,16 @@ describe('Wampy.js [with msgpack encoder]', function () {
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_REALM);
         });
 
+        it('disallows to connect on instantiation without specifying only one of [onChallenge, authid]', function () {
+            var wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid' }),
+                opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy = new Wampy(routerUrl, { realm: 'AppRealm', onChallenge: function () {} });
+            opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+        });
+
         it('allows to set different options on instantiation', function (done) {
             var helloCustomDetails = {
                     customFiled1: 25,
@@ -73,11 +83,13 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     maxRetries        : 50,
                     realm             : 'AppRealm',
                     helloCustomDetails: helloCustomDetails,
+                    onChallenge       : function () { done('Reached onChallenge'); },
+                    authid            : 'userid',
                     onConnect         : done,
-                    onClose           : done,
-                    onError           : done,
-                    onReconnect       : done,
-                    onReconnectSuccess: done,
+                    onClose           : function () { done('Reached onClose'); },
+                    onError           : function () { done('Reached onError'); },
+                    onReconnect       : function () { done('Reached onReconnect'); },
+                    onReconnectSuccess: function () { done('Reached onReconnectSuccess'); },
                     ws                : WebSocket,
                     transportEncoding : 'msgpack',
                     msgpackCoder      : msgpack
@@ -90,12 +102,29 @@ describe('Wampy.js [with msgpack encoder]', function () {
             expect(options.transportEncoding).to.be.equal('msgpack');
             expect(options.realm).to.be.equal('AppRealm');
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
+            expect(options.onChallenge).to.be.a('function');
+            expect(options.authid).to.be.equal('userid');
             expect(options.onConnect).to.be.a('function');
             expect(options.onClose).to.be.a('function');
             expect(options.onError).to.be.a('function');
             expect(options.onReconnect).to.be.a('function');
             expect(options.msgpackCoder).to.be.a('object');
             expect(options.onReconnectSuccess).to.be.a('function');
+        });
+
+        it('allows to use Challenge Response Authentication while connecting to server', function (done) {
+            var wampy = new Wampy(routerUrl, {
+                transportEncoding : 'json',
+                realm             : 'AppRealm',
+                onChallenge       : function (method, info) { return 'secretKey'; },
+                authid            : 'user1',
+                onConnect         : done,
+                onClose           : function () { done('Reached onClose'); },
+                onError           : function () { done('Reached onError'); },
+                onReconnect       : function () { done('Reached onReconnect'); },
+                onReconnectSuccess: function () { done('Reached onReconnectSuccess'); },
+                ws                : WebSocket
+            });
         });
 
     });
@@ -132,7 +161,9 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     reconnectInterval : 1000,
                     maxRetries        : 5,
                     transportEncoding : 'msgpack',
-                    helloCustomDetails: helloCustomDetails
+                    helloCustomDetails: helloCustomDetails,
+                    onChallenge       : function () {},
+                    authid            : 'userid'
                 }).options();
 
             expect(options.autoReconnect).to.be.true;
@@ -140,6 +171,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
             expect(options.maxRetries).to.be.equal(5);
             expect(options.transportEncoding).to.be.equal('msgpack');
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
+            expect(options.onChallenge).to.be.a('function');
+            expect(options.authid).to.be.equal('userid');
             expect(options.onConnect).to.be.a('function');
             expect(options.onClose).to.be.a('function');
             expect(options.onError).to.be.a('function');
@@ -156,6 +189,42 @@ describe('Wampy.js [with msgpack encoder]', function () {
         it('allows to disconnect from connected server', function (done) {
             wampy.options({ onConnect: null, onClose: done });
             wampy.disconnect();
+        });
+
+        it('disallows to connect without specifying only one of [onChallenge, authid]', function () {
+            var opStatus;
+
+            wampy.options({ authid: 'userid', onChallenge: null }).connect();
+            opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy.options({ authid: null, onChallenge: function () {} }).connect();
+            opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy.options({ authid: null, onChallenge: null });
+        });
+
+        it('calls onError handler if authentication using CRA fails', function (done) {
+            wampy.options({
+                authid: 'user1',
+                onChallenge: function (method, info) { throw new Error('Error occured in authentication'); },
+                onError: function (e) { done(); },
+                onConnect: null,
+                onClose: null
+            })
+                .connect();
+        });
+
+        it('calls onError handler if server requests authentication, but no credentials were provided', function (done) {
+            wampy.options({
+                onError: function (e) { done(); },
+                onConnect: null,
+                onClose: null,
+                authid: null,
+                onChallenge: null
+            })
+                .connect();
         });
 
         it('automatically sends goodbye message on server initiated disconnect', function (done) {
@@ -1180,6 +1249,33 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
+            it('allows to invoke asynchronous RPC without value but with extra options', function (done) {
+                wampy.register('register.rpc33', {
+                    rpc: function (e, o) {
+                        return new Promise(function (resolve, reject) {
+                            setTimeout(function () {
+                                resolve([{}]);
+                            }, 1);
+                        });
+                    },
+                    onSuccess: function (e) {
+                        wampy.call(
+                            'register.rpc33',
+                            null,
+                            function (e) {
+                                expect(e).to.be.null;
+                                done();
+                            },
+                            { exclude_me: false }
+                        );
+                    },
+                    onError: function (e) {
+                        done('Error during RPC registration!');
+                    }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
             it('allows to invoke asynchronous RPC with single value', function (done) {
                 wampy.register('register.rpc4', {
                     rpc: function (e, o) {
@@ -1267,7 +1363,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to reject asynchronous RPC', function (done) {
+            it('calls error handler if asynchronous RPC was rejected', function (done) {
                 wampy.register('register.rpc7', {
                     rpc: function (e) {
                         return new Promise(function (resolve, reject) {
@@ -1294,6 +1390,44 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     }
                 });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('calls error handler if asynchronous RPC raised exception', function (done) {
+                wampy.register('register.rpc77', {
+                    rpc: function (e) {
+                        throw new Error('Raised exception in RPC');
+                    },
+                    onSuccess: function (e) {
+                        wampy.call(
+                            'register.rpc77',
+                            100,
+                            {
+                                onSuccess: function () { },
+                                onError: function () {
+                                    done();
+                                }
+                            },
+                            { exclude_me: false }
+                        );
+                    },
+                    onError: function (e) {
+                        done('Error during RPC registration!');
+                    }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('calls error handler on trying to call nonexistent RPC', function (done) {
+                wampy.call(
+                    'nonexistent.rpc',
+                    100,
+                    {
+                        onSuccess: function () { },
+                        onError: function () {
+                            done();
+                        }
+                    }
+                );
             });
 
             it('calls error handler on trying to unregister non existent RPC', function () {

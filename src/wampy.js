@@ -69,61 +69,21 @@
                 code: 4,
                 description: 'Invalid parameter(s) specified!'
             },
-            NON_EXIST_SUBSCRIBE_CONFIRM: {
-                code: 5,
-                description: 'Received subscribe confirmation to non existent subscription!'
-            },
-            NON_EXIST_SUBSCRIBE_ERROR: {
-                code: 6,
-                description: 'Received error for non existent subscription!'
-            },
             NON_EXIST_UNSUBSCRIBE: {
                 code: 7,
                 description: 'Trying to unsubscribe from non existent subscription!'
-            },
-            NON_EXIST_SUBSCRIBE_UNSUBSCRIBED: {
-                code: 8,
-                description: 'Received unsubscribe confirmation to non existent subscription!'
-            },
-            NON_EXIST_PUBLISH_ERROR: {
-                code: 9,
-                description: 'Received error for non existent publication!'
-            },
-            NON_EXIST_PUBLISH_PUBLISHED: {
-                code: 10,
-                description: 'Received publish confirmation for non existent publication!'
-            },
-            NON_EXIST_SUBSCRIBE_EVENT: {
-                code: 11,
-                description: 'Received event for non existent subscription!'
             },
             NO_DEALER: {
                 code: 12,
                 description: 'Server doesn\'t provide dealer role!'
             },
-            NON_EXIST_CALL_RESULT: {
-                code: 13,
-                description: 'Received rpc result for non existent call!'
-            },
-            NON_EXIST_CALL_ERROR: {
-                code: 14,
-                description: 'Received rpc call error for non existent call!'
-            },
             RPC_ALREADY_REGISTERED: {
                 code: 15,
                 description: 'RPC already registered!'
             },
-            NON_EXIST_RPC_REG: {
-                code: 16,
-                description: 'Received rpc registration confirmation for non existent rpc!'
-            },
             NON_EXIST_RPC_UNREG: {
                 code: 17,
                 description: 'Received rpc unregistration for non existent rpc!'
-            },
-            NON_EXIST_RPC_ERROR: {
-                code: 18,
-                description: 'Received error for non existent rpc!'
             },
             NON_EXIST_RPC_INVOCATION: {
                 code: 19,
@@ -144,6 +104,10 @@
             NO_CRA_CB_OR_ID: {
                 code: 23,
                 description: 'No onChallenge callback or authid was provided for authentication!'
+            },
+            CRA_EXCEPTION: {
+                code: 24,
+                description: 'Exception raised during CRA challenge processing'
             }
         },
 
@@ -717,7 +681,7 @@
     };
 
     Wampy.prototype._wsOnMessage = function (event) {
-        var self = this, data, id, i, d, msg;
+        var self = this, data, id, i, d, msg, p;
 
         this._log('[wampy] websocket message received', event.data);
 
@@ -766,28 +730,38 @@
 
                 if (this._options.authid && typeof this._options.onChallenge === 'function') {
 
-                    Promise.resolve(this._options.onChallenge(data[1], data[2])).then(function (key) {
+                    p = new Promise(function (resolve, reject) {
+                        resolve(self._options.onChallenge(data[1], data[2]));
+                    });
 
-                        self._send([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]);
+                    p.then(function (key) {
 
-                    }, function (e) {
-                        self._send([
+                        // Sending directly 'cause it's a challenge msg and no sessionId check is needed
+                        self._ws.send(self._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
+
+                    }).catch(function (e) {
+                        self._ws.send(self._encode([
                             WAMP_MSG_SPEC.ABORT,
                             { message: 'Exception in onChallenge handler raised!' },
                             'wamp.error.cannot_authenticate'
-                        ]);
+                        ]));
+                        if (self._options.onError) {
+                            self._options.onError(WAMP_ERROR_MSG.CRA_EXCEPTION.description);
+                        }
+                        self._ws.close();
+                        self._cache.opStatus = WAMP_ERROR_MSG.CRA_EXCEPTION;
                     });
 
                 } else {
 
-                    if (this._options.onError) {
-                        this._options.onError(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description);
-                    }
-                    this._send([
+                    this._ws.send(this._encode([
                         WAMP_MSG_SPEC.ABORT,
                         { message: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description },
                         'wamp.error.cannot_authenticate'
-                    ]);
+                    ]));
+                    if (this._options.onError) {
+                        this._options.onError(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description);
+                    }
                     this._ws.close();
                     this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
 
@@ -819,8 +793,6 @@
 
                             delete this._requests[data[2]];
 
-                        } else {
-                            this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_SUBSCRIBE_ERROR;
                         }
                         break;
                     case WAMP_MSG_SPEC.PUBLISH:
@@ -832,8 +804,6 @@
 
                             delete this._requests[data[2]];
 
-                        } else {
-                            this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_PUBLISH_ERROR;
                         }
                         break;
                     case WAMP_MSG_SPEC.REGISTER:
@@ -847,8 +817,6 @@
 
                             delete this._requests[data[2]];
 
-                        } else {
-                            this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_ERROR;
                         }
                         break;
                     case WAMP_MSG_SPEC.INVOCATION:
@@ -880,8 +848,6 @@
 
                             delete this._calls[data[2]];
 
-                        } else {
-                            this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_CALL_ERROR;
                         }
                         break;
                 }
@@ -902,8 +868,6 @@
 
                     delete this._requests[data[1]];
 
-                } else {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_SUBSCRIBE_CONFIRM;
                 }
                 break;
             case WAMP_MSG_SPEC.UNSUBSCRIBED:
@@ -923,8 +887,6 @@
                     }
 
                     delete this._requests[data[1]];
-                } else {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_SUBSCRIBE_UNSUBSCRIBED;
                 }
                 break;
             case WAMP_MSG_SPEC.PUBLISHED:
@@ -936,8 +898,6 @@
 
                     delete this._requests[data[1]];
 
-                } else {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_PUBLISH_PUBLISHED;
                 }
                 break;
             case WAMP_MSG_SPEC.EVENT:
@@ -965,8 +925,6 @@
                         this._subscriptions[data[1]].callbacks[i](d);
                     }
 
-                } else {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_SUBSCRIBE_EVENT;
                 }
                 break;
             case WAMP_MSG_SPEC.RESULT:
@@ -994,8 +952,6 @@
                         delete this._calls[data[1]];
                     }
 
-                } else {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_CALL_RESULT;
                 }
                 break;
             case WAMP_MSG_SPEC.REGISTER:
@@ -1017,8 +973,6 @@
 
                     delete this._requests[data[1]];
 
-                } else {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_REG;
                 }
                 break;
             case WAMP_MSG_SPEC.UNREGISTER:
@@ -1041,8 +995,6 @@
                     }
 
                     delete this._requests[data[1]];
-                } else {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG;
                 }
                 break;
             case WAMP_MSG_SPEC.INVOCATION:
@@ -1065,9 +1017,12 @@
                             break;
                     }
 
-                    Promise.resolve(this._rpcRegs[data[2]].callbacks[0](d, data[3])).then(function (results) {
-                        // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
+                    p = new Promise(function (resolve, reject) {
+                        resolve(self._rpcRegs[data[2]].callbacks[0](d, data[3]));
+                    });
 
+                    p.then(function (results) {
+                        // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
                         if (results) {
                             if (self._isArray(results[1])) {
                                 msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], results[1]];
@@ -1082,7 +1037,8 @@
                             msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
                         }
                         self._send(msg);
-                    }, function (e) {
+
+                    }).catch(function (e) {
                         self._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
                                     data[1], {}, 'wamp.error.invocation_exception']);
                     });
@@ -1209,7 +1165,8 @@
 
         if (this._options.realm) {
 
-            if (this._options.authid && typeof this._options.onChallenge !== 'function') {
+            if ((!this._options.authid && typeof this._options.onChallenge === 'function') ||
+                (this._options.authid && typeof this._options.onChallenge !== 'function')) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
                 return this;
             }
