@@ -32,7 +32,7 @@ Table of Contents
     * [unsubscribe](#unsubscribetopicuri-callbacks)
     * [publish](#publishtopicuri-payload-callbacks-advancedoptions)
     * [call](#calltopicuri-payload-callbacks-advancedoptions)
-    * [cancel](#cancelreqId-callbacks-advancedOptions)
+    * [cancel](#cancelreqid-callbacks-advancedoptions)
     * [register](#registertopicuri-callbacks)
     * [unregister](#unregistertopicuri-callbacks)
 * [Quick comparison to other libs](#quick-comparison-to-other-libs)
@@ -126,12 +126,14 @@ Updating versions
 
 Please refer to [Migrating.md](Migrating.md) for instructions on upgrading major versions.
 
+[Back to TOC](#table-of-contents)
+
 Challenge Response Authentication
 =================================
 
 Wampy.js supports challenge response authentication. To use it you need to provide authid and onChallenge callback
 as wampy instance options. Also Wampy.js supports "wampcra" authentication method with a little helper
-plugin "[wamp-cra][]". Just add "wamp-cra" package and use provided methods as shown below.
+plugin "[wampy-cra][]". Just add "wampy-cra" package and use provided methods as shown below.
 
 ```javascript
 'use strict';
@@ -230,6 +232,8 @@ ws = new Wampy('ws://wamp.router.url', {
     }
 });
 ```
+
+[Back to TOC](#table-of-contents)
 
 API
 ===
@@ -602,6 +606,8 @@ ws.cancel(status.reqId);
 
 ```
 
+[Back to TOC](#table-of-contents)
+
 register(topicURI, callbacks)
 -----------------------------------------------
 
@@ -763,7 +769,8 @@ See Also
 * [Wiola][] - WAMP Router in Lua on top of nginx/openresty
 * [Loowy](https://github.com/KSDaemon/Loowy) - LUA WAMP client
 * [msgpack5][] - A msgpack v5 implementation for node.js and the browser,
-with extension point support.
+with extension point support
+* [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
 
 [Back to TOC](#table-of-contents)
 
@@ -772,7 +779,7 @@ with extension point support.
 [Wiola]: http://ksdaemon.github.io/wiola/
 [msgpack5]: https://github.com/mcollina/msgpack5
 [WAMP Spec CRA]: https://tools.ietf.org/html/draft-oberstet-hybi-tavendo-wamp-02#section-13.7.2.3
-[wamp-cra]: https://github.com/KSDaemon/wampy-cra
+[wampy-cra]: https://github.com/KSDaemon/wampy-cra
 
 [npm-url]: https://www.npmjs.com/package/wampy
 [npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
