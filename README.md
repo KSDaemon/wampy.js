@@ -17,7 +17,6 @@ Table of Contents
 
 * [Description](#description)
 * [Usage example](#usage-example)
-* [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Installation](#installation)
 * [Updating versions](#updating-versions)
 * [Challenge Response Authentication](#challenge-response-authentication)
@@ -36,6 +35,7 @@ Table of Contents
     * [cancel](#cancelreqId-callbacks-advancedOptions)
     * [register](#registertopicuri-callbacks)
     * [unregister](#unregistertopicuri-callbacks)
+* [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Tests and code coverage](#tests-and-code-coverage)
 * [Copyright and License](#copyright-and-license)
 * [See Also](#see-also)
@@ -49,7 +49,7 @@ It has no external dependencies (by default) and is easy to use. Also it's compa
 
 Wampy.js supports next WAMP roles and features:
 
-* Challenge Response Authentication (wampcra)
+* Challenge Response Authentication (wampcra method)
 * publisher: advanced profile with features:
     * subscriber blackwhite listing
     * publisher exclusion
@@ -93,25 +93,6 @@ ws.publish('system.monitor.update');
 
 ws.publish('client.message', 'Hi guys!');
 ```
-
-[Back to TOC](#table-of-contents)
-
-Quick comparison to other libs
-==============================
-
-| Topic         | Wampy.js | AutobahnJS  |
-|-------------- | -------- | ----------- |
-| Runs on | browser | browser and NodeJS |
-| Dependencies | msgpack5.js (optional) | when.js, CryptoJS (optional) |
-| Creating connection | var connection = new Wampy('ws://127.0.0.1:9000/', { realm: 'realm1' }); | var connection = new autobahn.Connection({url: 'ws://127.0.0.1:9000/', realm: 'realm1'}); |
-| Opening a connection | connection opens on creating an instance, or can be opened by: connection.connect() | connection.open(); |
-| Connection Callbacks | Wampy supports next callbacks: onConnect, onClose, onError, onReconnect. Callbacks can be specified via options object passed to constructor, or via .options() method. | AutobahnJS provides two callbacks: connection.onopen = function (session) { } and connection.onclose = function (reason/string, details/dict) { } |
-| WAMP API methods with parameters | While using Wampy you don't have to explicitly specify the payload type (single value, array, object), just pass it to api method. <br/>For example:<br/>ws.publish('chat.message.received', 'user message');<br/>ws.publish('chat.message.received', ['user message1', 'user message2']);<br/>ws.publish('chat.message.received', { message: 'user message'});<br/>Also Wampy is clever enough to understand some specific options, for example, if you specify a success or error callback to publish method, Wampy will automatically set acknowledge flag to true.  | In AutobahnJS you need to use only arrays and objects, as it's specified in WAMP, and also choose right argument position.<br/>For example:<br/>session.publish('com.myapp.hello', ['Hello, world!']);<br/>session.publish('com.myapp.hello', [], {message: 'Hello, world!'});<br/>Also you need to explicitly provide additional options, like {acknowledge: true} |
-| Method callbacks | Most of the API methods take a **callbacks** parameter, which is hash-table of posible callbacks | AutobahnJS make use of **Deffered** object, and most of API methods return a deferred object, so you can specify callbacks using .then() method |
-| Chaining support | Wampy supports methods chaining.<br/>connection.subscribe(...).publish(...).call(...) |  |
-| Transport encoders | json, msgpack (optional) | json |
-
-Which one library to use - choice is yours!
 
 [Back to TOC](#table-of-contents)
 
@@ -341,7 +322,7 @@ that also supports it.
 Is fired when wamp server requests authentication during session establishment.
 This function receives two arguments: auth method ('wampcra' for now only) and challenge details.
 Function should return computed signature, based on challenge details.
-See [WAMP Spec CRA][] for more info.
+See [Challenge Response Authentication](#challenge-response-authentication) section and [WAMP Spec CRA][] for more info.
 * **authid**. Default value: null. Authentication (user) id to use in challenge.
 * **onConnect**. Default value: null. Callback function. Fired when connection to wamp server is established.
 * **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
@@ -708,6 +689,25 @@ ws.unregister('sqrt.value', {
     }
 });
 ```
+
+[Back to TOC](#table-of-contents)
+
+Quick comparison to other libs
+==============================
+
+| Topic         | Wampy.js | AutobahnJS  |
+|-------------- | -------- | ----------- |
+| Runs on | browser | browser and NodeJS |
+| Dependencies | msgpack5.js (optional) | when.js, CryptoJS (optional) |
+| Creating connection | var connection = new Wampy('ws://127.0.0.1:9000/', { realm: 'realm1' }); | var connection = new autobahn.Connection({url: 'ws://127.0.0.1:9000/', realm: 'realm1'}); |
+| Opening a connection | connection opens on creating an instance, or can be opened by: connection.connect() | connection.open(); |
+| Connection Callbacks | Wampy supports next callbacks: onConnect, onClose, onError, onReconnect. Callbacks can be specified via options object passed to constructor, or via .options() method. | AutobahnJS provides two callbacks: connection.onopen = function (session) { } and connection.onclose = function (reason/string, details/dict) { } |
+| WAMP API methods with parameters | While using Wampy you don't have to explicitly specify the payload type (single value, array, object), just pass it to api method. <br/>For example:<br/>ws.publish('chat.message.received', 'user message');<br/>ws.publish('chat.message.received', ['user message1', 'user message2']);<br/>ws.publish('chat.message.received', { message: 'user message'});<br/>Also Wampy is clever enough to understand some specific options, for example, if you specify a success or error callback to publish method, Wampy will automatically set acknowledge flag to true.  | In AutobahnJS you need to use only arrays and objects, as it's specified in WAMP, and also choose right argument position.<br/>For example:<br/>session.publish('com.myapp.hello', ['Hello, world!']);<br/>session.publish('com.myapp.hello', [], {message: 'Hello, world!'});<br/>Also you need to explicitly provide additional options, like {acknowledge: true} |
+| Method callbacks | Most of the API methods take a **callbacks** parameter, which is hash-table of posible callbacks | AutobahnJS make use of **Deffered** object, and most of API methods return a deferred object, so you can specify callbacks using .then() method |
+| Chaining support | Wampy supports methods chaining.<br/>connection.subscribe(...).publish(...).call(...) |  |
+| Transport encoders | json, msgpack (optional) | json |
+
+Which one library to use - choice is yours!
 
 [Back to TOC](#table-of-contents)
 
