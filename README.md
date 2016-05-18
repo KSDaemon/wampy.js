@@ -20,21 +20,22 @@ Table of Contents
 * [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Installation](#installation)
 * [Updating versions](#updating-versions)
+* [Challenge Response Authentication](#challenge-response-authentication)
 * [API](#api)
-	* [Constructor](#constructorurl-options)
-	* [options](#optionsopts)
-	* [getOpStatus](#getopstatus)
-	* [getSessionId](#getsessionid)
-	* [connect](#connecturl)
-	* [disconnect](#disconnect)
-	* [abort](#abort)
-	* [subscribe](#subscribetopicuri-callbacks)
-	* [unsubscribe](#unsubscribetopicuri-callbacks)
-	* [publish](#publishtopicuri-payload-callbacks-advancedoptions)
-	* [call](#calltopicuri-payload-callbacks-advancedoptions)
-	* [cancel](#cancelreqId-callbacks-advancedOptions)
-	* [register](#registertopicuri-callbacks)
-	* [unregister](#unregistertopicuri-callbacks)
+    * [Constructor](#constructorurl-options)
+    * [options](#optionsopts)
+    * [getOpStatus](#getopstatus)
+    * [getSessionId](#getsessionid)
+    * [connect](#connecturl)
+    * [disconnect](#disconnect)
+    * [abort](#abort)
+    * [subscribe](#subscribetopicuri-callbacks)
+    * [unsubscribe](#unsubscribetopicuri-callbacks)
+    * [publish](#publishtopicuri-payload-callbacks-advancedoptions)
+    * [call](#calltopicuri-payload-callbacks-advancedoptions)
+    * [cancel](#cancelreqId-callbacks-advancedOptions)
+    * [register](#registertopicuri-callbacks)
+    * [unregister](#unregistertopicuri-callbacks)
 * [Tests and code coverage](#tests-and-code-coverage)
 * [Copyright and License](#copyright-and-license)
 * [See Also](#see-also)
@@ -48,17 +49,19 @@ It has no external dependencies (by default) and is easy to use. Also it's compa
 
 Wampy.js supports next WAMP roles and features:
 
+* Challenge Response Authentication (wampcra)
 * publisher: advanced profile with features:
     * subscriber blackwhite listing
-	* publisher exclusion
-	* publisher identification
-* subscriber: basic profile.
+    * publisher exclusion
+    * publisher identification
+* subscriber: basic profile
 * caller: advanced profile with features:
-	* callee blackwhite listing.
-	* caller exclusion.
-	* caller identification.
-	* progressive call results.
-* callee: basic profile.
+    * caller identification
+    * progressive call results
+    * call canceling
+    * call timeout
+* callee:
+    * caller identification
 
 Wampy default serializer is JSON, but it also supports msgpack as serializer.
 In that case you need to include msgpack5.js as dependency. See [msgpack5][] for more info.
@@ -76,13 +79,13 @@ ws.subscribe('system.monitor.update', function (data) { console.log('Received sy
   .subscribe('client.message', function (data) { console.log('Received client.message event!'); })
 
 ws.call('get.server.time', null, {
-	onSuccess: function (stime) {
-		console.log('RPC successfully called');
-		console.log('Server time is ' + stime);
-	},
-	onError: function (err) {
-		console.log('RPC call failed with error ' + err);
-	}
+    onSuccess: function (stime) {
+        console.log('RPC successfully called');
+        console.log('Server time is ' + stime);
+    },
+    onError: function (err) {
+        console.log('RPC call failed with error ' + err);
+    }
 });
 
 // Somewhere else for example
@@ -142,6 +145,111 @@ Updating versions
 
 Please refer to [Migrating.md](Migrating.md) for instructions on upgrading major versions.
 
+Challenge Response Authentication
+=================================
+
+Wampy.js supports challenge response authentication. To use it you need to provide authid and onChallenge callback
+as wampy instance options. Also Wampy.js supports "wampcra" authentication method with a little helper
+plugin "[wamp-cra][]". Just add "wamp-cra" package and use provided methods as shown below.
+
+```javascript
+'use strict';
+
+const Wampy = require('wampy');
+const wampyCra = require('wampy-cra');
+const w3cws = require('websocket').w3cwebsocket;
+let ws;
+
+/**
+ * Manual authentication using signed message
+ */
+ws = new Wampy('ws://wamp.router.url', {
+    ws: w3cws,
+    realm: 'realm1',
+    authid: 'joe',
+    onChallenge: (method, info) => {
+        console.log('Requested challenge with ', method, info);
+        return wampyCra.sign('joe secret key or password', info.challenge);
+    },
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+
+/**
+ * Promise-based manual authentication using signed message
+ */
+ws = new Wampy('ws://wamp.router.url', {
+    ws: w3cws,
+    realm: 'realm1',
+    authid: 'micky',
+    onChallenge: (method, info) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                console.log('Requested challenge with ', method, info);
+                resolve(wampyCra.sign('micky secret key or password', info.challenge));
+            }, 2000);
+        });
+    },
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+
+/**
+ * Manual authentication using salted key and pbkdf2 scheme
+ */
+ws = new Wampy('ws://wamp.router.url', {
+    ws: w3cws,
+    realm: 'realm1',
+    authid: 'peter',
+    onChallenge: (method, info) => {
+        const iterations = 100;
+        const keylen = 16;
+        const salt = 'password salt for user peter';
+
+        console.log('Requested challenge with ', method, info);
+        return wampyCra.sign(wampyCra.derive_key('peter secret key or password', salt, iterations, keylen), info.challenge);
+    },
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+
+/**
+ * Automatic method detection authentication
+ */
+ws = new Wampy('ws://wamp.router.url', {
+    ws: w3cws,
+    realm: 'realm1',
+    authid: 'patrik',
+    onChallenge: wampyCra.auto('patrik secret key or password'),
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+
+/**
+ * Promise-based automatic method detection authentication
+ */
+ws = new Wampy('ws://wamp.router.url', {
+    ws: w3cws,
+    realm: 'realm1',
+    authid: 'vanya',
+    onChallenge: (method, info) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                console.log('Requested challenge with ', method, info);
+                resolve(wampyCra.auto('vanya secret key or password')(method, info));
+            }, 2000);
+        });
+    },
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+```
+
 API
 ===
 
@@ -154,9 +262,9 @@ Wampy constructor can take 2 parameters:
 
 * **url** to wamp server - optional. If its undefined, page-schema://page-server:page-port/ws will be used.
 Can be in forms of:
-	* fully qualified url: schema://server:port/path
-	* server:port/path. In this case page schema will be used.
-	* /path. In this case page schema, server, port will be used.
+    * fully qualified url: schema://server:port/path
+    * server:port/path. In this case page schema will be used.
+    * /path. In this case page schema, server, port will be used.
 * **options** hash-table. The only required field is `realm`. For node.js enviroment also necessary to
 specify `ws` - websocket module. See description below.
 
@@ -250,13 +358,13 @@ doesn't work as expected. Feel free to research other variants.
 ws.options();
 
 ws.options({
-	reconnectInterval: 1000,
-	maxRetries: 999,
-	onConnect: function () { console.log('Yahoo! We are online!'); },
-	onClose: function () { console.log('See you next time!'); },
-	onError: function () { console.log('Breakdown happened'); },
-	onReconnect: function () { console.log('Reconnecting...'); },
-	onReconnectSuccess: function () { console.log('Reconnection succeeded...'); }
+    reconnectInterval: 1000,
+    maxRetries: 999,
+    onConnect: function () { console.log('Yahoo! We are online!'); },
+    onClose: function () { console.log('See you next time!'); },
+    onError: function () { console.log('Breakdown happened'); },
+    onReconnect: function () { console.log('Reconnecting...'); },
+    onReconnectSuccess: function () { console.log('Reconnection succeeded...'); }
 });
 ```
 
@@ -460,21 +568,21 @@ Must meet a WAMP Spec URI requirements.
 ws.call('server.time', null, function (data) { console.log('Server time is ' + d[0]); });
 
 ws.call('start.migration', null, {
-	onSuccess: function (data) {
-		console.log('RPC successfully called');
-	},
-	onError: function (err) {
-		console.log('RPC call failed!',err);
-	}
+    onSuccess: function (data) {
+        console.log('RPC successfully called');
+    },
+    onError: function (err) {
+        console.log('RPC call failed!',err);
+    }
 });
 
 ws.call('restore.backup', { backupFile: 'backup.zip' }, {
-	onSuccess: function (data) {
-		console.log('Backup successfully restored');
-	},
-	onError: function (err) {
-		console.log('Restore failed!',err);
-	}
+    onSuccess: function (data) {
+        console.log('Backup successfully restored');
+    },
+    onError: function (err) {
+        console.log('Restore failed!',err);
+    }
 });
 ```
 
@@ -500,12 +608,12 @@ Parameters:
 
 ```javascript
 ws.call('start.migration', null, {
-	onSuccess: function (data) {
-		console.log('RPC successfully called');
-	},
-	onError: function (err) {
-		console.log('RPC call failed!',err);
-	}
+    onSuccess: function (data) {
+        console.log('RPC successfully called');
+    },
+    onError: function (err) {
+        console.log('RPC call failed!',err);
+    }
 });
 status = ws.getOpStatus();
 
@@ -544,13 +652,13 @@ var sqrt_f = function (x) { return [{}, x*x]; };
 ws.register('sqrt.value', sqrt_f);
 
 ws.register('sqrt.value', {
-	rpc: sqrt_f,
-	onSuccess: function (data) {
-		console.log('RPC successfully registered');
-	},
-	onError: function (err) {
-		console.log('RPC registration failed!',err);
-	}
+    rpc: sqrt_f,
+    onSuccess: function (data) {
+        console.log('RPC successfully registered');
+    },
+    onError: function (err) {
+        console.log('RPC registration failed!',err);
+    }
 });
 ```
 
@@ -592,12 +700,12 @@ Must meet a WAMP Spec URI requirements.
 ws.unregister('sqrt.value');
 
 ws.unregister('sqrt.value', {
-	onSuccess: function (data) {
-		console.log('RPC successfully unregistered');
-	},
-	onError: function (err) {
-		console.log('RPC unregistration failed!',err);
-	}
+    onSuccess: function (data) {
+        console.log('RPC successfully unregistered');
+    },
+    onError: function (err) {
+        console.log('RPC unregistration failed!',err);
+    }
 });
 ```
 
@@ -664,6 +772,7 @@ with extension point support.
 [Wiola]: http://ksdaemon.github.io/wiola/
 [msgpack5]: https://github.com/mcollina/msgpack5
 [WAMP Spec CRA]: https://tools.ietf.org/html/draft-oberstet-hybi-tavendo-wamp-02#section-13.7.2.3
+[wamp-cra]: https://github.com/KSDaemon/wampy-cra
 
 [npm-url]: https://www.npmjs.com/package/wampy
 [npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
