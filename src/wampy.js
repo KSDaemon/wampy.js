@@ -20,7 +20,7 @@
     function (m) { this.Wampy = m(); }
 )(function () {
 
-    var WAMP_MSG_SPEC = {
+    const WAMP_MSG_SPEC = {
             HELLO: 1,
             WELCOME: 2,
             ABORT: 3,
@@ -172,7 +172,7 @@
      * @param {string} url
      * @param {Object} options
      */
-    var Wampy = function (url, options) {
+    const Wampy = function (url, options) {
 
         /**
          * Wampy version
@@ -450,7 +450,6 @@
     /* Internal utils methods */
     /**
      * Internal logger
-     * @param obj
      * @private
      */
     Wampy.prototype._log = function () {
@@ -623,13 +622,11 @@
      * @private
      */
     Wampy.prototype._initWsCallbacks = function () {
-        var self = this;
-
         if (this._ws) {
-            this._ws.onopen = function () { self._wsOnOpen.call(self); };
-            this._ws.onclose = function (event) { self._wsOnClose.call(self, event); };
-            this._ws.onmessage = function (event) { self._wsOnMessage.call(self, event); };
-            this._ws.onerror = function (error) { self._wsOnError.call(self, error); };
+            this._ws.onopen = () => { this._wsOnOpen(); };
+            this._ws.onclose = event => { this._wsOnClose(event); };
+            this._ws.onmessage = event => { this._wsOnMessage(event); };
+            this._ws.onerror = error => { this._wsOnError(error); };
         }
     };
 
@@ -657,8 +654,7 @@
     };
 
     Wampy.prototype._wsOnClose = function () {
-        var self = this,
-            root = isNode ? global : window;
+        var root = isNode ? global : window;
         this._log('[wampy] websocket disconnected');
 
         // Automatic reconnection
@@ -666,9 +662,7 @@
             this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries &&
             !this._cache.isSayingGoodbye) {
             this._cache.sessionId = null;
-            this._cache.timer = root.setTimeout(function () {
-                self._wsReconnect.call(self);
-            }, this._options.reconnectInterval);
+            this._cache.timer = root.setTimeout(() => { this._wsReconnect(); }, this._options.reconnectInterval);
         } else {
             // No reconnection needed or reached max retries count
             if (this._options.onClose) {
@@ -681,7 +675,7 @@
     };
 
     Wampy.prototype._wsOnMessage = function (event) {
-        var self = this, data, id, i, d, msg, p;
+        var data, id, i, d, msg, p;
 
         this._log('[wampy] websocket message received', event.data);
 
@@ -730,26 +724,26 @@
 
                 if (this._options.authid && typeof this._options.onChallenge === 'function') {
 
-                    p = new Promise(function (resolve, reject) {
-                        resolve(self._options.onChallenge(data[1], data[2]));
+                    p = new Promise((resolve, reject) => {
+                        resolve(this._options.onChallenge(data[1], data[2]));
                     });
 
-                    p.then(function (key) {
+                    p.then((key) => {
 
                         // Sending directly 'cause it's a challenge msg and no sessionId check is needed
-                        self._ws.send(self._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
+                        this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
 
-                    }).catch(function (e) {
-                        self._ws.send(self._encode([
+                    }).catch(e => {
+                        this._ws.send(this._encode([
                             WAMP_MSG_SPEC.ABORT,
                             { message: 'Exception in onChallenge handler raised!' },
                             'wamp.error.cannot_authenticate'
                         ]));
-                        if (self._options.onError) {
-                            self._options.onError(WAMP_ERROR_MSG.CRA_EXCEPTION.description);
+                        if (this._options.onError) {
+                            this._options.onError(WAMP_ERROR_MSG.CRA_EXCEPTION.description);
                         }
-                        self._ws.close();
-                        self._cache.opStatus = WAMP_ERROR_MSG.CRA_EXCEPTION;
+                        this._ws.close();
+                        this._cache.opStatus = WAMP_ERROR_MSG.CRA_EXCEPTION;
                     });
 
                 } else {
@@ -1017,16 +1011,16 @@
                             break;
                     }
 
-                    p = new Promise(function (resolve, reject) {
-                        resolve(self._rpcRegs[data[2]].callbacks[0](d, data[3]));
+                    p = new Promise((resolve, reject) => {
+                        resolve(this._rpcRegs[data[2]].callbacks[0](d, data[3]));
                     });
 
-                    p.then(function (results) {
+                    p.then((results) => {
                         // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
                         if (results) {
-                            if (self._isArray(results[1])) {
+                            if (this._isArray(results[1])) {
                                 msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], results[1]];
-                            } else if (self._isPlainObject(results[1])) {
+                            } else if (this._isPlainObject(results[1])) {
                                 msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], [], results[1]];
                             } else if (typeof (results[1]) === 'undefined') {
                                 msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0]];
@@ -1036,10 +1030,10 @@
                         } else {
                             msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
                         }
-                        self._send(msg);
+                        this._send(msg);
 
-                    }).catch(function (e) {
-                        self._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
+                    }).catch(e => {
+                        this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
                                     data[1], {}, 'wamp.error.invocation_exception']);
                     });
 
@@ -1147,7 +1141,7 @@
     /**
      * Get the WAMP Session ID
      *
-     * @returns Session ID
+     * @returns {string} Session ID
      */
     Wampy.prototype.getSessionId = function () {
         return this._cache.sessionId;
