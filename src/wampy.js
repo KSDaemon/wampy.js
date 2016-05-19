@@ -471,7 +471,7 @@
          * @private
          */
         _getReqId () {
-            var reqId;
+            let reqId;
 
             do {
                 /* Lua (and cjson) outputs big numbers in scientific notation :(
@@ -491,7 +491,7 @@
          * @private
          */
         _merge () {
-            var obj = {}, i, l = arguments.length, attr;
+            let obj = {}, i, l = arguments.length, attr;
 
             for (i = 0; i < l; i++) {
                 for (attr in arguments[i]) {
@@ -543,7 +543,7 @@
          * @private
          */
         _validateURI (uri) {
-            var re = /^([0-9a-zA-Z_]{2,}\.)*([0-9a-zA-Z_]{2,})$/;
+            const re = /^([0-9a-zA-Z_]{2,}\.)*([0-9a-zA-Z_]{2,})$/;
             if (!re.test(uri) || uri.indexOf('wamp') === 0) {
                 return false;
             } else {
@@ -638,7 +638,7 @@
         }
 
         _wsOnOpen () {
-            var options = this._merge(this._options.helloCustomDetails, this._wamp_features);
+            const options = this._merge(this._options.helloCustomDetails, this._wamp_features);
 
             if (this._options.authid) {
                 options.authmethods = this._authmethods;
@@ -661,7 +661,7 @@
         }
 
         _wsOnClose () {
-            var root = isNode ? global : window;
+            const root = isNode ? global : window;
             this._log('[wampy] websocket disconnected');
 
             // Automatic reconnection
@@ -682,7 +682,7 @@
         }
 
         _wsOnMessage (event) {
-            var data, id, i, d, msg, p;
+            let data, id, i, d, msg, p;
 
             this._log('[wampy] websocket message received', event.data);
 
@@ -1082,7 +1082,7 @@
         }
 
         _renewSubscriptions () {
-            var subs = this._subscriptions,
+            let subs = this._subscriptions,
                 st = this._subsTopics,
                 s, i;
 
@@ -1099,7 +1099,7 @@
         }
 
         _renewRegistrations () {
-            var rpcs = this._rpcRegs,
+            let rpcs = this._rpcRegs,
                 rn = this._rpcNames,
                 r;
 
@@ -1236,7 +1236,7 @@
          * @returns {Wampy}
          */
         subscribe (topicURI, callbacks) {
-            var reqId;
+            let reqId;
 
             if (this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
@@ -1310,7 +1310,7 @@
          * @returns {Wampy}
          */
         unsubscribe (topicURI, callbacks) {
-            var reqId, i = -1;
+            let reqId, i = -1;
 
             if (this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
@@ -1397,7 +1397,7 @@
          * @returns {Wampy}
          */
         publish (topicURI, payload, callbacks, advancedOptions) {
-            var reqId, msg, options = {}, err = false;
+            let reqId, msg, options = {}, err = false;
 
             if (this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
@@ -1566,7 +1566,7 @@
          * @returns {Wampy}
          */
         call (topicURI, payload, callbacks, advancedOptions) {
-            var reqId, msg, options = {}, err = false;
+            let reqId, msg, options = {}, err = false;
 
             if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
@@ -1675,7 +1675,7 @@
          * @returns {Wampy}
          */
         cancel (reqId, callbacks, advancedOptions) {
-            var options = { mode: 'skip' };
+            let options = { mode: 'skip' };
 
             if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
@@ -1729,7 +1729,7 @@
          * @returns {Wampy}
          */
         register (topicURI, callbacks) {
-            var reqId;
+            let reqId;
 
             if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
@@ -1800,7 +1800,7 @@
          * @returns {Wampy}
          */
         unregister (topicURI, callbacks) {
-            var reqId;
+            let reqId;
 
             if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
