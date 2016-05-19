@@ -29,7 +29,6 @@
             CHALLENGE: 4,
             AUTHENTICATE: 5,
             GOODBYE: 6,
-            HEARTBEAT: 7,
             ERROR: 8,
             PUBLISH: 16,
             PUBLISHED: 17,
@@ -776,9 +775,6 @@
                     }
                     this._cache.sessionId = null;
                     this._ws.close();
-                    break;
-                case WAMP_MSG_SPEC.HEARTBEAT:
-
                     break;
                 case WAMP_MSG_SPEC.ERROR:
                     // WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict,
