@@ -1,6 +1,6 @@
 {
   "name": "wampy",
-  "version": "2.0.2",
+  "version": "3.0.0",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation",
   "author": "Konstantin Burkalev <KSDaemon@ya.ru> (http://ksdaemon.ru)",
   "devDependencies": {
@@ -20,7 +20,7 @@
   "main": "src/wampy.js",
   "dependencies": {
     "msgpack5": "^3.3.0",
-    "websocket": "^1.0.22"
+    "websocket": "^1.0.23"
   },
   "repository": {
     "type": "git",
@@ -28,7 +28,9 @@
   },
   "keywords": [
     "websocket",
-    "wamp"
+    "wamp",
+    "pubsub",
+    "rpc"
   ],
   "license": "MIT",
   "bugs": {
