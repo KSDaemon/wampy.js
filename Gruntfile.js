@@ -1,7 +1,20 @@
 module.exports = function (grunt) {
-    // Project configuration.
+
+    require('load-grunt-tasks')(grunt);
+
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
+        babel: {
+            options: {
+                sourceMap: true,
+                presets: ['es2015']
+            },
+            dist: {
+                files: {
+                    'build/wampy.js': 'src/wampy.js'
+                }
+            }
+        },
         uglify: {
             options: {
                 compress: {
@@ -12,7 +25,7 @@ module.exports = function (grunt) {
             },
             default: {
                 files: {
-                    'build/wampy.min.js': ['src/wampy.js']
+                    'build/wampy.min.js': ['build/wampy.js']
                 }
             }
         },
@@ -34,9 +47,5 @@ module.exports = function (grunt) {
         }
     });
 
-    grunt.loadNpmTasks('grunt-contrib-uglify');
-    grunt.loadNpmTasks('grunt-contrib-concat');
-    grunt.loadNpmTasks('grunt-contrib-copy');
-
-    grunt.registerTask('default', ['uglify', 'copy', 'concat']);
+    grunt.registerTask('default', ['babel', 'uglify', 'copy', 'concat']);
 };
