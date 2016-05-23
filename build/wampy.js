@@ -24,13 +24,18 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-(typeof define === 'function' ? function (m) {
-    define('Wampy', m);
-} : (typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object' ? function (m) {
-    module.exports = m();
-} : function (m) {
-    this.Wampy = m();
-})(function () {
+(function (root, m) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['exports'], m());
+    } else if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object' && typeof exports.nodeName !== 'string') {
+        // CommonJS
+        module.exports = m();
+    } else {
+        // Browser globals
+        root.Wampy = m();
+    }
+})(this, function () {
 
     var WAMP_MSG_SPEC = {
         HELLO: 1,
