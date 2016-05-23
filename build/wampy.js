@@ -345,7 +345,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
              * @type {Array}
              * @private
              */
-            this._subsTopics = [];
+            this._subsTopics = new Set();
 
             /**
              * Stored RPC Registrations
@@ -359,7 +359,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
              * @type {Array}
              * @private
              */
-            this._rpcNames = [];
+            this._rpcNames = new Set();
 
             /**
              * Options hash-table
@@ -673,11 +673,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             value: function _resetState() {
                 this._wsQueue = [];
                 this._subscriptions = {};
-                this._subsTopics = [];
+                this._subsTopics = new Set();
                 this._requests = {};
                 this._calls = {};
                 this._rpcRegs = {};
-                this._rpcNames = [];
+                this._rpcNames = new Set();
 
                 // Just keep attrs that are have to be present
                 this._cache = {
@@ -929,7 +929,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                                 callbacks: [this._requests[data[1]].callbacks.onEvent]
                             };
 
-                            this._subsTopics.push(this._requests[data[1]].topic);
+                            this._subsTopics.add(this._requests[data[1]].topic);
 
                             if (this._requests[data[1]].callbacks.onSuccess) {
                                 this._requests[data[1]].callbacks.onSuccess();
@@ -945,9 +945,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                             delete this._subscriptions[this._requests[data[1]].topic];
                             delete this._subscriptions[id];
 
-                            i = this._subsTopics.indexOf(this._requests[data[1]].topic);
-                            if (i >= 0) {
-                                this._subsTopics.splice(i, 1);
+                            if (this._subsTopics.has(this._requests[data[1]].topic)) {
+                                this._subsTopics.delete(this._requests[data[1]].topic);
                             }
 
                             if (this._requests[data[1]].callbacks.onSuccess) {
@@ -1030,7 +1029,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                                 callbacks: [this._requests[data[1]].callbacks.rpc]
                             };
 
-                            this._rpcNames.push(this._requests[data[1]].topic);
+                            this._rpcNames.add(this._requests[data[1]].topic);
 
                             if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
                                 this._requests[data[1]].callbacks.onSuccess();
@@ -1049,9 +1048,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                             delete this._rpcRegs[this._requests[data[1]].topic];
                             delete this._rpcRegs[id];
 
-                            i = this._rpcNames.indexOf(this._requests[data[1]].topic);
-                            if (i >= 0) {
-                                this._rpcNames.splice(i, 1);
+                            if (this._rpcNames.has(this._requests[data[1]].topic)) {
+                                this._rpcNames.delete(this._requests[data[1]].topic);
                             }
 
                             if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
@@ -1147,17 +1145,36 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             value: function _renewSubscriptions() {
                 var subs = this._subscriptions,
                     st = this._subsTopics,
-                    s = void 0,
                     i = void 0;
 
                 this._subscriptions = {};
-                this._subsTopics = [];
+                this._subsTopics = new Set();
 
-                s = st.length;
-                while (s--) {
-                    i = subs[st[s]].callbacks.length;
-                    while (i--) {
-                        this.subscribe(st[s], subs[st[s]].callbacks[i]);
+                var _iteratorNormalCompletion = true;
+                var _didIteratorError = false;
+                var _iteratorError = undefined;
+
+                try {
+                    for (var _iterator = st[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+                        var topic = _step.value;
+
+                        i = subs[topic].callbacks.length;
+                        while (i--) {
+                            this.subscribe(topic, subs[topic].callbacks[i]);
+                        }
+                    }
+                } catch (err) {
+                    _didIteratorError = true;
+                    _iteratorError = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion && _iterator.return) {
+                            _iterator.return();
+                        }
+                    } finally {
+                        if (_didIteratorError) {
+                            throw _iteratorError;
+                        }
                     }
                 }
             }
@@ -1165,15 +1182,34 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             key: '_renewRegistrations',
             value: function _renewRegistrations() {
                 var rpcs = this._rpcRegs,
-                    rn = this._rpcNames,
-                    r = void 0;
+                    rn = this._rpcNames;
 
                 this._rpcRegs = {};
-                this._rpcNames = [];
+                this._rpcNames = new Set();
 
-                r = rn.length;
-                while (r--) {
-                    this.register(rn[r], { rpc: rpcs[rn[r]].callbacks[0] });
+                var _iteratorNormalCompletion2 = true;
+                var _didIteratorError2 = false;
+                var _iteratorError2 = undefined;
+
+                try {
+                    for (var _iterator2 = rn[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+                        var rpcName = _step2.value;
+
+                        this.register(rpcName, { rpc: rpcs[rpcName].callbacks[0] });
+                    }
+                } catch (err) {
+                    _didIteratorError2 = true;
+                    _iteratorError2 = err;
+                } finally {
+                    try {
+                        if (!_iteratorNormalCompletion2 && _iterator2.return) {
+                            _iterator2.return();
+                        }
+                    } finally {
+                        if (_didIteratorError2) {
+                            throw _iteratorError2;
+                        }
+                    }
                 }
             }
 

@@ -313,7 +313,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 onError: function () { },
                 onReconnect: function () {
                     var t = root.setInterval(function () {
-                        if (wampy._subsTopics.length === 2 && wampy._rpcNames.length === 3) {
+                        if (wampy._subsTopics.size === 2 && wampy._rpcNames.size === 3) {
                             root.clearInterval(t);
                             t = null;
                             wampy.options({ onReconnect: null })
