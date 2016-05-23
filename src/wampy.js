@@ -17,10 +17,18 @@
 'use strict';
 
 // Module boilerplate to support browser globals and browserify and AMD.
-(typeof define === 'function' ? function (m) { define('Wampy', m); } :
-    typeof exports === 'object' ? function (m) { module.exports = m(); } :
-    function (m) { this.Wampy = m(); }
-)(function () {
+(function (root, m) {
+    if (typeof define === 'function' && define.amd) {
+        // AMD. Register as an anonymous module.
+        define(['exports'], m());
+    } else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
+        // CommonJS
+        module.exports = m();
+    } else {
+        // Browser globals
+        root.Wampy = m();
+    }
+}(this, function () {
 
     const WAMP_MSG_SPEC = {
             HELLO: 1,
@@ -1850,4 +1858,4 @@
 
     return Wampy;
 
-});
+}));

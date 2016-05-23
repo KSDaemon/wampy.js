@@ -1426,7 +1426,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                     }
                 );
             });
-            
+
             it('calls error handler on trying to unregister non existent RPC', function () {
                 wampy.unregister(
                     'register.nonexistent',
