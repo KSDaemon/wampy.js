@@ -210,7 +210,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
              * @type {string}
              * @private
              */
-            this.version = 'v3.0.0';
+            this.version = 'v3.0.1';
 
             /**
              * WS Url
