@@ -1,6 +1,0 @@
-[submodule "src/jdataview"]
-    path = src/jdataview
-    url = git://github.com/jDataView/jDataView.git
-[submodule "src/msgpack"]
-    path = src/msgpack
-    url = git://github.com/KSDaemon/msgpack-js-browser.git
