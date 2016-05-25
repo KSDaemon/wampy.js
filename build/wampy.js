@@ -27,7 +27,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 (function (root, m) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(['exports'], m());
+        define(['exports'], m);
     } else if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object' && typeof exports.nodeName !== 'string') {
         // CommonJS
         module.exports = m();
@@ -210,7 +210,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
              * @type {string}
              * @private
              */
-            this.version = 'v3.0.1';
+            this.version = 'v3.0.2';
 
             /**
              * WS Url

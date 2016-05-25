@@ -20,7 +20,7 @@
 (function (root, m) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(['exports'], m());
+        define(['exports'], m);
     } else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
         // CommonJS
         module.exports = m();
@@ -193,7 +193,7 @@
              * @type {string}
              * @private
              */
-            this.version = 'v3.0.1';
+            this.version = 'v3.0.2';
 
             /**
              * WS Url
