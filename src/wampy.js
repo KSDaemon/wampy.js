@@ -193,7 +193,7 @@
              * @type {string}
              * @private
              */
-            this.version = 'v3.0.2';
+            this.version = 'v4.0.0';
 
             /**
              * WS Url
