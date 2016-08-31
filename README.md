@@ -445,8 +445,8 @@ ws.subscribe('chat.message.received', function (msg) { console.log('Received new
 
 ws.subscribe('some.another.topic', {
    onSuccess: function () { console.log('Successfully subscribed to topic'); },
-   onError: function (err) { console.log('Subscription error:' + err); },
-   onEvent: function (data) { console.log('Received topic event'); }
+   onError: function (err, details) { console.log('Subscription error:' + err); },
+   onEvent: function (arrayPayload, objectPayload) { console.log('Received topic event'); }
 });
 ```
 
@@ -519,7 +519,7 @@ ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
 });
 ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
   onSuccess: function () { console.log('User successfully modified'); },
-  onError: function (err) { console.log('User modification failed', err); }
+  onError: function (err, details) { console.log('User modification failed', err); }
 });
 ws.publish('chat.message.received', ['Private message'], null, { eligible: 123456789 });
 ```
@@ -550,13 +550,17 @@ Must meet a WAMP Spec URI requirements.
              timeout: integer timeout (in ms) for the call to finish }
 
 ```javascript
-ws.call('server.time', null, function (data) { console.log('Server time is ' + d[0]); });
+ws.call('server.time', null, 
+    function (arrayPayload, objectPayload) { 
+        console.log('Server time is ' + arrayPayload[0]); 
+    }
+);
 
 ws.call('start.migration', null, {
     onSuccess: function (data) {
         console.log('RPC successfully called');
     },
-    onError: function (err) {
+    onError: function (err, details, [arrayData, objectData]) {
         console.log('RPC call failed!',err);
     }
 });
@@ -565,7 +569,7 @@ ws.call('restore.backup', { backupFile: 'backup.zip' }, {
     onSuccess: function (data) {
         console.log('Backup successfully restored');
     },
-    onError: function (err) {
+    onError: function (err, details, [arrayData, objectData]) {
         console.log('Restore failed!',err);
     }
 });
@@ -643,7 +647,7 @@ ws.register('sqrt.value', {
     onSuccess: function (data) {
         console.log('RPC successfully registered');
     },
-    onError: function (err) {
+    onError: function (err, details) {
         console.log('RPC registration failed!',err);
     }
 });
@@ -690,7 +694,7 @@ ws.unregister('sqrt.value', {
     onSuccess: function (data) {
         console.log('RPC successfully unregistered');
     },
-    onError: function (err) {
+    onError: function (err, details) {
         console.log('RPC unregistration failed!',err);
     }
 });

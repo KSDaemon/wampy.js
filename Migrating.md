@@ -1,6 +1,18 @@
 Migrating from previous versions
 ================================
 
+Migrating from 3.x to 4.x versions
+==================================
+
+4.0.0 version was extended and updated, so there are some backward incompatible changes.
+
+* Error callbacks now receive more than 1 parameter. In most cases it now is called with (Error|uri|string, Details|object).
+In some cases, like CALL, callback is called with (Error|uri|string, Details|object, Arguments|array, ArgumentsKw|object).
+* Event callback for subscibed topic now receives 2 parameters: (Arguments|array, ArgumentsKw|object). It allows to receive 
+array-like and hash-table payload at the same time. So, if your app is expecting to receive object-like payload in first argument,
+now you should add second one, and use it.
+* Same rule as above applies to RPC result callback.
+
 Migrating from 2.x to 3.x versions
 ==================================
 
