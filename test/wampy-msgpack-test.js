@@ -613,6 +613,22 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
+            it('allows to receive events with array and hash-table payload at the same time', function (done) {
+                var payload = { key1: 100, key2: 'string-key' };
+
+                wampy.subscribe('subscribe.topic88', function (e1, e2) {
+                    expect(e1).to.be.an('array');
+                    expect(e1).to.have.length(5);
+                    expect(e1[0]).to.be.equal(1);
+                    expect(e1[4]).to.be.equal(5);
+                    expect(e2).to.be.an('object');
+                    expect(e2).to.be.deep.equal(payload);
+                    done();
+                })
+                .publish('subscribe.topic88', payload, null, { exclude_me: false, disclose_me: true });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
             it('disallows to publish event to topic with invalid URI', function () {
                 wampy.publish('q.w.e', 'payload');
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);

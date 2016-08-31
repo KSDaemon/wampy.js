@@ -870,6 +870,36 @@ var WAMP_MSG_SPEC = {
                 ['payload']
             ]
         },
+        // allows to receive events with array and hash-table payload at the same time
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                118   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                1225
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                118,
+                1225,
+                {},
+                [1, 2, 3, 4, 5],
+                { key1: 100, key2: 'string-key' }
+            ]
+        },
         // allows to unsubscribe from topic only specified handler
         {
             data: [
