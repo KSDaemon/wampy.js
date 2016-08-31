@@ -135,13 +135,13 @@ WebSocket.prototype.send = function (data) {
     rec_data = self.decode(data);
     send_data = sendData[sendDataCursor++];
 
-    //console.log('Data to send to server:', rec_data);
+    // console.log('Data to send to server:', rec_data);
     //console.log('Is silent:', send_data.silent ? 'yes' : 'no');
     if (send_data.silent) {
         return;
     }
 
-    //console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor);
+    // console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor);
 
     if (send_data.data) {
         // Prepare answer (copy request id from request to answer, etc)

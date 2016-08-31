@@ -826,7 +826,7 @@ var WAMP_MSG_SPEC = {
                 11,
                 121,
                 {},
-                [],
+                null,
                 { key1: 100, key2: 'string-key' }
             ],
             next: true
@@ -837,7 +837,7 @@ var WAMP_MSG_SPEC = {
                 11,
                 122,
                 {},
-                [],
+                null,
                 { key1: 100, key2: 'string-key' }
             ]
         },
@@ -1065,6 +1065,7 @@ var WAMP_MSG_SPEC = {
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
                 {},
+                null,
                 { key1: 100, key2: 'string-key' }
             ],
             from: [1],
@@ -1312,7 +1313,7 @@ var WAMP_MSG_SPEC = {
                 'RequestId',
                 25, // Registration ID
                 {},
-                [],
+                null,
                 { key1: 100, key2: 'string-key' }
             ],
             from: [1],
@@ -1323,7 +1324,7 @@ var WAMP_MSG_SPEC = {
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
                 {},
-                [],
+                null,
                 { key1: 100, key2: 'string-key' }
             ],
             from: [1],

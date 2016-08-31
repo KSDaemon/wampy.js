@@ -500,7 +500,7 @@ describe('Wampy.js [with JSON encoder]', function () {
             it('allows to publish/subscribe event without payload', function (done) {
                 var i = 1;
                 wampy.subscribe('subscribe.topic3', function (e) {
-                    expect(e).to.be.null;
+                    expect(e).to.be.undefined;
 
                     if (i === 2) {
                         done();
@@ -569,9 +569,10 @@ describe('Wampy.js [with JSON encoder]', function () {
             it('allows to publish/subscribe event with hash-table payload', function (done) {
                 var i = 1, payload = { key1: 100, key2: 'string-key' };
 
-                wampy.subscribe('subscribe.topic7', function (e) {
-                    expect(e).to.be.an('object');
-                    expect(e).to.be.deep.equal(payload);
+                wampy.subscribe('subscribe.topic7', function (e1, e2) {
+                    expect(e1).to.be.null;
+                    expect(e2).to.be.an('object');
+                    expect(e2).to.be.deep.equal(payload);
 
                     if (i === 2) {
                         done();
@@ -1090,7 +1091,7 @@ describe('Wampy.js [with JSON encoder]', function () {
 
             it('allows to call RPC without payload', function (done) {
                 wampy.call('call.rpc1', null, function (e) {
-                    expect(e).to.be.null;
+                    expect(e).to.be.undefined;
                     done();
                 });
             });
@@ -1124,9 +1125,10 @@ describe('Wampy.js [with JSON encoder]', function () {
             it('allows to call RPC with hash-table payload', function (done) {
                 var payload = { key1: 100, key2: 'string-key' };
 
-                wampy.call('call.rpc5', {}, function (e) {
-                    expect(e).to.be.an('object');
-                    expect(e).to.be.deep.equal(payload);
+                wampy.call('call.rpc5', {}, function (e1, e2) {
+                    expect(e1).to.be.null;
+                    expect(e2).to.be.an('object');
+                    expect(e2).to.be.deep.equal(payload);
                     done();
                 });
             });
@@ -1233,7 +1235,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                             'register.rpc3',
                             null,
                             function (e) {
-                                expect(e).to.be.null;
+                                expect(e).to.be.undefined;
                                 done();
                             },
                             { exclude_me: false }
@@ -1260,7 +1262,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                             'register.rpc33',
                             null,
                             function (e) {
-                                expect(e).to.be.null;
+                                expect(e).to.be.undefined;
                                 done();
                             },
                             { exclude_me: false }
@@ -1345,9 +1347,10 @@ describe('Wampy.js [with JSON encoder]', function () {
                         wampy.call(
                             'register.rpc6',
                             payload,
-                            function (e) {
-                                expect(e).to.be.an('object');
-                                expect(e).to.be.deep.equal(payload);
+                            function (e1, e2) {
+                                expect(e1).to.be.null;
+                                expect(e2).to.be.an('object');
+                                expect(e2).to.be.deep.equal(payload);
                                 done();
                             },
                             { exclude_me: false }
@@ -1520,7 +1523,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                         done('Reached success. Check Server side');
                     },
                     onError: function (e) {
-                        expect(e).to.be.null;
+                        expect(e).to.be.equal('call.error');
 
                         i++;
                         if (i === 3) {
@@ -1536,11 +1539,12 @@ describe('Wampy.js [with JSON encoder]', function () {
                         onSuccess: function (e) {
                             done('Reached success. Check Server side');
                         },
-                        onError: function (e) {
-                            expect(e).to.be.an('array');
-                            expect(e).to.have.length(5);
-                            expect(e[0]).to.be.equal(1);
-                            expect(e[4]).to.be.equal(5);
+                        onError: function (e1, e2, e3) {
+                            expect(e1).to.be.equal('call.error');
+                            expect(e3).to.be.an('array');
+                            expect(e3).to.have.length(5);
+                            expect(e3[0]).to.be.equal(1);
+                            expect(e3[4]).to.be.equal(5);
 
                             i++;
                             if (i === 3) {
@@ -1557,9 +1561,10 @@ describe('Wampy.js [with JSON encoder]', function () {
                         onSuccess: function (e) {
                             done('Reached success. Check Server side');
                         },
-                        onError: function (e) {
-                            expect(e).to.be.an('object');
-                            expect(e).to.be.deep.equal({ k1: 1, k2: 2 });
+                        onError: function (e1, e2, e3, e4) {
+                            expect(e1).to.be.equal('call.error');
+                            expect(e4).to.be.an('object');
+                            expect(e4).to.be.deep.equal({ k1: 1, k2: 2 });
 
                             i++;
                             if (i === 3) {
