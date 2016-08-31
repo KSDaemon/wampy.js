@@ -210,7 +210,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
              * @type {string}
              * @private
              */
-            this.version = 'v3.0.2';
+            this.version = 'v4.0.0';
 
             /**
              * WS Url
@@ -766,7 +766,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 var data = void 0,
                     id = void 0,
                     i = void 0,
-                    d = void 0,
                     msg = void 0,
                     p = void 0;
 
@@ -861,7 +860,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                                 if (this._requests[data[2]]) {
 
                                     if (this._requests[data[2]].callbacks.onError) {
-                                        this._requests[data[2]].callbacks.onError(data[4]);
+                                        this._requests[data[2]].callbacks.onError(data[4], data[3]);
                                     }
 
                                     delete this._requests[data[2]];
@@ -871,7 +870,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                                 if (this._requests[data[2]]) {
 
                                     if (this._requests[data[2]].callbacks.onError) {
-                                        this._requests[data[2]].callbacks.onError(data[4]);
+                                        this._requests[data[2]].callbacks.onError(data[4], data[3]);
                                     }
 
                                     delete this._requests[data[2]];
@@ -883,7 +882,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                                 if (this._requests[data[2]]) {
 
                                     if (this._requests[data[2]].callbacks.onError) {
-                                        this._requests[data[2]].callbacks.onError(data[4]);
+                                        this._requests[data[2]].callbacks.onError(data[4], data[3]);
                                     }
 
                                     delete this._requests[data[2]];
@@ -895,25 +894,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                                 if (this._calls[data[2]]) {
 
                                     if (this._calls[data[2]].onError) {
-
-                                        switch (data.length) {
-                                            case 5:
-                                                // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict, Error|uri]
-                                                d = null;
-                                                break;
-                                            case 6:
-                                                // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
-                                                //             Error|uri, Arguments|list]
-                                                d = data[5];
-                                                break;
-                                            case 7:
-                                                // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
-                                                //             Error|uri, Arguments|list, ArgumentsKw|dict]
-                                                d = data[6];
-                                                break;
-                                        }
-
-                                        this._calls[data[2]].onError(d);
+                                        // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
+                                        //             Error|uri, Arguments|list, ArgumentsKw|dict]
+                                        this._calls[data[2]].onError(data[4], data[3], data[5], data[6]);
                                     }
 
                                     delete this._calls[data[2]];
@@ -969,49 +952,22 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     case WAMP_MSG_SPEC.EVENT:
                         if (this._subscriptions[data[1]]) {
 
-                            switch (data.length) {
-                                case 4:
-                                    // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id, Details|dict]
-                                    d = null;
-                                    break;
-                                case 5:
-                                    // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
-                                    //             Details|dict, PUBLISH.Arguments|list]
-                                    d = data[4];
-                                    break;
-                                case 6:
-                                    // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
-                                    //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
-                                    d = data[5];
-                                    break;
-                            }
+                            // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
+                            //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
 
                             i = this._subscriptions[data[1]].callbacks.length;
                             while (i--) {
-                                this._subscriptions[data[1]].callbacks[i](d);
+                                this._subscriptions[data[1]].callbacks[i](data[4], data[5]);
                             }
                         }
                         break;
                     case WAMP_MSG_SPEC.RESULT:
                         if (this._calls[data[1]]) {
 
-                            switch (data.length) {
-                                case 3:
-                                    // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict]
-                                    d = null;
-                                    break;
-                                case 4:
-                                    // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict, YIELD.Arguments|list]
-                                    d = data[3];
-                                    break;
-                                case 5:
-                                    // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
-                                    //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
-                                    d = data[4];
-                                    break;
-                            }
+                            // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
+                            //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
 
-                            this._calls[data[1]].onSuccess(d);
+                            this._calls[data[1]].onSuccess(data[3], data[4]);
                             if (!(data[2].progress && data[2].progress === true)) {
                                 // We receive final result (progressive or not)
                                 delete this._calls[data[1]];
@@ -1062,25 +1018,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     case WAMP_MSG_SPEC.INVOCATION:
                         if (this._rpcRegs[data[2]]) {
 
-                            switch (data.length) {
-                                case 4:
-                                    // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict]
-                                    d = null;
-                                    break;
-                                case 5:
-                                    // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
-                                    //             Details|dict, CALL.Arguments|list]
-                                    d = data[4];
-                                    break;
-                                case 6:
-                                    // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
-                                    //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
-                                    d = data[5];
-                                    break;
-                            }
+                            // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
+                            //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 
                             p = new Promise(function (resolve, reject) {
-                                resolve(_this3._rpcRegs[data[2]].callbacks[0](d, data[3]));
+                                resolve(_this3._rpcRegs[data[2]].callbacks[0](data[4], data[5], data[3]));
                             });
 
                             p.then(function (results) {
