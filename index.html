@@ -452,7 +452,7 @@ Supports chaining.</p>
 
 <p>Disconnects from wamp server. Clears all queues, subscription, calls. Supports chaining.</p>
 
-<div class="highlight highlight-source-js"><pre><span class="pl-smi">ws</span>.<span class="pl-en">disconnect</span>();</pre></div>
+<div class="highlight highlight-source-js"><pre><span class="pl-smi">ws</span>.<span class="pl-c1">disconnect</span>();</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
 
@@ -493,8 +493,8 @@ Must meet a WAMP Spec URI requirements.</li>
 
 <span class="pl-smi">ws</span>.<span class="pl-en">subscribe</span>(<span class="pl-s"><span class="pl-pds">'</span>some.another.topic<span class="pl-pds">'</span></span>, {
    <span class="pl-en">onSuccess</span><span class="pl-k">:</span> <span class="pl-k">function</span> () { <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>Successfully subscribed to topic<span class="pl-pds">'</span></span>); },
-   <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>) { <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>Subscription error:<span class="pl-pds">'</span></span> <span class="pl-k">+</span> err); },
-   <span class="pl-en">onEvent</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">data</span>) { <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>Received topic event<span class="pl-pds">'</span></span>); }
+   <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>, <span class="pl-smi">details</span>) { <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>Subscription error:<span class="pl-pds">'</span></span> <span class="pl-k">+</span> err); },
+   <span class="pl-en">onEvent</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">arrayPayload</span>, <span class="pl-smi">objectPayload</span>) { <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>Received topic event<span class="pl-pds">'</span></span>); }
 });</pre></div>
 
 <p><a href="#table-of-contents">Back to TOC</a></p>
@@ -580,7 +580,7 @@ Must meet a WAMP Spec URI requirements.</li>
 });
 <span class="pl-smi">ws</span>.<span class="pl-en">publish</span>(<span class="pl-s"><span class="pl-pds">'</span>user.modified<span class="pl-pds">'</span></span>, { field1<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span>field1<span class="pl-pds">'</span></span>, field2<span class="pl-k">:</span> <span class="pl-c1">true</span>, field3<span class="pl-k">:</span> <span class="pl-c1">123</span> }, {
   <span class="pl-en">onSuccess</span><span class="pl-k">:</span> <span class="pl-k">function</span> () { <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>User successfully modified<span class="pl-pds">'</span></span>); },
-  <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>) { <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>User modification failed<span class="pl-pds">'</span></span>, err); }
+  <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>, <span class="pl-smi">details</span>) { <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>User modification failed<span class="pl-pds">'</span></span>, err); }
 });
 <span class="pl-smi">ws</span>.<span class="pl-en">publish</span>(<span class="pl-s"><span class="pl-pds">'</span>chat.message.received<span class="pl-pds">'</span></span>, [<span class="pl-s"><span class="pl-pds">'</span>Private message<span class="pl-pds">'</span></span>], <span class="pl-c1">null</span>, { eligible<span class="pl-k">:</span> <span class="pl-c1">123456789</span> });</pre></div>
 
@@ -619,13 +619,17 @@ Must meet a WAMP Spec URI requirements.</li>
 </li>
 </ul>
 
-<div class="highlight highlight-source-js"><pre><span class="pl-smi">ws</span>.<span class="pl-c1">call</span>(<span class="pl-s"><span class="pl-pds">'</span>server.time<span class="pl-pds">'</span></span>, <span class="pl-c1">null</span>, <span class="pl-k">function</span> (<span class="pl-smi">data</span>) { <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>Server time is <span class="pl-pds">'</span></span> <span class="pl-k">+</span> d[<span class="pl-c1">0</span>]); });
+<div class="highlight highlight-source-js"><pre><span class="pl-smi">ws</span>.<span class="pl-c1">call</span>(<span class="pl-s"><span class="pl-pds">'</span>server.time<span class="pl-pds">'</span></span>, <span class="pl-c1">null</span>, 
+    <span class="pl-k">function</span> (<span class="pl-smi">arrayPayload</span>, <span class="pl-smi">objectPayload</span>) { 
+        <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>Server time is <span class="pl-pds">'</span></span> <span class="pl-k">+</span> arrayPayload[<span class="pl-c1">0</span>]); 
+    }
+);
 
 <span class="pl-smi">ws</span>.<span class="pl-c1">call</span>(<span class="pl-s"><span class="pl-pds">'</span>start.migration<span class="pl-pds">'</span></span>, <span class="pl-c1">null</span>, {
     <span class="pl-en">onSuccess</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">data</span>) {
         <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>RPC successfully called<span class="pl-pds">'</span></span>);
     },
-    <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>) {
+    <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>, <span class="pl-smi">details</span>, [<span class="pl-smi">arrayData</span>, <span class="pl-smi">objectData</span>]) {
         <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>RPC call failed!<span class="pl-pds">'</span></span>,err);
     }
 });
@@ -634,7 +638,7 @@ Must meet a WAMP Spec URI requirements.</li>
     <span class="pl-en">onSuccess</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">data</span>) {
         <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>Backup successfully restored<span class="pl-pds">'</span></span>);
     },
-    <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>) {
+    <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>, <span class="pl-smi">details</span>, [<span class="pl-smi">arrayData</span>, <span class="pl-smi">objectData</span>]) {
         <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>Restore failed!<span class="pl-pds">'</span></span>,err);
     }
 });</pre></div>
@@ -725,7 +729,7 @@ on last result message.</li>
     <span class="pl-en">onSuccess</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">data</span>) {
         <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>RPC successfully registered<span class="pl-pds">'</span></span>);
     },
-    <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>) {
+    <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>, <span class="pl-smi">details</span>) {
         <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>RPC registration failed!<span class="pl-pds">'</span></span>,err);
     }
 });</pre></div>
@@ -774,7 +778,7 @@ Must meet a WAMP Spec URI requirements.</li>
     <span class="pl-en">onSuccess</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">data</span>) {
         <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>RPC successfully unregistered<span class="pl-pds">'</span></span>);
     },
-    <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>) {
+    <span class="pl-en">onError</span><span class="pl-k">:</span> <span class="pl-k">function</span> (<span class="pl-smi">err</span>, <span class="pl-smi">details</span>) {
         <span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-s"><span class="pl-pds">'</span>RPC unregistration failed!<span class="pl-pds">'</span></span>,err);
     }
 });</pre></div>
