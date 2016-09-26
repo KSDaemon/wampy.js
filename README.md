@@ -335,7 +335,7 @@ See [Challenge Response Authentication](#challenge-response-authentication) sect
 * **onReconnectSuccess**. Default value: null. Callback function. Fired every time when reconnection succeeded.
 * **ws**. Default value: null. User provided WebSocket class. Useful in node enviroment.
 * **msgpackCoder**. Default value: null. User provided msgpack class. Useful if you plan to use msgpack encoder
-instead of default json. Teoretically, any msgpack encoder with encode/decode methods should work.
+instead of default json. Theoretically, any msgpack encoder with encode/decode methods should work.
 In practice, [msgpack5][] tested and works well with [Wiola][], [msgpack-lite](https://github.com/kawanet/msgpack-lite)
 doesn't work as expected. Feel free to research other variants.
 
