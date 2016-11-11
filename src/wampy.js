@@ -210,12 +210,6 @@
             this._protocols = ['wamp.2.json'];
 
             /**
-             * Supported authentication methods
-             * @type {array}
-             */
-            this._authmethods = ['wampcra'];
-
-            /**
              * WAMP features, supported by Wampy
              * @type {object}
              * @private
@@ -393,16 +387,22 @@
                 helloCustomDetails: null,
 
                 /**
-                 * onChallenge callback
-                 * @type {function}
-                 */
-                onChallenge: null,
-
-                /**
                  * Authentication id to use in challenge
                  * @type {string}
                  */
                 authid: null,
+
+                /**
+                 * Supported authentication methods
+                 * @type {array}
+                 */
+                authmethods: [],
+
+                /**
+                 * onChallenge callback
+                 * @type {function}
+                 */
+                onChallenge: null,
 
                 /**
                  * onConnect callback
@@ -526,7 +526,7 @@
          * @private
          */
         _isPlainObject (obj) {
-            return (!!obj) && (obj === Object(obj));
+            return (!!obj) && (obj.constructor === Object);
         }
 
         /**
@@ -648,7 +648,7 @@
             const options = this._merge(this._options.helloCustomDetails, this._wamp_features);
 
             if (this._options.authid) {
-                options.authmethods = this._authmethods;
+                options.authmethods = this._options._authmethods;
                 options.authid = this._options.authid;
             }
 
@@ -986,13 +986,13 @@
 
                         }).catch(e => {
                             this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                                        data[1], {}, 'wamp.error.invocation_exception']);
+                                data[1], {}, 'wamp.error.invocation_exception']);
                         });
 
                     } else {
                         // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
                         this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                                    data[1], {}, 'wamp.error.no_such_procedure']);
+                            data[1], {}, 'wamp.error.no_such_procedure']);
                         this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION;
                     }
 
@@ -1108,8 +1108,11 @@
 
             if (this._options.realm) {
 
-                if ((!this._options.authid && typeof this._options.onChallenge === 'function') ||
-                    (this._options.authid && typeof this._options.onChallenge !== 'function')) {
+                let authp = (this._options.authid ? 1 : 0) +
+                    ((this._isArray(this._options.authmethods) && this._options.authmethods.length) ? 1 : 0) +
+                    (typeof this._options.onChallenge === 'function' ? 1 : 0);
+
+                if (authp > 0 && authp < 3) {
                     this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
                     return this;
                 }
