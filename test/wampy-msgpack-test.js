@@ -61,9 +61,29 @@ describe('Wampy.js [with msgpack encoder]', function () {
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_REALM);
         });
 
-        it('disallows to connect on instantiation without specifying only one of [onChallenge, authid]', function () {
-            var wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid' }),
+        it('disallows to connect on instantiation without specifying all of [onChallenge, authid, authmethods]', function () {
+            var wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid', authmethods: 'string' }),
                 opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid', authmethods: ['wampcra'] }),
+                opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid', onChallenge: function () {} }),
+                opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy = new Wampy(routerUrl, { realm: 'AppRealm', authmethods: ['wampcra'], onChallenge: function () {} }),
+                opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid' });
+            opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy = new Wampy(routerUrl, { realm: 'AppRealm', authmethods: ['wampcra'] });
+            opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
             wampy = new Wampy(routerUrl, { realm: 'AppRealm', onChallenge: function () {} });
@@ -85,6 +105,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     helloCustomDetails: helloCustomDetails,
                     onChallenge       : function () { done('Reached onChallenge'); },
                     authid            : 'userid',
+                    authmethods       : ['wampcra'],
                     onConnect         : done,
                     onClose           : function () { done('Reached onClose'); },
                     onError           : function () { done('Reached onError'); },
@@ -104,6 +125,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onChallenge).to.be.a('function');
             expect(options.authid).to.be.equal('userid');
+            expect(options.authmethods).to.be.an('array');
+            expect(options.authmethods[0]).to.be.equal('wampcra');
             expect(options.onConnect).to.be.a('function');
             expect(options.onClose).to.be.a('function');
             expect(options.onError).to.be.a('function');
@@ -118,6 +141,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 realm             : 'AppRealm',
                 onChallenge       : function (method, info) { return 'secretKey'; },
                 authid            : 'user1',
+                authmethods       : ['wampcra'],
                 onConnect         : done,
                 onClose           : function () { done('Reached onClose'); },
                 onError           : function () { done('Reached onError'); },
@@ -163,7 +187,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     transportEncoding : 'msgpack',
                     helloCustomDetails: helloCustomDetails,
                     onChallenge       : function () {},
-                    authid            : 'userid'
+                    authid            : 'userid',
+                    authmethods       : ['wampcra'],
                 }).options();
 
             expect(options.autoReconnect).to.be.true;
@@ -173,6 +198,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onChallenge).to.be.a('function');
             expect(options.authid).to.be.equal('userid');
+            expect(options.authmethods).to.be.an('array');
+            expect(options.authmethods[0]).to.be.equal('wampcra');
             expect(options.onConnect).to.be.a('function');
             expect(options.onClose).to.be.a('function');
             expect(options.onError).to.be.a('function');
@@ -191,14 +218,26 @@ describe('Wampy.js [with msgpack encoder]', function () {
             wampy.disconnect();
         });
 
-        it('disallows to connect without specifying only one of [onChallenge, authid]', function () {
+        it('disallows to connect on instantiation without specifying all of [onChallenge, authid, authmethods]', function () {
             var opStatus;
 
-            wampy.options({ authid: 'userid', onChallenge: null }).connect();
+            wampy.options({ authid: 'userid', authmethods: ['wampcra'], onChallenge: null }).connect();
+            opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy.options({ authid: null, authmethods: ['wampcra'], onChallenge: null }).connect();
             opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
             wampy.options({ authid: null, onChallenge: function () {} }).connect();
+            opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy.options({ authid: null, authmethods: [], onChallenge: function () {} }).connect();
+            opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+
+            wampy.options({ authid: 'userid', authmethods: 'string', onChallenge: function () {} }).connect();
             opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
@@ -208,6 +247,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
         it('calls onError handler if authentication using CRA fails', function (done) {
             wampy.options({
                 authid: 'user1',
+                authmethods: ['wampcra'],
                 onChallenge: function (method, info) { throw new Error('Error occured in authentication'); },
                 onError: function (e) { done(); },
                 onConnect: null,
@@ -222,6 +262,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 onConnect: null,
                 onClose: null,
                 authid: null,
+                authmethods: null,
                 onChallenge: null
             })
                 .connect();
