@@ -75,15 +75,15 @@ Usage example
 
 ```javascript
 var ws = new Wampy('/ws/', { realm: 'AppRealm' });
-ws.subscribe('system.monitor.update', function (data) { console.log('Received system.monitor.update event!'); })
-  .subscribe('client.message', function (data) { console.log('Received client.message event!'); })
+ws.subscribe('system.monitor.update', function (dataArr, dataObj) { console.log('Received system.monitor.update event!'); })
+  .subscribe('client.message', function (dataArr, dataObj) { console.log('Received client.message event!'); })
 
 ws.call('get.server.time', null, {
-    onSuccess: function (stime) {
+    onSuccess: function (dataArr, dataObj) {
         console.log('RPC successfully called');
-        console.log('Server time is ' + stime);
+        console.log('Server time is ' + dataArr[0]);
     },
-    onError: function (err) {
+    onError: function (err, detailsObj) {
         console.log('RPC call failed with error ' + err);
     }
 });
@@ -442,9 +442,13 @@ Must meet a WAMP Spec URI requirements.
 * **callbacks**. If it is a function - it will be treated as published event callback
              or it can be hash table of callbacks:
 
-           { onSuccess: will be called when subscribe would be confirmed
-             onError: will be called if subscribe would be aborted
-             onEvent: will be called on receiving published event }
+   { 
+     onSuccess: will be called when subscribe would be confirmed
+     onError:   will be called if subscribe would be aborted with 2 parameters:
+                (Error|uri|string, Details|object)
+     onEvent:   will be called on receiving published event with 2 parameters: 
+                (Arguments|array, ArgumentsKw|object) 
+   }
 
 ```javascript
 ws.subscribe('chat.message.received', function (msg) { console.log('Received new chat message!'); });
@@ -497,7 +501,8 @@ Must meet a WAMP Spec URI requirements.
 * **callbacks**. Optional hash table of callbacks:
 
            { onSuccess: will be called when publishing would be confirmed
-             onError: will be called if publishing would be aborted }
+             onError: will be called if publishing would be aborted with 2 parameters:
+                      (Error|uri|string, Details|object) }
 * **advancedOptions**. Optional parameter. Must include any or all of the options:
 
            { exclude:    integer|array WAMP session id(s) that won't receive a published event,
@@ -545,8 +550,10 @@ Must meet a WAMP Spec URI requirements.
 * **callbacks**. If it is a function - it will be treated as result callback function
              or it can be hash table of callbacks:
 
-           { onSuccess: will be called with result on successful call
-             onError: will be called if invocation would be aborted }
+           { onSuccess: will be called with result on successful call with 2 parameters: 
+                        (Arguments|array, ArgumentsKw|object) 
+             onError: will be called if invocation would be aborted with 2-4 parameters:
+                      (Error|uri|string, Details|object, Arguments|array, ArgumentsKw|object) }
 * **advancedOptions**. Optional parameter. Must include any or all of the options:
 
            { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
@@ -563,7 +570,7 @@ ws.call('server.time', null,
 );
 
 ws.call('start.migration', null, {
-    onSuccess: function (data) {
+    onSuccess: function (arrayPayload, objectPayload) {
         console.log('RPC successfully called');
     },
     onError: function (err, details, [arrayData, objectData]) {
@@ -572,7 +579,7 @@ ws.call('start.migration', null, {
 });
 
 ws.call('restore.backup', { backupFile: 'backup.zip' }, {
-    onSuccess: function (data) {
+    onSuccess: function (arrayPayload, objectPayload) {
         console.log('Backup successfully restored');
     },
     onError: function (err, details, [arrayData, objectData]) {
@@ -594,7 +601,7 @@ Parameters:
 * **callbacks**. Optional. If it is a function - it will be called if successfully sent canceling message
             or it can be hash table of callbacks:
 
-          { onSuccess: will be called if successfully sent canceling message
+          { onSuccess: will be called if successfully sent canceling message 
             onError: will be called if some error occurred }
 * **advancedOptions**. Optional parameter. Must include any or all of the options:
 
@@ -603,10 +610,10 @@ Parameters:
 
 ```javascript
 ws.call('start.migration', null, {
-    onSuccess: function (data) {
+    onSuccess: function (arrayPayload, objectPayload) {
         console.log('RPC successfully called');
     },
-    onError: function (err) {
+    onError: function (err, details) {
         console.log('RPC call failed!',err);
     }
 });
