@@ -15,7 +15,7 @@
     "grunt-text-replace": "^0.4.0",
     "istanbul": "^1.1.0-alpha.1",
     "load-grunt-tasks": "^3.5.2",
-    "mocha": "^3.1.2",
+    "mocha": "^3.2.0",
     "mocha-lcov-reporter": "^1.2.0"
   },
   "main": "src/wampy.js",
