@@ -447,15 +447,10 @@
                 msgpackCoder: null
             };
 
-            switch (arguments.length) {
-                case 1:
-                    if (typeof arguments[0] !== 'string') {
-                        this._options = this._merge(this._options, arguments[0]);
-                    }
-                    break;
-                case 2:
-                    this._options = this._merge(this._options, options);
-                    break;
+            if (this._isPlainObject(options)) {
+                this._options = this._merge(this._options, options);
+            } else if (this._isPlainObject(url)) {
+                this._options = this._merge(this._options, url);
             }
 
             this.connect();
@@ -840,6 +835,9 @@
                             delete this._calls[data[2]];
 
                             break;
+                        default:
+                            this._log('[wampy] Received non-compliant WAMP message');
+                            break;
                     }
                     break;
                 case WAMP_MSG_SPEC.SUBSCRIBED:
@@ -1003,6 +1001,9 @@
                     break;
                 case WAMP_MSG_SPEC.YIELD:
                     // WAMP SPEC:
+                    break;
+                default:
+                    this._log('[wampy] Received non-compliant WAMP message');
                     break;
             }
         }
@@ -1474,7 +1475,8 @@
          * @returns {Wampy}
          */
         call (topicURI, payload, callbacks, advancedOptions) {
-            let reqId, msg, options = {}, err = false;
+            let reqId, msg, err = false;
+            const options = {};
 
             if (!this._preReqChecks(topicURI, 'dealer', callbacks)) {
                 return this;
