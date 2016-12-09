@@ -125,21 +125,17 @@
     function getServerUrlBrowser (url) {
         let scheme, port;
 
+        scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+
         if (!url) {
-            scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             port = window.location.port !== '' ? ':' + window.location.port : '';
             return scheme + window.location.hostname + port + '/ws';
         } else if (/^ws(s)?:\/\//.test(url)) {   // ws scheme is specified
             return url;
-        } else if (/:\d{1,5}/.test(url)) {  // no scheme, but port is specified
-            scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-            return scheme + url;
         } else if (url[0] === '/') {    // just path on current server
-            scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             port = window.location.port !== '' ? ':' + window.location.port : '';
             return scheme + window.location.hostname + port + url;
         } else {    // domain
-            scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             return scheme + url;
         }
     }
@@ -163,14 +159,12 @@
             return new ws(parsedUrl, protocols);
         } else if (isNode) {    // we're in node, but no webSocket provided
             return null;
-        } else {    // we're in browser
-            if ('WebSocket' in window) {
-                // Chrome, MSIE, newer Firefox
-                return new window.WebSocket(parsedUrl, protocols);
-            } else if ('MozWebSocket' in window) {
-                // older versions of Firefox
-                return new window.MozWebSocket(parsedUrl, protocols);
-            }
+        } else if ('WebSocket' in window) {
+            // Chrome, MSIE, newer Firefox
+            return new window.WebSocket(parsedUrl, protocols);
+        } else if ('MozWebSocket' in window) {
+            // older versions of Firefox
+            return new window.MozWebSocket(parsedUrl, protocols);
         }
 
         return null;
