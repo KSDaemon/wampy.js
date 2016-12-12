@@ -695,7 +695,10 @@
                 this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries &&
                 !this._cache.isSayingGoodbye) {
                 this._cache.sessionId = null;
-                this._cache.timer = root.setTimeout(() => { this._wsReconnect(); }, this._options.reconnectInterval);
+                this._cache.timer = root.setTimeout(
+                    () => { this._wsReconnect(); },
+                    this._options.reconnectInterval
+                );
             } else {
                 // No reconnection needed or reached max retries count
                 if (this._options.onClose) {
@@ -908,9 +911,9 @@
 
                     }
                     break;
-                case WAMP_MSG_SPEC.REGISTER:
-                    // WAMP SPEC:
-                    break;
+                // case WAMP_MSG_SPEC.REGISTER:
+                //     // WAMP SPEC:
+                //     break;
                 case WAMP_MSG_SPEC.REGISTERED:
                     // WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
                     if (this._requests[data[1]]) {
@@ -929,9 +932,9 @@
 
                     }
                     break;
-                case WAMP_MSG_SPEC.UNREGISTER:
-                    // WAMP SPEC:
-                    break;
+                // case WAMP_MSG_SPEC.UNREGISTER:
+                //     // WAMP SPEC:
+                //     break;
                 case WAMP_MSG_SPEC.UNREGISTERED:
                     // WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
                     if (this._requests[data[1]]) {
@@ -990,12 +993,12 @@
                     }
 
                     break;
-                case WAMP_MSG_SPEC.INTERRUPT:
-                    // WAMP SPEC:
-                    break;
-                case WAMP_MSG_SPEC.YIELD:
-                    // WAMP SPEC:
-                    break;
+                // case WAMP_MSG_SPEC.INTERRUPT:
+                //     // WAMP SPEC:
+                //     break;
+                // case WAMP_MSG_SPEC.YIELD:
+                //     // WAMP SPEC:
+                //     break;
                 default:
                     this._log('[wampy] Received non-compliant WAMP message');
                     break;
@@ -1104,7 +1107,7 @@
 
             if (this._options.realm) {
 
-                let authp = (this._options.authid ? 1 : 0) +
+                const authp = (this._options.authid ? 1 : 0) +
                     ((this._isArray(this._options.authmethods) && this._options.authmethods.length) ? 1 : 0) +
                     (typeof this._options.onChallenge === 'function' ? 1 : 0);
 
@@ -1316,7 +1319,8 @@
          * @returns {Wampy}
          */
         publish (topicURI, payload, callbacks, advancedOptions) {
-            let reqId, msg, options = {}, err = false;
+            let reqId, msg, err = false;
+            const options = {};
 
             if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
                 return this;
