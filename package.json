@@ -21,7 +21,7 @@
   "main": "src/wampy.js",
   "dependencies": {
     "msgpack5": "^3.4.1",
-    "websocket": "^1.0.23"
+    "websocket": "^1.0.24"
   },
   "repository": {
     "type": "git",
