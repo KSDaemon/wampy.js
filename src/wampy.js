@@ -981,8 +981,21 @@
                             this._send(msg);
 
                         }).catch(e => {
-                            this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                                data[1], {}, 'wamp.error.invocation_exception']);
+                            let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
+                                data[1], e.details || {}, e.uri || 'wamp.error.invocation_exception'];
+
+                            if (e.argsList && this._isArray(e.argsList)) {
+                                msg.push(e.argsList);
+                            }
+
+                            if (e.argsDict && this._isPlainObject(e.argsDict)) {
+                                if (msg.length === 5) {
+                                    msg.push(null, e.argsDict);
+                                } else {
+                                    msg.push(e.argsDict);
+                                }
+                            }
+                            this._send(msg);
                         });
 
                     } else {
