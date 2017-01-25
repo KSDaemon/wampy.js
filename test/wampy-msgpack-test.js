@@ -1477,6 +1477,80 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
+            it('calls error handler with custom data if asynchronous RPC raised exception', function (done) {
+                var definedUri = 'app.error.custom_invocation_exception',
+                    definedDetails = { key1: 'key1', key2: true, key3: 25 },
+                    definedArgsList = [1, 2, 3, 4, 5],
+                    definedArgsDict = { key1: 'key1', key2: true, key3: 25 };
+
+                wampy.register('register.rpc88', {
+                    rpc: function (e) {
+                        var UserException = function () {
+                            this.uri = definedUri;
+                            this.details = definedDetails;
+                            this.argsList = definedArgsList;
+                            this.argsDict = definedArgsDict;
+                        };
+
+                        throw new UserException();
+                    },
+                    onSuccess: function (e) {
+                        wampy.call(
+                            'register.rpc88',
+                            100,
+                            {
+                                onSuccess: function () { },
+                                onError: function (uri, details, args, argsKw) {
+                                    expect(uri).to.be.equal(definedUri);
+                                    expect(details).to.be.deep.equal(definedDetails);
+                                    expect(args).to.be.an('array');
+                                    expect(args[0]).to.be.equal(1);
+                                    expect(argsKw).to.be.deep.equal(definedArgsDict);
+
+                                    wampy.register('register.rpc99', {
+                                        rpc: function (e) {
+                                            var UserException = function () {
+                                                this.uri = definedUri;
+                                                // no details
+                                                // no args list, only args dict
+                                                this.argsDict = definedArgsDict;
+                                            };
+
+                                            throw new UserException();
+                                        },
+                                        onSuccess: function (e) {
+                                            wampy.call(
+                                                'register.rpc99',
+                                                100,
+                                                {
+                                                    onSuccess: function () { },
+                                                    onError: function (uri, details, args, argsKw) {
+                                                        expect(uri).to.be.equal(definedUri);
+                                                        expect(details).to.be.deep.equal({});
+                                                        expect(args).to.be.null;
+                                                        expect(argsKw).to.be.deep.equal(definedArgsDict);
+                                                        done();
+                                                    }
+                                                },
+                                                { exclude_me: false }
+                                            );
+                                        },
+                                        onError: function (e) {
+                                            done('Error during RPC registration!');
+                                        }
+                                    });
+                                }
+                            },
+                            { exclude_me: false }
+                        );
+                    },
+                    onError: function (e) {
+                        done('Error during RPC registration!');
+                    }
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
             it('calls error handler on trying to call nonexistent RPC', function (done) {
                 wampy.call(
                     'nonexistent.rpc',

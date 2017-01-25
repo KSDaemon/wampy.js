@@ -1424,6 +1424,73 @@ var WAMP_MSG_SPEC = {
             from: [2],
             to: [2]
         },
+        // calls error handler with custom data if asynchronous RPC raised exception
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                2235   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                2235, // Registration ID
+                {},
+                [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                WAMP_MSG_SPEC.CALL,
+                'RequestId',
+                { key1: 'key1', key2: true, key3: 25 },
+                'app.error.custom_invocation_exception',
+                [1, 2, 3, 4, 5],
+                { key1: 'key1', key2: true, key3: 25 }
+            ],
+            from: [2],
+            to: [2]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                2236   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                2236, // Registration ID
+                {},
+                [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                WAMP_MSG_SPEC.CALL,
+                'RequestId',
+                {},
+                'app.error.custom_invocation_exception',
+                null,
+                { key1: 'key1', key2: true, key3: 25 }
+            ],
+            from: [2],
+            to: [2]
+        },
         // calls error handler on trying to call nonexistent RPC
         {
             data: [
