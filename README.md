@@ -74,7 +74,7 @@ Usage example
 =============
 
 ```javascript
-var ws = new Wampy('/ws/', { realm: 'AppRealm' });
+const ws = new Wampy('/ws/', { realm: 'AppRealm' });
 ws.subscribe('system.monitor.update', function (dataArr, dataObj) { console.log('Received system.monitor.update event!'); })
   .subscribe('client.message', function (dataArr, dataObj) { console.log('Received client.message event!'); })
 
@@ -480,7 +480,7 @@ Must meet a WAMP Spec URI requirements.
 or it can be not specified, in this case all callbacks and subscription will be removed.
 
 ```javascript
-var f1 = function (data) { ... };
+const f1 = function (data) { ... };
 ws.unsubscribe('subscribed.topic', f1);
 
 ws.unsubscribe('chat.message.received');
@@ -651,7 +651,7 @@ on last result message.
 * \[1\] element can contain result, which can be a simple value, array or object
 
 ```javascript
-var sqrt_f = function (x) { return [{}, x*x]; };
+const sqrt_f = function (x) { return [{}, x*x]; };
 
 ws.register('sqrt.value', sqrt_f);
 
@@ -672,7 +672,7 @@ like [es6-promise](https://github.com/jakearchibald/es6-promise). Check brower s
 at [can i use](http://caniuse.com/#search=promise) site.
 
 ```javascript
-var getUserName = function () {
+const getUserName = function () {
     return new Promise(function (resolve, reject) {
         /* Ask user to input his username somehow,
            and resolve promise with user input at the end */
@@ -692,7 +692,7 @@ Exception object with custom data may have next attributes:
 * **argsDict**. Custom arguments object.
   
 ```javascript
-var getSystemInfo = function () {
+const getSystemInfo = function () {
 
     // Application logic
     
@@ -700,7 +700,7 @@ var getSystemInfo = function () {
     // and at this time you can't connect to db
     // you can throw exception with some details for client application 
 
-    var UserException = function () {
+    const UserException = function () {
         this.uri = 'app.error.no_database_connection';
         this.details = { message: 'Can not connect to db server' };
         this.argsList = [1, 2, 3, 4, 5];
