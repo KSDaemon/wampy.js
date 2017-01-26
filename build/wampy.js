@@ -131,25 +131,20 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         var scheme = void 0,
             port = void 0;
 
+        scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+
         if (!url) {
-            scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             port = window.location.port !== '' ? ':' + window.location.port : '';
             return scheme + window.location.hostname + port + '/ws';
         } else if (/^ws(s)?:\/\//.test(url)) {
             // ws scheme is specified
             return url;
-        } else if (/:\d{1,5}/.test(url)) {
-            // no scheme, but port is specified
-            scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-            return scheme + url;
         } else if (url[0] === '/') {
             // just path on current server
-            scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             port = window.location.port !== '' ? ':' + window.location.port : '';
             return scheme + window.location.hostname + port + url;
         } else {
             // domain
-            scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
             return scheme + url;
         }
     }
@@ -176,15 +171,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         } else if (isNode) {
             // we're in node, but no webSocket provided
             return null;
-        } else {
-            // we're in browser
-            if ('WebSocket' in window) {
-                // Chrome, MSIE, newer Firefox
-                return new window.WebSocket(parsedUrl, protocols);
-            } else if ('MozWebSocket' in window) {
-                // older versions of Firefox
-                return new window.MozWebSocket(parsedUrl, protocols);
-            }
+        } else if ('WebSocket' in window) {
+            // Chrome, MSIE, newer Firefox
+            return new window.WebSocket(parsedUrl, protocols);
+        } else if ('MozWebSocket' in window) {
+            // older versions of Firefox
+            return new window.MozWebSocket(parsedUrl, protocols);
         }
 
         return null;
@@ -210,7 +202,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
              * @type {string}
              * @private
              */
-            this.version = 'v4.0.0';
+            this.version = 'v4.1.0';
 
             /**
              * WS Url
@@ -225,12 +217,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
              * @private
              */
             this._protocols = ['wamp.2.json'];
-
-            /**
-             * Supported authentication methods
-             * @type {array}
-             */
-            this._authmethods = ['wampcra'];
 
             /**
              * WAMP features, supported by Wampy
@@ -410,16 +396,22 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 helloCustomDetails: null,
 
                 /**
-                 * onChallenge callback
-                 * @type {function}
-                 */
-                onChallenge: null,
-
-                /**
                  * Authentication id to use in challenge
                  * @type {string}
                  */
                 authid: null,
+
+                /**
+                 * Supported authentication methods
+                 * @type {array}
+                 */
+                authmethods: [],
+
+                /**
+                 * onChallenge callback
+                 * @type {function}
+                 */
+                onChallenge: null,
 
                 /**
                  * onConnect callback
@@ -464,15 +456,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 msgpackCoder: null
             };
 
-            switch (arguments.length) {
-                case 1:
-                    if (typeof arguments[0] !== 'string') {
-                        this._options = this._merge(this._options, arguments[0]);
-                    }
-                    break;
-                case 2:
-                    this._options = this._merge(this._options, options);
-                    break;
+            if (this._isPlainObject(options)) {
+                this._options = this._merge(this._options, options);
+            } else if (this._isPlainObject(url)) {
+                this._options = this._merge(this._options, url);
             }
 
             this.connect();
@@ -508,8 +495,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     /* Lua (and cjson) outputs big numbers in scientific notation :(
                      * Need to find a way of fixing that
                      * For now, i think it's not a big problem to reduce range.
+                     * reqId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);    // 9007199254740992
                      */
-                    //          reqId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);    // 9007199254740992
                     reqId = Math.floor(Math.random() * 100000000000000);
                 } while (reqId in this._requests);
 
@@ -526,8 +513,8 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             key: '_merge',
             value: function _merge() {
                 var obj = {},
-                    i = void 0,
-                    l = arguments.length,
+                    l = arguments.length;
+                var i = void 0,
                     attr = void 0;
 
                 for (i = 0; i < l; i++) {
@@ -549,7 +536,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         }, {
             key: '_isArray',
             value: function _isArray(obj) {
-                return !!obj && obj.constructor === Array;
+                return !!obj && Array.isArray(obj);
             }
 
             /**
@@ -583,6 +570,42 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
 
             /**
+             * Prerequisite checks for any wampy api call
+             * @param {string} topicURI
+             * @param {string} role
+             * @param {object} callbacks
+             * @returns {boolean}
+             * @private
+             */
+
+        }, {
+            key: '_preReqChecks',
+            value: function _preReqChecks(topicURI, role, callbacks) {
+
+                if (this._cache.sessionId && !this._cache.server_wamp_features.roles[role]) {
+                    this._cache.opStatus = WAMP_ERROR_MSG['NO_' + role.toUpperCase()];
+
+                    if (this._isPlainObject(callbacks) && callbacks.onError) {
+                        callbacks.onError(this._cache.opStatus.description);
+                    }
+
+                    return false;
+                }
+
+                if (topicURI && !this._validateURI(topicURI)) {
+                    this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
+
+                    if (this._isPlainObject(callbacks) && callbacks.onError) {
+                        callbacks.onError(this._cache.opStatus.description);
+                    }
+
+                    return false;
+                }
+
+                return true;
+            }
+
+            /**
              * Validate uri
              * @param {string} uri
              * @returns {boolean}
@@ -593,11 +616,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             key: '_validateURI',
             value: function _validateURI(uri) {
                 var re = /^([0-9a-zA-Z_]{2,}\.)*([0-9a-zA-Z_]{2,})$/;
-                if (!re.test(uri) || uri.indexOf('wamp') === 0) {
-                    return false;
-                } else {
-                    return true;
-                }
+                return !(!re.test(uri) || uri.indexOf('wamp') === 0);
             }
 
             /**
@@ -716,7 +735,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 var options = this._merge(this._options.helloCustomDetails, this._wamp_features);
 
                 if (this._options.authid) {
-                    options.authmethods = this._authmethods;
+                    options.authmethods = this._options._authmethods;
                     options.authid = this._options.authid;
                 }
 
@@ -736,11 +755,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             }
         }, {
             key: '_wsOnClose',
-            value: function _wsOnClose() {
+            value: function _wsOnClose(event) {
                 var _this2 = this;
 
                 var root = isNode ? global : window;
-                this._log('[wampy] websocket disconnected');
+                this._log('[wampy] websocket disconnected. Info: ', event);
 
                 // Automatic reconnection
                 if ((this._cache.sessionId || this._cache.reconnectingAttempts) && this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries && !this._cache.isSayingGoodbye) {
@@ -857,50 +876,26 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                         switch (data[1]) {
                             case WAMP_MSG_SPEC.SUBSCRIBE:
                             case WAMP_MSG_SPEC.UNSUBSCRIBE:
-                                if (this._requests[data[2]]) {
-
-                                    if (this._requests[data[2]].callbacks.onError) {
-                                        this._requests[data[2]].callbacks.onError(data[4], data[3]);
-                                    }
-
-                                    delete this._requests[data[2]];
-                                }
-                                break;
                             case WAMP_MSG_SPEC.PUBLISH:
-                                if (this._requests[data[2]]) {
-
-                                    if (this._requests[data[2]].callbacks.onError) {
-                                        this._requests[data[2]].callbacks.onError(data[4], data[3]);
-                                    }
-
-                                    delete this._requests[data[2]];
-                                }
-                                break;
                             case WAMP_MSG_SPEC.REGISTER:
                             case WAMP_MSG_SPEC.UNREGISTER:
-                                // WAMP SPEC: [ERROR, REGISTER, REGISTER.Request|id, Details|dict, Error|uri]
-                                if (this._requests[data[2]]) {
 
-                                    if (this._requests[data[2]].callbacks.onError) {
-                                        this._requests[data[2]].callbacks.onError(data[4], data[3]);
-                                    }
+                                this._requests[data[2]] && this._requests[data[2]].callbacks.onError && this._requests[data[2]].callbacks.onError(data[4], data[3]);
+                                delete this._requests[data[2]];
 
-                                    delete this._requests[data[2]];
-                                }
                                 break;
                             case WAMP_MSG_SPEC.INVOCATION:
                                 break;
                             case WAMP_MSG_SPEC.CALL:
-                                if (this._calls[data[2]]) {
 
-                                    if (this._calls[data[2]].onError) {
-                                        // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
-                                        //             Error|uri, Arguments|list, ArgumentsKw|dict]
-                                        this._calls[data[2]].onError(data[4], data[3], data[5], data[6]);
-                                    }
+                                // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
+                                //             Error|uri, Arguments|list, ArgumentsKw|dict]
+                                this._calls[data[2]] && this._calls[data[2]].onError && this._calls[data[2]].onError(data[4], data[3], data[5], data[6]);
+                                delete this._calls[data[2]];
 
-                                    delete this._calls[data[2]];
-                                }
+                                break;
+                            default:
+                                this._log('[wampy] Received non-compliant WAMP message');
                                 break;
                         }
                         break;
@@ -974,9 +969,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                             }
                         }
                         break;
-                    case WAMP_MSG_SPEC.REGISTER:
-                        // WAMP SPEC:
-                        break;
+                    // case WAMP_MSG_SPEC.REGISTER:
+                    //     // WAMP SPEC:
+                    //     break;
                     case WAMP_MSG_SPEC.REGISTERED:
                         // WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
                         if (this._requests[data[1]]) {
@@ -994,9 +989,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                             delete this._requests[data[1]];
                         }
                         break;
-                    case WAMP_MSG_SPEC.UNREGISTER:
-                        // WAMP SPEC:
-                        break;
+                    // case WAMP_MSG_SPEC.UNREGISTER:
+                    //     // WAMP SPEC:
+                    //     break;
                     case WAMP_MSG_SPEC.UNREGISTERED:
                         // WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
                         if (this._requests[data[1]]) {
@@ -1043,7 +1038,20 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                                 }
                                 _this3._send(msg);
                             }).catch(function (e) {
-                                _this3._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], {}, 'wamp.error.invocation_exception']);
+                                var msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION, data[1], e.details || {}, e.uri || 'wamp.error.invocation_exception'];
+
+                                if (e.argsList && _this3._isArray(e.argsList)) {
+                                    msg.push(e.argsList);
+                                }
+
+                                if (e.argsDict && _this3._isPlainObject(e.argsDict)) {
+                                    if (msg.length === 5) {
+                                        msg.push(null, e.argsDict);
+                                    } else {
+                                        msg.push(e.argsDict);
+                                    }
+                                }
+                                _this3._send(msg);
                             });
                         } else {
                             // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
@@ -1052,11 +1060,14 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                         }
 
                         break;
-                    case WAMP_MSG_SPEC.INTERRUPT:
-                        // WAMP SPEC:
-                        break;
-                    case WAMP_MSG_SPEC.YIELD:
-                        // WAMP SPEC:
+                    // case WAMP_MSG_SPEC.INTERRUPT:
+                    //     // WAMP SPEC:
+                    //     break;
+                    // case WAMP_MSG_SPEC.YIELD:
+                    //     // WAMP SPEC:
+                    //     break;
+                    default:
+                        this._log('[wampy] Received non-compliant WAMP message');
                         break;
                 }
             }
@@ -1085,9 +1096,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         }, {
             key: '_renewSubscriptions',
             value: function _renewSubscriptions() {
+                var i = void 0;
                 var subs = this._subscriptions,
-                    st = this._subsTopics,
-                    i = void 0;
+                    st = this._subsTopics;
 
                 this._subscriptions = {};
                 this._subsTopics = new Set();
@@ -1221,7 +1232,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
                 if (this._options.realm) {
 
-                    if (!this._options.authid && typeof this._options.onChallenge === 'function' || this._options.authid && typeof this._options.onChallenge !== 'function') {
+                    var authp = (this._options.authid ? 1 : 0) + (this._isArray(this._options.authmethods) && this._options.authmethods.length ? 1 : 0) + (typeof this._options.onChallenge === 'function' ? 1 : 0);
+
+                    if (authp > 0 && authp < 3) {
                         this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
                         return this;
                     }
@@ -1300,23 +1313,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             value: function subscribe(topicURI, callbacks) {
                 var reqId = void 0;
 
-                if (this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
-                    return this;
-                }
-
-                if (!this._validateURI(topicURI)) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
+                if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
                     return this;
                 }
 
@@ -1378,13 +1375,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 var reqId = void 0,
                     i = -1;
 
-                if (this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
+                if (!this._preReqChecks(null, 'broker', callbacks)) {
                     return this;
                 }
 
@@ -1467,26 +1458,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             value: function publish(topicURI, payload, callbacks, advancedOptions) {
                 var reqId = void 0,
                     msg = void 0,
-                    options = {},
                     err = false;
+                var options = {};
 
-                if (this._cache.sessionId && !this._cache.server_wamp_features.roles.broker) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NO_BROKER;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
-                    return this;
-                }
-
-                if (!this._validateURI(topicURI)) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
+                if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
                     return this;
                 }
 
@@ -1643,26 +1618,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             value: function call(topicURI, payload, callbacks, advancedOptions) {
                 var reqId = void 0,
                     msg = void 0,
-                    options = {},
                     err = false;
+                var options = {};
 
-                if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
-                    return this;
-                }
-
-                if (!this._validateURI(topicURI)) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
+                if (!this._preReqChecks(topicURI, 'dealer', callbacks)) {
                     return this;
                 }
 
@@ -1758,13 +1717,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             value: function cancel(reqId, callbacks, advancedOptions) {
                 var options = { mode: 'skip' };
 
-                if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
+                if (!this._preReqChecks(null, 'dealer', callbacks)) {
                     return this;
                 }
 
@@ -1778,20 +1731,15 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     return this;
                 }
 
-                if (typeof advancedOptions !== 'undefined') {
-                    if (this._isPlainObject(advancedOptions)) {
-                        if (advancedOptions.hasOwnProperty('mode')) {
-                            options.mode = /skip|kill|killnowait/.test(advancedOptions.mode) ? advancedOptions.mode : 'skip';
-                        }
-                    }
+                if (typeof advancedOptions !== 'undefined' && this._isPlainObject(advancedOptions) && advancedOptions.hasOwnProperty('mode')) {
+
+                    options.mode = /skip|kill|killnowait/.test(advancedOptions.mode) ? advancedOptions.mode : 'skip';
                 }
 
                 // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
                 this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
 
-                if (callbacks.onSuccess) {
-                    callbacks.onSuccess();
-                }
+                callbacks.onSuccess && callbacks.onSuccess();
 
                 this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
                 this._cache.opStatus.reqId = reqId;
@@ -1814,23 +1762,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             value: function register(topicURI, callbacks) {
                 var reqId = void 0;
 
-                if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
-                    return this;
-                }
-
-                if (!this._validateURI(topicURI)) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
+                if (!this._preReqChecks(topicURI, 'dealer', callbacks)) {
                     return this;
                 }
 
@@ -1887,23 +1819,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             value: function unregister(topicURI, callbacks) {
                 var reqId = void 0;
 
-                if (this._cache.sessionId && !this._cache.server_wamp_features.roles.dealer) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.NO_DEALER;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
-                    return this;
-                }
-
-                if (!this._validateURI(topicURI)) {
-                    this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
+                if (!this._preReqChecks(topicURI, 'dealer', callbacks)) {
                     return this;
                 }
 
