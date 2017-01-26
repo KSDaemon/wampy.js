@@ -74,16 +74,16 @@ Usage example
 =============
 
 ```javascript
-var ws = new Wampy('/ws/', { realm: 'AppRealm' });
-ws.subscribe('system.monitor.update', function (data) { console.log('Received system.monitor.update event!'); })
-  .subscribe('client.message', function (data) { console.log('Received client.message event!'); })
+const ws = new Wampy('/ws/', { realm: 'AppRealm' });
+ws.subscribe('system.monitor.update', function (dataArr, dataObj) { console.log('Received system.monitor.update event!'); })
+  .subscribe('client.message', function (dataArr, dataObj) { console.log('Received client.message event!'); })
 
 ws.call('get.server.time', null, {
-    onSuccess: function (stime) {
+    onSuccess: function (dataArr, dataObj) {
         console.log('RPC successfully called');
-        console.log('Server time is ' + stime);
+        console.log('Server time is ' + dataArr[0]);
     },
-    onError: function (err) {
+    onError: function (err, detailsObj) {
         console.log('RPC call failed with error ' + err);
     }
 });
@@ -150,6 +150,7 @@ ws = new Wampy('ws://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'joe',
+    authmethods: ['wampcra'],
     onChallenge: (method, info) => {
         console.log('Requested challenge with ', method, info);
         return wampyCra.sign('joe secret key or password', info.challenge);
@@ -166,6 +167,7 @@ ws = new Wampy('ws://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'micky',
+    authmethods: ['wampcra'],
     onChallenge: (method, info) => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
@@ -186,6 +188,7 @@ ws = new Wampy('ws://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'peter',
+    authmethods: ['wampcra'],
     onChallenge: (method, info) => {
         const iterations = 100;
         const keylen = 16;
@@ -206,6 +209,7 @@ ws = new Wampy('ws://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'patrik',
+    authmethods: ['wampcra'],
     onChallenge: wampyCra.auto('patrik secret key or password'),
     onConnect: () => {
         console.log('Connected to Router!');
@@ -219,6 +223,7 @@ ws = new Wampy('ws://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'vanya',
+    authmethods: ['wampcra'],
     onChallenge: (method, info) => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
@@ -322,12 +327,13 @@ For using msgpack you need to provide [msgpack5][] javascript library, set up **
 that also supports it.
 * **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
 * **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
+* **authid**. Default value: null. Authentication (user) id to use in challenge.
+* **authmethods**. Default value: []. Array of strings of supported authentication methods.
 * **onChallenge**. Default value: null. Callback function.
 Is fired when wamp server requests authentication during session establishment.
-This function receives two arguments: auth method ('wampcra' for now only) and challenge details.
+This function receives two arguments: auth method and challenge details.
 Function should return computed signature, based on challenge details.
 See [Challenge Response Authentication](#challenge-response-authentication) section and [WAMP Spec CRA][] for more info.
-* **authid**. Default value: null. Authentication (user) id to use in challenge.
 * **onConnect**. Default value: null. Callback function. Fired when connection to wamp server is established.
 * **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
 * **onError**. Default value: null. Callback function. Fired on error in websocket communication.
@@ -335,7 +341,7 @@ See [Challenge Response Authentication](#challenge-response-authentication) sect
 * **onReconnectSuccess**. Default value: null. Callback function. Fired every time when reconnection succeeded.
 * **ws**. Default value: null. User provided WebSocket class. Useful in node enviroment.
 * **msgpackCoder**. Default value: null. User provided msgpack class. Useful if you plan to use msgpack encoder
-instead of default json. Teoretically, any msgpack encoder with encode/decode methods should work.
+instead of default json. Theoretically, any msgpack encoder with encode/decode methods should work.
 In practice, [msgpack5][] tested and works well with [Wiola][], [msgpack-lite](https://github.com/kawanet/msgpack-lite)
 doesn't work as expected. Feel free to research other variants.
 
@@ -436,9 +442,13 @@ Must meet a WAMP Spec URI requirements.
 * **callbacks**. If it is a function - it will be treated as published event callback
              or it can be hash table of callbacks:
 
-           { onSuccess: will be called when subscribe would be confirmed
-             onError: will be called if subscribe would be aborted
-             onEvent: will be called on receiving published event }
+   { 
+     onSuccess: will be called when subscribe would be confirmed
+     onError:   will be called if subscribe would be aborted with 2 parameters:
+                (Error|uri|string, Details|object)
+     onEvent:   will be called on receiving published event with 2 parameters: 
+                (Arguments|array, ArgumentsKw|object) 
+   }
 
 ```javascript
 ws.subscribe('chat.message.received', function (msg) { console.log('Received new chat message!'); });
@@ -470,7 +480,7 @@ Must meet a WAMP Spec URI requirements.
 or it can be not specified, in this case all callbacks and subscription will be removed.
 
 ```javascript
-var f1 = function (data) { ... };
+const f1 = function (data) { ... };
 ws.unsubscribe('subscribed.topic', f1);
 
 ws.unsubscribe('chat.message.received');
@@ -491,7 +501,8 @@ Must meet a WAMP Spec URI requirements.
 * **callbacks**. Optional hash table of callbacks:
 
            { onSuccess: will be called when publishing would be confirmed
-             onError: will be called if publishing would be aborted }
+             onError: will be called if publishing would be aborted with 2 parameters:
+                      (Error|uri|string, Details|object) }
 * **advancedOptions**. Optional parameter. Must include any or all of the options:
 
            { exclude:    integer|array WAMP session id(s) that won't receive a published event,
@@ -539,8 +550,10 @@ Must meet a WAMP Spec URI requirements.
 * **callbacks**. If it is a function - it will be treated as result callback function
              or it can be hash table of callbacks:
 
-           { onSuccess: will be called with result on successful call
-             onError: will be called if invocation would be aborted }
+           { onSuccess: will be called with result on successful call with 2 parameters: 
+                        (Arguments|array, ArgumentsKw|object) 
+             onError: will be called if invocation would be aborted with 2-4 parameters:
+                      (Error|uri|string, Details|object, Arguments|array, ArgumentsKw|object) }
 * **advancedOptions**. Optional parameter. Must include any or all of the options:
 
            { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
@@ -557,7 +570,7 @@ ws.call('server.time', null,
 );
 
 ws.call('start.migration', null, {
-    onSuccess: function (data) {
+    onSuccess: function (arrayPayload, objectPayload) {
         console.log('RPC successfully called');
     },
     onError: function (err, details, [arrayData, objectData]) {
@@ -566,7 +579,7 @@ ws.call('start.migration', null, {
 });
 
 ws.call('restore.backup', { backupFile: 'backup.zip' }, {
-    onSuccess: function (data) {
+    onSuccess: function (arrayPayload, objectPayload) {
         console.log('Backup successfully restored');
     },
     onError: function (err, details, [arrayData, objectData]) {
@@ -588,7 +601,7 @@ Parameters:
 * **callbacks**. Optional. If it is a function - it will be called if successfully sent canceling message
             or it can be hash table of callbacks:
 
-          { onSuccess: will be called if successfully sent canceling message
+          { onSuccess: will be called if successfully sent canceling message 
             onError: will be called if some error occurred }
 * **advancedOptions**. Optional parameter. Must include any or all of the options:
 
@@ -597,10 +610,10 @@ Parameters:
 
 ```javascript
 ws.call('start.migration', null, {
-    onSuccess: function (data) {
+    onSuccess: function (arrayPayload, objectPayload) {
         console.log('RPC successfully called');
     },
-    onError: function (err) {
+    onError: function (err, details) {
         console.log('RPC call failed!',err);
     }
 });
@@ -638,7 +651,7 @@ on last result message.
 * \[1\] element can contain result, which can be a simple value, array or object
 
 ```javascript
-var sqrt_f = function (x) { return [{}, x*x]; };
+const sqrt_f = function (x) { return [{}, x*x]; };
 
 ws.register('sqrt.value', sqrt_f);
 
@@ -659,7 +672,7 @@ like [es6-promise](https://github.com/jakearchibald/es6-promise). Check brower s
 at [can i use](http://caniuse.com/#search=promise) site.
 
 ```javascript
-var getUserName = function () {
+const getUserName = function () {
     return new Promise(function (resolve, reject) {
         /* Ask user to input his username somehow,
            and resolve promise with user input at the end */
@@ -669,6 +682,37 @@ var getUserName = function () {
 
 ws.register('get.user.name', getUserName);
 ```
+
+Also it is possible to abort rpc processing and throw error with custom application specific data. 
+This data will be passed to caller onError callback. 
+Exception object with custom data may have next attributes:
+* **uri**. String with custom error uri.
+* **details**. Custom details object.
+* **argsList**. Custom arguments array.
+* **argsDict**. Custom arguments object.
+  
+```javascript
+const getSystemInfo = function () {
+
+    // Application logic
+    
+    // for example, you need to get data from db
+    // and at this time you can't connect to db
+    // you can throw exception with some details for client application 
+
+    const UserException = function () {
+        this.uri = 'app.error.no_database_connection';
+        this.details = { message: 'Can not connect to db server' };
+        this.argsList = [1, 2, 3, 4, 5];
+        this.argsDict = { database: 'db', host: '1.2.3.4', port: 5432, dbtype: 'postgres' };
+    };
+    
+    throw new UserException();
+
+};
+
+ws.register('get.system.info', getSystemInfo);
+```  
 
 [Back to TOC](#table-of-contents)
 
