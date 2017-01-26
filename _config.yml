@@ -1,0 +1,8 @@
+title: Wampy.js
+description: Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation
+google_analytics: UA-52132189-2
+show_downloads: true
+theme: jekyll-theme-cayman
+
+gems:
+  - jekyll-mentions
