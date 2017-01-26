@@ -683,6 +683,37 @@ var getUserName = function () {
 ws.register('get.user.name', getUserName);
 ```
 
+Also it is possible to abort rpc processing and throw error with custom application specific data. 
+This data will be passed to caller onError callback. 
+Exception object with custom data may have next attributes:
+* **uri**. String with custom error uri.
+* **details**. Custom details object.
+* **argsList**. Custom arguments array.
+* **argsDict**. Custom arguments object.
+  
+```javascript
+var getSystemInfo = function () {
+
+    // Application logic
+    
+    // for example, you need to get data from db
+    // and at this time you can't connect to db
+    // you can throw exception with some details for client application 
+
+    var UserException = function () {
+        this.uri = 'app.error.no_database_connection';
+        this.details = { message: 'Can not connect to db server' };
+        this.argsList = [1, 2, 3, 4, 5];
+        this.argsDict = { database: 'db', host: '1.2.3.4', port: 5432, dbtype: 'postgres' };
+    };
+    
+    throw new UserException();
+
+};
+
+ws.register('get.system.info', getSystemInfo);
+```  
+
 [Back to TOC](#table-of-contents)
 
 unregister(topicURI, callbacks)
