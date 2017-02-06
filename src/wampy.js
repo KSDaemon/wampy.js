@@ -542,28 +542,27 @@
          * @private
          */
         _preReqChecks (topicURI, role, callbacks) {
+            let flag = true;
 
             if (this._cache.sessionId && !this._cache.server_wamp_features.roles[role]) {
                 this._cache.opStatus = WAMP_ERROR_MSG['NO_' + role.toUpperCase()];
-
-                if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
-                }
-
-                return false;
+                flag = false;
             }
 
             if (topicURI && !this._validateURI(topicURI)) {
                 this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
-
-                if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
-                }
-
-                return false;
+                flag = false;
             }
 
-            return true;
+            if (flag) {
+                return true;
+            }
+
+            if (this._isPlainObject(callbacks) && callbacks.onError) {
+                callbacks.onError(this._cache.opStatus.description);
+            }
+
+            return false;
         }
 
         /**
@@ -817,7 +816,7 @@
                         case WAMP_MSG_SPEC.UNREGISTER:
 
                             this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                            this._requests[data[2]].callbacks.onError(data[4], data[3]);
+                            this._requests[data[2]].callbacks.onError(data[4], data[3], data[5], data[6]);
                             delete this._requests[data[2]];
 
                             break;
@@ -833,7 +832,7 @@
 
                             break;
                         default:
-                            this._log('[wampy] Received non-compliant WAMP message');
+                            this._log('[wampy] Received non-compliant WAMP ERROR message');
                             break;
                     }
                     break;
@@ -965,15 +964,24 @@
 
                         p.then((results) => {
                             // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
-                            if (results) {
+                            msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+                            if (this._isArray(results)) {
+                                // Options
+                                if (this._isPlainObject(results[0])) {
+                                    msg[2] = results[0];
+                                }
+
                                 if (this._isArray(results[1])) {
-                                    msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], results[1]];
-                                } else if (this._isPlainObject(results[1])) {
-                                    msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], [], results[1]];
-                                } else if (typeof (results[1]) === 'undefined') {
-                                    msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0]];
-                                } else {    // single value
-                                    msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], [results[1]]];
+                                    msg.push(results[1]);
+                                } else if (typeof (results[1]) !== 'undefined') {
+                                    msg.push([results[1]]);
+                                }
+
+                                if (this._isPlainObject(results[2])) {
+                                    if (msg.length === 3) {
+                                        msg.push(null);
+                                    }
+                                    msg.push(results[2]);
                                 }
                             } else {
                                 msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
@@ -990,10 +998,9 @@
 
                             if (e.argsDict && this._isPlainObject(e.argsDict)) {
                                 if (msg.length === 5) {
-                                    msg.push(null, e.argsDict);
-                                } else {
-                                    msg.push(e.argsDict);
+                                    msg.push(null);
                                 }
+                                msg.push(e.argsDict);
                             }
                             this._send(msg);
                         });
@@ -1605,13 +1612,12 @@
 
             // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
             this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
+            this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+            this._cache.opStatus.reqId = reqId;
 
             callbacks.onSuccess && callbacks.onSuccess();
 
-            this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
-            this._cache.opStatus.reqId = reqId;
             return this;
-
         }
 
         /**
