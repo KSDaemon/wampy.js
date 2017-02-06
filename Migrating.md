@@ -1,6 +1,21 @@
 Migrating from previous versions
 ================================
 
+Migrating from 4.x to 5.x versions
+==================================
+
+5.0.0 version was extended and updated, so there are some backward incompatible changes.
+
+Now registered PRC during invocation will receive three arguments (instead of 2, previously): 
+array payload (may be undefined), object payload (may be undefined) and options object. 
+Also now RPC can return no result (undefined), or it must return an array with 1, 2 or 3 elements:
+
+* \[0\] element must contain options object or {} if not needed. Possible attribute of options is "progress": true, which
+indicates, that it's a progressive result, so there will be more results in future. Be sure to unset "progress"
+on last result message.
+* \[1\] element can contain array result or single value (that will be converted to array with one element)
+* \[2\] element can contain object result
+
 Migrating from 3.x to 4.x versions
 ==================================
 

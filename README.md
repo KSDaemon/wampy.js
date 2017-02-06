@@ -641,14 +641,16 @@ Must meet a WAMP Spec URI requirements.
              onSuccess: will be called on successful registration
              onError: will be called if registration would be aborted }
 
-Registered PRC during invocation will receive two arguments: payload (may be null), and options object. One attribute
-of interest in options is "receive_progress" (boolean), which indicates, that caller is willing to receive progressive
-results, if possible. RPC can return no result (undefined), or it must return an array with 2 elements:
+Registered PRC during invocation will receive three arguments: array payload (may be undefined), object payload 
+(may be undefined) and options object. One attribute of interest in options is "receive_progress" (boolean), 
+which indicates, that caller is willing to receive progressive results, if possible. RPC can return no result 
+(undefined), or it must return an array with 1, 2 or 3 elements:
 
 * \[0\] element must contain options object or {} if not needed. Possible attribute of options is "progress": true, which
 indicates, that it's a progressive result, so there will be more results in future. Be sure to unset "progress"
 on last result message.
-* \[1\] element can contain result, which can be a simple value, array or object
+* \[1\] element can contain array result or single value (that will be converted to array with one element)
+* \[2\] element can contain object result
 
 ```javascript
 const sqrt_f = function (x) { return [{}, x*x]; };
