@@ -125,13 +125,15 @@
     function getServerUrlBrowser (url) {
         let scheme, port;
 
+        if (/^ws(s)?:\/\//.test(url)) {   // ws scheme is specified
+            return url;
+        }
+
         scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 
         if (!url) {
             port = window.location.port !== '' ? ':' + window.location.port : '';
             return scheme + window.location.hostname + port + '/ws';
-        } else if (/^ws(s)?:\/\//.test(url)) {   // ws scheme is specified
-            return url;
         } else if (url[0] === '/') {    // just path on current server
             port = window.location.port !== '' ? ':' + window.location.port : '';
             return scheme + window.location.hostname + port + url;
