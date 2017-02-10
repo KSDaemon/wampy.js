@@ -470,14 +470,10 @@
          */
         _getReqId () {
             let reqId;
+            const max = 2 ^ 53;
 
             do {
-                /* Lua (and cjson) outputs big numbers in scientific notation :(
-                 * Need to find a way of fixing that
-                 * For now, i think it's not a big problem to reduce range.
-                 * reqId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);    // 9007199254740992
-                 */
-                reqId = Math.floor(Math.random() * 100000000000000);
+                reqId = Math.floor(Math.random() * max);
             } while (reqId in this._requests);
 
             return reqId;
