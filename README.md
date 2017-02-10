@@ -143,10 +143,6 @@ Wampy constructor can take 2 parameters:
     * String, begins with '/', meaning some path on current scheme:host:port.
     * Full qualified URL, starting with scheme 'ws' or 'wss'.
     * Host/domain with possible path, but without scheme. 
-Can be in forms of:
-    * fully qualified url: schema://server:port/path
-    * server:port/path. In this case page schema will be used.
-    * /path. In this case page schema, server, port will be used.
 * **options** hash-table. The only required field is `realm`. For node.js enviroment also necessary to
 specify `ws` - websocket module. See description below.
 
