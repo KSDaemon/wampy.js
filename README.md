@@ -138,7 +138,11 @@ Constructor([url[, options]])
 
 Wampy constructor can take 2 parameters:
 
-* **url** to wamp server - optional. If its undefined, page-schema://page-server:page-port/ws will be used.
+* **url** to wamp server - optional. URL can be specified in next forms:
+    * Undefined/null. If its undefined, page-scheme://page-server:page-port/ws will be used.
+    * String, begins with '/', meaning some path on current scheme:host:port.
+    * Full qualified URL, starting with scheme 'ws' or 'wss'.
+    * Host/domain with possible path, but without scheme. 
 Can be in forms of:
     * fully qualified url: schema://server:port/path
     * server:port/path. In this case page schema will be used.
