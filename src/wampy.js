@@ -977,7 +977,7 @@
 
                                 if (this._isPlainObject(results[2])) {
                                     if (msg.length === 3) {
-                                        msg.push(null);
+                                        msg.push([]);
                                     }
                                     msg.push(results[2]);
                                 }
@@ -996,7 +996,7 @@
 
                             if (e.argsDict && this._isPlainObject(e.argsDict)) {
                                 if (msg.length === 5) {
-                                    msg.push(null);
+                                    msg.push([]);
                                 }
                                 msg.push(e.argsDict);
                             }
@@ -1094,7 +1094,7 @@
         /**
          * Get the status of last operation
          *
-         * @returns {code, description}
+         * @returns {object} with 2 fields: code, description
          *      code: 0 - if operation was successful
          *      code > 0 - if error occurred
          *      description contains details about error
