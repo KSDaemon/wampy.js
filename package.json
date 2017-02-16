@@ -18,7 +18,7 @@
     "mocha": "^3.2.0",
     "mocha-lcov-reporter": "^1.2.0"
   },
-  "main": "src/wampy.js",
+  "main": "build/wampy.js",
   "dependencies": {
     "msgpack5": "^3.4.1",
     "websocket": "^1.0.24"
