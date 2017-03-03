@@ -10,7 +10,7 @@ var expect = require('chai').expect,
     msgpack = require('msgpack5')(),
     WebSocketModule = require('./fake-ws'),
     WebSocket = WebSocketModule.WebSocket,
-    Wampy = require('./../src/wampy'),
+    Wampy = require('./../src/index'),
     root = (typeof process === 'object' &&
             Object.prototype.toString.call(process) === '[object process]') ?
             global : window,

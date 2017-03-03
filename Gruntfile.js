@@ -4,24 +4,23 @@ module.exports = function (grunt) {
 
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
-        babel: {
-            options: {
-                sourceMap: true,
-                presets: ['es2015']
-            },
-            srcToDist: {
+        browserify: {
+            dist: {
+                options: {
+                    transform: [["babelify", { "presets": ["es2015"] }]]
+                },
                 files: {
-                    'build/wampy.js': 'src/wampy.js'
+                    "build/wampy.js": "src/index.js"
                 }
             }
         },
         replace: {
             dist: {
-                src         : ['build/wampy.js'],
-                overwrite   : true,
+                src: ['build/wampy.js'],
+                overwrite: true,
                 replacements: [{
                     from: /\}\)\(undefined, function \(\) \{/,
-                    to  : '})(this, function () {'
+                    to: '})(this, function () {'
                 }]
             }
         },
@@ -57,5 +56,5 @@ module.exports = function (grunt) {
         }
     });
 
-    grunt.registerTask('default', ['babel', 'replace', 'uglify', 'copy', 'concat']);
+    grunt.registerTask('default', ['browserify', 'replace', 'uglify', 'copy', 'concat']);
 };

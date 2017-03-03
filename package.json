@@ -5,11 +5,13 @@
   "author": "Konstantin Burkalev <KSDaemon@ya.ru> (http://ksdaemon.ru)",
   "devDependencies": {
     "babel-preset-es2015": "^6.22.0",
+    "babelify": "^7.3.0",
     "chai": "^3.5.0",
     "coveralls": "^2.11.15",
     "eslint": "^3.16.1",
     "grunt": "^1.0.1",
     "grunt-babel": "^6.0.0",
+    "grunt-browserify": "^5.0.0",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-uglify": "^2.0.0",
@@ -19,7 +21,7 @@
     "mocha": "^3.2.0",
     "mocha-lcov-reporter": "^1.2.0"
   },
-  "main": "src/wampy.js",
+  "main": "src/index.js",
   "dependencies": {
     "msgpack5": "^3.4.1",
     "websocket": "^1.0.24"
@@ -41,9 +43,9 @@
   "homepage": "https://github.com/KSDaemon/wampy.js",
   "scripts": {
     "build": "node ./node_modules/.bin/grunt",
-    "lint": "node ./node_modules/.bin/eslint src/wampy.js",
-    "lint:fix": "eslint --fix src/wampy.js",
-    "test": "node ./node_modules/.bin/mocha -R spec",
+    "lint": "node ./node_modules/.bin/eslint src",
+    "lint:fix": "node ./node_modules/.bin/eslint --fix src",
+    "test": "node ./node_modules/.bin/mocha --compilers js:babel-core/register -R spec",
     "cover": "node ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec"
   }
 }
