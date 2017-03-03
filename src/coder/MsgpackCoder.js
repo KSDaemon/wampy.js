@@ -4,11 +4,11 @@ export class MsgpackCoder {
         this._msgpack = msgpack;
     }
 
-    encode(data) {
+    encode (data) {
         return this._msgpack.encode(data);
     }
 
-    decode(data) {
+    decode (data) {
         return this._msgpack.decode(new Uint8Array(data));
     }
 }

@@ -1,7 +1,7 @@
-import {WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode} from './constants';
-import {getWebSocket} from './utils';
-import {JsonCoder} from './coder/JsonCoder';
-import {MsgpackCoder} from './coder/MsgpackCoder';
+import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode } from './constants';
+import { getWebSocket } from './utils';
+import { JsonCoder } from './coder/JsonCoder';
+import { MsgpackCoder } from './coder/MsgpackCoder';
 
 /**
  * WAMP Client Class

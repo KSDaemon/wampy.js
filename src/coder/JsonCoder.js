@@ -4,11 +4,11 @@ export class JsonCoder {
         this.protocol = 'json';
     }
 
-    encode(data) {
+    encode (data) {
         return JSON.stringify(data);
     }
 
-    decode(data) {
+    decode (data) {
         return JSON.parse(data);
     }
 }

@@ -18,7 +18,7 @@ import { Wampy } from './wampy';
 
 (function (getWampy) {
     if (typeof window !== 'undefined') {
-        window['Wampy'] = getWampy()
+        window['Wampy'] = getWampy();
     }
 
     if (typeof define === 'function' && define.amd) {
