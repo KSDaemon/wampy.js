@@ -1,4 +1,4 @@
-index.js
+wampy.js
 ========
 
 Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation
@@ -102,7 +102,7 @@ Installation
 Wampy.js can be installed using bower or npm or just by file-copy :)
 
 ```bash
-> bower install index.js
+> bower install wampy.js
 # Or
 > npm install wampy
 ```
