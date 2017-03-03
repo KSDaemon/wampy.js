@@ -361,12 +361,8 @@ export class Wampy {
      * @private
      */
     _setWsProtocols () {
-        if (this._options.coder) {
-            if (this._options.transportEncoding === 'msgpack') {
-                this._protocols = ['wamp.2.msgpack', 'wamp.2.json'];
-            } else {
-                this._protocols = ['wamp.2.json', 'wamp.2.msgpack'];
-            }
+        if (!(this._options.coder instanceof JsonCoder)) {
+            this._protocols.unshift('wamp.2.' + this._options.coder.protocol);
         }
     }
 
