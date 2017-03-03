@@ -16,9 +16,6 @@
 
 import { Wampy } from './wampy';
 
-'use strict';
-
-// Module boilerplate to support browser globals and browserify and AMD.
 (function (root, m) {
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
@@ -31,7 +28,5 @@ import { Wampy } from './wampy';
         root.Wampy = m();
     }
 }(this, function () {
-
     return Wampy;
-
 }));

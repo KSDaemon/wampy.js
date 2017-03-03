@@ -1,4 +1,4 @@
-import { isNode } from 'constants';
+import { isNode } from './constants';
 
 function getServerUrlBrowser (url) {
     let scheme, port;

@@ -1,4 +1,4 @@
-import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode } from 'constants';
+import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode } from './constants';
 import { getWebSocket } from './utils';
 
 /**
