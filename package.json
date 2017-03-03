@@ -7,6 +7,7 @@
     "babel-preset-es2015": "^6.22.0",
     "chai": "^3.5.0",
     "coveralls": "^2.11.15",
+    "eslint": "^3.16.1",
     "grunt": "^1.0.1",
     "grunt-babel": "^6.0.0",
     "grunt-contrib-concat": "^1.0.1",
@@ -40,7 +41,7 @@
   "homepage": "https://github.com/KSDaemon/wampy.js",
   "scripts": {
     "build": "node ./node_modules/.bin/grunt",
-    "lint": "eslint src/wampy.js",
+    "lint": "node ./node_modules/.bin/eslint src/wampy.js",
     "lint:fix": "eslint --fix src/wampy.js",
     "test": "node ./node_modules/.bin/mocha -R spec",
     "cover": "node ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec"
