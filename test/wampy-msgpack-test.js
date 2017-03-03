@@ -7,7 +7,6 @@
 var expect = require('chai').expect,
     routerUrl = 'ws://fake.server.org/ws/',
     anotherRouterUrl = 'ws://another.server.org/ws/',
-    msgpack = require('msgpack5')(),
     WebSocketModule = require('./fake-ws'),
     WebSocket = WebSocketModule.WebSocket,
     Wampy = require('./../src/index'),
@@ -15,6 +14,8 @@ var expect = require('chai').expect,
             Object.prototype.toString.call(process) === '[object process]') ?
             global : window,
     WAMP_ERROR_MSG = require('./wamp-error-msg.json');
+
+var msgpack = new Wampy.MsgpackCoder(require('msgpack5')());
 
 describe('Wampy.js [with msgpack encoder]', function () {
     this.timeout(0);
@@ -36,7 +37,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 onConnect: done,
                 ws: WebSocket,
                 transportEncoding: 'msgpack',
-                msgpackCoder: msgpack
+                coder: msgpack
             });
         });
 
@@ -113,7 +114,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     onReconnectSuccess: function () { done('Reached onReconnectSuccess'); },
                     ws                : WebSocket,
                     transportEncoding : 'msgpack',
-                    msgpackCoder      : msgpack
+                    coder      : msgpack
                 }),
                 options = wampy.options();
 
@@ -131,7 +132,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
             expect(options.onClose).to.be.a('function');
             expect(options.onError).to.be.a('function');
             expect(options.onReconnect).to.be.a('function');
-            expect(options.msgpackCoder).to.be.a('object');
+            expect(options.coder).to.be.a('object');
             expect(options.onReconnectSuccess).to.be.a('function');
         });
 
@@ -163,7 +164,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 reconnectInterval: 2000,
                 maxRetries: 7,
                 transportEncoding: 'msgpack',
-                msgpackCoder: msgpack,
+                coder: msgpack,
                 realm: 'AppRealm',
                 onConnect: function () { done(); },
                 onClose: function () { done('Reached close'); },

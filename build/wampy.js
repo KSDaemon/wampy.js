@@ -777,7 +777,7 @@ var Wampy = exports.Wampy = function () {
     }, {
         key: '_setWsProtocols',
         value: function _setWsProtocols() {
-            if (this._options.msgpackCoder) {
+            if (this._options.coder) {
                 if (this._options.transportEncoding === 'msgpack') {
                     this._protocols = ['wamp.2.msgpack', 'wamp.2.json'];
                 } else {
@@ -846,9 +846,9 @@ var Wampy = exports.Wampy = function () {
         key: '_encode',
         value: function _encode(msg) {
 
-            if (this._options.transportEncoding === 'msgpack' && this._options.msgpackCoder) {
+            if (this._options.transportEncoding === 'msgpack' && this._options.coder) {
                 try {
-                    return this._options.msgpackCoder.encode(msg);
+                    return this._options.coder.encode(msg);
                 } catch (e) {
                     throw new Error('[wampy] msgpack encode exception!');
                 }
@@ -867,9 +867,9 @@ var Wampy = exports.Wampy = function () {
     }, {
         key: '_decode',
         value: function _decode(msg) {
-            if (this._options.transportEncoding === 'msgpack' && this._options.msgpackCoder) {
+            if (this._options.transportEncoding === 'msgpack' && this._options.coder) {
                 try {
-                    return this._options.msgpackCoder.decode(new Uint8Array(msg));
+                    return this._options.coder.decode(new Uint8Array(msg));
                 } catch (e) {
                     throw new Error('[wampy] msgpack decode exception!');
                 }

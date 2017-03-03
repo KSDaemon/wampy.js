@@ -1,10 +1,20 @@
-import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode } from './constants';
-import { getWebSocket } from './utils';
+import {WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode} from './constants';
+import {getWebSocket} from './utils';
+import {JsonCoder} from './coder/JsonCoder';
+import {MsgpackCoder} from './coder/MsgpackCoder';
 
 /**
  * WAMP Client Class
  */
 export class Wampy {
+
+    static get JsonCoder () {
+        return JsonCoder;
+    }
+
+    static get MsgpackCoder () {
+        return MsgpackCoder;
+    }
 
     /**
      * Wampy constructor
@@ -269,7 +279,7 @@ export class Wampy {
              * User provided msgpack class
              * @type {function}
              */
-            msgpackCoder: null
+            coder: new Wampy.JsonCoder()
         };
 
         if (this._isPlainObject(options)) {
@@ -351,7 +361,7 @@ export class Wampy {
      * @private
      */
     _setWsProtocols () {
-        if (this._options.msgpackCoder) {
+        if (this._options.coder) {
             if (this._options.transportEncoding === 'msgpack') {
                 this._protocols = ['wamp.2.msgpack', 'wamp.2.json'];
             } else {
@@ -410,15 +420,10 @@ export class Wampy {
      * @private
      */
     _encode (msg) {
-
-        if (this._options.transportEncoding === 'msgpack' && this._options.msgpackCoder) {
-            try {
-                return this._options.msgpackCoder.encode(msg);
-            } catch (e) {
-                throw new Error('[wampy] msgpack encode exception!');
-            }
-        } else {
-            return JSON.stringify(msg);
+        try {
+            return this._options.coder.encode(msg);
+        } catch (e) {
+            throw new Error('[wampy] encoding exception!');
         }
     }
 
@@ -429,14 +434,10 @@ export class Wampy {
      * @private
      */
     _decode (msg) {
-        if (this._options.transportEncoding === 'msgpack' && this._options.msgpackCoder) {
-            try {
-                return this._options.msgpackCoder.decode(new Uint8Array(msg));
-            } catch (e) {
-                throw new Error('[wampy] msgpack decode exception!');
-            }
-        } else {
-            return JSON.parse(msg);
+        try {
+            return this._options.coder.decode(msg);
+        } catch (e) {
+            throw new Error('[wampy] decoding exception!');
         }
     }
 

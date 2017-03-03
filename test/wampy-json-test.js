@@ -35,7 +35,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                 realm: 'AppRealm',
                 onConnect: done,
                 ws: WebSocket,
-                msgpackCoder: msgpack
+                coder: new Wampy.JsonCoder()
             });
         });
 
