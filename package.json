@@ -39,10 +39,10 @@
   },
   "homepage": "https://github.com/KSDaemon/wampy.js",
   "scripts": {
-    "build": "grunt",
+    "build": "node ./node_modules/.bin/grunt",
     "lint": "eslint src/wampy.js",
     "lint:fix": "eslint --fix src/wampy.js",
-    "test": "mocha -R spec",
-    "cover": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec"
+    "test": "node ./node_modules/.bin/mocha -R spec",
+    "cover": "node ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec"
   }
 }

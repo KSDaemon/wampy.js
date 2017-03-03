@@ -20,7 +20,7 @@
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -131,14 +131,16 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         var scheme = void 0,
             port = void 0;
 
+        if (/^ws(s)?:\/\//.test(url)) {
+            // ws scheme is specified
+            return url;
+        }
+
         scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
 
         if (!url) {
             port = window.location.port !== '' ? ':' + window.location.port : '';
             return scheme + window.location.hostname + port + '/ws';
-        } else if (/^ws(s)?:\/\//.test(url)) {
-            // ws scheme is specified
-            return url;
         } else if (url[0] === '/') {
             // just path on current server
             port = window.location.port !== '' ? ':' + window.location.port : '';
@@ -193,7 +195,6 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
          * @param {string} url
          * @param {Object} options
          */
-
         function Wampy(url, options) {
             _classCallCheck(this, Wampy);
 
@@ -490,14 +491,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             key: '_getReqId',
             value: function _getReqId() {
                 var reqId = void 0;
+                var max = 2 ^ 53;
 
                 do {
-                    /* Lua (and cjson) outputs big numbers in scientific notation :(
-                     * Need to find a way of fixing that
-                     * For now, i think it's not a big problem to reduce range.
-                     * reqId = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);    // 9007199254740992
-                     */
-                    reqId = Math.floor(Math.random() * 100000000000000);
+                    reqId = Math.floor(Math.random() * max);
                 } while (reqId in this._requests);
 
                 return reqId;
@@ -581,28 +578,27 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
         }, {
             key: '_preReqChecks',
             value: function _preReqChecks(topicURI, role, callbacks) {
+                var flag = true;
 
                 if (this._cache.sessionId && !this._cache.server_wamp_features.roles[role]) {
                     this._cache.opStatus = WAMP_ERROR_MSG['NO_' + role.toUpperCase()];
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
-                    return false;
+                    flag = false;
                 }
 
                 if (topicURI && !this._validateURI(topicURI)) {
                     this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
-
-                    if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
-                    }
-
-                    return false;
+                    flag = false;
                 }
 
-                return true;
+                if (flag) {
+                    return true;
+                }
+
+                if (this._isPlainObject(callbacks) && callbacks.onError) {
+                    callbacks.onError(this._cache.opStatus.description);
+                }
+
+                return false;
             }
 
             /**
@@ -880,7 +876,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                             case WAMP_MSG_SPEC.REGISTER:
                             case WAMP_MSG_SPEC.UNREGISTER:
 
-                                this._requests[data[2]] && this._requests[data[2]].callbacks.onError && this._requests[data[2]].callbacks.onError(data[4], data[3]);
+                                this._requests[data[2]] && this._requests[data[2]].callbacks.onError && this._requests[data[2]].callbacks.onError(data[4], data[3], data[5], data[6]);
                                 delete this._requests[data[2]];
 
                                 break;
@@ -895,7 +891,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
                                 break;
                             default:
-                                this._log('[wampy] Received non-compliant WAMP message');
+                                this._log('[wampy] Received non-compliant WAMP ERROR message');
                                 break;
                         }
                         break;
@@ -1022,16 +1018,24 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
                             p.then(function (results) {
                                 // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
-                                if (results) {
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+                                if (_this3._isArray(results)) {
+                                    // Options
+                                    if (_this3._isPlainObject(results[0])) {
+                                        msg[2] = results[0];
+                                    }
+
                                     if (_this3._isArray(results[1])) {
-                                        msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], results[1]];
-                                    } else if (_this3._isPlainObject(results[1])) {
-                                        msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], [], results[1]];
-                                    } else if (typeof results[1] === 'undefined') {
-                                        msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0]];
-                                    } else {
-                                        // single value
-                                        msg = [WAMP_MSG_SPEC.YIELD, data[1], results[0], [results[1]]];
+                                        msg.push(results[1]);
+                                    } else if (typeof results[1] !== 'undefined') {
+                                        msg.push([results[1]]);
+                                    }
+
+                                    if (_this3._isPlainObject(results[2])) {
+                                        if (msg.length === 3) {
+                                            msg.push([]);
+                                        }
+                                        msg.push(results[2]);
                                     }
                                 } else {
                                     msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
@@ -1046,10 +1050,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
                                 if (e.argsDict && _this3._isPlainObject(e.argsDict)) {
                                     if (msg.length === 5) {
-                                        msg.push(null, e.argsDict);
-                                    } else {
-                                        msg.push(e.argsDict);
+                                        msg.push([]);
                                     }
+                                    msg.push(e.argsDict);
                                 }
                                 _this3._send(msg);
                             });
@@ -1192,7 +1195,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             /**
              * Get the status of last operation
              *
-             * @returns {code, description}
+             * @returns {object} with 2 fields: code, description
              *      code: 0 - if operation was successful
              *      code > 0 - if error occurred
              *      description contains details about error
@@ -1738,11 +1741,11 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
                 // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
                 this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
+                this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+                this._cache.opStatus.reqId = reqId;
 
                 callbacks.onSuccess && callbacks.onSuccess();
 
-                this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
-                this._cache.opStatus.reqId = reqId;
                 return this;
             }
 
