@@ -304,18 +304,20 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _wampy = require('./wampy');
 
-(function (root, m) {
+(function (getWampy) {
+
+    if (typeof window !== 'undefined') {
+        window['Wampy'] = getWampy();
+    }
+
     if (typeof define === 'function' && define.amd) {
         // AMD. Register as an anonymous module.
-        define(['exports'], m);
+        define(['exports'], getWampy);
     } else if ((typeof exports === 'undefined' ? 'undefined' : _typeof(exports)) === 'object' && typeof exports.nodeName !== 'string') {
         // CommonJS
-        module.exports = m();
-    } else {
-        // Browser globals
-        root.Wampy = m();
+        module.exports = getWampy();
     }
-})(this, function () {
+})(function () {
     return _wampy.Wampy;
 });
 
