@@ -181,6 +181,73 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],2:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var JsonCoder = exports.JsonCoder = function () {
+    function JsonCoder() {
+        _classCallCheck(this, JsonCoder);
+
+        this.protocol = 'json';
+    }
+
+    _createClass(JsonCoder, [{
+        key: 'encode',
+        value: function encode(data) {
+            return JSON.stringify(data);
+        }
+    }, {
+        key: 'decode',
+        value: function decode(data) {
+            return JSON.parse(data);
+        }
+    }]);
+
+    return JsonCoder;
+}();
+
+},{}],3:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var MsgpackCoder = exports.MsgpackCoder = function () {
+    function MsgpackCoder(msgpack) {
+        _classCallCheck(this, MsgpackCoder);
+
+        this.protocol = 'msgpack';
+        this._msgpack = msgpack;
+    }
+
+    _createClass(MsgpackCoder, [{
+        key: 'encode',
+        value: function encode(data) {
+            return this._msgpack.encode(data);
+        }
+    }, {
+        key: 'decode',
+        value: function decode(data) {
+            return this._msgpack.decode(new Uint8Array(data));
+        }
+    }]);
+
+    return MsgpackCoder;
+}();
+
+},{}],4:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -283,7 +350,7 @@ var WAMP_ERROR_MSG = exports.WAMP_ERROR_MSG = {
 var isNode = exports.isNode = (typeof process === 'undefined' ? 'undefined' : _typeof(process)) === 'object' && Object.prototype.toString.call(process) === '[object process]';
 
 }).call(this,require('_process'))
-},{"_process":1}],3:[function(require,module,exports){
+},{"_process":1}],5:[function(require,module,exports){
 'use strict';
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; /**
@@ -305,7 +372,6 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 var _wampy = require('./wampy');
 
 (function (getWampy) {
-
     if (typeof window !== 'undefined') {
         window['Wampy'] = getWampy();
     }
@@ -321,7 +387,7 @@ var _wampy = require('./wampy');
     return _wampy.Wampy;
 });
 
-},{"./wampy":5}],4:[function(require,module,exports){
+},{"./wampy":7}],6:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -388,7 +454,7 @@ function getWebSocket(url, protocols, ws) {
     return null;
 }
 
-},{"./constants":2}],5:[function(require,module,exports){
+},{"./constants":4}],7:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -403,18 +469,35 @@ var _constants = require('./constants');
 
 var _utils = require('./utils');
 
+var _JsonCoder = require('./coder/JsonCoder');
+
+var _MsgpackCoder = require('./coder/MsgpackCoder');
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 /**
  * WAMP Client Class
  */
 var Wampy = exports.Wampy = function () {
+    _createClass(Wampy, null, [{
+        key: 'JsonCoder',
+        get: function get() {
+            return _JsonCoder.JsonCoder;
+        }
+    }, {
+        key: 'MsgpackCoder',
+        get: function get() {
+            return _MsgpackCoder.MsgpackCoder;
+        }
 
-    /**
-     * Wampy constructor
-     * @param {string} url
-     * @param {Object} options
-     */
+        /**
+         * Wampy constructor
+         * @param {string} url
+         * @param {Object} options
+         */
+
+    }]);
+
     function Wampy(url, options) {
         _classCallCheck(this, Wampy);
 
@@ -674,7 +757,7 @@ var Wampy = exports.Wampy = function () {
              * User provided msgpack class
              * @type {function}
              */
-            msgpackCoder: null
+            coder: new Wampy.JsonCoder()
         };
 
         if (this._isPlainObject(options)) {
@@ -777,12 +860,8 @@ var Wampy = exports.Wampy = function () {
     }, {
         key: '_setWsProtocols',
         value: function _setWsProtocols() {
-            if (this._options.coder) {
-                if (this._options.transportEncoding === 'msgpack') {
-                    this._protocols = ['wamp.2.msgpack', 'wamp.2.json'];
-                } else {
-                    this._protocols = ['wamp.2.json', 'wamp.2.msgpack'];
-                }
+            if (!(this._options.coder instanceof _JsonCoder.JsonCoder)) {
+                this._protocols.unshift('wamp.2.' + this._options.coder.protocol);
             }
         }
 
@@ -845,15 +924,10 @@ var Wampy = exports.Wampy = function () {
     }, {
         key: '_encode',
         value: function _encode(msg) {
-
-            if (this._options.transportEncoding === 'msgpack' && this._options.coder) {
-                try {
-                    return this._options.coder.encode(msg);
-                } catch (e) {
-                    throw new Error('[wampy] msgpack encode exception!');
-                }
-            } else {
-                return JSON.stringify(msg);
+            try {
+                return this._options.coder.encode(msg);
+            } catch (e) {
+                throw new Error('[wampy] encoding exception!');
             }
         }
 
@@ -867,14 +941,10 @@ var Wampy = exports.Wampy = function () {
     }, {
         key: '_decode',
         value: function _decode(msg) {
-            if (this._options.transportEncoding === 'msgpack' && this._options.coder) {
-                try {
-                    return this._options.coder.decode(new Uint8Array(msg));
-                } catch (e) {
-                    throw new Error('[wampy] msgpack decode exception!');
-                }
-            } else {
-                return JSON.parse(msg);
+            try {
+                return this._options.coder.decode(msg);
+            } catch (e) {
+                throw new Error('[wampy] decoding exception!');
             }
         }
 
@@ -2081,4 +2151,4 @@ var Wampy = exports.Wampy = function () {
 }();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./constants":2,"./utils":4}]},{},[3]);
+},{"./coder/JsonCoder":2,"./coder/MsgpackCoder":3,"./constants":4,"./utils":6}]},{},[5]);
