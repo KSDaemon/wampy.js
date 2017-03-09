@@ -860,8 +860,8 @@ var Wampy = exports.Wampy = function () {
     }, {
         key: '_setWsProtocols',
         value: function _setWsProtocols() {
-            if (!(this._options.coder instanceof _JsonCoder.JsonCoder)) {
-                this._protocols.unshift('wamp.2.' + this._options.coder.protocol);
+            if (!(this._options.serializer instanceof _JsonCoder.JsonCoder)) {
+                this._protocols.unshift('wamp.2.' + this._options.serializer.protocol);
             }
         }
 
@@ -925,7 +925,7 @@ var Wampy = exports.Wampy = function () {
         key: '_encode',
         value: function _encode(msg) {
             try {
-                return this._options.coder.encode(msg);
+                return this._options.serializer.encode(msg);
             } catch (e) {
                 throw new Error('[wampy] encoding exception!');
             }
@@ -942,7 +942,7 @@ var Wampy = exports.Wampy = function () {
         key: '_decode',
         value: function _decode(msg) {
             try {
-                return this._options.coder.decode(msg);
+                return this._options.serializer.decode(msg);
             } catch (e) {
                 throw new Error('[wampy] decoding exception!');
             }

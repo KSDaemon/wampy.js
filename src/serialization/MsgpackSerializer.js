@@ -1,6 +1,7 @@
-export class MsgpackCoder {
+export class MsgpackSerializer {
     constructor (msgpack) {
         this.protocol = 'msgpack';
+        this.binaryType = 'arraybuffer';
         this._msgpack = msgpack;
     }
 

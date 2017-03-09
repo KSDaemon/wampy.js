@@ -1,7 +1,8 @@
-export class JsonCoder {
+export class JsonSerializer {
 
     constructor () {
         this.protocol = 'json';
+        this.binaryType = 'blob';
     }
 
     encode (data) {

@@ -16,6 +16,8 @@ var expect = require('chai').expect,
             global : window,
     WAMP_ERROR_MSG = require('./wamp-error-msg.json');
 
+import {JsonSerializer} from '../src/serialization/JsonSerializer';
+
 describe('Wampy.js [with JSON encoder]', function () {
     this.timeout(0);
 
@@ -35,7 +37,7 @@ describe('Wampy.js [with JSON encoder]', function () {
                 realm: 'AppRealm',
                 onConnect: done,
                 ws: WebSocket,
-                coder: new Wampy.JsonCoder()
+                coder: new JsonSerializer()
             });
         });
 

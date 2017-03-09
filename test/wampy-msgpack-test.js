@@ -15,7 +15,9 @@ var expect = require('chai').expect,
             global : window,
     WAMP_ERROR_MSG = require('./wamp-error-msg.json');
 
-var msgpack = new Wampy.MsgpackCoder(require('msgpack5')());
+import {MsgpackSerializer} from '../src/serialization/MsgpackSerializer';
+
+var msgpack = new MsgpackSerializer(require('msgpack5')());
 
 describe('Wampy.js [with msgpack encoder]', function () {
     this.timeout(0);

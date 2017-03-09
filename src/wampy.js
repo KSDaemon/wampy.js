@@ -1,20 +1,11 @@
 import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode } from './constants';
-import { getWebSocket } from './utils';
-import { JsonCoder } from './coder/JsonCoder';
-import { MsgpackCoder } from './coder/MsgpackCoder';
+import { getWebSocket, isBinaryTypeAllowed } from './utils';
+import { JsonSerializer } from './serialization/JsonSerializer';
 
 /**
  * WAMP Client Class
  */
 export class Wampy {
-
-    static get JsonCoder () {
-        return JsonCoder;
-    }
-
-    static get MsgpackCoder () {
-        return MsgpackCoder;
-    }
 
     /**
      * Wampy constructor
@@ -204,12 +195,6 @@ export class Wampy {
             maxRetries: 25,
 
             /**
-             * Message serializer
-             * @type {string}
-             */
-            transportEncoding: 'json',
-
-            /**
              * WAMP Realm to join
              * @type {string}
              */
@@ -277,9 +262,9 @@ export class Wampy {
 
             /**
              * User provided msgpack class
-             * @type {function}
+             * @type {object}
              */
-            coder: new Wampy.JsonCoder()
+            serializer: new JsonSerializer()
         };
 
         if (this._isPlainObject(options)) {
@@ -361,8 +346,8 @@ export class Wampy {
      * @private
      */
     _setWsProtocols () {
-        if (!(this._options.coder instanceof JsonCoder)) {
-            this._protocols.unshift('wamp.2.' + this._options.coder.protocol);
+        if (!(this._options.serializer instanceof JsonSerializer)) {
+            this._protocols.unshift('wamp.2.' + this._options.serializer.protocol);
         }
     }
 
@@ -417,7 +402,7 @@ export class Wampy {
      */
     _encode (msg) {
         try {
-            return this._options.coder.encode(msg);
+            return this._options.serializer.encode(msg);
         } catch (e) {
             throw new Error('[wampy] encoding exception!');
         }
@@ -431,7 +416,7 @@ export class Wampy {
      */
     _decode (msg) {
         try {
-            return this._options.coder.decode(msg);
+            return this._options.serializer.decode(msg);
         } catch (e) {
             throw new Error('[wampy] decoding exception!');
         }
@@ -504,13 +489,13 @@ export class Wampy {
 
         this._log('[wampy] websocket connected');
 
-        if (this._ws.protocol) {
-            this._options.transportEncoding = this._ws.protocol.split('.')[2];
+        const type = this._options.serializer.binaryType;
+
+        if (!isBinaryTypeAllowed(type)) {
+            throw new Error('Binary type is not allowed: ' + type);
         }
 
-        if (this._options.transportEncoding === 'msgpack') {
-            this._ws.binaryType = 'arraybuffer';
-        }
+        this._ws.binatyType = type;
 
         // WAMP SPEC: [HELLO, Realm|uri, Details|dict]
         // Sending directly 'cause it's a hello msg and no sessionId check is needed
