@@ -162,32 +162,31 @@ ws = new Wampy({ reconnectInterval: 1*1000, ws: w3cws });
 
 ```
 
-Json serializer will be used by default. If you want to use msgpack encoder, pass it through options,
-and set encoding type to 'msgpack'.
+Json serializer will be used by default. If you want to use msgpack serializer, pass it through options.
 
 ```javascript
 // in browser
 ws = new Wampy('ws://socket.server.com:5000/ws', {
-    transportEncoding: 'msgpack',
-    msgpackCoder: msgpack5
+    serializer: new WampyMsgpackSerializer(msgpack5)
 });
 ws = new Wampy({
-    transportEncoding: 'msgpack',
-    msgpackCoder: msgpack5
+    serializer: new WampyMsgpackSerializer(msgpack5)
 });
 
 // in node.js
-w3cws = require('websocket').w3cwebsocket;
-msgpack = require('msgpack5')();
+import {Wampy} from 'wampy';
+import {MsgpackSerializer} from 'wampy';
+import {w3cwebsocket} from 'websocket';
+
+const msgpack5 = require('msgpack5');
+
 ws = new Wampy('ws://socket.server.com:5000/ws', {
     ws: w3cws,
-    transportEncoding: 'msgpack',
-    msgpackCoder: msgpack
+    serializer: new MsgpackSerializer(msgpack5())
 });
 ws = new Wampy({
     ws: w3cws,
-    transportEncoding: 'msgpack',
-    msgpackCoder: msgpack
+    serializer: new MsgpackSerializer(msgpack5())
 });
 
 ```
@@ -210,9 +209,6 @@ or had registered some procedures, Wampy will resubscribe to that topics and rer
 * **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
 * **maxRetries**. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
 will be called
-* **transportEncoding**. Default value: json. Transport serializer to use. Supports 2 values: json|msgpack.
-For using msgpack you need to provide [msgpack5][] javascript library, set up **msgpackCoder** option, and wamp server,
-that also supports it.
 * **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
 * **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
 * **authid**. Default value: null. Authentication (user) id to use in challenge.
@@ -228,8 +224,8 @@ See [Challenge Response Authentication](#challenge-response-authentication) sect
 * **onReconnect**. Default value: null. Callback function. Fired every time on reconnection attempt.
 * **onReconnectSuccess**. Default value: null. Callback function. Fired every time when reconnection succeeded.
 * **ws**. Default value: null. User provided WebSocket class. Useful in node enviroment.
-* **msgpackCoder**. Default value: null. User provided msgpack class. Useful if you plan to use msgpack encoder
-instead of default json. Theoretically, any msgpack encoder with encode/decode methods should work.
+* **serializer**. Default value: JsonSerializer. User provided serializer class. Useful if you plan to use msgpack encoder
+instead of default json.
 In practice, [msgpack5][] tested and works well with [Wiola][], [msgpack-lite](https://github.com/kawanet/msgpack-lite)
 doesn't work as expected. Feel free to research other variants.
 

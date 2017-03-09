@@ -4,22 +4,22 @@
  * Date: 07.04.15
  */
 
-var expect = require('chai').expect,
-    routerUrl = 'ws://fake.server.org/ws/',
+const routerUrl = 'ws://fake.server.org/ws/',
     anotherRouterUrl = 'ws://another.server.org/ws/',
-    WebSocketModule = require('./fake-ws'),
-    WebSocket = WebSocketModule.WebSocket,
-    Wampy = require('./../src/index'),
     root = (typeof process === 'object' &&
-            Object.prototype.toString.call(process) === '[object process]') ?
-            global : window,
-    WAMP_ERROR_MSG = require('./wamp-error-msg.json');
+    Object.prototype.toString.call(process) === '[object process]') ?
+        global : window;
 
-import {MsgpackSerializer} from '../src/serialization/MsgpackSerializer';
+import {expect} from 'chai';
+import * as WebSocketModule from './fake-ws';
+import {WebSocket} from './fake-ws';
+import {MsgpackSerializer} from './../src/index';
+import {Wampy} from './../src/index';
+import * as WAMP_ERROR_MSG from './wamp-error-msg.json';
 
 var msgpack = new MsgpackSerializer(require('msgpack5')());
 
-describe('Wampy.js [with msgpack encoder]', function () {
+describe('Wampy.js [with msgpack serializer]', function () {
     this.timeout(0);
 
     before(function () {
@@ -39,7 +39,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 onConnect: done,
                 ws: WebSocket,
                 transportEncoding: 'msgpack',
-                coder: msgpack
+                serializer: msgpack
             });
         });
 
@@ -73,11 +73,17 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-            wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid', onChallenge: function () {} }),
+            wampy = new Wampy(routerUrl, {
+                realm: 'AppRealm', authid: 'userid', onChallenge: function () {
+                }
+            }),
                 opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-            wampy = new Wampy(routerUrl, { realm: 'AppRealm', authmethods: ['wampcra'], onChallenge: function () {} }),
+            wampy = new Wampy(routerUrl, {
+                realm: 'AppRealm', authmethods: ['wampcra'], onChallenge: function () {
+                }
+            }),
                 opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
@@ -89,7 +95,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
             opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-            wampy = new Wampy(routerUrl, { realm: 'AppRealm', onChallenge: function () {} });
+            wampy = new Wampy(routerUrl, {
+                realm: 'AppRealm', onChallenge: function () {
+                }
+            });
             opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
         });
@@ -101,22 +110,32 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     customFiled3: [1, 2, 3, 4, 5]
                 },
                 wampy = new Wampy(routerUrl, {
-                    autoReconnect     : true,
-                    reconnectInterval : 10000,
-                    maxRetries        : 50,
-                    realm             : 'AppRealm',
+                    autoReconnect: true,
+                    reconnectInterval: 10000,
+                    maxRetries: 50,
+                    realm: 'AppRealm',
                     helloCustomDetails: helloCustomDetails,
-                    onChallenge       : function () { done('Reached onChallenge'); },
-                    authid            : 'userid',
-                    authmethods       : ['wampcra'],
-                    onConnect         : done,
-                    onClose           : function () { done('Reached onClose'); },
-                    onError           : function () { done('Reached onError'); },
-                    onReconnect       : function () { done('Reached onReconnect'); },
-                    onReconnectSuccess: function () { done('Reached onReconnectSuccess'); },
-                    ws                : WebSocket,
-                    transportEncoding : 'msgpack',
-                    coder      : msgpack
+                    onChallenge: function () {
+                        done('Reached onChallenge');
+                    },
+                    authid: 'userid',
+                    authmethods: ['wampcra'],
+                    onConnect: done,
+                    onClose: function () {
+                        done('Reached onClose');
+                    },
+                    onError: function () {
+                        done('Reached onError');
+                    },
+                    onReconnect: function () {
+                        done('Reached onReconnect');
+                    },
+                    onReconnectSuccess: function () {
+                        done('Reached onReconnectSuccess');
+                    },
+                    ws: WebSocket,
+                    transportEncoding: 'msgpack',
+                    serializer: msgpack
                 }),
                 options = wampy.options();
 
@@ -134,23 +153,33 @@ describe('Wampy.js [with msgpack encoder]', function () {
             expect(options.onClose).to.be.a('function');
             expect(options.onError).to.be.a('function');
             expect(options.onReconnect).to.be.a('function');
-            expect(options.coder).to.be.a('object');
+            expect(options.serializer).to.be.a('object');
             expect(options.onReconnectSuccess).to.be.a('function');
         });
 
         it('allows to use Challenge Response Authentication while connecting to server', function (done) {
             var wampy = new Wampy(routerUrl, {
-                transportEncoding : 'json',
-                realm             : 'AppRealm',
-                onChallenge       : function (method, info) { return 'secretKey'; },
-                authid            : 'user1',
-                authmethods       : ['wampcra'],
-                onConnect         : done,
-                onClose           : function () { done('Reached onClose'); },
-                onError           : function () { done('Reached onError'); },
-                onReconnect       : function () { done('Reached onReconnect'); },
-                onReconnectSuccess: function () { done('Reached onReconnectSuccess'); },
-                ws                : WebSocket
+                transportEncoding: 'json',
+                realm: 'AppRealm',
+                onChallenge: function (method, info) {
+                    return 'secretKey';
+                },
+                authid: 'user1',
+                authmethods: ['wampcra'],
+                onConnect: done,
+                onClose: function () {
+                    done('Reached onClose');
+                },
+                onError: function () {
+                    done('Reached onError');
+                },
+                onReconnect: function () {
+                    done('Reached onReconnect');
+                },
+                onReconnectSuccess: function () {
+                    done('Reached onReconnectSuccess');
+                },
+                ws: WebSocket
             });
         });
 
@@ -166,13 +195,23 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 reconnectInterval: 2000,
                 maxRetries: 7,
                 transportEncoding: 'msgpack',
-                coder: msgpack,
+                serializer: msgpack,
                 realm: 'AppRealm',
-                onConnect: function () { done(); },
-                onClose: function () { done('Reached close'); },
-                onError: function () { done('Reached error'); },
-                onReconnect: function () { done('Reached reconnection'); },
-                onReconnectSuccess: function () { done('Reached reconnection success'); },
+                onConnect: function () {
+                    done();
+                },
+                onClose: function () {
+                    done('Reached close');
+                },
+                onError: function () {
+                    done('Reached error');
+                },
+                onReconnect: function () {
+                    done('Reached reconnection');
+                },
+                onReconnectSuccess: function () {
+                    done('Reached reconnection success');
+                },
                 ws: WebSocket
             });
         });
@@ -184,14 +223,15 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     customFiled3: [1, 2, 3, 4, 5]
                 },
                 options = wampy.options({
-                    autoReconnect     : true,
-                    reconnectInterval : 1000,
-                    maxRetries        : 5,
-                    transportEncoding : 'msgpack',
+                    autoReconnect: true,
+                    reconnectInterval: 1000,
+                    maxRetries: 5,
+                    transportEncoding: 'msgpack',
                     helloCustomDetails: helloCustomDetails,
-                    onChallenge       : function () {},
-                    authid            : 'userid',
-                    authmethods       : ['wampcra'],
+                    onChallenge: function () {
+                    },
+                    authid: 'userid',
+                    authmethods: ['wampcra'],
                 }).options();
 
             expect(options.autoReconnect).to.be.true;
@@ -232,15 +272,24 @@ describe('Wampy.js [with msgpack encoder]', function () {
             opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-            wampy.options({ authid: null, onChallenge: function () {} }).connect();
+            wampy.options({
+                authid: null, onChallenge: function () {
+                }
+            }).connect();
             opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-            wampy.options({ authid: null, authmethods: [], onChallenge: function () {} }).connect();
+            wampy.options({
+                authid: null, authmethods: [], onChallenge: function () {
+                }
+            }).connect();
             opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-            wampy.options({ authid: 'userid', authmethods: 'string', onChallenge: function () {} }).connect();
+            wampy.options({
+                authid: 'userid', authmethods: 'string', onChallenge: function () {
+                }
+            }).connect();
             opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
@@ -251,8 +300,12 @@ describe('Wampy.js [with msgpack encoder]', function () {
             wampy.options({
                 authid: 'user1',
                 authmethods: ['wampcra'],
-                onChallenge: function (method, info) { throw new Error('Error occured in authentication'); },
-                onError: function (e) { done(); },
+                onChallenge: function (method, info) {
+                    throw new Error('Error occured in authentication');
+                },
+                onError: function (e) {
+                    done();
+                },
                 onConnect: null,
                 onClose: null
             })
@@ -261,7 +314,9 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
         it('calls onError handler if server requests authentication, but no credentials were provided', function (done) {
             wampy.options({
-                onError: function (e) { done(); },
+                onError: function (e) {
+                    done();
+                },
                 onConnect: null,
                 onClose: null,
                 authid: null,
@@ -278,7 +333,9 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
         it('allows to disconnect while connecting to server', function (done) {
             wampy.options({
-                onConnect: function () { done('Reached onConnect'); },
+                onConnect: function () {
+                    done('Reached onConnect');
+                },
                 onClose: done
             }).connect();
 
@@ -327,34 +384,56 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 onConnect: function () {
                     wampy
                         .subscribe('subscribe.reconnect1', {
-                            onSuccess: function () { },
-                            onError: function () { done('Error during subscribing'); },
-                            onEvent: function (e) { }
+                            onSuccess: function () {
+                            },
+                            onError: function () {
+                                done('Error during subscribing');
+                            },
+                            onEvent: function (e) {
+                            }
                         })
                         .subscribe('subscribe.reconnect2', {
-                            onSuccess: function () { },
-                            onError: function () { done('Error during subscribing'); },
-                            onEvent: function (e) { }
+                            onSuccess: function () {
+                            },
+                            onError: function () {
+                                done('Error during subscribing');
+                            },
+                            onEvent: function (e) {
+                            }
                         })
                         .register('register.reconnect1', {
-                            rpc: function (e) { },
-                            onSuccess: function () { },
-                            onError: function () { done('Error during RPC registration'); }
+                            rpc: function (e) {
+                            },
+                            onSuccess: function () {
+                            },
+                            onError: function () {
+                                done('Error during RPC registration');
+                            }
                         })
                         .register('register.reconnect2', {
-                            rpc: function (e) { },
-                            onSuccess: function () { },
-                            onError: function () { done('Error during RPC registration'); }
+                            rpc: function (e) {
+                            },
+                            onSuccess: function () {
+                            },
+                            onError: function () {
+                                done('Error during RPC registration');
+                            }
                         })
                         .register('register.reconnect3', {
-                            rpc: function (e) { },
-                            onSuccess: function () { },
-                            onError: function () { done('Error during RPC registration'); }
+                            rpc: function (e) {
+                            },
+                            onSuccess: function () {
+                            },
+                            onError: function () {
+                                done('Error during RPC registration');
+                            }
                         });
 
                 },
-                onClose: function () { },
-                onError: function () { },
+                onClose: function () {
+                },
+                onError: function () {
+                },
                 onReconnect: function () {
                     var t = root.setInterval(function () {
                         if (wampy._subsTopics.size === 2 && wampy._rpcNames.size === 3) {
@@ -363,13 +442,17 @@ describe('Wampy.js [with msgpack encoder]', function () {
                             wampy.options({ onReconnect: null })
                                 .subscribe('subscribe.reconnection.check', {
                                     onSuccess: done,
-                                    onError: function () { done('Error during subscribing'); },
-                                    onEvent: function (e) { }
+                                    onError: function () {
+                                        done('Error during subscribing');
+                                    },
+                                    onEvent: function (e) {
+                                    }
                                 });
                         }
                     }, 1);
                 },
-                onReconnectSuccess: function () { }
+                onReconnectSuccess: function () {
+                }
             }).connect();
         });
 
@@ -411,7 +494,9 @@ describe('Wampy.js [with msgpack encoder]', function () {
         it('calls error handler if server sends abort message', function (done) {
             wampy.options({
                 onClose: null,
-                onError: function (e) { done(); }
+                onError: function (e) {
+                    done();
+                }
             }).connect();
         });
 
@@ -428,12 +513,14 @@ describe('Wampy.js [with msgpack encoder]', function () {
             });
 
             it('disallows to subscribe to topic if server does not provide BROKER role', function () {
-                wampy.subscribe('qwe.asd.zxc', function (e) { });
+                wampy.subscribe('qwe.asd.zxc', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_BROKER);
 
                 wampy.subscribe('qwe.asd.zxc',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
                         }
@@ -447,7 +534,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
                 wampy.unsubscribe('qwe.asd.zxc',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
                         }
@@ -461,7 +549,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
                 wampy.publish('qwe.asd.zxc', 'payload',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
                         }
@@ -476,27 +565,34 @@ describe('Wampy.js [with msgpack encoder]', function () {
                             wampy.options({
                                 onConnect: function () {
 
-                                    wampy.subscribe('q.w.e', function (e) { });
+                                    wampy.subscribe('q.w.e', function (e) {
+                                    });
                                     expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                                    wampy.subscribe('qwe.asd.zxc.', function (e) { });
+                                    wampy.subscribe('qwe.asd.zxc.', function (e) {
+                                    });
                                     expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                                    wampy.subscribe('qwe.asd..zxc', function (e) { });
+                                    wampy.subscribe('qwe.asd..zxc', function (e) {
+                                    });
                                     expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                                    wampy.subscribe('qq,ww,ee', function (e) { });
+                                    wampy.subscribe('qq,ww,ee', function (e) {
+                                    });
                                     expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                                    wampy.subscribe('qq:www:ee', function (e) { });
+                                    wampy.subscribe('qq:www:ee', function (e) {
+                                    });
                                     expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                                    wampy.subscribe('q.w.e', function (e) { });
+                                    wampy.subscribe('q.w.e', function (e) {
+                                    });
                                     expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
                                     wampy.subscribe('q.w.e',
                                         {
-                                            onSuccess: function (e) { },
+                                            onSuccess: function (e) {
+                                            },
                                             onError: function (e) {
                                                 expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                                             }
@@ -516,13 +612,15 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 wampy.subscribe('qqq.www.eee');
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
 
-                wampy.subscribe('qqq.www.eee', { });
+                wampy.subscribe('qqq.www.eee', {});
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
 
-                wampy.subscribe('qqq.www.eee', { onError: function (e) {
-                    expect(e).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
-                    done();
-                } });
+                wampy.subscribe('qqq.www.eee', {
+                    onError: function (e) {
+                        expect(e).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
+                        done();
+                    }
+                });
             });
 
             it('allows to subscribe to topic with notification on subscribing', function (done) {
@@ -530,20 +628,27 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     onSuccess: function () {
                         done();
                     },
-                    onError: function () { done('Error during subscribing'); },
-                    onEvent: function (e) { }
+                    onError: function () {
+                        done('Error during subscribing');
+                    },
+                    onEvent: function (e) {
+                    }
                 });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
             it('allows to setup multiple handlers to same topic', function () {
-                wampy.subscribe('subscribe.topic2', function (e) { });
+                wampy.subscribe('subscribe.topic2', function (e) {
+                });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                wampy.subscribe('subscribe.topic2', function (e) { });
+                wampy.subscribe('subscribe.topic2', function (e) {
+                });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 wampy.subscribe('subscribe.topic2', {
-                    onEvent: function (e) { },
-                    onSuccess: function (e) { }
+                    onEvent: function (e) {
+                    },
+                    onSuccess: function (e) {
+                    }
                 });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
@@ -559,8 +664,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                         i++;
                     }
                 })
-                .publish('subscribe.topic3')
-                .publish('subscribe.topic3', null, { exclude_me: false, disclose_me: true });
+                    .publish('subscribe.topic3')
+                    .publish('subscribe.topic3', null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -576,8 +681,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                         i++;
                     }
                 })
-                .publish('subscribe.topic4', 25)
-                .publish('subscribe.topic4', 25, null, { exclude_me: false, disclose_me: true });
+                    .publish('subscribe.topic4', 25)
+                    .publish('subscribe.topic4', 25, null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -593,8 +698,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                         i++;
                     }
                 })
-                .publish('subscribe.topic5', 'payload')
-                .publish('subscribe.topic5', 'payload', null, { exclude_me: false, disclose_me: true });
+                    .publish('subscribe.topic5', 'payload')
+                    .publish('subscribe.topic5', 'payload', null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -612,8 +717,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                         i++;
                     }
                 })
-                .publish('subscribe.topic6', [1, 2, 3, 4, 5])
-                .publish('subscribe.topic6', [1, 2, 3, 4, 5], null, { exclude_me: false, disclose_me: true });
+                    .publish('subscribe.topic6', [1, 2, 3, 4, 5])
+                    .publish('subscribe.topic6', [1, 2, 3, 4, 5], null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -631,8 +736,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                         i++;
                     }
                 })
-                .publish('subscribe.topic7', payload)
-                .publish('subscribe.topic7', payload, null, { exclude_me: false, disclose_me: true });
+                    .publish('subscribe.topic7', payload)
+                    .publish('subscribe.topic7', payload, null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -642,18 +747,20 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     expect(e[0]).to.be.equal('payload');
                     done();
                 })
-                .publish('subscribe.topic8', 'payload',
-                    {
-                        onSuccess: function () { },
-                        onError: function () { }
-                    },
-                    {
-                        exclude: [1234567],
-                        eligible: [wampy.getSessionId(), 7654321],
-                        exclude_me: false,
-                        disclose_me: true
-                    }
-                );
+                    .publish('subscribe.topic8', 'payload',
+                        {
+                            onSuccess: function () {
+                            },
+                            onError: function () {
+                            }
+                        },
+                        {
+                            exclude: [1234567],
+                            eligible: [wampy.getSessionId(), 7654321],
+                            exclude_me: false,
+                            disclose_me: true
+                        }
+                    );
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -669,7 +776,7 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     expect(e2).to.be.deep.equal(payload);
                     done();
                 })
-                .publish('subscribe.topic88', payload, null, { exclude_me: false, disclose_me: true });
+                    .publish('subscribe.topic88', payload, null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -691,7 +798,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
                 wampy.publish('qq:www:ee', 'payload',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                         }
@@ -704,8 +812,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     'string instead of object'
                 );
@@ -715,8 +825,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     123
                 );
@@ -726,10 +838,13 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
-                    function () {}
+                    function () {
+                    }
                 );
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
@@ -737,8 +852,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     {
                         exclude: 'string instead of number or array',
@@ -755,8 +872,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     {
                         exclude: {},
@@ -773,8 +892,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     {
                         exclude: 1234567,
@@ -791,8 +912,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     {
                         exclude: 1234567,
@@ -809,7 +932,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
                         }
@@ -828,7 +952,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
                         }
@@ -842,9 +967,15 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
             it('allows to unsubscribe from topic only specified handler', function (done) {
 
-                var handler3 = function (e) { done('Called removed handler'); },
-                    handler2 = function (e) { done(); },
-                    handler1 = function (e) { done('Called removed handler'); };
+                var handler3 = function (e) {
+                        done('Called removed handler');
+                    },
+                    handler2 = function (e) {
+                        done();
+                    },
+                    handler1 = function (e) {
+                        done('Called removed handler');
+                    };
 
                 wampy.subscribe('subscribe.topic9', {
                     onSuccess: function () {
@@ -854,7 +985,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                             .unsubscribe('subscribe.topic9', { onEvent: handler3 })
                             .publish('subscribe.topic9', 'payload', null, { exclude_me: false });
                     },
-                    onError: function () { },
+                    onError: function () {
+                    },
                     onEvent: handler1
                 });
             });
@@ -866,7 +998,9 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
             it('allows to unsubscribe from topic with notification on unsubscribing', function (done) {
                 wampy.unsubscribe('subscribe.topic2', {
-                    onSuccess: function (e) { done(); }
+                    onSuccess: function (e) {
+                        done();
+                    }
                 });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
@@ -876,7 +1010,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE.code);
 
                 wampy.unsubscribe('subscribe.topic2', {
-                    onSuccess: function (e) { },
+                    onSuccess: function (e) {
+                    },
                     onError: function (e) {
                         expect(e).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE.description);
                     }
@@ -885,24 +1020,34 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
             it('fires error callback if error occurred during subscribing', function (done) {
                 wampy.subscribe('subscribe.topic10', {
-                    onSuccess: function () { },
-                    onError: function (e) { done(); },
-                    onEvent: function (e) { }
+                    onSuccess: function () {
+                    },
+                    onError: function (e) {
+                        done();
+                    },
+                    onEvent: function (e) {
+                    }
                 });
             });
 
             it('fires error callback if error occurred during unsubscribing', function (done) {
                 wampy.unsubscribe('subscribe.topic3', {
-                    onSuccess: function () { },
-                    onError: function (e) { done(); }
+                    onSuccess: function () {
+                    },
+                    onError: function (e) {
+                        done();
+                    }
                 });
 
             });
 
             it('fires error callback if error occurred during publishing', function (done) {
                 wampy.publish('subscribe.topic4', null, {
-                    onSuccess: function () { },
-                    onError: function (e) { done(); }
+                    onSuccess: function () {
+                    },
+                    onError: function (e) {
+                        done();
+                    }
                 });
             });
 
@@ -911,21 +1056,29 @@ describe('Wampy.js [with msgpack encoder]', function () {
         describe('RPC module', function () {
 
             before(function (done) {
-                wampy.options({ onClose: function () {
-                    root.setTimeout(function () {
-                        wampy.options({ onConnect: function () { done(); } })
-                            .connect();
-                    }, 1);
-                } }).disconnect();
+                wampy.options({
+                    onClose: function () {
+                        root.setTimeout(function () {
+                            wampy.options({
+                                onConnect: function () {
+                                    done();
+                                }
+                            })
+                                .connect();
+                        }, 1);
+                    }
+                }).disconnect();
             });
 
             it('disallows to call rpc if server does not provide DEALER role', function () {
-                wampy.call('call.rpc1', 'payload', function (e) { });
+                wampy.call('call.rpc1', 'payload', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
 
                 wampy.call('call.rpc1', 'payload',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
                         }
@@ -935,12 +1088,14 @@ describe('Wampy.js [with msgpack encoder]', function () {
             });
 
             it('disallows to cancel rpc if server does not provide DEALER role', function () {
-                wampy.cancel(1234567, function (e) { });
+                wampy.cancel(1234567, function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
 
                 wampy.cancel(1234567,
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
                         }
@@ -949,13 +1104,16 @@ describe('Wampy.js [with msgpack encoder]', function () {
             });
 
             it('disallows to register rpc if server does not provide DEALER role', function () {
-                wampy.register('call.rpc2', function (e) { });
+                wampy.register('call.rpc2', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
 
                 wampy.register('call.rpc2',
                     {
-                        rpc: function (e) {},
-                        onSuccess: function (e) { },
+                        rpc: function (e) {
+                        },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
                         }
@@ -964,12 +1122,14 @@ describe('Wampy.js [with msgpack encoder]', function () {
             });
 
             it('disallows to unregister rpc if server does not provide DEALER role', function () {
-                wampy.unregister('call.rpc3', function (e) { });
+                wampy.unregister('call.rpc3', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
 
                 wampy.unregister('call.rpc3',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
                         }
@@ -986,25 +1146,32 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     },
                     onConnect: function () {
 
-                        wampy.register('q.w.e', function (e) { });
+                        wampy.register('q.w.e', function (e) {
+                        });
                         expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                        wampy.register('qwe.asd.zxc.', function (e) { });
+                        wampy.register('qwe.asd.zxc.', function (e) {
+                        });
                         expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                        wampy.register('qwe.asd..zxc', function (e) { });
+                        wampy.register('qwe.asd..zxc', function (e) {
+                        });
                         expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                        wampy.register('qq,ww,ee', function (e) { });
+                        wampy.register('qq,ww,ee', function (e) {
+                        });
                         expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                        wampy.register('qq:www:ee', function (e) { });
+                        wampy.register('qq:www:ee', function (e) {
+                        });
                         expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
                         wampy.register('qq:www:ee',
                             {
-                                rpc: function (e) {},
-                                onSuccess: function (e) { },
+                                rpc: function (e) {
+                                },
+                                onSuccess: function (e) {
+                                },
                                 onError: function (e) {
                                     expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                                 }
@@ -1018,44 +1185,57 @@ describe('Wampy.js [with msgpack encoder]', function () {
             });
 
             it('allows to register RPC', function (done) {
-                wampy.register('register.rpc1', function (e) { });
+                wampy.register('register.rpc1', function (e) {
+                });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                root.setTimeout(function () { done(); }, 10);
+                root.setTimeout(function () {
+                    done();
+                }, 10);
             });
 
             it('allows to register RPC with notification on registration', function (done) {
                 wampy.register('register.rpc2', {
-                    rpc: function (e) { },
+                    rpc: function (e) {
+                    },
                     onSuccess: function () {
                         done();
                     },
-                    onError: function () { done('Error during RPC registration'); }
+                    onError: function () {
+                        done('Error during RPC registration');
+                    }
                 });
             });
 
             it('disallows to register RPC with same name', function () {
-                wampy.register('register.rpc2', function (e) { });
+                wampy.register('register.rpc2', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED);
             });
 
             it('disallows to call RPC with invalid URI', function () {
-                wampy.call('q.w.e', 'payload', function (e) { });
+                wampy.call('q.w.e', 'payload', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                wampy.call('qwe.asd.zxc.', 'payload', function (e) { });
+                wampy.call('qwe.asd.zxc.', 'payload', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                wampy.call('qwe.asd..zxc', 'payload', function (e) { });
+                wampy.call('qwe.asd..zxc', 'payload', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                wampy.call('qq,ww,ee', 'payload', function (e) { });
+                wampy.call('qq,ww,ee', 'payload', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                wampy.call('qq:www:ee', 'payload', function (e) { });
+                wampy.call('qq:www:ee', 'payload', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
                 wampy.call('qq:www:ee', 'payload', {
-                    onSuccess: function (e) { },
+                    onSuccess: function (e) {
+                    },
                     onError: function (e) {
                         expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                     }
@@ -1078,8 +1258,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     'string instead of object'
                 );
@@ -1089,8 +1271,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     123
                 );
@@ -1100,10 +1284,13 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
-                    function () {}
+                    function () {
+                    }
                 );
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
@@ -1111,8 +1298,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     {
                         timeout: 'string instead of number'
@@ -1124,8 +1313,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     {
                         timeout: {}
@@ -1137,8 +1328,10 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'qqq.www.eee',
                     'payload',
                     {
-                        onSuccess: function (e) { },
-                        onError: function (e) { }
+                        onSuccess: function (e) {
+                        },
+                        onError: function (e) {
+                        }
                     },
                     {
                         timeout: true
@@ -1148,7 +1341,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
             });
 
             it('disallows to unregister rpc if there is no such registration', function () {
-                wampy.unregister('call.rpc4', function (e) { });
+                wampy.unregister('call.rpc4', function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG);
             });
 
@@ -1242,8 +1436,11 @@ describe('Wampy.js [with msgpack encoder]', function () {
                             wampy.cancel(
                                 reqId,
                                 {
-                                    onSuccess: function () {},
-                                    onError: function () { done('Error occured during call canceling'); }
+                                    onSuccess: function () {
+                                    },
+                                    onError: function () {
+                                        done('Error occured during call canceling');
+                                    }
                                 },
                                 {
                                     mode: 'kill'
@@ -1440,7 +1637,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                             'register.rpc7',
                             100,
                             {
-                                onSuccess: function () { },
+                                onSuccess: function () {
+                                },
                                 onError: function () {
                                     done();
                                 }
@@ -1465,7 +1663,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                             'register.rpc77',
                             100,
                             {
-                                onSuccess: function () { },
+                                onSuccess: function () {
+                                },
                                 onError: function () {
                                     done();
                                 }
@@ -1502,7 +1701,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                             'register.rpc88',
                             100,
                             {
-                                onSuccess: function () { },
+                                onSuccess: function () {
+                                },
                                 onError: function (uri, details, args, argsKw) {
                                     expect(uri).to.be.equal(definedUri);
                                     expect(details).to.be.deep.equal(definedDetails);
@@ -1526,7 +1726,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                                                 'register.rpc99',
                                                 100,
                                                 {
-                                                    onSuccess: function () { },
+                                                    onSuccess: function () {
+                                                    },
                                                     onError: function (uri, details, args, argsKw) {
                                                         expect(uri).to.be.equal(definedUri);
                                                         expect(details).to.be.deep.equal({});
@@ -1559,7 +1760,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                     'nonexistent.rpc',
                     100,
                     {
-                        onSuccess: function () { },
+                        onSuccess: function () {
+                        },
                         onError: function () {
                             done();
                         }
@@ -1571,7 +1773,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 wampy.unregister(
                     'register.nonexistent',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG.description);
                         }
@@ -1583,7 +1786,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 wampy.unregister(
                     'q:w:e',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                         }
@@ -1595,7 +1799,8 @@ describe('Wampy.js [with msgpack encoder]', function () {
                 wampy.register(
                     'register.rpc8',
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
                         }
@@ -1605,11 +1810,14 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
             it('disallows to register RPC with the same name', function (done) {
                 wampy.register('register.rpc9', {
-                    rpc: function (e) { },
+                    rpc: function (e) {
+                    },
                     onSuccess: function (e) {
                         wampy.register('register.rpc9', {
-                            rpc: function (e) { },
-                            onSuccess: function (e) { },
+                            rpc: function (e) {
+                            },
+                            onSuccess: function (e) {
+                            },
                             onError: function (e) {
                                 expect(e).to.be.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED.description);
                                 done();
@@ -1624,12 +1832,14 @@ describe('Wampy.js [with msgpack encoder]', function () {
             });
 
             it('disallows to cancel non existent rpc invocation', function () {
-                wampy.cancel(1234567, function (e) { });
+                wampy.cancel(1234567, function (e) {
+                });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID);
 
                 wampy.cancel(1234567,
                     {
-                        onSuccess: function (e) { },
+                        onSuccess: function (e) {
+                        },
                         onError: function (e) {
                             expect(e).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID.description);
                         }
@@ -1639,16 +1849,23 @@ describe('Wampy.js [with msgpack encoder]', function () {
 
             it('fires error callback if error occurred during registering', function (done) {
                 wampy.register('call.rpc10', {
-                    rpc: function () { },
-                    onSuccess: function () { },
-                    onError: function (e) { done(); }
+                    rpc: function () {
+                    },
+                    onSuccess: function () {
+                    },
+                    onError: function (e) {
+                        done();
+                    }
                 });
             });
 
             it('fires error callback if error occurred during unregistering', function (done) {
                 wampy.unregister('register.rpc9', {
-                    onSuccess: function () { },
-                    onError: function (e) { done(); }
+                    onSuccess: function () {
+                    },
+                    onError: function (e) {
+                        done();
+                    }
                 });
 
             });

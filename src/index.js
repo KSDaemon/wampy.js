@@ -15,10 +15,12 @@
  */
 
 import { Wampy } from './wampy';
+import { MsgpackSerializer } from './serialization/MsgpackSerializer';
 
 (function (getWampy) {
     if (typeof window !== 'undefined') {
         window['Wampy'] = getWampy();
+        window['WampyMsgpackSerializer'] = MsgpackSerializer;
     }
 
     if (typeof define === 'function' && define.amd) {
@@ -26,7 +28,7 @@ import { Wampy } from './wampy';
         define(['exports'], getWampy);
     } else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
         // CommonJS
-        module.exports = getWampy();
+        module.exports = { Wampy: getWampy(), MsgpackSerializer: MsgpackSerializer};
     }
 }(function () {
     return Wampy;
