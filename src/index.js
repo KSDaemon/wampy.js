@@ -28,7 +28,7 @@ import { MsgpackSerializer } from './serialization/MsgpackSerializer';
         define(['exports'], getWampy);
     } else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
         // CommonJS
-        module.exports = { Wampy: getWampy(), MsgpackSerializer: MsgpackSerializer};
+        module.exports = { Wampy: getWampy(), MsgpackSerializer: MsgpackSerializer };
     }
 }(function () {
     return Wampy;
