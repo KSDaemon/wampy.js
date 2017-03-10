@@ -7,10 +7,10 @@ module.exports = function (grunt) {
         browserify: {
             dist: {
                 options: {
-                    transform: [["babelify", { "presets": ["es2015"] }]]
+                    transform: [['babelify', { 'presets': ['es2015'] }]]
                 },
                 files: {
-                    "build/wampy.js": "src/index.js"
+                    'build/wampy.js': 'src/index.js'
                 }
             }
         },

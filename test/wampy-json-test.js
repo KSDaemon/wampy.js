@@ -10,11 +10,11 @@ const routerUrl = 'ws://fake.server.org/ws/',
     Object.prototype.toString.call(process) === '[object process]') ?
         global : window;
 
-import {expect} from 'chai';
+import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
-import {WebSocket} from './fake-ws';
-import {Wampy} from './../src/index';
-import {JsonSerializer} from '../src/serializers/JsonSerializer';
+import { WebSocket } from './fake-ws';
+import { Wampy } from './../src/index';
+import { JsonSerializer } from '../src/serializers/JsonSerializer';
 import * as WAMP_ERROR_MSG from './wamp-error-msg.json';
 
 describe('Wampy.js [with JSON serializer]', function () {
@@ -38,6 +38,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 ws: WebSocket,
                 serializer: new JsonSerializer()
             });
+            expect(wampy).to.be.an('object');
         });
 
         it('disallows to connect on instantiation without url', function () {
@@ -176,6 +177,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 },
                 ws: WebSocket
             });
+            expect(wampy).to.be.an('object');
         });
 
     });
@@ -739,22 +741,22 @@ describe('Wampy.js [with JSON serializer]', function () {
                     done();
                 })
                     .publish('subscribe.topic8', 'payload',
-                        {
-                            onSuccess: function () {
-                            },
-                            onError: function () {
-                            }
+                    {
+                        onSuccess: function () {
                         },
-                        {
-                            exclude: [1234567],
-                            exclude_authid: ['iuhfiruhfhr'],
-                            exclude_authrole: ['user-role'],
-                            eligible: [wampy.getSessionId(), 7654321],
-                            eligible_authid: ['dsvsdvsfgdfg'],
-                            eligible_authrole: ['admin-role'],
-                            exclude_me: false,
-                            disclose_me: true
+                        onError: function () {
                         }
+                    },
+                    {
+                        exclude: [1234567],
+                        exclude_authid: ['iuhfiruhfhr'],
+                        exclude_authrole: ['user-role'],
+                        eligible: [wampy.getSessionId(), 7654321],
+                        eligible_authid: ['dsvsdvsfgdfg'],
+                        eligible_authrole: ['admin-role'],
+                        exclude_me: false,
+                        disclose_me: true
+                    }
                     );
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });

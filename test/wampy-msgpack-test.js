@@ -10,14 +10,12 @@ const routerUrl = 'ws://fake.server.org/ws/',
     Object.prototype.toString.call(process) === '[object process]') ?
         global : window;
 
-import {expect} from 'chai';
+import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
-import {WebSocket} from './fake-ws';
-import {MsgpackSerializer} from './../src/index';
-import {Wampy} from './../src/index';
+import { WebSocket } from './fake-ws';
+import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
+import { Wampy } from './../src/index';
 import * as WAMP_ERROR_MSG from './wamp-error-msg.json';
-
-var msgpack = new MsgpackSerializer(require('msgpack5')());
 
 describe('Wampy.js [with msgpack serializer]', function () {
     this.timeout(0);
@@ -39,8 +37,9 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 onConnect: done,
                 ws: WebSocket,
                 transportEncoding: 'msgpack',
-                serializer: msgpack
+                serializer: new MsgpackSerializer()
             });
+            expect(wampy).to.be.an('object');
         });
 
         it('disallows to connect on instantiation without url', function () {
@@ -135,7 +134,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     },
                     ws: WebSocket,
                     transportEncoding: 'msgpack',
-                    serializer: msgpack
+                    serializer: new MsgpackSerializer()
                 }),
                 options = wampy.options();
 
@@ -181,6 +180,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 },
                 ws: WebSocket
             });
+            expect(wampy).to.be.an('object');
         });
 
     });
@@ -195,7 +195,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 reconnectInterval: 2000,
                 maxRetries: 7,
                 transportEncoding: 'msgpack',
-                serializer: msgpack,
+                serializer: new MsgpackSerializer(),
                 realm: 'AppRealm',
                 onConnect: function () {
                     done();
@@ -748,18 +748,18 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     done();
                 })
                     .publish('subscribe.topic8', 'payload',
-                        {
-                            onSuccess: function () {
-                            },
-                            onError: function () {
-                            }
+                    {
+                        onSuccess: function () {
                         },
-                        {
-                            exclude: [1234567],
-                            eligible: [wampy.getSessionId(), 7654321],
-                            exclude_me: false,
-                            disclose_me: true
+                        onError: function () {
                         }
+                    },
+                    {
+                        exclude: [1234567],
+                        eligible: [wampy.getSessionId(), 7654321],
+                        exclude_me: false,
+                        disclose_me: true
+                    }
                     );
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
