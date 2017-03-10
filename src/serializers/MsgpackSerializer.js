@@ -1,15 +1,16 @@
+const msgpack = require('msgpack5')();
+
 export class MsgpackSerializer {
-    constructor (msgpack) {
+    constructor () {
         this.protocol = 'msgpack';
         this.binaryType = 'arraybuffer';
-        this._msgpack = msgpack;
     }
 
     encode (data) {
-        return this._msgpack.encode(data);
+        return msgpack.encode(data);
     }
 
     decode (data) {
-        return this._msgpack.decode(new Uint8Array(data));
+        return msgpack.decode(new Uint8Array(data));
     }
 }
