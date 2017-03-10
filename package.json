@@ -10,7 +10,7 @@
     "coveralls": "^2.11.15",
     "eslint": "^3.16.1",
     "grunt": "^1.0.1",
-    "grunt-browserify": "^5.0.0",
+    "grunt-browserify": "^6.0.0",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-uglify": "^2.0.0",
@@ -43,8 +43,8 @@
   "homepage": "https://github.com/KSDaemon/wampy.js",
   "scripts": {
     "build": "node ./node_modules/.bin/grunt",
-    "lint": "node ./node_modules/.bin/eslint src",
-    "lint:fix": "node ./node_modules/.bin/eslint --fix src",
+    "lint": "node ./node_modules/.bin/eslint src test Gruntfile.js",
+    "lint:fix": "node ./node_modules/.bin/eslint --fix src test Gruntfile.js",
     "test": "node ./node_modules/.bin/mocha --compilers js:babel-core/register -R spec",
     "cover": "node ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- --compilers js:babel-core/register -R spec"
   }
