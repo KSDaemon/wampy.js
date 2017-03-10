@@ -479,6 +479,10 @@ export class Wampy {
         }
     }
 
+    /**
+     * Internal websocket on open callback
+     * @private
+     */
     _wsOnOpen () {
         const options = this._merge(this._options.helloCustomDetails, this._wamp_features);
 
@@ -502,6 +506,11 @@ export class Wampy {
         this._ws.send(this._encode([WAMP_MSG_SPEC.HELLO, this._options.realm, options]));
     }
 
+    /**
+     * Internal websocket on close callback
+     * @param {object} event
+     * @private
+     */
     _wsOnClose (event) {
         const root = isNode ? global : window;
         this._log('[wampy] websocket disconnected. Info: ', event);
@@ -527,6 +536,11 @@ export class Wampy {
         }
     }
 
+    /**
+     * Internal websocket on event callback
+     * @param {object} event
+     * @private
+     */
     _wsOnMessage (event) {
         let data, id, i, msg, p;
 
@@ -843,6 +857,11 @@ export class Wampy {
         }
     }
 
+    /**
+     * Internal websocket on error callback
+     * @param {object} error
+     * @private
+     */
     _wsOnError (error) {
         this._log('[wampy] websocket error');
 
@@ -851,6 +870,10 @@ export class Wampy {
         }
     }
 
+    /**
+     * Reconnect to server in case of websocket error
+     * @private
+     */
     _wsReconnect () {
         this._log('[wampy] websocket reconnecting...');
 
@@ -863,6 +886,10 @@ export class Wampy {
         this._initWsCallbacks();
     }
 
+    /**
+     * Resubscribe to topics in case of communication error
+     * @private
+     */
     _renewSubscriptions () {
         let i;
         const subs = this._subscriptions,
@@ -879,6 +906,10 @@ export class Wampy {
         }
     }
 
+    /**
+     * Reregister RPCs in case of communication error
+     * @private
+     */
     _renewRegistrations () {
         const rpcs = this._rpcRegs,
             rn = this._rpcNames;
