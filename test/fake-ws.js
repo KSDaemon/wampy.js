@@ -94,7 +94,7 @@ function resetCursor () {
     sendDataCursor = 0;
 }
 
-function processQueue() {
+function processQueue () {
     var f;
 
     if (clientMessageQueue.length) {
