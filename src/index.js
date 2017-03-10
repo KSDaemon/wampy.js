@@ -15,7 +15,7 @@
  */
 
 import { Wampy } from './wampy';
-import { MsgpackSerializer } from './serialization/MsgpackSerializer';
+import { MsgpackSerializer } from './serializers/MsgpackSerializer';
 
 (function (getWampy) {
     if (typeof window !== 'undefined') {

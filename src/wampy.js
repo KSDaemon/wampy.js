@@ -1,6 +1,6 @@
 import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode } from './constants';
 import { getWebSocket, isBinaryTypeAllowed } from './utils';
-import { JsonSerializer } from './serialization/JsonSerializer';
+import { JsonSerializer } from './serializers/JsonSerializer';
 
 /**
  * WAMP Client Class
