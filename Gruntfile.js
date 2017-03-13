@@ -4,23 +4,16 @@ module.exports = function (grunt) {
 
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
-        browserify: {
-            dist: {
-                options: {
-                    transform: [['babelify', { 'presets': ['es2015'] }]]
-                },
-                files: {
-                    'build/wampy.js': 'src/index.js'
-                }
-            }
+        clean: {
+            dist: ['dist/*']
         },
-        replace: {
-            dist: {
-                src: ['build/wampy.js'],
-                overwrite: true,
-                replacements: [{
-                    from: /\}\)\(undefined, function \(\) \{/,
-                    to: '})(this, function () {'
+        babel: {
+            srcToDist: {
+                files: [{
+                    expand: true,
+                    cwd: 'src/',
+                    src: '**/*.js',
+                    dest: 'dist/'
                 }]
             }
         },
@@ -30,31 +23,33 @@ module.exports = function (grunt) {
                     drop_console: true
                 },
                 preserveComments: false,
-                sourceMap: true
+                sourceMap: true,
+                mangle: {
+                    except: ['Wampy']
+                }
             },
             dist: {
                 files: {
-                    'build/wampy.min.js': ['build/wampy.js']
+                    'dist/wampy.min.js': ['dist/**/*.js', '!dist/wampy.js', 'dist/wampy.js']
                 }
-            }
-        },
-        concat: {
-            msgpackToWampy: {
-                src: ['build/msgpack5.min.js', 'build/wampy.min.js'],
-                dest: 'build/wampy-all.min.js'
             }
         },
         copy: {
             msgpackToDist: {
-                files: [
-                    {
-                        src: ['node_modules/msgpack5/dist/msgpack5.min.js'],
-                        dest: 'build/msgpack5.min.js'
-                    }
-                ]
+                files: [{
+                    src: ['node_modules/msgpack5/dist/msgpack5.min.js'],
+                    dest: 'dist/msgpack5.min.js'
+                }]
+            }
+        },
+        concat: {
+            concatWampy: {
+                src: ['dist/msgpack5.min.js', 'dist/wampy.min.js'],
+                dest: 'dist/wampy-all.min.js'
             }
         }
     });
 
-    grunt.registerTask('default', ['browserify', 'replace', 'uglify', 'copy', 'concat']);
+    // grunt.registerTask('default', ['babel', 'replace', 'uglify', 'copy', 'concat']);
+    grunt.registerTask('default', ['clean', 'babel', 'uglify', 'copy', 'concat']);
 };
