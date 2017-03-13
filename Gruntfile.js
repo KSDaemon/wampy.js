@@ -50,6 +50,5 @@ module.exports = function (grunt) {
         }
     });
 
-    // grunt.registerTask('default', ['babel', 'replace', 'uglify', 'copy', 'concat']);
     grunt.registerTask('default', ['clean', 'babel', 'uglify', 'copy', 'concat']);
 };
