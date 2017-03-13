@@ -12,7 +12,7 @@ const routerUrl = 'ws://fake.server.org/ws/',
 
 import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
-import { Wampy } from './../src/index';
+import { Wampy } from './../src/wampy';
 import { JsonSerializer } from '../src/serializers/JsonSerializer';
 import * as WAMP_ERROR_MSG from './wamp-error-msg.json';
 

@@ -1,3 +1,19 @@
+/**
+ * Project: wampy.js
+ *
+ * https://github.com/KSDaemon/wampy.js
+ *
+ * A lightweight client-side implementation of
+ * WAMP (The WebSocket Application Messaging Protocol v2)
+ * http://wamp.ws
+ *
+ * Provides asynchronous RPC/PubSub over WebSocket.
+ *
+ * Copyright 2014 KSDaemon. Licensed under the MIT License.
+ * See @license text at http://www.opensource.org/licenses/mit-license.php
+ *
+ */
+
 import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode } from './constants';
 import { getWebSocket, isBinaryTypeAllowed } from './utils';
 import { JsonSerializer } from './serializers/JsonSerializer';
@@ -5,7 +21,7 @@ import { JsonSerializer } from './serializers/JsonSerializer';
 /**
  * WAMP Client Class
  */
-export class Wampy {
+class Wampy {
 
     /**
      * Wampy constructor
@@ -1570,3 +1586,6 @@ export class Wampy {
         return this;
     }
 }
+
+export default Wampy;
+export { Wampy };
