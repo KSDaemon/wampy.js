@@ -14,22 +14,9 @@
  *
  */
 
+'use strict';
+
 import { Wampy } from './wampy';
-import { MsgpackSerializer } from './serializers/MsgpackSerializer';
 
-(function (getWampy) {
-    if (typeof window !== 'undefined') {
-        window['Wampy'] = getWampy();
-        window['WampyMsgpackSerializer'] = MsgpackSerializer;
-    }
-
-    if (typeof define === 'function' && define.amd) {
-        // AMD. Register as an anonymous module.
-        define(['exports'], getWampy);
-    } else if (typeof exports === 'object' && typeof exports.nodeName !== 'string') {
-        // CommonJS
-        module.exports = { Wampy: getWampy(), MsgpackSerializer: MsgpackSerializer };
-    }
-}(function () {
-    return Wampy;
-}));
+export default Wampy;
+export { Wampy };

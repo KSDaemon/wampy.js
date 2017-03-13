@@ -1,4 +1,6 @@
-const msgpack = require('msgpack5')();
+import msgpack5 from 'msgpack5';
+
+const msgpack = msgpack5();
 
 export class MsgpackSerializer {
     constructor () {
