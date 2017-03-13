@@ -12,7 +12,6 @@ const routerUrl = 'ws://fake.server.org/ws/',
 
 import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
-import { WebSocket } from './fake-ws';
 import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
 import { Wampy } from './../src/index';
 import * as WAMP_ERROR_MSG from './wamp-error-msg.json';
@@ -32,10 +31,10 @@ describe('Wampy.js [with msgpack serializer]', function () {
     describe('Constructor', function () {
 
         it('allows to connect on instantiation if all required options specified', function (done) {
-            var wampy = new Wampy(routerUrl, {
+            let wampy = new Wampy(routerUrl, {
                 realm: 'AppRealm',
                 onConnect: done,
-                ws: WebSocket,
+                ws: WebSocketModule.WebSocket,
                 transportEncoding: 'msgpack',
                 serializer: new MsgpackSerializer()
             });
@@ -43,28 +42,28 @@ describe('Wampy.js [with msgpack serializer]', function () {
         });
 
         it('disallows to connect on instantiation without url', function () {
-            var wampy = new Wampy({ realm: 'AppRealm' }),
+            let wampy = new Wampy({ realm: 'AppRealm' }),
                 opStatus = wampy.getOpStatus();
 
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
         });
 
         it('disallows to connect on instantiation without websocket provided (in Node.js env)', function () {
-            var wampy = new Wampy(routerUrl, { realm: 'AppRealm' }),
+            let wampy = new Wampy(routerUrl, { realm: 'AppRealm' }),
                 opStatus = wampy.getOpStatus();
 
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
         });
 
         it('disallows to connect on instantiation without realm', function () {
-            var wampy = new Wampy(routerUrl),
+            let wampy = new Wampy(routerUrl),
                 opStatus = wampy.getOpStatus();
 
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_REALM);
         });
 
         it('disallows to connect on instantiation without specifying all of [onChallenge, authid, authmethods]', function () {
-            var wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid', authmethods: 'string' }),
+            let wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid', authmethods: 'string' }),
                 opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
@@ -103,7 +102,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
         });
 
         it('allows to set different options on instantiation', function (done) {
-            var helloCustomDetails = {
+            let helloCustomDetails = {
                     customFiled1: 25,
                     customFiled2: 'string',
                     customFiled3: [1, 2, 3, 4, 5]
@@ -132,7 +131,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     onReconnectSuccess: function () {
                         done('Reached onReconnectSuccess');
                     },
-                    ws: WebSocket,
+                    ws: WebSocketModule.WebSocket,
                     transportEncoding: 'msgpack',
                     serializer: new MsgpackSerializer()
                 }),
@@ -157,7 +156,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
         });
 
         it('allows to use Challenge Response Authentication while connecting to server', function (done) {
-            var wampy = new Wampy(routerUrl, {
+            let wampy = new Wampy(routerUrl, {
                 transportEncoding: 'json',
                 realm: 'AppRealm',
                 onChallenge: function (method, info) {
@@ -178,7 +177,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 onReconnectSuccess: function () {
                     done('Reached onReconnectSuccess');
                 },
-                ws: WebSocket
+                ws: WebSocketModule.WebSocket
             });
             expect(wampy).to.be.an('object');
         });
@@ -186,7 +185,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
     });
 
     describe('Instance', function () {
-        var wampy;
+        let wampy;
 
         before(function (done) {
             wampy = new Wampy(routerUrl, {
@@ -212,12 +211,12 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 onReconnectSuccess: function () {
                     done('Reached reconnection success');
                 },
-                ws: WebSocket
+                ws: WebSocketModule.WebSocket
             });
         });
 
         it('allows to get and set different options', function () {
-            var helloCustomDetails = {
+            let helloCustomDetails = {
                     customFiled1: 25,
                     customFiled2: 'string',
                     customFiled3: [1, 2, 3, 4, 5]
@@ -251,7 +250,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
         });
 
         it('allows to get current WAMP Session ID', function () {
-            var s = wampy.getSessionId();
+            let s = wampy.getSessionId();
             expect(s).to.be.a('number');
             expect(s).to.be.above(0);
         });
@@ -262,7 +261,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
         });
 
         it('disallows to connect on instantiation without specifying all of [onChallenge, authid, authmethods]', function () {
-            var opStatus;
+            let opStatus;
 
             wampy.options({ authid: 'userid', authmethods: ['wampcra'], onChallenge: null }).connect();
             opStatus = wampy.getOpStatus();
@@ -360,7 +359,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             }).disconnect();
         });
 
-        it('allows to abort WebSocket/WAMP session establishment', function (done) {
+        it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
             wampy.options({
                 onClose: function () {
                     root.setTimeout(function () {
@@ -435,7 +434,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 onError: function () {
                 },
                 onReconnect: function () {
-                    var t = root.setInterval(function () {
+                    let t = root.setInterval(function () {
                         if (wampy._subsTopics.size === 2 && wampy._rpcNames.size === 3) {
                             root.clearInterval(t);
                             t = null;
@@ -654,7 +653,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('allows to publish/subscribe event without payload', function (done) {
-                var i = 1;
+                let i = 1;
                 wampy.subscribe('subscribe.topic3', function (e) {
                     expect(e).to.be.undefined;
 
@@ -670,7 +669,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('allows to publish/subscribe event with int payload', function (done) {
-                var i = 1;
+                let i = 1;
                 wampy.subscribe('subscribe.topic4', function (e) {
                     expect(e).to.be.an('array');
                     expect(e[0]).to.be.equal(25);
@@ -687,7 +686,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('allows to publish/subscribe event with string payload', function (done) {
-                var i = 1;
+                let i = 1;
                 wampy.subscribe('subscribe.topic5', function (e) {
                     expect(e).to.be.an('array');
                     expect(e[0]).to.be.equal('payload');
@@ -704,7 +703,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('allows to publish/subscribe event with array payload', function (done) {
-                var i = 1;
+                let i = 1;
                 wampy.subscribe('subscribe.topic6', function (e) {
                     expect(e).to.be.an('array');
                     expect(e).to.have.length(5);
@@ -723,7 +722,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('allows to publish/subscribe event with hash-table payload', function (done) {
-                var i = 1, payload = { key1: 100, key2: 'string-key' };
+                let i = 1, payload = { key1: 100, key2: 'string-key' };
 
                 wampy.subscribe('subscribe.topic7', function (e1, e2) {
                     expect(e1).to.be.null;
@@ -765,7 +764,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('allows to receive events with array and hash-table payload at the same time', function (done) {
-                var payload = { key1: 100, key2: 'string-key' };
+                let payload = { key1: 100, key2: 'string-key' };
 
                 wampy.subscribe('subscribe.topic88', function (e1, e2) {
                     expect(e1).to.be.an('array');
@@ -967,7 +966,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
 
             it('allows to unsubscribe from topic only specified handler', function (done) {
 
-                var handler3 = function (e) {
+                let handler3 = function (e) {
                         done('Called removed handler');
                     },
                     handler2 = function (e) {
@@ -1380,7 +1379,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('allows to call RPC with hash-table payload', function (done) {
-                var payload = { key1: 100, key2: 'string-key' };
+                let payload = { key1: 100, key2: 'string-key' };
 
                 wampy.call('call.rpc5', {}, function (e1, e2) {
                     expect(e1).to.be.null;
@@ -1424,7 +1423,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('allows to cancel RPC invocation', function (done) {
-                var reqId;
+                let reqId;
 
                 wampy.call(
                     'call.rpc8',
@@ -1594,7 +1593,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('allows to invoke asynchronous RPC with hash-table value', function (done) {
-                var payload = { key1: 100, key2: 'string-key' };
+                let payload = { key1: 100, key2: 'string-key' };
                 wampy.register('register.rpc6', {
                     rpc: function (e, o) {
                         return new Promise(function (resolve, reject) {
@@ -1680,14 +1679,14 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('calls error handler with custom data if asynchronous RPC raised exception', function (done) {
-                var definedUri = 'app.error.custom_invocation_exception',
+                let definedUri = 'app.error.custom_invocation_exception',
                     definedDetails = { key1: 'key1', key2: true, key3: 25 },
                     definedArgsList = [1, 2, 3, 4, 5],
                     definedArgsDict = { key1: 'key1', key2: true, key3: 25 };
 
                 wampy.register('register.rpc88', {
                     rpc: function (e) {
-                        var UserException = function () {
+                        let UserException = function () {
                             this.uri = definedUri;
                             this.details = definedDetails;
                             this.argsList = definedArgsList;
@@ -1712,7 +1711,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
 
                                     wampy.register('register.rpc99', {
                                         rpc: function (e) {
-                                            var UserException = function () {
+                                            let UserException = function () {
                                                 this.uri = definedUri;
                                                 // no details
                                                 // no args list, only args dict
@@ -1871,7 +1870,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('fires error handler if error occurred during RPC call', function (done) {
-                var i = 0;
+                let i = 0;
                 wampy.call('call.rpc1', null, {
                     onSuccess: function (e) {
                         done('Reached success. Check Server side');

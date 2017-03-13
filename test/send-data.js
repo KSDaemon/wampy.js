@@ -1,4 +1,4 @@
-var WAMP_MSG_SPEC = {
+const WAMP_MSG_SPEC = {
         HELLO: 1,
         WELCOME: 2,
         ABORT: 3,
@@ -1587,4 +1587,4 @@ var WAMP_MSG_SPEC = {
         }
     ];
 
-module.exports = sendData;
+export default sendData;

@@ -4,17 +4,18 @@
  * Date: 07.04.15
  */
 
-var TIMEOUT = 15,
+import msgpack5 from 'msgpack5';
+import sendData from './send-data';
 
-    sendData = require('./send-data'),
-    sendDataCursor = 0,
+const TIMEOUT = 15,
 
+    root = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]') ?
+        global : window;
+
+let sendDataCursor = 0,
     clientMessageQueue = [],
     openTimer = null,
     sendTimer = null,
-
-    root = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]') ?
-        global : window,
 
     WebSocket = function (url, protocols) {
         this.url = url;
@@ -23,7 +24,7 @@ var TIMEOUT = 15,
 
         if (this.transportEncoding === 'msgpack') {
             this.binaryType = 'arraybuffer';
-            this.encoder = require('msgpack5')();
+            this.encoder = msgpack5();
             this.encode = this.encoder.encode;
             this.decode = this.encoder.decode;
         } else {
@@ -67,7 +68,7 @@ function resetCursor () {
 }
 
 function processQueue () {
-    var f;
+    let f;
 
     if (clientMessageQueue.length) {
         f = clientMessageQueue.shift();
@@ -80,7 +81,7 @@ function startTimers () {
 }
 
 WebSocket.prototype.close = function (code, reason) {
-    var self = this;
+    const self = this;
 
     if (openTimer) {
         root.clearTimeout(openTimer);
@@ -91,7 +92,7 @@ WebSocket.prototype.close = function (code, reason) {
 };
 
 WebSocket.prototype.abort = function () {
-    var self = this;
+    const self = this;
 
     if (openTimer) {
         root.clearTimeout(openTimer);
@@ -102,7 +103,8 @@ WebSocket.prototype.abort = function () {
 };
 
 WebSocket.prototype.send = function (data) {
-    var self = this, send_data, enc_data, rec_data, i;
+    const self = this;
+    let send_data, enc_data, rec_data, i;
 
     rec_data = self.decode(data);
     send_data = sendData[sendDataCursor++];
@@ -147,5 +149,5 @@ WebSocket.prototype.send = function (data) {
     );
 };
 
-module.exports = { WebSocket: WebSocket, startTimers: startTimers, clearTimers: clearTimers, resetCursor: resetCursor };
+export { WebSocket, startTimers, clearTimers, resetCursor };
 
