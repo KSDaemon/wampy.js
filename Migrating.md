@@ -6,6 +6,50 @@ Migrating from 4.x to 5.x versions
 
 5.0.0 version was extended and updated, so there are some backward incompatible changes.
 
+First of all, because of rewriting Wampy to ES6 modules, module import slightly changed:
+ 
+```javascript
+// WAS:
+const Wampy = require('wampy');
+//IS NOW:
+const Wampy = require('wampy').Wampy;
+
+// If you are using ES6 modules syntax
+import { Wampy } from 'wampy';
+```
+
+If you use Wampy with msgpack, then you need to update you code for proper serializer initialization.
+`msgpackCoder` and `transportEncoding` options was removed. Instead, `serializer` option was added for providing
+custom serializer. Just pass a Serializer instance there. Wampy already comes with 2 serializers: 
+JsonSerializer (default) and MsgpackSerializer (optional).
+
+```javascript
+// WAS:
+const msgpack = require('msgpack5')()
+const w3cws = require('websocket').w3cwebsocket;
+const Wampy = require('wampy');
+
+const wampy = new Wampy(routerUrl, {
+                realm: 'AppRealm',
+                onConnect: function () { ... },
+                ws: w3cws,
+                transportEncoding: 'msgpack',
+                msgpackCoder: msgpack
+            });
+
+//IS NOW:
+const w3cws = require('websocket').w3cwebsocket;
+const Wampy = require('wampy').Wampy;
+const MsgpackSerializer = require('wampy/dist/serializers/MsgpackSerializer').MsgpackSerializer;
+
+const wampy = new Wampy(routerUrl, {
+    realm: 'AppRealm',
+    onConnect: function () { ... },
+    ws: w3cws,
+    serializer: new MsgpackSerializer()
+});
+```
+
 Now registered PRC during invocation will receive three arguments (instead of 2, previously): 
 array payload (may be undefined), object payload (may be undefined) and options object. 
 Also now RPC can return no result (undefined), or it must return an array with 1, 2 or 3 elements:

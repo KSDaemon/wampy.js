@@ -35,6 +35,7 @@ Table of Contents
     * [cancel](#cancelreqid-callbacks-advancedoptions)
     * [register](#registertopicuri-callbacks)
     * [unregister](#unregistertopicuri-callbacks)
+* [Using custom serializer](#using-custom-serializer)
 * [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Tests and code coverage](#tests-and-code-coverage)
 * [Copyright and License](#copyright-and-license)
@@ -43,9 +44,9 @@ Table of Contents
 Description
 ===========
 
-Wampy.js is javascript library, that runs both in browser and node.js enviroments. It implements [WAMP][] v2 specification on top of
-WebSocket object, also provides additional features like autoreconnecting and use of Chaining Pattern.
-It has no external dependencies (by default) and is easy to use. Also it's compatible with AMD and browserify.
+Wampy.js is javascript library, that runs both in browser and node.js enviroments. It implements [WAMP][] v2 
+specification on top of WebSocket object, also provides additional features like autoreconnecting and use of 
+Chaining Pattern. It has no external dependencies (by default) and is easy to use.
 
 Wampy.js supports next WAMP roles and features:
 
@@ -107,17 +108,21 @@ Wampy.js can be installed using bower or npm or just by file-copy :)
 > npm install wampy
 ```
 
-To use Wampy simply add wampy-all.min.js file to your page. It contains msgpack encoder plus wampy itself.
+For simple browser usage just add wampy-all.min.js file to your page. It contains msgpack encoder plus wampy itself.
 
 ```html
-<script src="wampy-all.min.js"></script>
+<script src="dist/browser/wampy-all.min.js"></script>
 ```
 
 In case, you don't plan to use msgpack, just include clean wampy.min.js.
 
 ```html
-<script src="wampy.min.js"></script>
+<script src="dist/browser/wampy.min.js"></script>
 ```
+
+In case you are using any kind of build tools and bundlers, like grunt/gulp/webpack/rollup/etc, 
+your entry point can be **src/wampy.js** if you transpile you code somehow, or **dist/wampy.js** which is already 
+transpiled to "es2015" preset, so it is working out of the box, just bundle modules.
 
 [Back to TOC](#table-of-contents)
 
@@ -175,7 +180,7 @@ ws = new Wampy({
 
 // in node.js
 import {Wampy} from 'wampy';
-import {MsgpackSerializer} from 'wampy';
+import {MsgpackSerializer} from 'wampy/dist/serializers';
 import {w3cwebsocket} from 'websocket';
 
 const msgpack5 = require('msgpack5');
@@ -324,7 +329,7 @@ plugin "[wampy-cra][]". Just add "wampy-cra" package and use provided methods as
 ```javascript
 'use strict';
 
-const Wampy = require('wampy');
+const Wampy = require('wampy').Wampy;
 const wampyCra = require('wampy-cra');
 const w3cws = require('websocket').w3cwebsocket;
 let ws;
@@ -772,6 +777,24 @@ ws.unregister('sqrt.value', {
     }
 });
 ```
+
+[Back to TOC](#table-of-contents)
+
+Using custom serializer
+=======================
+
+From v5.0 version there is option to provide custom serializer. 
+
+Custom serializer instance must meet a few requirements:
+
+* Have a `encode (data)` method, that returns encoded data
+* Have a `decode (data)` method, that returns decoded data
+* Have a `protocol` string property, that contains a protocol name. This name is concatenated with "wamp.2." string and
+ is then passed as websocket subprotocol http header.
+* Have a `binaryType` string property, that contains a serialized data type. Allowed options are: ['blob', 'arraybuffer'].
+
+Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or 
+[MsgpackSerializer.js](src/serializers/MsgpackSerializer.js) as examples.
 
 [Back to TOC](#table-of-contents)
 
