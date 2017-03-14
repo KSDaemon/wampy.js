@@ -1,3 +1,408 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],2:[function(require,module,exports){
+'use strict';
+
+var _wampy = require('./wampy');
+
+window.Wampy = _wampy.Wampy; /**
+                              * Wrapper for browser usage
+                              * Imports Wampy from dist!! because don't want to transpile second time
+                              **/
+
+},{"./wampy":6}],3:[function(require,module,exports){
+(function (process){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+var WAMP_MSG_SPEC = exports.WAMP_MSG_SPEC = {
+    HELLO: 1,
+    WELCOME: 2,
+    ABORT: 3,
+    CHALLENGE: 4,
+    AUTHENTICATE: 5,
+    GOODBYE: 6,
+    ERROR: 8,
+    PUBLISH: 16,
+    PUBLISHED: 17,
+    SUBSCRIBE: 32,
+    SUBSCRIBED: 33,
+    UNSUBSCRIBE: 34,
+    UNSUBSCRIBED: 35,
+    EVENT: 36,
+    CALL: 48,
+    CANCEL: 49,
+    RESULT: 50,
+    REGISTER: 64,
+    REGISTERED: 65,
+    UNREGISTER: 66,
+    UNREGISTERED: 67,
+    INVOCATION: 68,
+    INTERRUPT: 69,
+    YIELD: 70
+};
+
+var WAMP_ERROR_MSG = exports.WAMP_ERROR_MSG = {
+    SUCCESS: {
+        code: 0,
+        description: 'Success!'
+    },
+    URI_ERROR: {
+        code: 1,
+        description: 'Topic URI doesn\'t meet requirements!'
+    },
+    NO_BROKER: {
+        code: 2,
+        description: 'Server doesn\'t provide broker role!'
+    },
+    NO_CALLBACK_SPEC: {
+        code: 3,
+        description: 'No required callback function specified!'
+    },
+    INVALID_PARAM: {
+        code: 4,
+        description: 'Invalid parameter(s) specified!'
+    },
+    NON_EXIST_UNSUBSCRIBE: {
+        code: 7,
+        description: 'Trying to unsubscribe from non existent subscription!'
+    },
+    NO_DEALER: {
+        code: 12,
+        description: 'Server doesn\'t provide dealer role!'
+    },
+    RPC_ALREADY_REGISTERED: {
+        code: 15,
+        description: 'RPC already registered!'
+    },
+    NON_EXIST_RPC_UNREG: {
+        code: 17,
+        description: 'Received rpc unregistration for non existent rpc!'
+    },
+    NON_EXIST_RPC_INVOCATION: {
+        code: 19,
+        description: 'Received invocation for non existent rpc!'
+    },
+    NON_EXIST_RPC_REQ_ID: {
+        code: 20,
+        description: 'No RPC calls in action with specified request ID!'
+    },
+    NO_REALM: {
+        code: 21,
+        description: 'No realm specified!'
+    },
+    NO_WS_OR_URL: {
+        code: 22,
+        description: 'No websocket provided or URL specified is incorrect!'
+    },
+    NO_CRA_CB_OR_ID: {
+        code: 23,
+        description: 'No onChallenge callback or authid was provided for authentication!'
+    },
+    CRA_EXCEPTION: {
+        code: 24,
+        description: 'Exception raised during CRA challenge processing'
+    }
+};
+
+var ALLOWED_BINARY_TYPES = exports.ALLOWED_BINARY_TYPES = ['blob', 'arraybuffer'];
+
+var isNode = exports.isNode = (typeof process === 'undefined' ? 'undefined' : _typeof(process)) === 'object' && Object.prototype.toString.call(process) === '[object process]';
+
+}).call(this,require('_process'))
+},{"_process":1}],4:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var JsonSerializer = exports.JsonSerializer = function () {
+    function JsonSerializer() {
+        _classCallCheck(this, JsonSerializer);
+
+        this.protocol = 'json';
+        this.binaryType = 'blob';
+    }
+
+    _createClass(JsonSerializer, [{
+        key: 'encode',
+        value: function encode(data) {
+            return JSON.stringify(data);
+        }
+    }, {
+        key: 'decode',
+        value: function decode(data) {
+            return JSON.parse(data);
+        }
+    }]);
+
+    return JsonSerializer;
+}();
+
+},{}],5:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.getWebSocket = getWebSocket;
+exports.isBinaryTypeAllowed = isBinaryTypeAllowed;
+
+var _constants = require('./constants');
+
+function getServerUrlBrowser(url) {
+    var scheme = void 0,
+        port = void 0;
+
+    if (/^ws(s)?:\/\//.test(url)) {
+        // ws scheme is specified
+        return url;
+    }
+
+    scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+
+    if (!url) {
+        port = window.location.port !== '' ? ':' + window.location.port : '';
+        return scheme + window.location.hostname + port + '/ws';
+    } else if (url[0] === '/') {
+        // just path on current server
+        port = window.location.port !== '' ? ':' + window.location.port : '';
+        return scheme + window.location.hostname + port + url;
+    } else {
+        // domain
+        return scheme + url;
+    }
+}
+
+function getServerUrlNode(url) {
+    if (/^ws(s)?:\/\//.test(url)) {
+        // ws scheme is specified
+        return url;
+    } else {
+        return null;
+    }
+}
+
+function getWebSocket(url, protocols, ws) {
+    var parsedUrl = _constants.isNode ? getServerUrlNode(url) : getServerUrlBrowser(url);
+
+    if (!parsedUrl) {
+        return null;
+    }
+
+    if (ws) {
+        // User provided webSocket class
+        return new ws(parsedUrl, protocols);
+    } else if (_constants.isNode) {
+        // we're in node, but no webSocket provided
+        return null;
+    } else if ('WebSocket' in window) {
+        // Chrome, MSIE, newer Firefox
+        return new window.WebSocket(parsedUrl, protocols);
+    } else if ('MozWebSocket' in window) {
+        // older versions of Firefox
+        return new window.MozWebSocket(parsedUrl, protocols);
+    }
+
+    return null;
+}
+
+function isBinaryTypeAllowed(type) {
+    return _constants.ALLOWED_BINARY_TYPES.indexOf(type) !== -1;
+}
+
+},{"./constants":3}],6:[function(require,module,exports){
+(function (global){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -1734,4 +2139,6 @@ var Wampy = function () {
 
 exports.default = Wampy;
 exports.Wampy = Wampy;
-//# sourceMappingURL=wampy.js.map
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./constants":3,"./serializers/JsonSerializer":4,"./utils":5}]},{},[2]);
