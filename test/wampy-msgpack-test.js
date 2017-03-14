@@ -35,7 +35,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 realm: 'AppRealm',
                 onConnect: done,
                 ws: WebSocketModule.WebSocket,
-                transportEncoding: 'msgpack',
                 serializer: new MsgpackSerializer()
             });
             expect(wampy).to.be.an('object');
@@ -132,7 +131,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         done('Reached onReconnectSuccess');
                     },
                     ws: WebSocketModule.WebSocket,
-                    transportEncoding: 'msgpack',
                     serializer: new MsgpackSerializer()
                 }),
                 options = wampy.options();
@@ -140,7 +138,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
             expect(options.autoReconnect).to.be.true;
             expect(options.reconnectInterval).to.be.equal(10000);
             expect(options.maxRetries).to.be.equal(50);
-            expect(options.transportEncoding).to.be.equal('msgpack');
             expect(options.realm).to.be.equal('AppRealm');
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onChallenge).to.be.a('function');
@@ -157,7 +154,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
 
         it('allows to use Challenge Response Authentication while connecting to server', function (done) {
             let wampy = new Wampy(routerUrl, {
-                transportEncoding: 'json',
                 realm: 'AppRealm',
                 onChallenge: function (method, info) {
                     return 'secretKey';
@@ -193,7 +189,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 autoReconnect: true,
                 reconnectInterval: 2000,
                 maxRetries: 7,
-                transportEncoding: 'msgpack',
                 serializer: new MsgpackSerializer(),
                 realm: 'AppRealm',
                 onConnect: function () {
@@ -225,7 +220,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     autoReconnect: true,
                     reconnectInterval: 1000,
                     maxRetries: 5,
-                    transportEncoding: 'msgpack',
                     helloCustomDetails: helloCustomDetails,
                     onChallenge: function () {
                     },
@@ -236,7 +230,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
             expect(options.autoReconnect).to.be.true;
             expect(options.reconnectInterval).to.be.equal(1000);
             expect(options.maxRetries).to.be.equal(5);
-            expect(options.transportEncoding).to.be.equal('msgpack');
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onChallenge).to.be.a('function');
             expect(options.authid).to.be.equal('userid');

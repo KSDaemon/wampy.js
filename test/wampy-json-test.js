@@ -110,7 +110,6 @@ describe('Wampy.js [with JSON serializer]', function () {
                     autoReconnect: true,
                     reconnectInterval: 10000,
                     maxRetries: 50,
-                    transportEncoding: 'json',
                     realm: 'AppRealm',
                     helloCustomDetails: helloCustomDetails,
                     onChallenge: function () {
@@ -138,7 +137,6 @@ describe('Wampy.js [with JSON serializer]', function () {
             expect(options.autoReconnect).to.be.true;
             expect(options.reconnectInterval).to.be.equal(10000);
             expect(options.maxRetries).to.be.equal(50);
-            expect(options.transportEncoding).to.be.equal('json');
             expect(options.realm).to.be.equal('AppRealm');
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onChallenge).to.be.a('function');
@@ -154,7 +152,6 @@ describe('Wampy.js [with JSON serializer]', function () {
 
         it('allows to use Challenge Response Authentication while connecting to server', function (done) {
             let wampy = new Wampy(routerUrl, {
-                transportEncoding: 'json',
                 realm: 'AppRealm',
                 onChallenge: function (method, info) {
                     return 'secretKey';
@@ -190,7 +187,6 @@ describe('Wampy.js [with JSON serializer]', function () {
                 autoReconnect: true,
                 reconnectInterval: 2000,
                 maxRetries: 7,
-                transportEncoding: 'json',
                 realm: 'AppRealm',
                 onConnect: function () {
                     done();
@@ -221,7 +217,6 @@ describe('Wampy.js [with JSON serializer]', function () {
                     autoReconnect: true,
                     reconnectInterval: 1000,
                     maxRetries: 5,
-                    transportEncoding: 'json',
                     helloCustomDetails: helloCustomDetails,
                     onChallenge: function () {
                     },
@@ -232,7 +227,6 @@ describe('Wampy.js [with JSON serializer]', function () {
             expect(options.autoReconnect).to.be.true;
             expect(options.reconnectInterval).to.be.equal(1000);
             expect(options.maxRetries).to.be.equal(5);
-            expect(options.transportEncoding).to.be.equal('json');
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onChallenge).to.be.a('function');
             expect(options.authid).to.be.equal('userid');
