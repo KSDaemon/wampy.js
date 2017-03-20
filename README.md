@@ -108,7 +108,7 @@ Wampy.js can be installed using npm or bower or just by file-copy :)
 > bower install wampy.js
 ```
 
-For simple browser usage just download latest [browser.zip](releases/latest/) archive and 
+For simple browser usage just download latest [browser.zip](/releases/latest) archive and 
 add wampy-all.min.js file to your page. It contains msgpack encoder plus wampy itself. 
 
 ```html
