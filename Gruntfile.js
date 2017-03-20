@@ -5,7 +5,8 @@ module.exports = function (grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
         clean: {
-            dist: ['dist/*']
+            dist: ['dist/*'],
+            browserFolder: ['dist/browser']
         },
         babel: {
             srcToDist: {
@@ -54,8 +55,25 @@ module.exports = function (grunt) {
                 src: ['dist/browser/msgpack5.min.js', 'dist/browser/wampy.min.js'],
                 dest: 'dist/browser/wampy-all.min.js'
             }
+        },
+        compress: {
+            browser: {
+                options: {
+                    archive: 'dist/browser.zip',
+                    mode: 'zip',
+                    level: 9
+                },
+                files: [{
+                    expand: true,
+                    cwd   : 'dist/browser/',
+                    src   : ['**/*'],
+                    dest  : 'browser/'
+                }]
+            }
         }
     });
 
-    grunt.registerTask('default', ['clean', 'babel', 'browserify', 'uglify', 'copy', 'concat']);
+    grunt.registerTask('default', [
+        'clean:dist', 'babel', 'browserify', 'uglify', 'copy',
+        'concat', 'compress', 'clean:browserFolder']);
 };
