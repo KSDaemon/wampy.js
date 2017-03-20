@@ -8,7 +8,7 @@ Migrating from 4.x to 5.x versions
 
 Starting with 5.0.0 version, browser precompiled version is no longer included to dist folder. Most people use 
 bundlers, like webpack/rollup or others, so they do not need standalone browser version. You can always download 
-it from [releases page](/releases/latest).
+it from [releases page](../../releases/latest).
 
 First of all, because of rewriting Wampy to ES6 modules, module import slightly changed:
  
