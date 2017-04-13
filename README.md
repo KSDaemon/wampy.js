@@ -1,8 +1,6 @@
 wampy.js
 ========
 
-[![Greenkeeper badge](https://badges.greenkeeper.io/KSDaemon/wampy.js.svg)](https://greenkeeper.io/)
-
 Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation
 
 [![NPM version][npm-image]][npm-url]
@@ -11,7 +9,7 @@ Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side im
 [![Dependency Status][depstat-image]][depstat-url]
 [![DevDependency Status][depstat-dev-image]][depstat-dev-url]
 [![MIT License][license-image]][license-url]
-
+[![Greenkeeper badge][greenkeeper-image]][greenkeeper-url]
 [![Gitter Chat][gitter-image]][gitter-url]
 
 Table of Contents
@@ -904,5 +902,8 @@ with extension point support
 
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: http://opensource.org/licenses/MIT
+
+[greenkeeper-image]: https://badges.greenkeeper.io/KSDaemon/wampy.js.svg
+[greenkeeper-url]: https://greenkeeper.io/
 
 [DefinitelyTyped.org]: http://definitelytyped.org/
