@@ -1,6 +1,8 @@
 wampy.js
 ========
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/KSDaemon/wampy.js.svg)](https://greenkeeper.io/)
+
 Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation
 
 [![NPM version][npm-image]][npm-url]
