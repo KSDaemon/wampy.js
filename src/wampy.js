@@ -310,7 +310,7 @@ class Wampy {
      */
     _getReqId () {
         let reqId;
-        const max = 2 ^ 53;
+        const max = Math.pow(2, 53);
 
         do {
             reqId = Math.floor(Math.random() * max);
