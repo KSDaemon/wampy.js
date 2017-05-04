@@ -331,7 +331,7 @@ var Wampy = function () {
         key: '_getReqId',
         value: function _getReqId() {
             var reqId = void 0;
-            var max = 2 ^ 53;
+            var max = Math.pow(2, 53);
 
             do {
                 reqId = Math.floor(Math.random() * max);
