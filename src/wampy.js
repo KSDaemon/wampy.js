@@ -96,6 +96,12 @@ class Wampy {
             sessionId: null,
 
             /**
+             * WAMP Session scope requests ID
+             * @type {int}
+             */
+            reqId: 0,
+
+            /**
              * Server WAMP roles and features
              */
             server_wamp_features: { roles: {} },
@@ -309,14 +315,7 @@ class Wampy {
      * @private
      */
     _getReqId () {
-        let reqId;
-        const max = 2 ^ 53;
-
-        do {
-            reqId = Math.floor(Math.random() * max);
-        } while (reqId in this._requests);
-
-        return reqId;
+        return ++this._cache.reqId;
     }
 
     /**
@@ -470,6 +469,7 @@ class Wampy {
 
         // Just keep attrs that are have to be present
         this._cache = {
+            reqId: 0,
             reconnectingAttempts: 0
         };
     }
