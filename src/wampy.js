@@ -509,6 +509,11 @@ class Wampy {
 
         this._log('[wampy] websocket connected');
 
+        if (this._ws.protocol && this._options.serializer.protocol !== this._ws.protocol.split('.')[2]) {
+            // Server have chosen not our preferred protocol, so let's switch back to json
+            this._options.serializer = new JsonSerializer();
+        }
+
         const type = this._options.serializer.binaryType;
 
         if (!isBinaryTypeAllowed(type)) {
