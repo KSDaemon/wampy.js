@@ -295,7 +295,10 @@ class Wampy {
             this._options = this._merge(this._options, url);
         }
 
-        this.connect();
+        if (this._url) {
+            this.connect();
+        }
+
     }
 
     /* Internal utils methods */

@@ -40,13 +40,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
             expect(wampy).to.be.an('object');
         });
 
-        it('disallows to connect on instantiation without url', function () {
-            let wampy = new Wampy({ realm: 'AppRealm' }),
-                opStatus = wampy.getOpStatus();
-
-            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
-        });
-
         it('disallows to connect on instantiation without websocket provided (in Node.js env)', function () {
             let wampy = new Wampy(routerUrl, { realm: 'AppRealm' }),
                 opStatus = wampy.getOpStatus();
