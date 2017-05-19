@@ -49,7 +49,7 @@ var Wampy = function () {
          * @type {string}
          * @private
          */
-        this.version = 'v5.0.0';
+        this.version = 'v5.0.1';
 
         /**
          * WS Url
@@ -108,6 +108,12 @@ var Wampy = function () {
              * @type {string}
              */
             sessionId: null,
+
+            /**
+             * WAMP Session scope requests ID
+             * @type {int}
+             */
+            reqId: 0,
 
             /**
              * Server WAMP roles and features
@@ -330,14 +336,7 @@ var Wampy = function () {
     }, {
         key: '_getReqId',
         value: function _getReqId() {
-            var reqId = void 0;
-            var max = Math.pow(2, 53);
-
-            do {
-                reqId = Math.floor(Math.random() * max);
-            } while (reqId in this._requests);
-
-            return reqId;
+            return ++this._cache.reqId;
         }
 
         /**
@@ -523,6 +522,7 @@ var Wampy = function () {
 
             // Just keep attrs that are have to be present
             this._cache = {
+                reqId: 0,
                 reconnectingAttempts: 0
             };
         }
@@ -569,6 +569,11 @@ var Wampy = function () {
             }
 
             this._log('[wampy] websocket connected');
+
+            if (this._ws.protocol && this._options.serializer.protocol !== this._ws.protocol.split('.')[2]) {
+                // Server have chosen not our preferred protocol, so let's switch back to json
+                this._options.serializer = new _JsonSerializer.JsonSerializer();
+            }
 
             var type = this._options.serializer.binaryType;
 
