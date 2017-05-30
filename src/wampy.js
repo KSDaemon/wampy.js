@@ -506,7 +506,7 @@ class Wampy {
         const options = this._merge(this._options.helloCustomDetails, this._wamp_features);
 
         if (this._options.authid) {
-            options.authmethods = this._options._authmethods;
+            options.authmethods = this._options.authmethods;
             options.authid = this._options.authid;
         }
 
