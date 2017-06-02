@@ -25,8 +25,8 @@ class Wampy {
 
     /**
      * Wampy constructor
-     * @param {string} url
-     * @param {Object} options
+     * @param {string} [url]
+     * @param {Object} [options]
      */
     constructor (url, options) {
 
@@ -954,7 +954,7 @@ class Wampy {
      * To get options - call without parameters
      * To set options - pass hash-table with options values
      *
-     * @param {object} opts
+     * @param {object} [opts]
      * @returns {*}
      */
     options (opts) {
@@ -990,7 +990,7 @@ class Wampy {
 
     /**
      * Connect to server
-     * @param {string} url New url (optional)
+     * @param {string} [url] New url (optional)
      * @returns {Wampy}
      */
     connect (url) {
