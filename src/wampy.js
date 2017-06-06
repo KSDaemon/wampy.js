@@ -672,7 +672,12 @@ class Wampy {
                     case WAMP_MSG_SPEC.UNREGISTER:
 
                         this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                        this._requests[data[2]].callbacks.onError(data[4], data[3], data[5], data[6]);
+                        this._requests[data[2]].callbacks.onError({
+                            error: data[4],
+                            details: data[3],
+                            argsList: data[5],
+                            argsDict: data[6]
+                        });
                         delete this._requests[data[2]];
 
                         break;
@@ -683,7 +688,12 @@ class Wampy {
                         // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
                         //             Error|uri, Arguments|list, ArgumentsKw|dict]
                         this._calls[data[2]] && this._calls[data[2]].onError &&
-                        this._calls[data[2]].onError(data[4], data[3], data[5], data[6]);
+                        this._calls[data[2]].onError({
+                            error   : data[4],
+                            details : data[3],
+                            argsList: data[5],
+                            argsDict: data[6]
+                        });
                         delete this._calls[data[2]];
 
                         break;
@@ -747,7 +757,11 @@ class Wampy {
 
                     i = this._subscriptions[data[1]].callbacks.length;
                     while (i--) {
-                        this._subscriptions[data[1]].callbacks[i](data[4], data[5]);
+                        this._subscriptions[data[1]].callbacks[i]({
+                            details : data[3],
+                            argsList: data[4],
+                            argsDict: data[5]
+                        });
                     }
 
                 }
@@ -758,7 +772,11 @@ class Wampy {
                     // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
                     //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
 
-                    this._calls[data[1]].onSuccess(data[3], data[4]);
+                    this._calls[data[1]].onSuccess({
+                        details : data[2],
+                        argsList: data[3],
+                        argsDict: data[4]
+                    });
                     if (!(data[2].progress && data[2].progress === true)) {
                         // We receive final result (progressive or not)
                         delete this._calls[data[1]];
@@ -815,35 +833,39 @@ class Wampy {
                     //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 
                     p = new Promise((resolve, reject) => {
-                        resolve(this._rpcRegs[data[2]].callbacks[0](data[4], data[5], data[3]));
+                        resolve(this._rpcRegs[data[2]].callbacks[0]({
+                            details : data[3],
+                            argsList: data[4],
+                            argsDict: data[5]
+                        }));
                     });
 
                     p.then((results) => {
                         // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
                         msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-                        if (this._isArray(results)) {
-                            // Options
-                            if (this._isPlainObject(results[0])) {
-                                msg[2] = results[0];
+
+                        if (this._isPlainObject(results)) {
+
+                            if (this._isPlainObject(results.options)) {
+                                msg[2] = results.options;
                             }
 
-                            if (this._isArray(results[1])) {
-                                msg.push(results[1]);
-                            } else if (typeof (results[1]) !== 'undefined') {
-                                msg.push([results[1]]);
+                            if (this._isArray(results.argsList)) {
+                                msg.push(results.argsList);
+                            } else if (typeof (results.argsList) !== 'undefined') {
+                                msg.push([results.argsList]);
                             }
 
-                            if (this._isPlainObject(results[2])) {
+                            if (this._isPlainObject(results.argsDict)) {
                                 if (msg.length === 3) {
                                     msg.push([]);
                                 }
-                                msg.push(results[2]);
+                                msg.push(results.argsDict);
                             }
                         } else {
                             msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
                         }
                         this._send(msg);
-
                     }).catch(e => {
                         let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
                             data[1], e.details || {}, e.uri || 'wamp.error.invocation_exception'];
@@ -1067,8 +1089,8 @@ class Wampy {
      * @param {function|object} callbacks - if it is a function - it will be treated as published event callback
      *                          or it can be hash table of callbacks:
      *                          { onSuccess: will be called when subscribe would be confirmed
-         *                            onError: will be called if subscribe would be aborted
-         *                            onEvent: will be called on receiving published event }
+     *                            onError: will be called if subscribe would be aborted
+     *                            onEvent: will be called on receiving published event }
      *
      * @returns {Wampy}
      */
@@ -1126,8 +1148,8 @@ class Wampy {
      * @param {function|object} callbacks - if it is a function - it will be treated as
      *                          published event callback to remove or it can be hash table of callbacks:
      *                          { onSuccess: will be called when unsubscribe would be confirmed
-         *                            onError: will be called if unsubscribe would be aborted
-         *                            onEvent: published event callback to remove }
+     *                            onError: will be called if unsubscribe would be aborted
+     *                            onEvent: published event callback to remove }
      * @returns {Wampy}
      */
     unsubscribe (topicURI, callbacks) {
@@ -1192,23 +1214,23 @@ class Wampy {
      * @param {string|number|Array|object} payload - optional parameter.
      * @param {object} callbacks - optional hash table of callbacks:
      *                          { onSuccess: will be called when publishing would be confirmed
-         *                            onError: will be called if publishing would be aborted }
+     *                            onError: will be called if publishing would be aborted }
      * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
      *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
-         *                                      even though they may be subscribed
-         *                            exclude_authid: string|array Authentication id(s) that won't receive
-         *                                      a published event, even though they may be subscribed
-         *                            exclude_authrole: string|array Authentication role(s) that won't receive
-         *                                      a published event, even though they may be subscribed
-         *                            eligible: integer|array WAMP session id(s) that are allowed
-         *                                      to receive a published event
-         *                            eligible_authid: string|array Authentication id(s) that are allowed
-         *                                      to receive a published event
-         *                            eligible_authrole: string|array Authentication role(s) that are allowed
-         *                                      to receive a published event
-         *                            exclude_me: bool flag of receiving publishing event by initiator
-         *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
-         *                                      to receivers of a published event }
+     *                                      even though they may be subscribed
+     *                            exclude_authid: string|array Authentication id(s) that won't receive
+     *                                      a published event, even though they may be subscribed
+     *                            exclude_authrole: string|array Authentication role(s) that won't receive
+     *                                      a published event, even though they may be subscribed
+     *                            eligible: integer|array WAMP session id(s) that are allowed
+     *                                      to receive a published event
+     *                            eligible_authid: string|array Authentication id(s) that are allowed
+     *                                      to receive a published event
+     *                            eligible_authrole: string|array Authentication role(s) that are allowed
+     *                                      to receive a published event
+     *                            exclude_me: bool flag of receiving publishing event by initiator
+     *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
+     *                                      to receivers of a published event }
      * @returns {Wampy}
      */
     publish (topicURI, payload, callbacks, advancedOptions) {
@@ -1356,13 +1378,13 @@ class Wampy {
      * @param {function|object} callbacks - if it is a function - it will be treated as result callback function
      *                          or it can be hash table of callbacks:
      *                          { onSuccess: will be called with result on successful call
-         *                            onError: will be called if invocation would be aborted }
+     *                            onError: will be called if invocation would be aborted }
      * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
      *                          { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
-         *                                  to endpoints of a routed call
-         *                            receive_progress: bool flag for receiving progressive results. In this case
-         *                                  onSuccess function will be called every time on receiving result
-         *                            timeout: integer timeout (in ms) for the call to finish }
+     *                                  to endpoints of a routed call
+     *                            receive_progress: bool flag for receiving progressive results. In this case
+     *                                  onSuccess function will be called every time on receiving result
+     *                            timeout: integer timeout (in ms) for the call to finish }
      * @returns {Wampy}
      */
     call (topicURI, payload, callbacks, advancedOptions) {
@@ -1451,11 +1473,11 @@ class Wampy {
      * @param {function|object} callbacks - if it is a function - it will be called if successfully
      *                          sent canceling message or it can be hash table of callbacks:
      *                          { onSuccess: will be called if successfully sent canceling message
-         *                            onError: will be called if some error occurred }
+     *                            onError: will be called if some error occurred }
      * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
      *                          { mode: string|one of the possible modes:
-         *                                  "skip" | "kill" | "killnowait". Skip is default.
-          *                          }
+     *                                  "skip" | "kill" | "killnowait". Skip is default.
+     *                          }
      *
      * @returns {Wampy}
      */
@@ -1499,8 +1521,8 @@ class Wampy {
      * @param {function|object} callbacks - if it is a function - it will be treated as rpc itself
      *                          or it can be hash table of callbacks:
      *                          { rpc: registered procedure
-         *                            onSuccess: will be called on successful registration
-         *                            onError: will be called if registration would be aborted }
+     *                            onSuccess: will be called on successful registration
+     *                            onError: will be called if registration would be aborted }
      * @returns {Wampy}
      */
     register (topicURI, callbacks) {
@@ -1555,7 +1577,7 @@ class Wampy {
      * @param {function|object} callbacks - if it is a function, it will be called on successful unregistration
      *                          or it can be hash table of callbacks:
      *                          { onSuccess: will be called on successful unregistration
-         *                            onError: will be called if unregistration would be aborted }
+     *                            onError: will be called if unregistration would be aborted }
      * @returns {Wampy}
      */
     unregister (topicURI, callbacks) {
