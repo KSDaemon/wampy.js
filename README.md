@@ -44,9 +44,9 @@ Table of Contents
 Description
 ===========
 
-Wampy.js is javascript library, that runs both in browser and node.js enviroments. It implements [WAMP][] v2 
-specification on top of WebSocket object, also provides additional features like autoreconnecting and use of 
-Chaining Pattern. It has no external dependencies (by default) and is easy to use.
+Wampy.js is javascript library, that runs both in browser and node.js enviroments, and even in react native enviroment. 
+It implements [WAMP][] v2 specification on top of WebSocket object, also provides additional features like 
+autoreconnecting and use of Chaining Pattern. It has no external dependencies (by default) and is easy to use.
 
 Wampy.js supports next WAMP roles and features:
 
@@ -441,16 +441,13 @@ Parameters:
 
 * **topicURI**. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-* **callbacks**. If it is a function - it will be treated as published event callback
-             or it can be hash table of callbacks:
-
-   { 
-     onSuccess: will be called when subscription would be confirmed
-     onError:   will be called if subscription would be aborted with 2-4 parameters:
+* **callbacks**. If it is a function - it will be treated as published event callback o
+r it can be hash table of callbacks:
+    * **onSuccess**: will be called when subscription would be confirmed
+    * **onError**:   will be called if subscription would be aborted with 2-4 parameters:
                 (Error|uri|string, Details|object[, Arguments|list, ArgumentsKw|dict])
-     onEvent:   will be called on receiving published event with 2 parameters: 
+    * **onEvent**:   will be called on receiving published event with 2 parameters: 
                 (Arguments|array, ArgumentsKw|object) 
-   }
 
 ```javascript
 ws.subscribe('chat.message.received', function (msg) { console.log('Received new chat message!'); });
@@ -475,13 +472,11 @@ Parameters:
 Must meet a WAMP Spec URI requirements.
 * **callbacks**. If it is a function - it will be treated as published event callback to remove
              or it can be hash table of callbacks:
-
-    { 
-        onSuccess: will be called when unsubscription would be confirmed
-        onError: will be called if unsubscribe would be aborted with 2 parameters:
+    * **onSuccess**: will be called when unsubscription would be confirmed
+    * **onError**: will be called if unsubscribe would be aborted with 2 parameters:
                       (Error|uri|string, Details|object)
-        onEvent: published event callback to remove 
-    }
+    * **onEvent**: published event callback to remove 
+
 or it can be not specified, in this case all callbacks and subscription will be removed.
 
 ```javascript
@@ -504,30 +499,24 @@ Parameters:
 Must meet a WAMP Spec URI requirements.
 * **payload**. Publishing event data. Optional. May be any single value or array or hash-table object or null.
 * **callbacks**. Optional hash table of callbacks:
-
-    { 
-        onSuccess: will be called when publishing would be confirmed
-        onError:   will be called if publishing would be aborted with 2-4 parameters:
+    * **onSuccess**: will be called when publishing would be confirmed
+    * **onError**:   will be called if publishing would be aborted with 2-4 parameters:
                 (Error|uri|string, Details|object[, Arguments|list, ArgumentsKw|dict])
-    }
-* **advancedOptions**. Optional parameter. Must include any or all of the options:
-
-    { 
-        exclude: integer|array WAMP session id(s) that won't receive a published event,
+* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+    * **exclude**: integer|array WAMP session id(s) that won't receive a published event,
                  even though they may be subscribed
-        exclude_authid: string|array Authentication id(s) that won't receive
+    * **exclude_authid**: string|array Authentication id(s) that won't receive
                         a published event, even though they may be subscribed
-        exclude_authrole: string|array Authentication role(s) that won't receive
+    * **exclude_authrole**: string|array Authentication role(s) that won't receive
                           a published event, even though they may be subscribed
-        eligible: integer|array WAMP session id(s) that are allowed to receive a published event
-        eligible_authid: string|array Authentication id(s) that are allowed to receive a published event
-        eligible_authrole: string|array Authentication role(s) that are allowed
+    * **eligible**: integer|array WAMP session id(s) that are allowed to receive a published event
+    * **eligible_authid**: string|array Authentication id(s) that are allowed to receive a published event
+    * **eligible_authrole**: string|array Authentication role(s) that are allowed
                            to receive a published event
-        exclude_me: bool flag of receiving publishing event by initiator
+    * **exclude_me**: bool flag of receiving publishing event by initiator
                          (if it is subscribed to this topic)
-        disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
+    * **disclose_me**: bool flag of disclosure of publisher identity (its WAMP session ID)
                          to receivers of a published event 
-    }
 
 ```javascript
 ws.publish('user.logged.in');
@@ -558,23 +547,16 @@ Must meet a WAMP Spec URI requirements.
 * **payload**. RPC data. Optional. May be any single value or array or hash-table object or null.
 * **callbacks**. If it is a function - it will be treated as result callback function
              or it can be hash table of callbacks:
-
-    { 
-        onSuccess: will be called with result on successful call with 2 parameters: 
+    * **onSuccess**: will be called with result on successful call with 2 parameters: 
                         (Arguments|array, ArgumentsKw|object) 
-        onError: will be called if invocation would be aborted with 2-4 parameters:
+    * **onError**: will be called if invocation would be aborted with 2-4 parameters:
                       (Error|uri|string, Details|object[, Arguments|array, ArgumentsKw|object]) 
-    }
-
-* **advancedOptions**. Optional parameter. Must include any or all of the options:
-
-    { 
-        disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
+* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+    * **disclose_me**: bool flag of disclosure of Caller identity (WAMP session ID)
                         to endpoints of a routed call
-        receive_progress: bool flag for receiving progressive results. In this case onSuccess function
+    * **receive_progress**: bool flag for receiving progressive results. In this case onSuccess function
                         will be called every time on receiving result
-        timeout: integer timeout (in ms) for the call to finish 
-    }
+    * **timeout**: integer timeout (in ms) for the call to finish 
 
 ```javascript
 ws.call('server.time', null, 
@@ -614,17 +596,10 @@ Parameters:
 * **reqId**. Required. Request ID of RPC call that need to be canceled.
 * **callbacks**. Optional. If it is a function - it will be called if successfully sent canceling message
             or it can be hash table of callbacks:
-
-    { 
-        onSuccess: will be called if successfully sent canceling message 
-        onError: will be called if some error occurred 
-    }
-    
-* **advancedOptions**. Optional parameter. Must include any or all of the options:
-
-    { 
-        mode: string|one of the possible modes: "skip" | "kill" | "killnowait". Skip is default. 
-    }
+    * **onSuccess**: will be called if successfully sent canceling message 
+    * **onError**: will be called if some error occurred 
+* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+    * **mode**: string|one of the possible modes: "skip" | "kill" | "killnowait". Skip is default. 
 
 ```javascript
 ws.call('start.migration', null, {
@@ -654,12 +629,9 @@ Parameters:
 Must meet a WAMP Spec URI requirements.
 * **callbacks**. Required. If it is a function - it will be treated as rpc itself
              or it can be hash table of callbacks:
-
-    { 
-        rpc: registered procedure
-        onSuccess: will be called on successful registration
-        onError: will be called if registration would be aborted 
-    }
+    * **rpc**: registered procedure
+    * **onSuccess**: will be called on successful registration
+    * **onError**: will be called if registration would be aborted 
 
 Registered PRC during invocation will receive three arguments: array payload (may be undefined), object payload 
 (may be undefined) and options object. One attribute of interest in options is "receive_progress" (boolean), 
@@ -760,11 +732,8 @@ Parameters:
 Must meet a WAMP Spec URI requirements.
 * **callbacks**. Optional. If it is a function - it will be called on successful unregistration
              or it can be hash table of callbacks:
-
-    { 
-        onSuccess: will be called on successful unregistration
-        onError: will be called if unregistration would be aborted 
-    }
+    * **onSuccess**: will be called on successful unregistration
+    * **onError**: will be called if unregistration would be aborted 
 
 ```javascript
 ws.unregister('sqrt.value');
