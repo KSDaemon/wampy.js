@@ -395,7 +395,7 @@ class Wampy {
         }
 
         if (this._isPlainObject(callbacks) && callbacks.onError) {
-            callbacks.onError(this._cache.opStatus.description);
+            callbacks.onError({ error: this._cache.opStatus.description });
         }
 
         return false;
@@ -606,7 +606,7 @@ class Wampy {
             case WAMP_MSG_SPEC.ABORT:
                 // WAMP SPEC: [ABORT, Details|dict, Reason|uri]
                 if (this._options.onError) {
-                    this._options.onError(data[1].message ? data[1].message : data[2]);
+                    this._options.onError({ error: data[2], details: data[1] });
                 }
                 this._ws.close();
                 break;
@@ -631,7 +631,7 @@ class Wampy {
                             'wamp.error.cannot_authenticate'
                         ]));
                         if (this._options.onError) {
-                            this._options.onError(WAMP_ERROR_MSG.CRA_EXCEPTION.description);
+                            this._options.onError({ error: WAMP_ERROR_MSG.CRA_EXCEPTION.description });
                         }
                         this._ws.close();
                         this._cache.opStatus = WAMP_ERROR_MSG.CRA_EXCEPTION;
@@ -645,7 +645,7 @@ class Wampy {
                         'wamp.error.cannot_authenticate'
                     ]));
                     if (this._options.onError) {
-                        this._options.onError(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description);
+                        this._options.onError({ error: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description });
                     }
                     this._ws.close();
                     this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
@@ -912,7 +912,7 @@ class Wampy {
         this._log('[wampy] websocket error');
 
         if (this._options.onError) {
-            this._options.onError(error);
+            this._options.onError({ error: error });
         }
     }
 
@@ -1107,7 +1107,7 @@ class Wampy {
             this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError(this._cache.opStatus.description);
+                callbacks.onError({ error: this._cache.opStatus.description });
             }
 
             return this;
@@ -1197,7 +1197,7 @@ class Wampy {
             this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError(this._cache.opStatus.description);
+                callbacks.onError({ error: this._cache.opStatus.description });
             }
 
             return this;
@@ -1234,7 +1234,7 @@ class Wampy {
      * @returns {Wampy}
      */
     publish (topicURI, payload, callbacks, advancedOptions) {
-        let reqId, msg, err = false;
+        let reqId, msg, err = false, hasPayload = false;
         const options = {};
 
         if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
@@ -1324,7 +1324,7 @@ class Wampy {
                 this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
 
                 return this;
@@ -1335,34 +1335,45 @@ class Wampy {
 
         switch (arguments.length) {
             case 1:
-                // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
-                msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI];
                 break;
             case 2:
-                // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-                if (this._isArray(payload)) {
-                    msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, payload];
-                } else if (this._isPlainObject(payload)) {
-                    msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [], payload];
-                } else {    // assume it's a single value
-                    msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [payload]];
-                }
+                hasPayload = true;
                 break;
             default:
                 this._requests[reqId] = {
                     topic: topicURI,
                     callbacks: callbacks
                 };
-
-                // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-                if (this._isArray(payload)) {
-                    msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, payload];
-                } else if (this._isPlainObject(payload)) {
-                    msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [], payload];
-                } else {    // assume it's a single value
-                    msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [payload]];
-                }
+                hasPayload = true;
                 break;
+        }
+
+        // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
+        msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI];
+
+        if (hasPayload) {
+            // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
+            if (this._isArray(payload)) {
+                msg.push(payload);
+            } else if (this._isPlainObject(payload)) {
+                // It's a wampy unified form of payload passing
+                if (payload.argsList || payload.argsDict) {
+                    if (payload.argsList) {
+                        msg.push(payload.argsList);
+                    }
+
+                    if (payload.argsDict) {
+                        if (msg.length === 4) {
+                            msg.push([]);
+                        }
+                        msg.push(payload.argsDict);
+                    }
+                } else {
+                    msg.push([], payload);
+                }
+            } else {    // assume it's a single value
+                msg.push([payload]);
+            }
         }
 
         this._send(msg);
@@ -1401,7 +1412,7 @@ class Wampy {
             this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError(this._cache.opStatus.description);
+                callbacks.onError({ error: this._cache.opStatus.description });
             }
 
             return this;
@@ -1434,7 +1445,7 @@ class Wampy {
                 this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
 
                 return this;
@@ -1448,15 +1459,29 @@ class Wampy {
         this._calls[reqId] = callbacks;
 
         // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
-        if (payload === null) {
-            msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
-        } else {
+        msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
+
+        if (payload !== null) {
             if (this._isArray(payload)) {
-                msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI, payload];
+                msg.push(payload);
             } else if (this._isPlainObject(payload)) {
-                msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI, [], payload];
+                // It's a wampy unified form of payload passing
+                if (payload.argsList || payload.argsDict) {
+                    if (payload.argsList) {
+                        msg.push(payload.argsList);
+                    }
+
+                    if (payload.argsDict) {
+                        if (msg.length === 4) {
+                            msg.push([]);
+                        }
+                        msg.push(payload.argsDict);
+                    }
+                } else {
+                    msg.push([], payload);
+                }
             } else {    // assume it's a single value
-                msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI, [payload]];
+                msg.push([payload]);
             }
         }
 
@@ -1492,7 +1517,7 @@ class Wampy {
             this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError(this._cache.opStatus.description);
+                callbacks.onError({ error: this._cache.opStatus.description });
             }
 
             return this;
@@ -1538,7 +1563,7 @@ class Wampy {
             this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError(this._cache.opStatus.description);
+                callbacks.onError({ error: this._cache.opStatus.description });
             }
 
             return this;
@@ -1562,7 +1587,7 @@ class Wampy {
             this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError(this._cache.opStatus.description);
+                callbacks.onError({ error: this._cache.opStatus.description });
             }
 
         }
@@ -1608,7 +1633,7 @@ class Wampy {
             this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG;
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError(this._cache.opStatus.description);
+                callbacks.onError({ error: this._cache.opStatus.description });
             }
 
         }
