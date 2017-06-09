@@ -1404,7 +1404,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 let dictpayload = { key1: 100, key2: 'string-key' },
                     payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
 
-                wampy.call('call.rpc5', {}, function (e) {
+                wampy.call('call.rpc5', payload, function (e) {
                     expect(e).to.be.an('object');
                     expect(e.argsList).to.be.an('array');
                     expect(e.argsList[0]).to.be.equal(1);
