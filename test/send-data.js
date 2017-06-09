@@ -601,7 +601,7 @@ const WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
-        // allows to publish/subscribe event without payload
+        // allows to publish event without payload
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
@@ -647,7 +647,7 @@ const WAMP_MSG_SPEC = {
                 {}
             ]
         },
-        // allows to publish/subscribe event with int payload
+        // allows to publish event with int payload
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
@@ -695,7 +695,7 @@ const WAMP_MSG_SPEC = {
                 [25]
             ]
         },
-        // allows to publish/subscribe event with string payload
+        // allows to publish event with string payload
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
@@ -743,7 +743,7 @@ const WAMP_MSG_SPEC = {
                 ['payload']
             ]
         },
-        // allows to publish/subscribe event with array payload
+        // allows to publish event with array payload
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
@@ -791,7 +791,7 @@ const WAMP_MSG_SPEC = {
                 [1, 2, 3, 4, 5]
             ]
         },
-        // allows to publish/subscribe event with hash-table payload
+        // allows to publish event with hash-table payload
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
@@ -826,7 +826,7 @@ const WAMP_MSG_SPEC = {
                 11,
                 121,
                 {},
-                null,
+                [],
                 { key1: 100, key2: 'string-key' }
             ],
             next: true
@@ -837,7 +837,57 @@ const WAMP_MSG_SPEC = {
                 11,
                 122,
                 {},
-                null,
+                [],
+                { key1: 100, key2: 'string-key' }
+            ]
+        },
+        // allows to publish event with both array and hash-table payload
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                1177   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                12177
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                12277
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                1177,
+                12177,
+                {},
+                [1, 2, 3, 4, 5],
+                { key1: 100, key2: 'string-key' }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                1177,
+                12277,
+                {},
+                [1, 2, 3, 4, 5],
                 { key1: 100, key2: 'string-key' }
             ]
         },
@@ -868,36 +918,6 @@ const WAMP_MSG_SPEC = {
                 14,
                 {},
                 ['payload']
-            ]
-        },
-        // allows to receive events with array and hash-table payload at the same time
-        {
-            data: [
-                WAMP_MSG_SPEC.SUBSCRIBED,
-                'RequestId',
-                118   // Subscription id need in next publish msg
-            ],
-            from: [1],
-            to: [1]
-        },
-        {
-            data: [
-                WAMP_MSG_SPEC.PUBLISHED,
-                'RequestId',
-                1225
-            ],
-            from: [1],
-            to: [1],
-            next: true
-        },
-        {
-            data: [
-                WAMP_MSG_SPEC.EVENT,
-                118,
-                1225,
-                {},
-                [1, 2, 3, 4, 5],
-                { key1: 100, key2: 'string-key' }
             ]
         },
         // allows to unsubscribe from topic only specified handler
@@ -1095,7 +1115,19 @@ const WAMP_MSG_SPEC = {
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
                 {},
-                null,
+                [],
+                { key1: 100, key2: 'string-key' }
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with both array and hash-table payload
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [1, 2, 3, 4, 5],
                 { key1: 100, key2: 'string-key' }
             ],
             from: [1],
@@ -1343,7 +1375,7 @@ const WAMP_MSG_SPEC = {
                 'RequestId',
                 25, // Registration ID
                 {},
-                null,
+                [],
                 { key1: 100, key2: 'string-key' }
             ],
             from: [1],
@@ -1354,7 +1386,7 @@ const WAMP_MSG_SPEC = {
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
                 {},
-                null,
+                [],
                 { key1: 100, key2: 'string-key' }
             ],
             from: [1],
@@ -1485,7 +1517,7 @@ const WAMP_MSG_SPEC = {
                 'RequestId',
                 {},
                 'app.error.custom_invocation_exception',
-                null,
+                [],
                 { key1: 'key1', key2: true, key3: 25 }
             ],
             from: [2],
@@ -1579,7 +1611,7 @@ const WAMP_MSG_SPEC = {
                 'RequestId',
                 {},
                 'call.error',
-                null,
+                [],
                 { k1: 1, k2: 2 }
             ],
             from: [1],

@@ -507,7 +507,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
                         }
                     }
                 );
@@ -522,7 +522,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
                         }
                     }
                 );
@@ -537,7 +537,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
                         }
                     }
                 );
@@ -579,7 +579,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                                             onSuccess: function (e) {
                                             },
                                             onError: function (e) {
-                                                expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                                             }
                                         }
                                     );
@@ -602,7 +602,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
 
                 wampy.subscribe('qqq.www.eee', {
                     onError: function (e) {
-                        expect(e).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
+                        expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
                         done();
                     }
                 });
@@ -638,10 +638,12 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish/subscribe event without payload', function (done) {
+            it('allows to publish event without payload', function (done) {
                 let i = 1;
                 wampy.subscribe('subscribe.topic3', function (e) {
-                    expect(e).to.be.undefined;
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.undefined;
+                    expect(e.argsDict).to.be.undefined;
 
                     if (i === 2) {
                         done();
@@ -654,11 +656,13 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish/subscribe event with int payload', function (done) {
+            it('allows to publish event with int payload', function (done) {
                 let i = 1;
                 wampy.subscribe('subscribe.topic4', function (e) {
-                    expect(e).to.be.an('array');
-                    expect(e[0]).to.be.equal(25);
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(25);
 
                     if (i === 2) {
                         done();
@@ -671,11 +675,13 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish/subscribe event with string payload', function (done) {
+            it('allows to publish event with string payload', function (done) {
                 let i = 1;
                 wampy.subscribe('subscribe.topic5', function (e) {
-                    expect(e).to.be.an('array');
-                    expect(e[0]).to.be.equal('payload');
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal('payload');
 
                     if (i === 2) {
                         done();
@@ -688,13 +694,14 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish/subscribe event with array payload', function (done) {
+            it('allows to publish event with array payload', function (done) {
                 let i = 1;
                 wampy.subscribe('subscribe.topic6', function (e) {
-                    expect(e).to.be.an('array');
-                    expect(e).to.have.length(5);
-                    expect(e[0]).to.be.equal(1);
-                    expect(e[4]).to.be.equal(5);
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
 
                     if (i === 2) {
                         done();
@@ -707,13 +714,15 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
-            it('allows to publish/subscribe event with hash-table payload', function (done) {
+            it('allows to publish event with hash-table payload', function (done) {
                 let i = 1, payload = { key1: 100, key2: 'string-key' };
 
-                wampy.subscribe('subscribe.topic7', function (e1, e2) {
-                    expect(e1).to.be.null;
-                    expect(e2).to.be.an('object');
-                    expect(e2).to.be.deep.equal(payload);
+                wampy.subscribe('subscribe.topic7', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList.length).to.be.equal(0);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(payload);
 
                     if (i === 2) {
                         done();
@@ -726,10 +735,35 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
+            it('allows to publish event with both array and hash-table payload', function (done) {
+                let i = 1, dictpayload = { key1: 100, key2: 'string-key' },
+                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                wampy.subscribe('subscribe.topic77', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(dictpayload);
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
+                })
+                    .publish('subscribe.topic77', payload)
+                    .publish('subscribe.topic77', payload, null, { exclude_me: false, disclose_me: true });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
             it('allows to publish event with different advanced options', function (done) {
                 wampy.subscribe('subscribe.topic8', function (e) {
-                    expect(e).to.be.an('array');
-                    expect(e[0]).to.be.equal('payload');
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal('payload');
                     done();
                 })
                     .publish('subscribe.topic8', 'payload',
@@ -746,22 +780,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         disclose_me: true
                     }
                     );
-                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-            });
-
-            it('allows to receive events with array and hash-table payload at the same time', function (done) {
-                let payload = { key1: 100, key2: 'string-key' };
-
-                wampy.subscribe('subscribe.topic88', function (e1, e2) {
-                    expect(e1).to.be.an('array');
-                    expect(e1).to.have.length(5);
-                    expect(e1[0]).to.be.equal(1);
-                    expect(e1[4]).to.be.equal(5);
-                    expect(e2).to.be.an('object');
-                    expect(e2).to.be.deep.equal(payload);
-                    done();
-                })
-                    .publish('subscribe.topic88', payload, null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -786,7 +804,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                         }
                     }
                 );
@@ -920,7 +938,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
                         }
                     },
                     {
@@ -940,7 +958,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
                         }
                     },
                     {
@@ -998,7 +1016,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     onSuccess: function (e) {
                     },
                     onError: function (e) {
-                        expect(e).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE.description);
+                        expect(e.error).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE.description);
                     }
                 });
             });
@@ -1065,7 +1083,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
                         }
                     }
                 );
@@ -1082,7 +1100,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
                         }
                     }
                 );
@@ -1100,7 +1118,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
                         }
                     }
                 );
@@ -1116,7 +1134,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
                         }
                     }
                 );
@@ -1158,7 +1176,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                                 onSuccess: function (e) {
                                 },
                                 onError: function (e) {
-                                    expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                                 }
                             }
                         );
@@ -1222,7 +1240,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     onSuccess: function (e) {
                     },
                     onError: function (e) {
-                        expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                        expect(e.error).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                     }
                 });
             });
@@ -1233,7 +1251,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
 
                 wampy.call('qqq.www.eee', 'payload', {
                     onError: function (e) {
-                        expect(e).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
+                        expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
                     }
                 });
             });
@@ -1333,33 +1351,40 @@ describe('Wampy.js [with msgpack serializer]', function () {
 
             it('allows to call RPC without payload', function (done) {
                 wampy.call('call.rpc1', null, function (e) {
-                    expect(e).to.be.undefined;
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.undefined;
+                    expect(e.argsDict).to.be.undefined;
                     done();
                 });
             });
 
             it('allows to call RPC with int payload', function (done) {
                 wampy.call('call.rpc2', 25, function (e) {
-                    expect(e).to.be.an('array');
-                    expect(e[0]).to.be.equal(25);
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(25);
                     done();
                 });
             });
 
             it('allows to call RPC with string payload', function (done) {
                 wampy.call('call.rpc3', 'payload', function (e) {
-                    expect(e).to.be.an('array');
-                    expect(e[0]).to.be.equal('payload');
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal('payload');
                     done();
                 });
             });
 
             it('allows to call RPC with array payload', function (done) {
                 wampy.call('call.rpc4', [1, 2, 3, 4, 5], function (e) {
-                    expect(e).to.be.an('array');
-                    expect(e).to.have.length(5);
-                    expect(e[0]).to.be.equal(1);
-                    expect(e[4]).to.be.equal(5);
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
                     done();
                 });
             });
@@ -1367,10 +1392,27 @@ describe('Wampy.js [with msgpack serializer]', function () {
             it('allows to call RPC with hash-table payload', function (done) {
                 let payload = { key1: 100, key2: 'string-key' };
 
-                wampy.call('call.rpc5', {}, function (e1, e2) {
-                    expect(e1).to.be.null;
-                    expect(e2).to.be.an('object');
-                    expect(e2).to.be.deep.equal(payload);
+                wampy.call('call.rpc5', {}, function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList.length).to.be.equal(0);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(payload);
+                    done();
+                });
+            });
+
+            it('allows to call RPC with both array and hash-table payload', function (done) {
+                let dictpayload = { key1: 100, key2: 'string-key' },
+                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                wampy.call('call.rpc5', {}, function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(dictpayload);
                     done();
                 });
             });
@@ -1380,8 +1422,10 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     'call.rpc6',
                     'payload',
                     function (e) {
-                        expect(e).to.be.an('array');
-                        expect(e[0]).to.be.equal('payload');
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal('payload');
                         done();
                     },
                     {
@@ -1397,8 +1441,10 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     'call.rpc7',
                     'payload',
                     function (e) {
-                        expect(e).to.be.an('array');
-                        if (e[0] == 100) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        if (e.argsList[0] == 100) {
                             done();
                         }
                     },
@@ -1416,7 +1462,8 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     'payload',
                     {
                         onSuccess: function (e) {
-                            expect(e).to.be.an('array');
+                            expect(e).to.be.an('object');
+                            expect(e.argsList).to.be.an('array');
 
                             wampy.cancel(
                                 reqId,
@@ -1480,7 +1527,9 @@ describe('Wampy.js [with msgpack serializer]', function () {
                             'register.rpc3',
                             null,
                             function (e) {
-                                expect(e).to.be.undefined;
+                                expect(e).to.be.an('object');
+                                expect(e.argsList).to.be.undefined;
+                                expect(e.argsDict).to.be.undefined;
                                 done();
                             },
                             { exclude_me: false }
@@ -1507,7 +1556,9 @@ describe('Wampy.js [with msgpack serializer]', function () {
                             'register.rpc33',
                             null,
                             function (e) {
-                                expect(e).to.be.undefined;
+                                expect(e).to.be.an('object');
+                                expect(e.argsList).to.be.undefined;
+                                expect(e.argsDict).to.be.undefined;
                                 done();
                             },
                             { exclude_me: false }
@@ -1534,8 +1585,10 @@ describe('Wampy.js [with msgpack serializer]', function () {
                             'register.rpc4',
                             100,
                             function (e) {
-                                expect(e).to.be.an('array');
-                                expect(e[0]).to.be.equal(100);
+                                expect(e).to.be.an('object');
+                                expect(e.argsList).to.be.an('array');
+                                expect(e.argsDict).to.be.undefined;
+                                expect(e.argsList[0]).to.be.equal(100);
                                 done();
                             },
                             { exclude_me: false }
@@ -1562,10 +1615,11 @@ describe('Wampy.js [with msgpack serializer]', function () {
                             'register.rpc5',
                             [1, 2, 3, 4, 5],
                             function (e) {
-                                expect(e).to.be.an('array');
-                                expect(e).to.have.length(5);
-                                expect(e[0]).to.be.equal(1);
-                                expect(e[4]).to.be.equal(5);
+                                expect(e).to.be.an('object');
+                                expect(e.argsList).to.be.an('array');
+                                expect(e.argsDict).to.be.undefined;
+                                expect(e.argsList[0]).to.be.equal(1);
+                                expect(e.argsList[4]).to.be.equal(5);
                                 done();
                             },
                             { exclude_me: false }
@@ -1592,10 +1646,12 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         wampy.call(
                             'register.rpc6',
                             payload,
-                            function (e1, e2) {
-                                expect(e1).to.be.null;
-                                expect(e2).to.be.an('object');
-                                expect(e2).to.be.deep.equal(payload);
+                            function (e) {
+                                expect(e).to.be.an('object');
+                                expect(e.argsList).to.be.an('array');
+                                expect(e.argsList.length).to.be.equal(0);
+                                expect(e.argsDict).to.be.an('object');
+                                expect(e.argsDict).to.be.deep.equal(payload);
                                 done();
                             },
                             { exclude_me: false }
@@ -1673,7 +1729,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 wampy.register('register.rpc88', {
                     rpc: function (e) {
                         let UserException = function () {
-                            this.uri = definedUri;
+                            this.error = definedUri;
                             this.details = definedDetails;
                             this.argsList = definedArgsList;
                             this.argsDict = definedArgsDict;
@@ -1688,17 +1744,17 @@ describe('Wampy.js [with msgpack serializer]', function () {
                             {
                                 onSuccess: function () {
                                 },
-                                onError: function (uri, details, args, argsKw) {
-                                    expect(uri).to.be.equal(definedUri);
-                                    expect(details).to.be.deep.equal(definedDetails);
-                                    expect(args).to.be.an('array');
-                                    expect(args[0]).to.be.equal(1);
-                                    expect(argsKw).to.be.deep.equal(definedArgsDict);
+                                onError: function (e) {
+                                    expect(e.error).to.be.equal(definedUri);
+                                    expect(e.details).to.be.deep.equal(definedDetails);
+                                    expect(e.argsList).to.be.an('array');
+                                    expect(e.argsList[0]).to.be.equal(1);
+                                    expect(e.argsDict).to.be.deep.equal(definedArgsDict);
 
                                     wampy.register('register.rpc99', {
                                         rpc: function (e) {
                                             let UserException = function () {
-                                                this.uri = definedUri;
+                                                this.error = definedUri;
                                                 // no details
                                                 // no args list, only args dict
                                                 this.argsDict = definedArgsDict;
@@ -1713,11 +1769,12 @@ describe('Wampy.js [with msgpack serializer]', function () {
                                                 {
                                                     onSuccess: function () {
                                                     },
-                                                    onError: function (uri, details, args, argsKw) {
-                                                        expect(uri).to.be.equal(definedUri);
-                                                        expect(details).to.be.deep.equal({});
-                                                        expect(args).to.be.null;
-                                                        expect(argsKw).to.be.deep.equal(definedArgsDict);
+                                                    onError: function (e) {
+                                                        expect(e.error).to.be.equal(definedUri);
+                                                        expect(e.details).to.be.deep.equal({});
+                                                        expect(e.argsList).to.be.an('array');
+                                                        expect(e.argsList.length).to.be.equal(0);
+                                                        expect(e.argsDict).to.be.deep.equal(definedArgsDict);
                                                         done();
                                                     }
                                                 },
@@ -1761,7 +1818,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG.description);
                         }
                     }
                 );
@@ -1774,7 +1831,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
                         }
                     }
                 );
@@ -1787,7 +1844,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
                         }
                     }
                 );
@@ -1804,7 +1861,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                             onSuccess: function (e) {
                             },
                             onError: function (e) {
-                                expect(e).to.be.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED.description);
+                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED.description);
                                 done();
                             }
                         });
@@ -1826,7 +1883,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                         },
                         onError: function (e) {
-                            expect(e).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID.description);
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID.description);
                         }
                     }
                 );
@@ -1862,7 +1919,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         done('Reached success. Check Server side');
                     },
                     onError: function (e) {
-                        expect(e).to.be.equal('call.error');
+                        expect(e.error).to.be.equal('call.error');
 
                         i++;
                         if (i === 3) {
@@ -1878,12 +1935,13 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                             done('Reached success. Check Server side');
                         },
-                        onError: function (e1, e2, e3) {
-                            expect(e1).to.be.equal('call.error');
-                            expect(e3).to.be.an('array');
-                            expect(e3).to.have.length(5);
-                            expect(e3[0]).to.be.equal(1);
-                            expect(e3[4]).to.be.equal(5);
+                        onError: function (e) {
+                            expect(e.error).to.be.equal('call.error');
+                            expect(e.argsList).to.be.an('array');
+                            expect(e.argsList[0]).to.be.equal(1);
+                            expect(e.argsList[4]).to.be.equal(5);
+                            expect(e.argsList).to.have.length(5);
+                            expect(e.argsDict).to.be.undefined;
 
                             i++;
                             if (i === 3) {
@@ -1900,10 +1958,11 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         onSuccess: function (e) {
                             done('Reached success. Check Server side');
                         },
-                        onError: function (e1, e2, e3, e4) {
-                            expect(e1).to.be.equal('call.error');
-                            expect(e4).to.be.an('object');
-                            expect(e4).to.be.deep.equal({ k1: 1, k2: 2 });
+                        onError: function (e) {
+                            expect(e.error).to.be.equal('call.error');
+                            expect(e.argsList).to.be.an('array');
+                            expect(e.argsList).to.have.length(0);
+                            expect(e.argsDict).to.be.deep.equal({ k1: 1, k2: 2 });
 
                             i++;
                             if (i === 3) {
