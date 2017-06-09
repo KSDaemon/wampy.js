@@ -1523,7 +1523,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
 
             it('allows to invoke asynchronous RPC without value', function (done) {
                 wampy.register('register.rpc3', {
-                    rpc: function (e, o) {
+                    rpc: function (e) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 resolve();
@@ -1552,7 +1552,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
 
             it('allows to invoke asynchronous RPC without value but with extra options', function (done) {
                 wampy.register('register.rpc33', {
-                    rpc: function (e, o) {
+                    rpc: function (e) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 resolve({ options: { extra: true } });
@@ -1583,7 +1583,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
 
             it('allows to invoke asynchronous RPC with single value', function (done) {
                 wampy.register('register.rpc4', {
-                    rpc: function (e, o) {
+                    rpc: function (e) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 resolve({ options: {}, argsList: 100 });
@@ -1613,7 +1613,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
 
             it('allows to invoke asynchronous RPC with array value', function (done) {
                 wampy.register('register.rpc5', {
-                    rpc: function (e, o) {
+                    rpc: function (e) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 resolve({ options: {}, argsList: [1, 2, 3, 4, 5] });
@@ -1645,7 +1645,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             it('allows to invoke asynchronous RPC with hash-table value', function (done) {
                 let payload = { key1: 100, key2: 'string-key' };
                 wampy.register('register.rpc6', {
-                    rpc: function (e, o) {
+                    rpc: function (e) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
                                 resolve({ options: {}, argsDict: payload });
