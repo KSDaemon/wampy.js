@@ -99,33 +99,52 @@ describe('Wampy.js [with JSON serializer]', function () {
                     customFiled2: 'string',
                     customFiled3: [1, 2, 3, 4, 5]
                 },
-                wampy = new Wampy(routerUrl, {
-                    autoReconnect: true,
-                    reconnectInterval: 10000,
-                    maxRetries: 50,
-                    realm: 'AppRealm',
+                setoptions = {
+                    autoReconnect     : true,
+                    reconnectInterval : 10000,
+                    maxRetries        : 50,
+                    realm             : 'AppRealm',
                     helloCustomDetails: helloCustomDetails,
-                    onChallenge: function () {
+                    onChallenge       : function () {
                         done('Reached onChallenge');
                     },
-                    authid: 'userid',
-                    authmethods: ['wampcra'],
-                    onConnect: done,
-                    onClose: function () {
+                    authid            : 'userid',
+                    authmethods       : ['wampcra'],
+                    onConnect         : done,
+                    onClose           : function () {
                         done('Reached onClose');
                     },
-                    onError: function () {
+                    onError           : function () {
                         done('Reached onError');
                     },
-                    onReconnect: function () {
+                    onReconnect       : function () {
                         done('Reached onReconnect');
                     },
                     onReconnectSuccess: function () {
                         done('Reached onReconnectSuccess');
                     },
-                    ws: WebSocketModule.WebSocket
-                }),
+                    ws                : WebSocketModule.WebSocket
+                },
+                wampy = new Wampy(setoptions),
                 options = wampy.options();
+
+            expect(options.autoReconnect).to.be.true;
+            expect(options.reconnectInterval).to.be.equal(10000);
+            expect(options.maxRetries).to.be.equal(50);
+            expect(options.realm).to.be.equal('AppRealm');
+            expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
+            expect(options.onChallenge).to.be.a('function');
+            expect(options.authid).to.be.equal('userid');
+            expect(options.authmethods).to.be.an('array');
+            expect(options.authmethods[0]).to.be.equal('wampcra');
+            expect(options.onConnect).to.be.a('function');
+            expect(options.onClose).to.be.a('function');
+            expect(options.onError).to.be.a('function');
+            expect(options.onReconnect).to.be.a('function');
+            expect(options.onReconnectSuccess).to.be.a('function');
+
+            wampy = new Wampy(routerUrl, setoptions);
+            options = wampy.options();
 
             expect(options.autoReconnect).to.be.true;
             expect(options.reconnectInterval).to.be.equal(10000);
