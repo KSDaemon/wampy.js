@@ -724,14 +724,15 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     expect(e.argsDict).to.be.an('object');
                     expect(e.argsDict).to.be.deep.equal(payload);
 
-                    if (i === 2) {
+                    if (i === 3) {
                         done();
                     } else {
                         i++;
                     }
                 })
                     .publish('subscribe.topic7', payload)
-                    .publish('subscribe.topic7', payload, null, { exclude_me: false, disclose_me: true });
+                    .publish('subscribe.topic7', payload, null, { exclude_me: false, disclose_me: true })
+                    .publish('subscribe.topic7', { argsDict: payload }, null, { exclude_me: false, disclose_me: true });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -1390,16 +1391,23 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('allows to call RPC with hash-table payload', function (done) {
-                let payload = { key1: 100, key2: 'string-key' };
+                let i = 1, payload = { key1: 100, key2: 'string-key' },
+                    cb = function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsList.length).to.be.equal(0);
+                        expect(e.argsDict).to.be.an('object');
+                        expect(e.argsDict).to.be.deep.equal(payload);
 
-                wampy.call('call.rpc5', {}, function (e) {
-                    expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList.length).to.be.equal(0);
-                    expect(e.argsDict).to.be.an('object');
-                    expect(e.argsDict).to.be.deep.equal(payload);
-                    done();
-                });
+                        if (i === 2) {
+                            done();
+                        } else {
+                            i++;
+                        }
+                    };
+
+                wampy.call('call.rpc5', payload, cb)
+                    .call('call.rpc5', { argsDict: payload }, cb);
             });
 
             it('allows to call RPC with both array and hash-table payload', function (done) {
@@ -1547,7 +1555,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     rpc: function (e, o) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
-                                resolve([{}]);
+                                resolve({ options: { extra: true } });
                             }, 1);
                         });
                     },
@@ -1557,6 +1565,8 @@ describe('Wampy.js [with msgpack serializer]', function () {
                             null,
                             function (e) {
                                 expect(e).to.be.an('object');
+                                expect(e.details).to.be.an('object');
+                                expect(e.details.extra).to.be.true;
                                 expect(e.argsList).to.be.undefined;
                                 expect(e.argsDict).to.be.undefined;
                                 done();
@@ -1576,7 +1586,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     rpc: function (e, o) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
-                                resolve([{}, 100]);
+                                resolve({ options: {}, argsList: 100 });
                             }, 1);
                         });
                     },
@@ -1606,7 +1616,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     rpc: function (e, o) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
-                                resolve([{}, [1, 2, 3, 4, 5]]);
+                                resolve({ options: {}, argsList: [1, 2, 3, 4, 5] });
                             }, 1);
                         });
                     },
@@ -1638,7 +1648,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     rpc: function (e, o) {
                         return new Promise(function (resolve, reject) {
                             setTimeout(function () {
-                                resolve([{}, payload]);
+                                resolve({ options: {}, argsDict: payload });
                             }, 1);
                         });
                     },

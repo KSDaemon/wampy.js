@@ -681,8 +681,8 @@ class Wampy {
                         delete this._requests[data[2]];
 
                         break;
-                    case WAMP_MSG_SPEC.INVOCATION:
-                        break;
+                    // case WAMP_MSG_SPEC.INVOCATION:
+                    //     break;
                     case WAMP_MSG_SPEC.CALL:
 
                         // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
@@ -1212,7 +1212,7 @@ class Wampy {
      * Publish a event to topic
      * @param {string} topicURI
      * @param {string|number|Array|object} payload - optional parameter.
-     * @param {object} callbacks - optional hash table of callbacks:
+     * @param {object} [callbacks] - optional hash table of callbacks:
      *                          { onSuccess: will be called when publishing would be confirmed
      *                            onError: will be called if publishing would be aborted }
      * @param {object} advancedOptions - optional parameter. Must include any or all of the options:

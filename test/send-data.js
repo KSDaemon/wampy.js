@@ -817,6 +817,15 @@ const WAMP_MSG_SPEC = {
                 122
             ],
             from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                123
+            ],
+            from: [1],
             to: [1],
             next: true
         },
@@ -836,6 +845,17 @@ const WAMP_MSG_SPEC = {
                 WAMP_MSG_SPEC.EVENT,
                 11,
                 122,
+                {},
+                [],
+                { key1: 100, key2: 'string-key' }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                11,
+                123,
                 {},
                 [],
                 { key1: 100, key2: 'string-key' }
@@ -1121,6 +1141,17 @@ const WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [],
+                { key1: 100, key2: 'string-key' }
+            ],
+            from: [1],
+            to: [1]
+        },
         // allows to call RPC with both array and hash-table payload
         {
             data: [
@@ -1292,10 +1323,10 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                {}
+                { }
             ],
-            from: [1],
-            to: [1]
+            from: [1, 2],
+            to: [1, 2]
         },
         // allows to invoke asynchronous RPC with single value
         {
@@ -1322,11 +1353,10 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                {},
-                [100]
+                {}
             ],
-            from: [1],
-            to: [1]
+            from: [1, 2, 3],
+            to: [1, 2, 3]
         },
         // allows to invoke asynchronous RPC with array value
         {
@@ -1353,11 +1383,10 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                {},
-                [1, 2, 3, 4, 5]
+                {}
             ],
-            from: [1],
-            to: [1]
+            from: [1, 2, 3],
+            to: [1, 2, 3]
         },
         // allows to invoke asynchronous RPC with hash-table value
         {
@@ -1385,12 +1414,10 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                {},
-                [],
-                { key1: 100, key2: 'string-key' }
+                {}
             ],
-            from: [1],
-            to: [1]
+            from: [1, 2, 3, 4],
+            to: [1, 2, 3, 4]
         },
         // calls error handler if asynchronous RPC was rejected
         {
