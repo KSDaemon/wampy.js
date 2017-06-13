@@ -54,6 +54,13 @@ describe('Wampy.js [with JSON serializer]', function () {
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_REALM);
         });
 
+        it('Allows to create a wampy instance without router url and any options', function () {
+            let wampy = new Wampy(),
+                opStatus = wampy.getOpStatus();
+
+            expect(opStatus.code).to.be.equal(0);
+        });
+
         it('disallows to connect on instantiation without specifying all of [onChallenge, authid, authmethods]', function () {
             let wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid', authmethods: 'string' }),
                 opStatus = wampy.getOpStatus();
@@ -217,6 +224,13 @@ describe('Wampy.js [with JSON serializer]', function () {
                 },
                 ws: WebSocketModule.WebSocket
             });
+        });
+
+        it('disallows to connect to a router if no url was specified during instantiation', function () {
+            let wampy = new Wampy({ realm: 'AppRealm' }),
+                opStatus = wampy.connect().getOpStatus();;
+
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
         });
 
         it('allows to get and set different options', function () {
