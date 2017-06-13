@@ -79,12 +79,12 @@ describe('Wampy.js Constructor', function () {
     });
 
     it('throws exception when trying to use custom serializer with not supported binaryType', function () {
-        let wampy = new Wampy(routerUrl, {
-                realm: 'AppRealm',
-                onConnect: done('Connected to router with unsupported serializer!'),
-                ws: WebSocketModule.WebSocket,
-                serializer: new CustomSerializer()
-            });
+        // let wampy = new Wampy(routerUrl, {
+        //         realm: 'AppRealm',
+        //         onConnect: done('Connected to router with unsupported serializer!'),
+        //         ws: WebSocketModule.WebSocket,
+        //         serializer: new CustomSerializer()
+        //     });
 
 
     });

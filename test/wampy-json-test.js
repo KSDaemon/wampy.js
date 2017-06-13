@@ -687,7 +687,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 wampy.subscribe('subscribe.topic7', function (e) {
                     expect(e).to.be.an('object');
                     expect(e.argsList).to.be.an('array');
-                    expect(e.argsList.length).to.be.equal(0);
+                    expect(e.argsList).to.have.lengthOf(0);
                     expect(e.argsDict).to.be.an('object');
                     expect(e.argsDict).to.be.deep.equal(payload);
 
@@ -1366,7 +1366,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                     cb = function (e) {
                         expect(e).to.be.an('object');
                         expect(e.argsList).to.be.an('array');
-                        expect(e.argsList.length).to.be.equal(0);
+                        expect(e.argsList).to.have.lengthOf(0);
                         expect(e.argsDict).to.be.an('object');
                         expect(e.argsDict).to.be.deep.equal(payload);
 
@@ -1630,7 +1630,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                             function (e) {
                                 expect(e).to.be.an('object');
                                 expect(e.argsList).to.be.an('array');
-                                expect(e.argsList.length).to.be.equal(0);
+                                expect(e.argsList).to.have.lengthOf(0);
                                 expect(e.argsDict).to.be.an('object');
                                 expect(e.argsDict).to.be.deep.equal(payload);
                                 done();
@@ -1754,7 +1754,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                                                         expect(e.error).to.be.equal(definedUri);
                                                         expect(e.details).to.be.deep.equal({});
                                                         expect(e.argsList).to.be.an('array');
-                                                        expect(e.argsList.length).to.be.equal(0);
+                                                        expect(e.argsList).to.have.lengthOf(0);
                                                         expect(e.argsDict).to.be.deep.equal(definedArgsDict);
                                                         done();
                                                     }
@@ -1921,7 +1921,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                             expect(e.argsList).to.be.an('array');
                             expect(e.argsList[0]).to.be.equal(1);
                             expect(e.argsList[4]).to.be.equal(5);
-                            expect(e.argsList).to.have.length(5);
+                            expect(e.argsList).to.have.lengthOf(5);
                             expect(e.argsDict).to.be.undefined;
 
                             i++;
@@ -1942,7 +1942,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                         onError: function (e) {
                             expect(e.error).to.be.equal('call.error');
                             expect(e.argsList).to.be.an('array');
-                            expect(e.argsList).to.have.length(0);
+                            expect(e.argsList).to.have.lengthOf(0);
                             expect(e.argsDict).to.be.deep.equal({ k1: 1, k2: 2 });
 
                             i++;
