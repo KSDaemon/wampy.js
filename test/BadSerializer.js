@@ -1,7 +1,7 @@
-export class CustomSerializer {
+export class BadSerializer {
 
     constructor () {
-        this.protocol = 'custom';
+        this.protocol = 'unsupported';
         this.binaryType = 'text';
     }
 

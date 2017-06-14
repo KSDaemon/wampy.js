@@ -12,7 +12,7 @@ const routerUrl = 'ws://fake.server.org/ws/',
 import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
 import { Wampy } from './../src/wampy';
-import { CustomSerializer } from './CustomSerializer';
+import { BadSerializer } from './BadSerializer';
 import { WAMP_ERROR_MSG } from './../src/constants';
 
 describe('Wampy.js Constructor', function () {
@@ -91,7 +91,7 @@ describe('Wampy.js Constructor', function () {
         let wampy = new Wampy(routerUrl, {
             realm: 'AppRealm',
             ws: WebSocketModule.WebSocket,
-            serializer: new CustomSerializer()
+            serializer: new BadSerializer()
         });
         root.setTimeout(function () {
             let opStatus = wampy.getOpStatus();
