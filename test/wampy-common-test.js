@@ -53,22 +53,16 @@ describe('Wampy.js Constructor', function () {
             opStatus = wampy.getOpStatus();
         expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-        wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid', authmethods: ['wampcra'] }),
-            opStatus = wampy.getOpStatus();
+        wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid', authmethods: ['wampcra'] });
+        opStatus = wampy.getOpStatus();
         expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-        wampy = new Wampy(routerUrl, {
-            realm: 'AppRealm', authid: 'userid', onChallenge: function () {
-            }
-        }),
-            opStatus = wampy.getOpStatus();
+        wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid', onChallenge: function () { } });
+        opStatus = wampy.getOpStatus();
         expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-        wampy = new Wampy(routerUrl, {
-            realm: 'AppRealm', authmethods: ['wampcra'], onChallenge: function () {
-            }
-        }),
-            opStatus = wampy.getOpStatus();
+        wampy = new Wampy(routerUrl, { realm: 'AppRealm', authmethods: ['wampcra'], onChallenge: function () { } });
+        opStatus = wampy.getOpStatus();
         expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
         wampy = new Wampy(routerUrl, { realm: 'AppRealm', authid: 'userid' });
@@ -79,10 +73,7 @@ describe('Wampy.js Constructor', function () {
         opStatus = wampy.getOpStatus();
         expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-        wampy = new Wampy(routerUrl, {
-            realm: 'AppRealm', onChallenge: function () {
-            }
-        });
+        wampy = new Wampy(routerUrl, { realm: 'AppRealm', onChallenge: function () { } });
         opStatus = wampy.getOpStatus();
         expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
     });
