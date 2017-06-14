@@ -520,7 +520,8 @@ class Wampy {
         const type = this._options.serializer.binaryType;
 
         if (!isBinaryTypeAllowed(type)) {
-            throw new Error('Binary type is not allowed: ' + type);
+            this._cache.opStatus = WAMP_ERROR_MSG.INVALID_SERIALIZER_TYPE;
+            return this;
         }
 
         this._ws.binatyType = type;
