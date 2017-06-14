@@ -19,6 +19,10 @@
         "code": 4,
         "description": "Invalid parameter(s) specified!"
     },
+    "INVALID_SERIALIZER_TYPE": {
+        "code": 5,
+        "description": "Serializer with unsupported type provided!"
+    },
     "NON_EXIST_UNSUBSCRIBE": {
         "code": 7,
         "description": "Trying to unsubscribe from non existent subscription!"
