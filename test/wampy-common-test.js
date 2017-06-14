@@ -13,7 +13,7 @@ import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
 import { Wampy } from './../src/wampy';
 import { CustomSerializer } from './CustomSerializer';
-import * as WAMP_ERROR_MSG from './wamp-error-msg.json';
+import { WAMP_ERROR_MSG } from './../src/constants';
 
 describe('Wampy.js Constructor', function () {
     this.timeout(0);

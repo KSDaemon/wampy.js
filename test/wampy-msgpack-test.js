@@ -14,7 +14,7 @@ import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
 import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
 import { Wampy } from './../src/wampy';
-import * as WAMP_ERROR_MSG from './wamp-error-msg.json';
+import { WAMP_ERROR_MSG } from './../src/constants';
 
 describe('Wampy.js [with msgpack serializer]', function () {
     this.timeout(0);
