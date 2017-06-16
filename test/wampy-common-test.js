@@ -10,22 +10,15 @@ const routerUrl = 'ws://fake.server.org/ws/',
         global : window;
 
 import { expect } from 'chai';
-import * as WebSocketModule from './fake-ws';
+import { WebSocket, setProtocol as wsSetProtocol } from './fake-ws-set-protocol';
 import { Wampy } from './../src/wampy';
+import { JsonSerializer } from '../src/serializers/JsonSerializer';
+import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
 import { BadSerializer } from './BadSerializer';
 import { WAMP_ERROR_MSG } from './../src/constants';
 
 describe('Wampy.js Constructor', function () {
     this.timeout(0);
-
-    before(function () {
-        WebSocketModule.startTimers();
-    });
-
-    after(function () {
-        WebSocketModule.clearTimers();
-        WebSocketModule.resetCursor();
-    });
 
     it('disallows to connect on instantiation without websocket provided (in Node.js env)', function () {
         let wampy = new Wampy(routerUrl, { realm: 'AppRealm' }),
@@ -78,12 +71,43 @@ describe('Wampy.js Constructor', function () {
         expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
     });
 
+    it('automatically selects serializer, chosen by server', function (done) {
+        let wampy = new Wampy(routerUrl, {
+            realm: 'AppRealm',
+            ws: WebSocket,
+            serializer: new MsgpackSerializer()
+        });
+        wsSetProtocol('json');
+        root.setTimeout(function () {
+            let options = wampy.options();
+            expect(options.serializer).to.be.an.instanceof(JsonSerializer);
+            done();
+        }, 20);
+
+    });
+
+    it('disallows to connect when server choose not available serializer', function (done) {
+        let wampy = new Wampy(routerUrl, {
+            realm: 'AppRealm',
+            ws: WebSocket,
+            serializer: new JsonSerializer()
+        });
+        wsSetProtocol('cbor');
+        root.setTimeout(function () {
+            let opStatus = wampy.getOpStatus();
+            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_SERIALIZER_AVAILABLE);
+            done();
+        }, 20);
+
+    });
+
     it('disallows to connect when trying to use custom serializer with not supported binaryType', function (done) {
         let wampy = new Wampy(routerUrl, {
             realm: 'AppRealm',
-            ws: WebSocketModule.WebSocket,
+            ws: WebSocket,
             serializer: new BadSerializer()
         });
+        wsSetProtocol('unsupported');
         root.setTimeout(function () {
             let opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_SERIALIZER_TYPE);
