@@ -503,7 +503,8 @@ class Wampy {
      * @private
      */
     _wsOnOpen () {
-        const options = this._merge(this._options.helloCustomDetails, this._wamp_features);
+        const options = this._merge(this._options.helloCustomDetails, this._wamp_features),
+            serverProtocol = this._ws.protocol ? this._ws.protocol.split('.')[2] : '';
 
         if (this._options.authid) {
             options.authmethods = this._options.authmethods;
@@ -512,9 +513,17 @@ class Wampy {
 
         this._log('[wampy] websocket connected');
 
-        if (this._ws.protocol && this._options.serializer.protocol !== this._ws.protocol.split('.')[2]) {
-            // Server have chosen not our preferred protocol, so let's switch back to json
-            this._options.serializer = new JsonSerializer();
+        if (this._options.serializer.protocol !== serverProtocol) {
+            // Server have chosen not our preferred protocol
+
+            // Falling back to json if possible
+            if (serverProtocol === 'json') {
+                this._options.serializer = new JsonSerializer();
+            } else {
+                this._cache.opStatus = WAMP_ERROR_MSG.NO_SERIALIZER_AVAILABLE;
+                return this;
+            }
+
         }
 
         const type = this._options.serializer.binaryType;
