@@ -8,7 +8,7 @@
     "babelify": "^7.3.0",
     "chai": "^4.0.1",
     "coveralls": "^2.13.0",
-    "eslint": "^3.19.0",
+    "eslint": "^4.1.0",
     "grunt": "^1.0.1",
     "grunt-babel": "^6.0.0",
     "grunt-browserify": "^5.0.0",
