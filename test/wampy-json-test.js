@@ -168,7 +168,7 @@ describe('Wampy.js [with JSON serializer]', function () {
 
         it('disallows to connect to a router if no url was specified during instantiation', function () {
             let wampy = new Wampy({ realm: 'AppRealm' }),
-                opStatus = wampy.connect().getOpStatus();;
+                opStatus = wampy.connect().getOpStatus();
 
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
         });
