@@ -10,7 +10,6 @@ const TIMEOUT = 15,
         global : window;
 
 let protocol = 'json',
-    openTimer = null,
 
     WebSocket = function (url, protocols) {
         this.url = url;
@@ -31,7 +30,7 @@ let protocol = 'json',
 
         let self = this;
 
-        openTimer = root.setTimeout(function () {
+        root.setTimeout(function () {
             self.protocol = 'wamp.2.' + protocol;
             self.onopen();
         }, TIMEOUT);
