@@ -878,7 +878,7 @@ class Wampy {
                         this._send(msg);
                     }).catch(e => {
                         let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                            data[1], e.details || {}, e.uri || 'wamp.error.invocation_exception'];
+                            data[1], e.details || {}, e.error || 'wamp.error.invocation_exception'];
 
                         if (e.argsList && this._isArray(e.argsList)) {
                             msg.push(e.argsList);
