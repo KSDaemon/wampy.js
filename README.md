@@ -145,11 +145,11 @@ Constructor([url[, options]])
 Wampy constructor can take 2 parameters:
 
 * **url** to wamp server - optional. URL can be specified in next forms:
-    * Undefined/null. If its undefined, page-scheme://page-server:page-port/ws will be used.
-    * String, begins with '/', meaning some path on current scheme:host:port.
+    * Undefined/null. In browser environment page-scheme://page-server:page-port/ws will be used in this case.
+    * String, begins with '/', meaning some path on current scheme://host:port.
     * Full qualified URL, starting with scheme 'ws' or 'wss'.
-    * Host/domain with possible path, but without scheme. 
-* **options** hash-table. The only required field is `realm`. For node.js enviroment also necessary to
+    * Host/domain with possible path, but without scheme. In browser environment page-scheme will be used.
+* **options** hash-table. The only required field is `realm`. For node.js environment also necessary to
 specify `ws` - websocket module. See description below.
 
 ```javascript
@@ -168,7 +168,8 @@ ws = new Wampy({ reconnectInterval: 1*1000, ws: w3cws });
 
 ```
 
-Json serializer will be used by default. If you want to use msgpack serializer, pass it through options.
+Json serializer will be used by default. If you want to use msgpack serializer, pass it through options. 
+Also, you can use your own serializer. Just be sure, it is supported on WAMP router side!
 
 ```javascript
 // in browser
@@ -182,7 +183,7 @@ ws = new Wampy({
 // in node.js
 import {Wampy} from 'wampy';
 import {MsgpackSerializer} from 'wampy/dist/serializers';
-import {w3cwebsocket} from 'websocket';
+import {w3cws} from 'websocket';
 
 const msgpack5 = require('msgpack5');
 
@@ -444,18 +445,21 @@ Must meet a WAMP Spec URI requirements.
 * **callbacks**. If it is a function - it will be treated as published event callback o
 r it can be hash table of callbacks:
     * **onSuccess**: will be called when subscription would be confirmed
-    * **onError**:   will be called if subscription would be aborted with 2-4 parameters:
-                (Error|uri|string, Details|object[, Arguments|list, ArgumentsKw|dict])
-    * **onEvent**:   will be called on receiving published event with 2 parameters: 
-                (Arguments|array, ArgumentsKw|object) 
+    * **onError**: will be called if subscription would be aborted with one hash-table parameter with following attributes:
+        * **error**: string error description
+        * **details**: hash-table with some error details
+    * **onEvent**:   will be called on receiving published event with one hash-table parameter with following attributes: 
+        * **argsList**: array payload (may be omitted)
+        * **argsDict**: object payload (may be omitted)
+        * **details**: some publication options object. 
 
 ```javascript
 ws.subscribe('chat.message.received', function (msg) { console.log('Received new chat message!'); });
 
 ws.subscribe('some.another.topic', {
    onSuccess: function () { console.log('Successfully subscribed to topic'); },
-   onError: function (err, details) { console.log('Subscription error:' + err); },
-   onEvent: function (arrayPayload, objectPayload) { console.log('Received topic event'); }
+   onError: function (err) { console.log('Subscription error:' + err.error); },
+   onEvent: function (result) { console.log('Received topic event'); }
 });
 ```
 
@@ -473,11 +477,11 @@ Must meet a WAMP Spec URI requirements.
 * **callbacks**. If it is a function - it will be treated as published event callback to remove
              or it can be hash table of callbacks:
     * **onSuccess**: will be called when unsubscription would be confirmed
-    * **onError**: will be called if unsubscribe would be aborted with 2 parameters:
-                      (Error|uri|string, Details|object)
-    * **onEvent**: published event callback to remove 
-
-or it can be not specified, in this case all callbacks and subscription will be removed.
+    * **onError**: will be called if unsubscribe would be aborted with one hash-table parameter with following attributes:
+        * **error**: string error description
+        * **details**: hash-table with some error details
+    * **onEvent**: published event callback instance to remove or it can be not specified, 
+                   in this case all callbacks and subscription will be removed.
 
 ```javascript
 const f1 = function (data) { ... };
@@ -500,8 +504,9 @@ Must meet a WAMP Spec URI requirements.
 * **payload**. Publishing event data. Optional. May be any single value or array or hash-table object or null.
 * **callbacks**. Optional hash table of callbacks:
     * **onSuccess**: will be called when publishing would be confirmed
-    * **onError**:   will be called if publishing would be aborted with 2-4 parameters:
-                (Error|uri|string, Details|object[, Arguments|list, ArgumentsKw|dict])
+    * **onError**: will be called if publishing would be aborted with one hash-table parameter with following attributes:
+        * **error**: string error description
+        * **details**: hash-table with some error details
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
     * **exclude**: integer|array WAMP session id(s) that won't receive a published event,
                  even though they may be subscribed
@@ -547,10 +552,19 @@ Must meet a WAMP Spec URI requirements.
 * **payload**. RPC data. Optional. May be any single value or array or hash-table object or null.
 * **callbacks**. If it is a function - it will be treated as result callback function
              or it can be hash table of callbacks:
-    * **onSuccess**: will be called with result on successful call with 2 parameters: 
-                        (Arguments|array, ArgumentsKw|object) 
-    * **onError**: will be called if invocation would be aborted with 2-4 parameters:
-                      (Error|uri|string, Details|object[, Arguments|array, ArgumentsKw|object]) 
+    * **onSuccess**: will be called with result on successful call with one hash-table parameter with following attributes: 
+        * **details**: hash-table with some additional details
+        * **argsList**: optional array containing the original list of positional result
+                        elements as returned by the _Callee_
+        * **argsDict**: optional hash-table containing the original dictionary of keyword result
+                        elements as returned by the _Callee_  
+    * **onError**: will be called if invocation would be aborted with one hash-table parameter with following attributes:
+        * **error**: string error description
+        * **details**: hash-table with some error details
+        * **argsList**: optional array containing the original error payload list as returned 
+                        by the _Callee_ to the _Dealer_
+        * **argsDict**: optional hash-table containing the original error
+                        payload dictionary as returned by the _Callee_ to the _Dealer_
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
     * **disclose_me**: bool flag of disclosure of Caller identity (WAMP session ID)
                         to endpoints of a routed call
@@ -560,26 +574,26 @@ Must meet a WAMP Spec URI requirements.
 
 ```javascript
 ws.call('server.time', null, 
-    function (arrayPayload, objectPayload) { 
-        console.log('Server time is ' + arrayPayload[0]); 
+    function (result) { 
+        console.log('Server time is ' + result.argsList[0]); 
     }
 );
 
 ws.call('start.migration', null, {
-    onSuccess: function (arrayPayload, objectPayload) {
+    onSuccess: function (result) {
         console.log('RPC successfully called');
     },
-    onError: function (err, details, [arrayData, objectData]) {
-        console.log('RPC call failed!',err);
+    onError: function (err) {
+        console.log('RPC call failed!', err.error);
     }
 });
 
 ws.call('restore.backup', { backupFile: 'backup.zip' }, {
-    onSuccess: function (arrayPayload, objectPayload) {
+    onSuccess: function (result) {
         console.log('Backup successfully restored');
     },
-    onError: function (err, details, [arrayData, objectData]) {
-        console.log('Restore failed!',err);
+    onError: function (err) {
+        console.log('Restore failed!', err.error);
     }
 });
 ```
@@ -603,11 +617,11 @@ Parameters:
 
 ```javascript
 ws.call('start.migration', null, {
-    onSuccess: function (arrayPayload, objectPayload) {
+    onSuccess: function (result) {
         console.log('RPC successfully called');
     },
-    onError: function (err, details) {
-        console.log('RPC call failed!',err);
+    onError: function (err) {
+        console.log('RPC call failed!', err.error);
     }
 });
 status = ws.getOpStatus();
@@ -631,21 +645,25 @@ Must meet a WAMP Spec URI requirements.
              or it can be hash table of callbacks:
     * **rpc**: registered procedure
     * **onSuccess**: will be called on successful registration
-    * **onError**: will be called if registration would be aborted 
+    * **onError**: will be called if registration would be aborted with one hash-table parameter with following attributes:
+        * **error**: string error description
+        * **details**: hash-table with some error details
 
-Registered PRC during invocation will receive three arguments: array payload (may be undefined), object payload 
-(may be undefined) and options object. One attribute of interest in options is "receive_progress" (boolean), 
-which indicates, that caller is willing to receive progressive results, if possible. RPC can return no result 
-(undefined), or it must return an array with 1, 2 or 3 elements:
+Registered PRC during invocation will receive one hash-table argument with following attributes: 
+    * **argsList**: array payload (may be omitted)
+    * **argsDict**: object payload (may be omitted)
+    * **details**: some invocation options object. One attribute of interest in options is "receive_progress" (boolean), 
+which indicates, that caller is willing to receive progressive results, if possible. 
 
-* \[0\] element must contain options object or {} if not needed. Possible attribute of options is "progress": true, which
-indicates, that it's a progressive result, so there will be more results in future. Be sure to unset "progress"
-on last result message.
-* \[1\] element can contain array result or single value (that will be converted to array with one element)
-* \[2\] element can contain object result
+RPC can return no result (undefined), or it must return an object with next attributes:
+    * **argsList**: array result or single value, (may be omitted)
+    * **argsDict**: object result payload (may be omitted)
+    * **options**: some result options object. Possible attribute of options is "progress": true, which
+   indicates, that it's a progressive result, so there will be more results in future. Be sure to unset "progress"
+   on last result message. 
 
 ```javascript
-const sqrt_f = function (x) { return [{}, x*x]; };
+const sqrt_f = function (x) { return { argsList: x*x } };
 
 ws.register('sqrt.value', sqrt_f);
 
@@ -654,8 +672,8 @@ ws.register('sqrt.value', {
     onSuccess: function (data) {
         console.log('RPC successfully registered');
     },
-    onError: function (err, details) {
-        console.log('RPC registration failed!',err);
+    onError: function (err) {
+        console.log('RPC registration failed!', err.error);
     }
 });
 ```
@@ -670,7 +688,7 @@ const getUserName = function () {
     return new Promise(function (resolve, reject) {
         /* Ask user to input his username somehow,
            and resolve promise with user input at the end */
-        resolve([{}, userInput]);
+        resolve({ argsList: userInput });
     });
 };
 
@@ -681,7 +699,7 @@ Also it is possible to abort rpc processing and throw error with custom applicat
 This data will be passed to caller onError callback. 
 
 Exception object with custom data may have next attributes:
-* **uri**. String with custom error uri. Must meet a WAMP Spec URI requirements.
+* **error**. String with custom error uri. Must meet a WAMP Spec URI requirements.
 * **details**. Custom details dictionary object. The details object is used for the future extensibility, and used by the WAMP router. This object not passed to the client. For details see [WAMP specification 6.1](https://tools.ietf.org/html/draft-oberstet-hybi-tavendo-wamp-02#section-6.1)
 * **argsList**. Custom arguments array, this will be forwarded to the caller by the WAMP router's dealer role. Most cases this attribute is used to pass the human readable message to the client.
 * **argsDict**. Custom arguments object, this will be forwarded to the caller by the WAMP router's dealer role.
@@ -700,17 +718,17 @@ const getSystemInfo = function () {
     // you can throw exception with some details for client application 
 
     const UserException = function () {
-        this.uri = 'app.error.no_database_connection';
-        this.details = {};
+        this.error = 'app.error.no_database_connection';
+        this.details = { 
+         errorCode: 'ECONNREFUSED'
+         errorMessage: 'Connection refused by a remote host.',
+         database: 'db', 
+         host: '1.2.3.4', 
+         port: 5432, 
+         dbtype: 'postgres' 
+       };
         this.argsList = ['Not able to connect to the database.'];
-        this.argsDict = { 
-          errorCode: 'ECONNREFUSED'
-          errorMessage: 'Connection refused by a remote host.',
-          database: 'db', 
-          host: '1.2.3.4', 
-          port: 5432, 
-          dbtype: 'postgres' 
-        };
+        this.argsDict = {};
     };
     
     throw new UserException();
@@ -733,7 +751,9 @@ Must meet a WAMP Spec URI requirements.
 * **callbacks**. Optional. If it is a function - it will be called on successful unregistration
              or it can be hash table of callbacks:
     * **onSuccess**: will be called on successful unregistration
-    * **onError**: will be called if unregistration would be aborted 
+    * **onError**: will be called if unregistration would be aborted with one hash-table parameter with following attributes:
+        * **error**: string error description
+        * **details**: hash-table with some error details
 
 ```javascript
 ws.unregister('sqrt.value');
@@ -742,8 +762,8 @@ ws.unregister('sqrt.value', {
     onSuccess: function (data) {
         console.log('RPC successfully unregistered');
     },
-    onError: function (err, details) {
-        console.log('RPC unregistration failed!',err);
+    onError: function (err) {
+        console.log('RPC unregistration failed!', err.error);
     }
 });
 ```
