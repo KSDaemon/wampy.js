@@ -735,22 +735,22 @@ describe('Wampy.js [with JSON serializer]', function () {
                     done();
                 })
                     .publish('subscribe.topic8', 'payload',
-                    {
-                        onSuccess: function () {
+                        {
+                            onSuccess: function () {
+                            },
+                            onError: function () {
+                            }
                         },
-                        onError: function () {
+                        {
+                            exclude: [1234567],
+                            exclude_authid: ['iuhfiruhfhr'],
+                            exclude_authrole: ['user-role'],
+                            eligible: [wampy.getSessionId(), 7654321],
+                            eligible_authid: ['dsvsdvsfgdfg'],
+                            eligible_authrole: ['admin-role'],
+                            exclude_me: false,
+                            disclose_me: true
                         }
-                    },
-                    {
-                        exclude: [1234567],
-                        exclude_authid: ['iuhfiruhfhr'],
-                        exclude_authrole: ['user-role'],
-                        eligible: [wampy.getSessionId(), 7654321],
-                        eligible_authid: ['dsvsdvsfgdfg'],
-                        eligible_authrole: ['admin-role'],
-                        exclude_me: false,
-                        disclose_me: true
-                    }
                     );
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });

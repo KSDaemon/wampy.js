@@ -742,18 +742,18 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     done();
                 })
                     .publish('subscribe.topic8', 'payload',
-                    {
-                        onSuccess: function () {
+                        {
+                            onSuccess: function () {
+                            },
+                            onError: function () {
+                            }
                         },
-                        onError: function () {
+                        {
+                            exclude: [1234567],
+                            eligible: [wampy.getSessionId(), 7654321],
+                            exclude_me: false,
+                            disclose_me: true
                         }
-                    },
-                    {
-                        exclude: [1234567],
-                        eligible: [wampy.getSessionId(), 7654321],
-                        exclude_me: false,
-                        disclose_me: true
-                    }
                     );
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
