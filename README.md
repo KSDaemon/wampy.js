@@ -663,7 +663,7 @@ RPC can return no result (undefined), or it must return an object with next attr
    on last result message. 
 
 ```javascript
-const sqrt_f = function (x) { return { argsList: x*x } };
+const sqrt_f = function (data) { return { argsList: data.argsList[0]*data.argsList[0] } };
 
 ws.register('sqrt.value', sqrt_f);
 
