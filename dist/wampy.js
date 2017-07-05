@@ -37,8 +37,8 @@ var Wampy = function () {
 
     /**
      * Wampy constructor
-     * @param {string} url
-     * @param {Object} options
+     * @param {string} [url]
+     * @param {Object} [options]
      */
 
     function Wampy(url, options) {
@@ -49,7 +49,7 @@ var Wampy = function () {
          * @type {string}
          * @private
          */
-        this.version = 'v5.0.1';
+        this.version = 'v6.0.0';
 
         /**
          * WS Url
@@ -309,7 +309,9 @@ var Wampy = function () {
             this._options = this._merge(this._options, url);
         }
 
-        this.connect();
+        if (this._url) {
+            this.connect();
+        }
     }
 
     /* Internal utils methods */
@@ -430,7 +432,7 @@ var Wampy = function () {
             }
 
             if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError(this._cache.opStatus.description);
+                callbacks.onError({ error: this._cache.opStatus.description });
             }
 
             return false;
@@ -561,24 +563,33 @@ var Wampy = function () {
     }, {
         key: '_wsOnOpen',
         value: function _wsOnOpen() {
-            var options = this._merge(this._options.helloCustomDetails, this._wamp_features);
+            var options = this._merge(this._options.helloCustomDetails, this._wamp_features),
+                serverProtocol = this._ws.protocol ? this._ws.protocol.split('.')[2] : '';
 
             if (this._options.authid) {
-                options.authmethods = this._options._authmethods;
+                options.authmethods = this._options.authmethods;
                 options.authid = this._options.authid;
             }
 
             this._log('[wampy] websocket connected');
 
-            if (this._ws.protocol && this._options.serializer.protocol !== this._ws.protocol.split('.')[2]) {
-                // Server have chosen not our preferred protocol, so let's switch back to json
-                this._options.serializer = new _JsonSerializer.JsonSerializer();
+            if (this._options.serializer.protocol !== serverProtocol) {
+                // Server have chosen not our preferred protocol
+
+                // Falling back to json if possible
+                if (serverProtocol === 'json') {
+                    this._options.serializer = new _JsonSerializer.JsonSerializer();
+                } else {
+                    this._cache.opStatus = _constants.WAMP_ERROR_MSG.NO_SERIALIZER_AVAILABLE;
+                    return this;
+                }
             }
 
             var type = this._options.serializer.binaryType;
 
             if (!(0, _utils.isBinaryTypeAllowed)(type)) {
-                throw new Error('Binary type is not allowed: ' + type);
+                this._cache.opStatus = _constants.WAMP_ERROR_MSG.INVALID_SERIALIZER_TYPE;
+                return this;
             }
 
             this._ws.binatyType = type;
@@ -673,7 +684,7 @@ var Wampy = function () {
                 case _constants.WAMP_MSG_SPEC.ABORT:
                     // WAMP SPEC: [ABORT, Details|dict, Reason|uri]
                     if (this._options.onError) {
-                        this._options.onError(data[1].message ? data[1].message : data[2]);
+                        this._options.onError({ error: data[2], details: data[1] });
                     }
                     this._ws.close();
                     break;
@@ -693,7 +704,7 @@ var Wampy = function () {
                         }).catch(function (e) {
                             _this3._ws.send(_this3._encode([_constants.WAMP_MSG_SPEC.ABORT, { message: 'Exception in onChallenge handler raised!' }, 'wamp.error.cannot_authenticate']));
                             if (_this3._options.onError) {
-                                _this3._options.onError(_constants.WAMP_ERROR_MSG.CRA_EXCEPTION.description);
+                                _this3._options.onError({ error: _constants.WAMP_ERROR_MSG.CRA_EXCEPTION.description });
                             }
                             _this3._ws.close();
                             _this3._cache.opStatus = _constants.WAMP_ERROR_MSG.CRA_EXCEPTION;
@@ -702,7 +713,7 @@ var Wampy = function () {
 
                         this._ws.send(this._encode([_constants.WAMP_MSG_SPEC.ABORT, { message: _constants.WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description }, 'wamp.error.cannot_authenticate']));
                         if (this._options.onError) {
-                            this._options.onError(_constants.WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description);
+                            this._options.onError({ error: _constants.WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description });
                         }
                         this._ws.close();
                         this._cache.opStatus = _constants.WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
@@ -728,7 +739,12 @@ var Wampy = function () {
                         case _constants.WAMP_MSG_SPEC.REGISTER:
                         case _constants.WAMP_MSG_SPEC.UNREGISTER:
 
-                            this._requests[data[2]] && this._requests[data[2]].callbacks.onError && this._requests[data[2]].callbacks.onError(data[4], data[3], data[5], data[6]);
+                            this._requests[data[2]] && this._requests[data[2]].callbacks.onError && this._requests[data[2]].callbacks.onError({
+                                error: data[4],
+                                details: data[3],
+                                argsList: data[5],
+                                argsDict: data[6]
+                            });
                             delete this._requests[data[2]];
 
                             break;
@@ -738,7 +754,12 @@ var Wampy = function () {
 
                             // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
                             //             Error|uri, Arguments|list, ArgumentsKw|dict]
-                            this._calls[data[2]] && this._calls[data[2]].onError && this._calls[data[2]].onError(data[4], data[3], data[5], data[6]);
+                            this._calls[data[2]] && this._calls[data[2]].onError && this._calls[data[2]].onError({
+                                error: data[4],
+                                details: data[3],
+                                argsList: data[5],
+                                argsDict: data[6]
+                            });
                             delete this._calls[data[2]];
 
                             break;
@@ -800,7 +821,11 @@ var Wampy = function () {
 
                         i = this._subscriptions[data[1]].callbacks.length;
                         while (i--) {
-                            this._subscriptions[data[1]].callbacks[i](data[4], data[5]);
+                            this._subscriptions[data[1]].callbacks[i]({
+                                details: data[3],
+                                argsList: data[4],
+                                argsDict: data[5]
+                            });
                         }
                     }
                     break;
@@ -810,7 +835,11 @@ var Wampy = function () {
                         // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
                         //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
 
-                        this._calls[data[1]].onSuccess(data[3], data[4]);
+                        this._calls[data[1]].onSuccess({
+                            details: data[2],
+                            argsList: data[3],
+                            argsDict: data[4]
+                        });
                         if (!(data[2].progress && data[2].progress === true)) {
                             // We receive final result (progressive or not)
                             delete this._calls[data[1]];
@@ -865,36 +894,41 @@ var Wampy = function () {
                         //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 
                         p = new Promise(function (resolve, reject) {
-                            resolve(_this3._rpcRegs[data[2]].callbacks[0](data[4], data[5], data[3]));
+                            resolve(_this3._rpcRegs[data[2]].callbacks[0]({
+                                details: data[3],
+                                argsList: data[4],
+                                argsDict: data[5]
+                            }));
                         });
 
                         p.then(function (results) {
                             // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
                             msg = [_constants.WAMP_MSG_SPEC.YIELD, data[1], {}];
-                            if (_this3._isArray(results)) {
-                                // Options
-                                if (_this3._isPlainObject(results[0])) {
-                                    msg[2] = results[0];
+
+                            if (_this3._isPlainObject(results)) {
+
+                                if (_this3._isPlainObject(results.options)) {
+                                    msg[2] = results.options;
                                 }
 
-                                if (_this3._isArray(results[1])) {
-                                    msg.push(results[1]);
-                                } else if (typeof results[1] !== 'undefined') {
-                                    msg.push([results[1]]);
+                                if (_this3._isArray(results.argsList)) {
+                                    msg.push(results.argsList);
+                                } else if (typeof results.argsList !== 'undefined') {
+                                    msg.push([results.argsList]);
                                 }
 
-                                if (_this3._isPlainObject(results[2])) {
+                                if (_this3._isPlainObject(results.argsDict)) {
                                     if (msg.length === 3) {
                                         msg.push([]);
                                     }
-                                    msg.push(results[2]);
+                                    msg.push(results.argsDict);
                                 }
                             } else {
                                 msg = [_constants.WAMP_MSG_SPEC.YIELD, data[1], {}];
                             }
                             _this3._send(msg);
                         }).catch(function (e) {
-                            var msg = [_constants.WAMP_MSG_SPEC.ERROR, _constants.WAMP_MSG_SPEC.INVOCATION, data[1], e.details || {}, e.uri || 'wamp.error.invocation_exception'];
+                            var msg = [_constants.WAMP_MSG_SPEC.ERROR, _constants.WAMP_MSG_SPEC.INVOCATION, data[1], e.details || {}, e.error || 'wamp.error.invocation_exception'];
 
                             if (e.argsList && _this3._isArray(e.argsList)) {
                                 msg.push(e.argsList);
@@ -939,7 +973,7 @@ var Wampy = function () {
             this._log('[wampy] websocket error');
 
             if (this._options.onError) {
-                this._options.onError(error);
+                this._options.onError({ error: error });
             }
         }
 
@@ -1054,7 +1088,7 @@ var Wampy = function () {
          * To get options - call without parameters
          * To set options - pass hash-table with options values
          *
-         * @param {object} opts
+         * @param {object} [opts]
          * @returns {*}
          */
 
@@ -1099,7 +1133,7 @@ var Wampy = function () {
 
         /**
          * Connect to server
-         * @param {string} url New url (optional)
+         * @param {string} [url] New url (optional)
          * @returns {Wampy}
          */
 
@@ -1182,8 +1216,8 @@ var Wampy = function () {
          * @param {function|object} callbacks - if it is a function - it will be treated as published event callback
          *                          or it can be hash table of callbacks:
          *                          { onSuccess: will be called when subscribe would be confirmed
-             *                            onError: will be called if subscribe would be aborted
-             *                            onEvent: will be called on receiving published event }
+         *                            onError: will be called if subscribe would be aborted
+         *                            onEvent: will be called on receiving published event }
          *
          * @returns {Wampy}
          */
@@ -1203,7 +1237,7 @@ var Wampy = function () {
                 this._cache.opStatus = _constants.WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
 
                 return this;
@@ -1244,8 +1278,8 @@ var Wampy = function () {
          * @param {function|object} callbacks - if it is a function - it will be treated as
          *                          published event callback to remove or it can be hash table of callbacks:
          *                          { onSuccess: will be called when unsubscribe would be confirmed
-             *                            onError: will be called if unsubscribe would be aborted
-             *                            onEvent: published event callback to remove }
+         *                            onError: will be called if unsubscribe would be aborted
+         *                            onEvent: published event callback to remove }
          * @returns {Wampy}
          */
 
@@ -1296,7 +1330,7 @@ var Wampy = function () {
                 this._cache.opStatus = _constants.WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
 
                 return this;
@@ -1311,25 +1345,25 @@ var Wampy = function () {
          * Publish a event to topic
          * @param {string} topicURI
          * @param {string|number|Array|object} payload - optional parameter.
-         * @param {object} callbacks - optional hash table of callbacks:
+         * @param {object} [callbacks] - optional hash table of callbacks:
          *                          { onSuccess: will be called when publishing would be confirmed
-             *                            onError: will be called if publishing would be aborted }
+         *                            onError: will be called if publishing would be aborted }
          * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
          *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
-             *                                      even though they may be subscribed
-             *                            exclude_authid: string|array Authentication id(s) that won't receive
-             *                                      a published event, even though they may be subscribed
-             *                            exclude_authrole: string|array Authentication role(s) that won't receive
-             *                                      a published event, even though they may be subscribed
-             *                            eligible: integer|array WAMP session id(s) that are allowed
-             *                                      to receive a published event
-             *                            eligible_authid: string|array Authentication id(s) that are allowed
-             *                                      to receive a published event
-             *                            eligible_authrole: string|array Authentication role(s) that are allowed
-             *                                      to receive a published event
-             *                            exclude_me: bool flag of receiving publishing event by initiator
-             *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
-             *                                      to receivers of a published event }
+         *                                      even though they may be subscribed
+         *                            exclude_authid: string|array Authentication id(s) that won't receive
+         *                                      a published event, even though they may be subscribed
+         *                            exclude_authrole: string|array Authentication role(s) that won't receive
+         *                                      a published event, even though they may be subscribed
+         *                            eligible: integer|array WAMP session id(s) that are allowed
+         *                                      to receive a published event
+         *                            eligible_authid: string|array Authentication id(s) that are allowed
+         *                                      to receive a published event
+         *                            eligible_authrole: string|array Authentication role(s) that are allowed
+         *                                      to receive a published event
+         *                            exclude_me: bool flag of receiving publishing event by initiator
+         *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
+         *                                      to receivers of a published event }
          * @returns {Wampy}
          */
 
@@ -1338,7 +1372,8 @@ var Wampy = function () {
         value: function publish(topicURI, payload, callbacks, advancedOptions) {
             var reqId = void 0,
                 msg = void 0,
-                err = false;
+                err = false,
+                hasPayload = false;
             var options = {};
 
             if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
@@ -1427,7 +1462,7 @@ var Wampy = function () {
                     this._cache.opStatus = _constants.WAMP_ERROR_MSG.INVALID_PARAM;
 
                     if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
+                        callbacks.onError({ error: this._cache.opStatus.description });
                     }
 
                     return this;
@@ -1438,36 +1473,46 @@ var Wampy = function () {
 
             switch (arguments.length) {
                 case 1:
-                    // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
-                    msg = [_constants.WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI];
                     break;
                 case 2:
-                    // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-                    if (this._isArray(payload)) {
-                        msg = [_constants.WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, payload];
-                    } else if (this._isPlainObject(payload)) {
-                        msg = [_constants.WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [], payload];
-                    } else {
-                        // assume it's a single value
-                        msg = [_constants.WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [payload]];
-                    }
+                    hasPayload = true;
                     break;
                 default:
                     this._requests[reqId] = {
                         topic: topicURI,
                         callbacks: callbacks
                     };
-
-                    // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-                    if (this._isArray(payload)) {
-                        msg = [_constants.WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, payload];
-                    } else if (this._isPlainObject(payload)) {
-                        msg = [_constants.WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [], payload];
-                    } else {
-                        // assume it's a single value
-                        msg = [_constants.WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI, [payload]];
-                    }
+                    hasPayload = true;
                     break;
+            }
+
+            // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
+            msg = [_constants.WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI];
+
+            if (hasPayload) {
+                // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
+                if (this._isArray(payload)) {
+                    msg.push(payload);
+                } else if (this._isPlainObject(payload)) {
+                    // It's a wampy unified form of payload passing
+                    if (payload.argsList || payload.argsDict) {
+                        if (payload.argsList) {
+                            msg.push(payload.argsList);
+                        }
+
+                        if (payload.argsDict) {
+                            if (msg.length === 4) {
+                                msg.push([]);
+                            }
+                            msg.push(payload.argsDict);
+                        }
+                    } else {
+                        msg.push([], payload);
+                    }
+                } else {
+                    // assume it's a single value
+                    msg.push([payload]);
+                }
             }
 
             this._send(msg);
@@ -1483,13 +1528,13 @@ var Wampy = function () {
          * @param {function|object} callbacks - if it is a function - it will be treated as result callback function
          *                          or it can be hash table of callbacks:
          *                          { onSuccess: will be called with result on successful call
-             *                            onError: will be called if invocation would be aborted }
+         *                            onError: will be called if invocation would be aborted }
          * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
          *                          { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
-             *                                  to endpoints of a routed call
-             *                            receive_progress: bool flag for receiving progressive results. In this case
-             *                                  onSuccess function will be called every time on receiving result
-             *                            timeout: integer timeout (in ms) for the call to finish }
+         *                                  to endpoints of a routed call
+         *                            receive_progress: bool flag for receiving progressive results. In this case
+         *                                  onSuccess function will be called every time on receiving result
+         *                            timeout: integer timeout (in ms) for the call to finish }
          * @returns {Wampy}
          */
 
@@ -1511,7 +1556,7 @@ var Wampy = function () {
                 this._cache.opStatus = _constants.WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
 
                 return this;
@@ -1543,7 +1588,7 @@ var Wampy = function () {
                     this._cache.opStatus = _constants.WAMP_ERROR_MSG.INVALID_PARAM;
 
                     if (this._isPlainObject(callbacks) && callbacks.onError) {
-                        callbacks.onError(this._cache.opStatus.description);
+                        callbacks.onError({ error: this._cache.opStatus.description });
                     }
 
                     return this;
@@ -1557,16 +1602,30 @@ var Wampy = function () {
             this._calls[reqId] = callbacks;
 
             // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
-            if (payload === null) {
-                msg = [_constants.WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
-            } else {
+            msg = [_constants.WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
+
+            if (payload !== null) {
                 if (this._isArray(payload)) {
-                    msg = [_constants.WAMP_MSG_SPEC.CALL, reqId, options, topicURI, payload];
+                    msg.push(payload);
                 } else if (this._isPlainObject(payload)) {
-                    msg = [_constants.WAMP_MSG_SPEC.CALL, reqId, options, topicURI, [], payload];
+                    // It's a wampy unified form of payload passing
+                    if (payload.argsList || payload.argsDict) {
+                        if (payload.argsList) {
+                            msg.push(payload.argsList);
+                        }
+
+                        if (payload.argsDict) {
+                            if (msg.length === 4) {
+                                msg.push([]);
+                            }
+                            msg.push(payload.argsDict);
+                        }
+                    } else {
+                        msg.push([], payload);
+                    }
                 } else {
                     // assume it's a single value
-                    msg = [_constants.WAMP_MSG_SPEC.CALL, reqId, options, topicURI, [payload]];
+                    msg.push([payload]);
                 }
             }
 
@@ -1583,11 +1642,11 @@ var Wampy = function () {
          * @param {function|object} callbacks - if it is a function - it will be called if successfully
          *                          sent canceling message or it can be hash table of callbacks:
          *                          { onSuccess: will be called if successfully sent canceling message
-             *                            onError: will be called if some error occurred }
+         *                            onError: will be called if some error occurred }
          * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
          *                          { mode: string|one of the possible modes:
-             *                                  "skip" | "kill" | "killnowait". Skip is default.
-              *                          }
+         *                                  "skip" | "kill" | "killnowait". Skip is default.
+         *                          }
          *
          * @returns {Wampy}
          */
@@ -1605,7 +1664,7 @@ var Wampy = function () {
                 this._cache.opStatus = _constants.WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
 
                 return this;
@@ -1632,8 +1691,8 @@ var Wampy = function () {
          * @param {function|object} callbacks - if it is a function - it will be treated as rpc itself
          *                          or it can be hash table of callbacks:
          *                          { rpc: registered procedure
-             *                            onSuccess: will be called on successful registration
-             *                            onError: will be called if registration would be aborted }
+         *                            onSuccess: will be called on successful registration
+         *                            onError: will be called if registration would be aborted }
          * @returns {Wampy}
          */
 
@@ -1652,7 +1711,7 @@ var Wampy = function () {
                 this._cache.opStatus = _constants.WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
 
                 return this;
@@ -1677,7 +1736,7 @@ var Wampy = function () {
                 this._cache.opStatus = _constants.WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
             }
 
@@ -1690,7 +1749,7 @@ var Wampy = function () {
          * @param {function|object} callbacks - if it is a function, it will be called on successful unregistration
          *                          or it can be hash table of callbacks:
          *                          { onSuccess: will be called on successful unregistration
-             *                            onError: will be called if unregistration would be aborted }
+         *                            onError: will be called if unregistration would be aborted }
          * @returns {Wampy}
          */
 
@@ -1726,7 +1785,7 @@ var Wampy = function () {
                 this._cache.opStatus = _constants.WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError(this._cache.opStatus.description);
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
             }
 

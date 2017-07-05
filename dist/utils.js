@@ -27,7 +27,7 @@ function getServerUrlBrowser(url) {
         port = window.location.port !== '' ? ':' + window.location.port : '';
         return scheme + window.location.hostname + port + url;
     } else {
-        // domain
+        // assuming just domain+path
         return scheme + url;
     }
 }
