@@ -35,13 +35,17 @@ var MsgpackSerializer = exports.MsgpackSerializer = function () {
         value: function decode(data) {
             return new Promise(function (resolve) {
 
-                if (data instanceof ArrayBuffer) {
+                var type = data.constructor.name;
+
+                if (type === 'ArrayBuffer' || type === 'Buffer') {
                     resolve(msgpack.decode(new Uint8Array(data)));
                 } else {
                     var reader = new FileReader();
+
                     reader.onload = function () {
-                        resolve(new Uint8Array(this.result));
+                        resolve(msgpack.decode(new Uint8Array(this.result)));
                     };
+
                     reader.readAsArrayBuffer(data);
                 }
             });

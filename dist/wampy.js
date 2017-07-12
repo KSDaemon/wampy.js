@@ -477,11 +477,7 @@ var Wampy = function () {
     }, {
         key: '_decode',
         value: function _decode(msg) {
-            try {
-                return this._options.serializer.decode(msg);
-            } catch (e) {
-                throw new Error('[wampy] decoding exception!');
-            }
+            return this._options.serializer.decode(msg);
         }
 
         /**
@@ -608,13 +604,12 @@ var Wampy = function () {
         value: function _wsOnClose(event) {
             var _this2 = this;
 
-            var root = _constants.isNode ? global : window;
             this._log('[wampy] websocket disconnected. Info: ', event);
 
             // Automatic reconnection
             if ((this._cache.sessionId || this._cache.reconnectingAttempts) && this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries && !this._cache.isSayingGoodbye) {
                 this._cache.sessionId = null;
-                this._cache.timer = root.setTimeout(function () {
+                this._cache.timer = setTimeout(function () {
                     _this2._wsReconnect();
                 }, this._options.reconnectInterval);
             } else {
@@ -956,6 +951,8 @@ var Wampy = function () {
                         _this3._log('[wampy] Received non-compliant WAMP message');
                         break;
                 }
+            }, function (err) {
+                return console.error(err);
             });
         }
 

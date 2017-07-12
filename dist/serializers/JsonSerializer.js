@@ -25,7 +25,7 @@ var JsonSerializer = exports.JsonSerializer = function () {
         key: 'decode',
         value: function decode(data) {
             return new Promise(function (resolve) {
-                return resolve(JSON.parse(data));
+                resolve(JSON.parse(data));
             });
         }
     }]);
