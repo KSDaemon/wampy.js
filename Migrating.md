@@ -1,10 +1,184 @@
 Migrating from previous versions
 ================================
 
+Migrating from 5.x to 6.x versions
+==================================
+
+6.0.0 version was extended and refactored, so there are backward incompatible changes.
+
+One of the main changes is in API callback methods parameters. In 6.0.0 version, all callbacks receive **one** argument,
+ which is an object, containing all necessary data. In most cases, it looks like this:
+
+```javascript
+let callbackParams = {
+    argsList: [],    // array payload (may be omitted)
+    argsDict: {},    // object payload (may be omitted)
+    details: {}      // some details specific for API call type (may be empty)
+}
+```
+
+Next one change is in unifying error callbacks. In 6.0.0 version, all callbacks receive **one** argument,
+ which is an object, containing all necessary data. In most cases, it looks like this:
+
+```javascript
+let errorObject = {
+    error: 'stringURI', // string URI that gives the error of why the request could not be fulfilled
+    argsList: [],       // array payload (may be omitted)
+    argsDict: {},       // object payload (may be omitted)
+    details: {}         // some details specific for API call type (may be empty)
+}
+```
+
+Subscribe event callback method signature change:
+```javascript
+// WAS:
+ws.subscribe('some.topic', {
+   onSuccess: function () { console.log('Successfully subscribed to topic'); },
+   onError: function (err, details) { console.log('Subscription error:' + err); },
+   onEvent: function (arrayPayload, objectPayload) { 
+       console.log('Received topic event');
+       console.log('Event array payload', arrayPayload);
+       console.log('Event object payload', objectPayload);
+   }
+});
+
+//IS NOW:
+ws.subscribe('some.topic', {
+   onSuccess: function () { console.log('Successfully subscribed to topic'); },
+   onError: function (err) { console.log('Subscription error:' + err.error); },
+   onEvent: function (result) { 
+       console.log('Received topic event');
+       console.log('Event array payload', result.argsList);
+       console.log('Event object payload', result.argsDict);
+       console.log('Event details', result.details);
+   }
+});
+```
+
+RPC Call callback method signature change:
+```javascript
+// WAS:
+ws.call('restore.backup', { backupFile: 'backup.zip' }, {
+    onSuccess: function (arrayPayload, objectPayload) {
+        console.log('Backup successfully restored');
+        console.log('RPC result array payload', arrayPayload);
+        console.log('RPC result object payload', objectPayload);
+    },
+    onError: function (err, details, [arrayData, objectData]) {
+        console.log('Restore failed!',err);
+    }
+});
+
+//IS NOW:
+ws.call('restore.backup', { backupFile: 'backup.zip' }, {
+    onSuccess: function (result) {
+        console.log('Backup successfully restored');
+        console.log('RPC result array payload', result.argsList);
+        console.log('RPC result object payload', result.argsDict);
+        console.log('RPC result details', result.details);
+    },
+    onError: function (err) {
+        console.log('Restore failed!');
+        console.log('Error details:', err.error, err.details, err.argsList, err.argsDict);
+    }
+});
+```
+
+RPC registration method signature change:
+```javascript
+// WAS:
+const sqrt_f = function (x) { return [{}, x*x]; };
+
+ws.register('sqrt.value', {
+    rpc: sqrt_f,
+    onSuccess: function (data) {
+        console.log('RPC successfully registered');
+    },
+    onError: function (err, details) {
+        console.log('RPC registration failed!',err);
+    }
+});
+
+//IS NOW:
+const sqrt_f = function (data) { return { argsList: data.argsList[0]*data.argsList[0] } };
+
+ws.register('sqrt.value', {
+    rpc: sqrt_f,
+    onSuccess: function (data) {
+        console.log('RPC successfully registered');
+    },
+    onError: function (err) {
+        console.log('Registration failed!');
+        console.log('Error details:', err.error, err.details);
+    }
+});
+```
+
+Wampy instance onError callback method signature change:
+```javascript
+// WAS:
+ws.options({
+    onError: function (err) { console.log('Breakdown happened!', err); },
+});
+
+//IS NOW:
+ws.options({
+    onError: function (err) { console.log('Breakdown happened!', err.error); },
+});
+```
+
 Migrating from 4.x to 5.x versions
 ==================================
 
 5.0.0 version was extended and updated, so there are some backward incompatible changes.
+
+Starting with 5.0.0 version, browser precompiled version is no longer included to dist folder. Most people use 
+bundlers, like webpack/rollup or others, so they do not need standalone browser version. You can always download 
+it from [releases page](../../releases/latest).
+
+First of all, because of rewriting Wampy to ES6 modules, module import slightly changed:
+ 
+```javascript
+// WAS:
+const Wampy = require('wampy');
+//IS NOW:
+const Wampy = require('wampy').Wampy;
+
+// If you are using ES6 modules syntax
+import { Wampy } from 'wampy';
+```
+
+If you use Wampy with msgpack, then you need to update you code for proper serializer initialization.
+`msgpackCoder` and `transportEncoding` options was removed. Instead, `serializer` option was added for providing
+custom serializer. Just pass a Serializer instance there. Wampy already comes with 2 serializers: 
+JsonSerializer (default) and MsgpackSerializer (optional).
+
+```javascript
+// WAS:
+const msgpack = require('msgpack5')()
+const w3cws = require('websocket').w3cwebsocket;
+const Wampy = require('wampy');
+
+const wampy = new Wampy(routerUrl, {
+                realm: 'AppRealm',
+                onConnect: function () { ... },
+                ws: w3cws,
+                transportEncoding: 'msgpack',
+                msgpackCoder: msgpack
+            });
+
+//IS NOW:
+const w3cws = require('websocket').w3cwebsocket;
+const Wampy = require('wampy').Wampy;
+const MsgpackSerializer = require('wampy/dist/serializers/MsgpackSerializer').MsgpackSerializer;
+
+const wampy = new Wampy(routerUrl, {
+    realm: 'AppRealm',
+    onConnect: function () { ... },
+    ws: w3cws,
+    serializer: new MsgpackSerializer()
+});
+```
 
 Now registered PRC during invocation will receive three arguments (instead of 2, previously): 
 array payload (may be undefined), object payload (may be undefined) and options object. 

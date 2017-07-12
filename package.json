@@ -1,24 +1,29 @@
 {
   "name": "wampy",
-  "version": "4.1.0",
+  "version": "6.0.0",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation",
   "author": "Konstantin Burkalev <KSDaemon@ya.ru> (http://ksdaemon.ru)",
   "devDependencies": {
-    "babel-preset-es2015": "^6.22.0",
-    "chai": "^3.5.0",
-    "coveralls": "^2.11.15",
+    "babel-preset-es2015": "^6.24.0",
+    "babelify": "^7.3.0",
+    "chai": "^4.0.2",
+    "coveralls": "^2.13.0",
+    "eslint": "^4.1.1",
     "grunt": "^1.0.1",
     "grunt-babel": "^6.0.0",
+    "grunt-browserify": "^5.0.0",
+    "grunt-contrib-clean": "^1.0.0",
+    "grunt-contrib-compress": "^1.4.1",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-uglify": "^2.0.0",
-    "grunt-text-replace": "^0.4.0",
+    "grunt-contrib-uglify": "^3.0.0",
     "istanbul": "^1.1.0-alpha.1",
     "load-grunt-tasks": "^3.5.2",
     "mocha": "^3.2.0",
-    "mocha-lcov-reporter": "^1.2.0"
+    "mocha-lcov-reporter": "^1.3.0",
+    "mock-require": "^2.0.2"
   },
-  "main": "src/wampy.js",
+  "main": "dist/wampy.js",
   "dependencies": {
     "msgpack5": "^3.4.1",
     "websocket": "^1.0.24"
@@ -39,10 +44,10 @@
   },
   "homepage": "https://github.com/KSDaemon/wampy.js",
   "scripts": {
-    "build": "grunt",
-    "lint": "eslint src/wampy.js",
-    "lint:fix": "eslint --fix src/wampy.js",
-    "test": "mocha -R spec",
-    "cover": "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- -R spec"
+    "build": "node ./node_modules/.bin/grunt",
+    "lint": "node ./node_modules/.bin/eslint src test Gruntfile.js",
+    "lint:fix": "node ./node_modules/.bin/eslint --fix src test Gruntfile.js",
+    "test": "node ./node_modules/.bin/mocha --compilers js:babel-core/register -R spec",
+    "cover": "node ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- --compilers js:babel-core/register -R spec"
   }
 }

@@ -4,45 +4,18 @@
  * Date: 07.04.15
  */
 
-var WAMP_MSG_SPEC = {
-        HELLO: 1,
-        WELCOME: 2,
-        ABORT: 3,
-        CHALLENGE: 4,
-        AUTHENTICATE: 5,
-        GOODBYE: 6,
-        HEARTBEAT: 7,
-        ERROR: 8,
-        PUBLISH: 16,
-        PUBLISHED: 17,
-        SUBSCRIBE: 32,
-        SUBSCRIBED: 33,
-        UNSUBSCRIBE: 34,
-        UNSUBSCRIBED: 35,
-        EVENT: 36,
-        CALL: 48,
-        CANCEL: 49,
-        RESULT: 50,
-        REGISTER: 64,
-        REGISTERED: 65,
-        UNREGISTER: 66,
-        UNREGISTERED: 67,
-        INVOCATION: 68,
-        INTERRUPT: 69,
-        YIELD: 70
-    },
+import msgpack5 from 'msgpack5';
+import sendData from './send-data';
 
-    TIMEOUT = 15,
+const TIMEOUT = 15,
 
-    sendData = require('./send-data'),
-    sendDataCursor = 0,
+    root = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]') ?
+        global : window;
 
+let sendDataCursor = 0,
     clientMessageQueue = [],
     openTimer = null,
     sendTimer = null,
-
-    root = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]') ?
-        global : window,
 
     WebSocket = function (url, protocols) {
         this.url = url;
@@ -51,7 +24,7 @@ var WAMP_MSG_SPEC = {
 
         if (this.transportEncoding === 'msgpack') {
             this.binaryType = 'arraybuffer';
-            this.encoder = require('msgpack5')();
+            this.encoder = msgpack5();
             this.encode = this.encoder.encode;
             this.decode = this.encoder.decode;
         } else {
@@ -94,8 +67,8 @@ function resetCursor () {
     sendDataCursor = 0;
 }
 
-function processQueue() {
-    var f;
+function processQueue () {
+    let f;
 
     if (clientMessageQueue.length) {
         f = clientMessageQueue.shift();
@@ -108,7 +81,7 @@ function startTimers () {
 }
 
 WebSocket.prototype.close = function (code, reason) {
-    var self = this;
+    const self = this;
 
     if (openTimer) {
         root.clearTimeout(openTimer);
@@ -119,7 +92,7 @@ WebSocket.prototype.close = function (code, reason) {
 };
 
 WebSocket.prototype.abort = function () {
-    var self = this;
+    const self = this;
 
     if (openTimer) {
         root.clearTimeout(openTimer);
@@ -130,7 +103,8 @@ WebSocket.prototype.abort = function () {
 };
 
 WebSocket.prototype.send = function (data) {
-    var self = this, send_data, enc_data, rec_data, i;
+    const self = this;
+    let send_data, enc_data, rec_data, i;
 
     rec_data = self.decode(data);
     send_data = sendData[sendDataCursor++];
@@ -175,5 +149,5 @@ WebSocket.prototype.send = function (data) {
     );
 };
 
-module.exports = { WebSocket: WebSocket, startTimers: startTimers, clearTimers: clearTimers, resetCursor: resetCursor };
+export { WebSocket, startTimers, clearTimers, resetCursor };
 
