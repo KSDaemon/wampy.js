@@ -30,11 +30,9 @@ let protocol = 'json',
 
         this.readyState = 1;    // Closed
 
-        let self = this;
-
-        root.setTimeout(function () {
-            self.protocol = 'wamp.2.' + protocol;
-            self.onopen();
+        root.setTimeout(() => {
+            this.protocol = 'wamp.2.' + protocol;
+            this.onopen();
         }, TIMEOUT);
 
     },

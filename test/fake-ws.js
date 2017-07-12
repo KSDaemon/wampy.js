@@ -8,10 +8,7 @@ import sendData from './send-data';
 import {MsgpackSerializer} from './../src/serializers/MsgpackSerializer';
 import {JsonSerializer} from './../src/serializers/JsonSerializer';
 
-const TIMEOUT = 15,
-
-    root = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]') ?
-        global : window;
+const TIMEOUT = 15;
 
 let sendDataCursor = 0,
     clientMessageQueue = [],
@@ -42,23 +39,21 @@ let sendDataCursor = 0,
 
         this.readyState = 1;    // Closed
 
-        var self = this;
-
-        openTimer = root.setTimeout(function () {
-            self.protocol = 'wamp.2.' + self.transportEncoding;
-            self.onopen();
+        openTimer = setTimeout(() => {
+            this.protocol = 'wamp.2.' + this.transportEncoding;
+            this.onopen();
         }, TIMEOUT);
 
     };
 
 function clearTimers () {
     if (openTimer) {
-        root.clearTimeout(openTimer);
+        clearTimeout(openTimer);
         openTimer = null;
     }
 
     if (sendTimer) {
-        root.clearInterval(sendTimer);
+        clearInterval(sendTimer);
         sendTimer = null;
     }
 }
@@ -77,36 +72,31 @@ function processQueue () {
 }
 
 function startTimers () {
-    sendTimer = root.setInterval(processQueue, TIMEOUT);
+    sendTimer = setInterval(processQueue, TIMEOUT);
 }
 
 WebSocket.prototype.close = function (code, reason) {
-    const self = this;
-
     if (openTimer) {
-        root.clearTimeout(openTimer);
+        clearTimeout(openTimer);
         openTimer = null;
     }
     this.readyState = 3;    // Closed
-    self.onclose();
+    this.onclose();
 };
 
 WebSocket.prototype.abort = function () {
-    const self = this;
-
     if (openTimer) {
-        root.clearTimeout(openTimer);
+        clearTimeout(openTimer);
         openTimer = null;
     }
     this.readyState = 3;    // Closed
-    self.onerror();
+    this.onerror();
 };
 
 WebSocket.prototype.send = function (data) {
-    const self = this;
     let send_data, enc_data, i;
 
-    self.decode(data).then(rec_data => {
+    this.decode(data).then(rec_data => {
         send_data = sendData[sendDataCursor++];
 
         //console.log('Data to send to server:', rec_data);
@@ -126,28 +116,26 @@ WebSocket.prototype.send = function (data) {
                 }
             }
 
-            enc_data = { data: self.encode(send_data.data) };
+            enc_data = { data: this.encode(send_data.data) };
         }
 
-        clientMessageQueue.push(
-            function () {
-                if (send_data.data) {
-                    self.onmessage(enc_data);
-                }
-                //
-                // console.log('processsing message: data? ', send_data.data ? 'yes' : 'no',
-                //    ' next? ', send_data.next ? 'yes' : 'no',
-                //    ' abort? ', send_data.abort ? 'yes' : 'no',
-                //    ' close? ', send_data.close ? 'yes' : 'no')
-                if (send_data.next) {           // Send to client next message
-                    self.send(data);
-                } else if (send_data.abort) {   // Abort ws connection
-                    self.abort();
-                } else if (send_data.close) {   // Close ws connection
-                    self.close();
-                }
+        clientMessageQueue.push(() => {
+            if (send_data.data) {
+                this.onmessage(enc_data);
             }
-        );
+
+            // console.log('processsing message: data? ', send_data.data ? 'yes' : 'no',
+            //    ' next? ', send_data.next ? 'yes' : 'no',
+            //    ' abort? ', send_data.abort ? 'yes' : 'no',
+            //    ' close? ', send_data.close ? 'yes' : 'no')
+            if (send_data.next) {           // Send to client next message
+                this.send(data);
+            } else if (send_data.abort) {   // Abort ws connection
+                this.abort();
+            } else if (send_data.close) {   // Close ws connection
+                this.close();
+            }
+        });
     });
 };
 

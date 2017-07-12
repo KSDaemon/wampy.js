@@ -17,7 +17,6 @@ import { Wampy } from './../src/wampy';
 import { WAMP_ERROR_MSG } from './../src/constants';
 
 describe('Wampy.js [with msgpack serializer]', function () {
-
     this.timeout(10000);
 
     before(function () {

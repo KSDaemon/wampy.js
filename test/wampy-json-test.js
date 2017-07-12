@@ -10,14 +10,13 @@ const isNode = typeof process === 'object' &&
 const routerUrl = 'ws://fake.server.org/ws/',
     anotherRouterUrl = 'ws://another.server.org/ws/';
 
-import { expect } from 'chai';
+import {expect} from 'chai';
 import * as WebSocketModule from './fake-ws';
-import { Wampy } from './../src/wampy';
-import { JsonSerializer } from '../src/serializers/JsonSerializer';
-import { WAMP_ERROR_MSG } from './../src/constants';
+import {Wampy} from './../src/wampy';
+import {JsonSerializer} from '../src/serializers/JsonSerializer';
+import {WAMP_ERROR_MSG} from './../src/constants';
 
 describe('Wampy.js [with JSON serializer]', function () {
-
     this.timeout(10000);
 
     before(function () {
@@ -48,30 +47,30 @@ describe('Wampy.js [with JSON serializer]', function () {
                     customFiled3: [1, 2, 3, 4, 5]
                 },
                 setoptions = {
-                    autoReconnect     : true,
-                    reconnectInterval : 10000,
-                    maxRetries        : 50,
-                    realm             : 'AppRealm',
+                    autoReconnect: true,
+                    reconnectInterval: 10000,
+                    maxRetries: 50,
+                    realm: 'AppRealm',
                     helloCustomDetails: helloCustomDetails,
-                    onChallenge       : function () {
+                    onChallenge: function () {
                         done('Reached onChallenge');
                     },
-                    authid            : 'userid',
-                    authmethods       : ['wampcra'],
-                    onConnect         : done,
-                    onClose           : function () {
+                    authid: 'userid',
+                    authmethods: ['wampcra'],
+                    onConnect: done,
+                    onClose: function () {
                         done('Reached onClose');
                     },
-                    onError           : function () {
+                    onError: function () {
                         done('Reached onError');
                     },
-                    onReconnect       : function () {
+                    onReconnect: function () {
                         done('Reached onReconnect');
                     },
                     onReconnectSuccess: function () {
                         done('Reached onReconnectSuccess');
                     },
-                    ws                : WebSocketModule.WebSocket
+                    ws: WebSocketModule.WebSocket
                 },
                 wampy = new Wampy(setoptions),
                 options = wampy.options();

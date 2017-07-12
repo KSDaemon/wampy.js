@@ -14,7 +14,7 @@
  *
  */
 
-import {isNode, WAMP_ERROR_MSG, WAMP_MSG_SPEC} from './constants';
+import {WAMP_ERROR_MSG, WAMP_MSG_SPEC} from './constants';
 import {getWebSocket, isBinaryTypeAllowed} from './utils';
 import {JsonSerializer} from './serializers/JsonSerializer';
 
@@ -542,14 +542,13 @@ class Wampy {
      * @private
      */
     _wsOnClose (event) {
-        const root = isNode ? global : window;
         this._log('[wampy] websocket disconnected. Info: ', event);
 
         // Automatic reconnection
         if ((this._cache.sessionId || this._cache.reconnectingAttempts) &&
             this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries && !this._cache.isSayingGoodbye) {
             this._cache.sessionId = null;
-            this._cache.timer = root.setTimeout(
+            this._cache.timer = setTimeout(
                 () => {
                     this._wsReconnect();
                 },
@@ -589,7 +588,6 @@ class Wampy {
                         // There was reconnection
 
                         this._cache.reconnectingAttempts = 0;
-                        console.log(this._options.onReconnectSuccess);
 
                         if (this._options.onReconnectSuccess) {
                             this._options.onReconnectSuccess();
