@@ -4,11 +4,16 @@
  * Date: 07.04.15
  */
 
+const isNode = typeof process === 'object' &&
+    Object.prototype.toString.call(process) === '[object process]';
+
+if (!isNode) {
+    require('core-js/es6');
+}
+
 const routerUrl = 'ws://fake.server.org/ws/',
     anotherRouterUrl = 'ws://another.server.org/ws/',
-    root = (typeof process === 'object' &&
-    Object.prototype.toString.call(process) === '[object process]') ?
-        global : window;
+    root = isNode ? global : window;
 
 import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
@@ -167,6 +172,11 @@ describe('Wampy.js [with JSON serializer]', function () {
         });
 
         it('disallows to connect to a router if no url was specified during instantiation', function () {
+
+            if (!isNode) {
+                return;
+            }
+
             let wampy = new Wampy({ realm: 'AppRealm' }),
                 opStatus = wampy.connect().getOpStatus();
 
