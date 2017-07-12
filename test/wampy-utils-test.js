@@ -7,10 +7,6 @@
 const isNode = typeof process === 'object' &&
     Object.prototype.toString.call(process) === '[object process]';
 
-if (!isNode) {
-    require('core-js/es6');
-}
-
 import { expect } from 'chai';
 const utils = require('./../src/utils');
 let getWebSocket = utils.getWebSocket, isBinaryTypeAllowed = utils.isBinaryTypeAllowed;

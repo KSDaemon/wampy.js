@@ -14,9 +14,9 @@
  *
  */
 
-import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode } from './constants';
-import { getWebSocket, isBinaryTypeAllowed } from './utils';
-import { JsonSerializer } from './serializers/JsonSerializer';
+import {isNode, WAMP_ERROR_MSG, WAMP_MSG_SPEC} from './constants';
+import {getWebSocket, isBinaryTypeAllowed} from './utils';
+import {JsonSerializer} from './serializers/JsonSerializer';
 
 /**
  * WAMP Client Class
@@ -429,15 +429,11 @@ class Wampy {
     /**
      * Decode WAMP message
      * @param  msg
-     * @returns {array}
+     * @returns {Promise}
      * @private
      */
     _decode (msg) {
-        try {
-            return this._options.serializer.decode(msg);
-        } catch (e) {
-            throw new Error('[wampy] decoding exception!');
-        }
+        return this._options.serializer.decode(msg);
     }
 
     /**
@@ -576,341 +572,343 @@ class Wampy {
      * @private
      */
     _wsOnMessage (event) {
-        let data, id, i, msg, p;
-
         this._log('[wampy] websocket message received', event.data);
 
-        data = this._decode(event.data);
+        this._decode(event.data).then(data => {
 
-        switch (data[0]) {
-            case WAMP_MSG_SPEC.WELCOME:
-                // WAMP SPEC: [WELCOME, Session|id, Details|dict]
+            let id, i, msg, p;
 
-                this._cache.sessionId = data[1];
-                this._cache.server_wamp_features = data[2];
+            switch (data[0]) {
+                case WAMP_MSG_SPEC.WELCOME:
+                    // WAMP SPEC: [WELCOME, Session|id, Details|dict]
 
-                if (this._cache.reconnectingAttempts) {
-                    // There was reconnection
+                    this._cache.sessionId = data[1];
+                    this._cache.server_wamp_features = data[2];
 
-                    this._cache.reconnectingAttempts = 0;
+                    if (this._cache.reconnectingAttempts) {
+                        // There was reconnection
 
-                    if (this._options.onReconnectSuccess) {
-                        this._options.onReconnectSuccess();
+                        this._cache.reconnectingAttempts = 0;
+                        console.log(this._options.onReconnectSuccess);
+
+                        if (this._options.onReconnectSuccess) {
+                            this._options.onReconnectSuccess();
+                        }
+
+                        // Let's renew all previous state
+                        this._renewSubscriptions();
+                        this._renewRegistrations();
+
+                    } else {
+                        // Firing onConnect event on real connection to WAMP server
+                        if (this._options.onConnect) {
+                            this._options.onConnect();
+                        }
                     }
 
-                    // Let's renew all previous state
-                    this._renewSubscriptions();
-                    this._renewRegistrations();
+                    // Send local queue if there is something out there
+                    this._send();
 
-                } else {
-                    // Firing onConnect event on real connection to WAMP server
-                    if (this._options.onConnect) {
-                        this._options.onConnect();
+                    break;
+                case WAMP_MSG_SPEC.ABORT:
+                    // WAMP SPEC: [ABORT, Details|dict, Reason|uri]
+                    if (this._options.onError) {
+                        this._options.onError({ error: data[2], details: data[1] });
                     }
-                }
+                    this._ws.close();
+                    break;
+                case WAMP_MSG_SPEC.CHALLENGE:
+                    // WAMP SPEC: [CHALLENGE, AuthMethod|string, Extra|dict]
 
-                // Send local queue if there is something out there
-                this._send();
+                    if (this._options.authid && typeof this._options.onChallenge === 'function') {
 
-                break;
-            case WAMP_MSG_SPEC.ABORT:
-                // WAMP SPEC: [ABORT, Details|dict, Reason|uri]
-                if (this._options.onError) {
-                    this._options.onError({ error: data[2], details: data[1] });
-                }
-                this._ws.close();
-                break;
-            case WAMP_MSG_SPEC.CHALLENGE:
-                // WAMP SPEC: [CHALLENGE, AuthMethod|string, Extra|dict]
+                        p = new Promise((resolve, reject) => {
+                            resolve(this._options.onChallenge(data[1], data[2]));
+                        });
 
-                if (this._options.authid && typeof this._options.onChallenge === 'function') {
+                        p.then((key) => {
 
-                    p = new Promise((resolve, reject) => {
-                        resolve(this._options.onChallenge(data[1], data[2]));
-                    });
+                            // Sending directly 'cause it's a challenge msg and no sessionId check is needed
+                            this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
 
-                    p.then((key) => {
+                        }).catch(e => {
+                            this._ws.send(this._encode([
+                                WAMP_MSG_SPEC.ABORT,
+                                { message: 'Exception in onChallenge handler raised!' },
+                                'wamp.error.cannot_authenticate'
+                            ]));
+                            if (this._options.onError) {
+                                this._options.onError({ error: WAMP_ERROR_MSG.CRA_EXCEPTION.description });
+                            }
+                            this._ws.close();
+                            this._cache.opStatus = WAMP_ERROR_MSG.CRA_EXCEPTION;
+                        });
 
-                        // Sending directly 'cause it's a challenge msg and no sessionId check is needed
-                        this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
+                    } else {
 
-                    }).catch(e => {
                         this._ws.send(this._encode([
                             WAMP_MSG_SPEC.ABORT,
-                            { message: 'Exception in onChallenge handler raised!' },
+                            { message: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description },
                             'wamp.error.cannot_authenticate'
                         ]));
                         if (this._options.onError) {
-                            this._options.onError({ error: WAMP_ERROR_MSG.CRA_EXCEPTION.description });
+                            this._options.onError({ error: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description });
                         }
                         this._ws.close();
-                        this._cache.opStatus = WAMP_ERROR_MSG.CRA_EXCEPTION;
-                    });
+                        this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
 
-                } else {
-
-                    this._ws.send(this._encode([
-                        WAMP_MSG_SPEC.ABORT,
-                        { message: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description },
-                        'wamp.error.cannot_authenticate'
-                    ]));
-                    if (this._options.onError) {
-                        this._options.onError({ error: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description });
                     }
+                    break;
+                case WAMP_MSG_SPEC.GOODBYE:
+                    // WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
+                    if (!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
+                        this._cache.isSayingGoodbye = true;
+                        this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.error.goodbye_and_out']);
+                    }
+                    this._cache.sessionId = null;
                     this._ws.close();
-                    this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
+                    break;
+                case WAMP_MSG_SPEC.ERROR:
+                    // WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict,
+                    //             Error|uri, (Arguments|list, ArgumentsKw|dict)]
+                    switch (data[1]) {
+                        case WAMP_MSG_SPEC.SUBSCRIBE:
+                        case WAMP_MSG_SPEC.UNSUBSCRIBE:
+                        case WAMP_MSG_SPEC.PUBLISH:
+                        case WAMP_MSG_SPEC.REGISTER:
+                        case WAMP_MSG_SPEC.UNREGISTER:
 
-                }
-                break;
-            case WAMP_MSG_SPEC.GOODBYE:
-                // WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
-                if (!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
-                    this._cache.isSayingGoodbye = true;
-                    this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.error.goodbye_and_out']);
-                }
-                this._cache.sessionId = null;
-                this._ws.close();
-                break;
-            case WAMP_MSG_SPEC.ERROR:
-                // WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict,
-                //             Error|uri, (Arguments|list, ArgumentsKw|dict)]
-                switch (data[1]) {
-                    case WAMP_MSG_SPEC.SUBSCRIBE:
-                    case WAMP_MSG_SPEC.UNSUBSCRIBE:
-                    case WAMP_MSG_SPEC.PUBLISH:
-                    case WAMP_MSG_SPEC.REGISTER:
-                    case WAMP_MSG_SPEC.UNREGISTER:
+                            this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
+                            this._requests[data[2]].callbacks.onError({
+                                error: data[4],
+                                details: data[3],
+                                argsList: data[5],
+                                argsDict: data[6]
+                            });
+                            delete this._requests[data[2]];
 
-                        this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                        this._requests[data[2]].callbacks.onError({
-                            error: data[4],
-                            details: data[3],
-                            argsList: data[5],
-                            argsDict: data[6]
+                            break;
+                        case WAMP_MSG_SPEC.INVOCATION:
+                            break;
+                        case WAMP_MSG_SPEC.CALL:
+
+                            // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
+                            //             Error|uri, Arguments|list, ArgumentsKw|dict]
+                            this._calls[data[2]] && this._calls[data[2]].onError &&
+                            this._calls[data[2]].onError({
+                                error: data[4],
+                                details: data[3],
+                                argsList: data[5],
+                                argsDict: data[6]
+                            });
+                            delete this._calls[data[2]];
+
+                            break;
+                        default:
+                            this._log('[wampy] Received non-compliant WAMP ERROR message');
+                            break;
+                    }
+                    break;
+                case WAMP_MSG_SPEC.SUBSCRIBED:
+                    // WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
+                    if (this._requests[data[1]]) {
+                        this._subscriptions[this._requests[data[1]].topic] = this._subscriptions[data[2]] = {
+                            id: data[2],
+                            callbacks: [this._requests[data[1]].callbacks.onEvent]
+                        };
+
+                        this._subsTopics.add(this._requests[data[1]].topic);
+
+                        if (this._requests[data[1]].callbacks.onSuccess) {
+                            this._requests[data[1]].callbacks.onSuccess();
+                        }
+
+                        delete this._requests[data[1]];
+
+                    }
+                    break;
+                case WAMP_MSG_SPEC.UNSUBSCRIBED:
+                    // WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
+                    if (this._requests[data[1]]) {
+                        id = this._subscriptions[this._requests[data[1]].topic].id;
+                        delete this._subscriptions[this._requests[data[1]].topic];
+                        delete this._subscriptions[id];
+
+                        if (this._subsTopics.has(this._requests[data[1]].topic)) {
+                            this._subsTopics.delete(this._requests[data[1]].topic);
+                        }
+
+                        if (this._requests[data[1]].callbacks.onSuccess) {
+                            this._requests[data[1]].callbacks.onSuccess();
+                        }
+
+                        delete this._requests[data[1]];
+                    }
+                    break;
+                case WAMP_MSG_SPEC.PUBLISHED:
+                    // WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
+                    if (this._requests[data[1]]) {
+                        if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
+                            this._requests[data[1]].callbacks.onSuccess();
+                        }
+
+                        delete this._requests[data[1]];
+
+                    }
+                    break;
+                case WAMP_MSG_SPEC.EVENT:
+                    if (this._subscriptions[data[1]]) {
+
+                        // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
+                        //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
+
+                        i = this._subscriptions[data[1]].callbacks.length;
+                        while (i--) {
+                            this._subscriptions[data[1]].callbacks[i]({
+                                details: data[3],
+                                argsList: data[4],
+                                argsDict: data[5]
+                            });
+                        }
+
+                    }
+                    break;
+                case WAMP_MSG_SPEC.RESULT:
+                    if (this._calls[data[1]]) {
+
+                        // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
+                        //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
+
+                        this._calls[data[1]].onSuccess({
+                            details: data[2],
+                            argsList: data[3],
+                            argsDict: data[4]
                         });
-                        delete this._requests[data[2]];
+                        if (!(data[2].progress && data[2].progress === true)) {
+                            // We receive final result (progressive or not)
+                            delete this._calls[data[1]];
+                        }
 
-                        break;
-                    case WAMP_MSG_SPEC.INVOCATION:
-                        break;
-                    case WAMP_MSG_SPEC.CALL:
+                    }
+                    break;
+                // case WAMP_MSG_SPEC.REGISTER:
+                //     // WAMP SPEC:
+                //     break;
+                case WAMP_MSG_SPEC.REGISTERED:
+                    // WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
+                    if (this._requests[data[1]]) {
+                        this._rpcRegs[this._requests[data[1]].topic] = this._rpcRegs[data[2]] = {
+                            id: data[2],
+                            callbacks: [this._requests[data[1]].callbacks.rpc]
+                        };
 
-                        // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
-                        //             Error|uri, Arguments|list, ArgumentsKw|dict]
-                        this._calls[data[2]] && this._calls[data[2]].onError &&
-                        this._calls[data[2]].onError({
-                            error   : data[4],
-                            details : data[3],
-                            argsList: data[5],
-                            argsDict: data[6]
+                        this._rpcNames.add(this._requests[data[1]].topic);
+
+                        if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
+                            this._requests[data[1]].callbacks.onSuccess();
+                        }
+
+                        delete this._requests[data[1]];
+
+                    }
+                    break;
+                // case WAMP_MSG_SPEC.UNREGISTER:
+                //     // WAMP SPEC:
+                //     break;
+                case WAMP_MSG_SPEC.UNREGISTERED:
+                    // WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
+                    if (this._requests[data[1]]) {
+                        id = this._rpcRegs[this._requests[data[1]].topic].id;
+                        delete this._rpcRegs[this._requests[data[1]].topic];
+                        delete this._rpcRegs[id];
+
+                        if (this._rpcNames.has(this._requests[data[1]].topic)) {
+                            this._rpcNames.delete(this._requests[data[1]].topic);
+                        }
+
+                        if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
+                            this._requests[data[1]].callbacks.onSuccess();
+                        }
+
+                        delete this._requests[data[1]];
+                    }
+                    break;
+                case WAMP_MSG_SPEC.INVOCATION:
+                    if (this._rpcRegs[data[2]]) {
+
+                        // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
+                        //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
+
+                        p = new Promise((resolve, reject) => {
+                            resolve(this._rpcRegs[data[2]].callbacks[0]({
+                                details: data[3],
+                                argsList: data[4],
+                                argsDict: data[5]
+                            }));
                         });
-                        delete this._calls[data[2]];
 
-                        break;
-                    default:
-                        this._log('[wampy] Received non-compliant WAMP ERROR message');
-                        break;
-                }
-                break;
-            case WAMP_MSG_SPEC.SUBSCRIBED:
-                // WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
-                if (this._requests[data[1]]) {
-                    this._subscriptions[this._requests[data[1]].topic] = this._subscriptions[data[2]] = {
-                        id: data[2],
-                        callbacks: [this._requests[data[1]].callbacks.onEvent]
-                    };
+                        p.then((results) => {
+                            // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
+                            msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
 
-                    this._subsTopics.add(this._requests[data[1]].topic);
+                            if (this._isPlainObject(results)) {
 
-                    if (this._requests[data[1]].callbacks.onSuccess) {
-                        this._requests[data[1]].callbacks.onSuccess();
-                    }
+                                if (this._isPlainObject(results.options)) {
+                                    msg[2] = results.options;
+                                }
 
-                    delete this._requests[data[1]];
+                                if (this._isArray(results.argsList)) {
+                                    msg.push(results.argsList);
+                                } else if (typeof (results.argsList) !== 'undefined') {
+                                    msg.push([results.argsList]);
+                                }
 
-                }
-                break;
-            case WAMP_MSG_SPEC.UNSUBSCRIBED:
-                // WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
-                if (this._requests[data[1]]) {
-                    id = this._subscriptions[this._requests[data[1]].topic].id;
-                    delete this._subscriptions[this._requests[data[1]].topic];
-                    delete this._subscriptions[id];
+                                if (this._isPlainObject(results.argsDict)) {
+                                    if (msg.length === 3) {
+                                        msg.push([]);
+                                    }
+                                    msg.push(results.argsDict);
+                                }
+                            } else {
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+                            }
+                            this._send(msg);
+                        }).catch(e => {
+                            let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
+                                data[1], e.details || {}, e.error || 'wamp.error.invocation_exception'];
 
-                    if (this._subsTopics.has(this._requests[data[1]].topic)) {
-                        this._subsTopics.delete(this._requests[data[1]].topic);
-                    }
-
-                    if (this._requests[data[1]].callbacks.onSuccess) {
-                        this._requests[data[1]].callbacks.onSuccess();
-                    }
-
-                    delete this._requests[data[1]];
-                }
-                break;
-            case WAMP_MSG_SPEC.PUBLISHED:
-                // WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
-                if (this._requests[data[1]]) {
-                    if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-                        this._requests[data[1]].callbacks.onSuccess();
-                    }
-
-                    delete this._requests[data[1]];
-
-                }
-                break;
-            case WAMP_MSG_SPEC.EVENT:
-                if (this._subscriptions[data[1]]) {
-
-                    // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
-                    //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
-
-                    i = this._subscriptions[data[1]].callbacks.length;
-                    while (i--) {
-                        this._subscriptions[data[1]].callbacks[i]({
-                            details : data[3],
-                            argsList: data[4],
-                            argsDict: data[5]
-                        });
-                    }
-
-                }
-                break;
-            case WAMP_MSG_SPEC.RESULT:
-                if (this._calls[data[1]]) {
-
-                    // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
-                    //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
-
-                    this._calls[data[1]].onSuccess({
-                        details : data[2],
-                        argsList: data[3],
-                        argsDict: data[4]
-                    });
-                    if (!(data[2].progress && data[2].progress === true)) {
-                        // We receive final result (progressive or not)
-                        delete this._calls[data[1]];
-                    }
-
-                }
-                break;
-            // case WAMP_MSG_SPEC.REGISTER:
-            //     // WAMP SPEC:
-            //     break;
-            case WAMP_MSG_SPEC.REGISTERED:
-                // WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
-                if (this._requests[data[1]]) {
-                    this._rpcRegs[this._requests[data[1]].topic] = this._rpcRegs[data[2]] = {
-                        id: data[2],
-                        callbacks: [this._requests[data[1]].callbacks.rpc]
-                    };
-
-                    this._rpcNames.add(this._requests[data[1]].topic);
-
-                    if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-                        this._requests[data[1]].callbacks.onSuccess();
-                    }
-
-                    delete this._requests[data[1]];
-
-                }
-                break;
-            // case WAMP_MSG_SPEC.UNREGISTER:
-            //     // WAMP SPEC:
-            //     break;
-            case WAMP_MSG_SPEC.UNREGISTERED:
-                // WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
-                if (this._requests[data[1]]) {
-                    id = this._rpcRegs[this._requests[data[1]].topic].id;
-                    delete this._rpcRegs[this._requests[data[1]].topic];
-                    delete this._rpcRegs[id];
-
-                    if (this._rpcNames.has(this._requests[data[1]].topic)) {
-                        this._rpcNames.delete(this._requests[data[1]].topic);
-                    }
-
-                    if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-                        this._requests[data[1]].callbacks.onSuccess();
-                    }
-
-                    delete this._requests[data[1]];
-                }
-                break;
-            case WAMP_MSG_SPEC.INVOCATION:
-                if (this._rpcRegs[data[2]]) {
-
-                    // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
-                    //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
-
-                    p = new Promise((resolve, reject) => {
-                        resolve(this._rpcRegs[data[2]].callbacks[0]({
-                            details : data[3],
-                            argsList: data[4],
-                            argsDict: data[5]
-                        }));
-                    });
-
-                    p.then((results) => {
-                        // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
-                        msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-
-                        if (this._isPlainObject(results)) {
-
-                            if (this._isPlainObject(results.options)) {
-                                msg[2] = results.options;
+                            if (e.argsList && this._isArray(e.argsList)) {
+                                msg.push(e.argsList);
                             }
 
-                            if (this._isArray(results.argsList)) {
-                                msg.push(results.argsList);
-                            } else if (typeof (results.argsList) !== 'undefined') {
-                                msg.push([results.argsList]);
-                            }
-
-                            if (this._isPlainObject(results.argsDict)) {
-                                if (msg.length === 3) {
+                            if (e.argsDict && this._isPlainObject(e.argsDict)) {
+                                if (msg.length === 5) {
                                     msg.push([]);
                                 }
-                                msg.push(results.argsDict);
+                                msg.push(e.argsDict);
                             }
-                        } else {
-                            msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-                        }
-                        this._send(msg);
-                    }).catch(e => {
-                        let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                            data[1], e.details || {}, e.error || 'wamp.error.invocation_exception'];
+                            this._send(msg);
+                        });
 
-                        if (e.argsList && this._isArray(e.argsList)) {
-                            msg.push(e.argsList);
-                        }
+                    } else {
+                        // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
+                        this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
+                            data[1], {}, 'wamp.error.no_such_procedure']);
+                        this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION;
+                    }
 
-                        if (e.argsDict && this._isPlainObject(e.argsDict)) {
-                            if (msg.length === 5) {
-                                msg.push([]);
-                            }
-                            msg.push(e.argsDict);
-                        }
-                        this._send(msg);
-                    });
-
-                } else {
-                    // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
-                    this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                        data[1], {}, 'wamp.error.no_such_procedure']);
-                    this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION;
-                }
-
-                break;
-            // case WAMP_MSG_SPEC.INTERRUPT:
-            //     // WAMP SPEC:
-            //     break;
-            // case WAMP_MSG_SPEC.YIELD:
-            //     // WAMP SPEC:
-            //     break;
-            default:
-                this._log('[wampy] Received non-compliant WAMP message');
-                break;
-        }
+                    break;
+                // case WAMP_MSG_SPEC.INTERRUPT:
+                //     // WAMP SPEC:
+                //     break;
+                // case WAMP_MSG_SPEC.YIELD:
+                //     // WAMP SPEC:
+                //     break;
+                default:
+                    this._log('[wampy] Received non-compliant WAMP message');
+                    break;
+            }
+        }, err => console.error(err));
     }
 
     /**
@@ -1653,4 +1651,4 @@ class Wampy {
 }
 
 export default Wampy;
-export { Wampy };
+export {Wampy};

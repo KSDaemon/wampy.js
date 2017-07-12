@@ -4,8 +4,9 @@
  * Date: 07.04.15
  */
 
-import msgpack5 from 'msgpack5';
 import sendData from './send-data';
+import {MsgpackSerializer} from './../src/serializers/MsgpackSerializer';
+import {JsonSerializer} from './../src/serializers/JsonSerializer';
 
 const TIMEOUT = 15,
 
@@ -24,14 +25,13 @@ let sendDataCursor = 0,
 
         if (this.transportEncoding === 'msgpack') {
             this.binaryType = 'arraybuffer';
-            this.encoder = msgpack5();
-            this.encode = this.encoder.encode;
-            this.decode = this.encoder.decode;
+            this.encoder = new MsgpackSerializer();
         } else {
-            this.encoder = JSON;
-            this.encode = this.encoder.stringify;
-            this.decode = this.encoder.parse;
+            this.encoder = new JsonSerializer();
         }
+
+        this.encode = this.encoder.encode;
+        this.decode = this.encoder.decode;
 
         this.onclose = null;
         this.onerror = null;
@@ -104,50 +104,52 @@ WebSocket.prototype.abort = function () {
 
 WebSocket.prototype.send = function (data) {
     const self = this;
-    let send_data, enc_data, rec_data, i;
+    let send_data, enc_data, i;
 
-    rec_data = self.decode(data);
-    send_data = sendData[sendDataCursor++];
+    self.decode(data).then(rec_data => {
+        send_data = sendData[sendDataCursor++];
 
-    // console.log('Data to send to server:', rec_data);
-    //console.log('Is silent:', send_data.silent ? 'yes' : 'no');
-    if (send_data.silent) {
-        return;
-    }
-
-    // console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor);
-
-    if (send_data.data) {
-        // Prepare answer (copy request id from request to answer, etc)
-        if (send_data.from) {
-            i = send_data.from.length;
-            while (i--) {
-                send_data.data[send_data.to[i]] = rec_data[send_data.from[i]];
-            }
+        //console.log('Data to send to server:', rec_data);
+        //console.log('Is silent:', send_data.silent ? 'yes' : 'no');
+        if (send_data.silent) {
+            return;
         }
-        enc_data = { data: self.encode(send_data.data) };
-    }
 
-    clientMessageQueue.push(
-        function () {
-            if (send_data.data) {
-                self.onmessage(enc_data);
+        // console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor);
+
+        if (send_data.data) {
+            // Prepare answer (copy request id from request to answer, etc)
+            if (send_data.from) {
+                i = send_data.from.length;
+                while (i--) {
+                    send_data.data[send_data.to[i]] = rec_data[send_data.from[i]];
+                }
             }
 
-            //console.log('processsing message: data? ', send_data.data ? 'yes' : 'no',
-            //    ' next? ', send_data.next ? 'yes' : 'no',
-            //    ' abort? ', send_data.abort ? 'yes' : 'no',
-            //    ' close? ', send_data.close ? 'yes' : 'no')
-            if (send_data.next) {           // Send to client next message
-                self.send(data);
-            } else if (send_data.abort) {   // Abort ws connection
-                self.abort();
-            } else if (send_data.close) {   // Close ws connection
-                self.close();
-            }
+            enc_data = { data: self.encode(send_data.data) };
         }
-    );
+
+        clientMessageQueue.push(
+            function () {
+                if (send_data.data) {
+                    self.onmessage(enc_data);
+                }
+                //
+                // console.log('processsing message: data? ', send_data.data ? 'yes' : 'no',
+                //    ' next? ', send_data.next ? 'yes' : 'no',
+                //    ' abort? ', send_data.abort ? 'yes' : 'no',
+                //    ' close? ', send_data.close ? 'yes' : 'no')
+                if (send_data.next) {           // Send to client next message
+                    self.send(data);
+                } else if (send_data.abort) {   // Abort ws connection
+                    self.abort();
+                } else if (send_data.close) {   // Close ws connection
+                    self.close();
+                }
+            }
+        );
+    });
 };
 
-export { WebSocket, startTimers, clearTimers, resetCursor };
+export {WebSocket, startTimers, clearTimers, resetCursor};
 

@@ -7,13 +7,8 @@
 const isNode = typeof process === 'object' &&
     Object.prototype.toString.call(process) === '[object process]';
 
-if (!isNode) {
-    require('core-js/es6');
-}
-
 const routerUrl = 'ws://fake.server.org/ws/',
-    anotherRouterUrl = 'ws://another.server.org/ws/',
-    root = isNode ? global : window;
+    anotherRouterUrl = 'ws://another.server.org/ws/';
 
 import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
@@ -22,7 +17,8 @@ import { Wampy } from './../src/wampy';
 import { WAMP_ERROR_MSG } from './../src/constants';
 
 describe('Wampy.js [with msgpack serializer]', function () {
-    this.timeout(0);
+
+    this.timeout(10000);
 
     before(function () {
         WebSocketModule.startTimers();
@@ -307,7 +303,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 onClose: done
             }).connect();
 
-            root.setTimeout(function () {
+            setTimeout(function () {
                 wampy.disconnect();
             }, 10);
         });
@@ -320,7 +316,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
         it('allows to connect to different WAMP server', function (done) {
             wampy.options({
                 onClose: function () {
-                    root.setTimeout(function () {
+                    setTimeout(function () {
                         wampy.connect(anotherRouterUrl);
                     }, 1);
                 },
@@ -331,11 +327,11 @@ describe('Wampy.js [with msgpack serializer]', function () {
         it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
             wampy.options({
                 onClose: function () {
-                    root.setTimeout(function () {
+                    setTimeout(function () {
                         wampy.options({ onClose: done })
                             .connect(anotherRouterUrl);
 
-                        root.setTimeout(function () {
+                        setTimeout(function () {
                             wampy.abort();
                         }, 1);
 
@@ -403,9 +399,9 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 onError: function () {
                 },
                 onReconnect: function () {
-                    let t = root.setInterval(function () {
+                    let t = setInterval(function () {
                         if (wampy._subsTopics.size === 2 && wampy._rpcNames.size === 3) {
-                            root.clearInterval(t);
+                            clearInterval(t);
                             t = null;
                             wampy.options({ onReconnect: null })
                                 .subscribe('subscribe.reconnection.check', {
@@ -428,7 +424,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             wampy.options({
                 autoReconnect: true,
                 onClose: function () {
-                    root.setTimeout(function () {
+                    setTimeout(function () {
                         wampy.connect();
                     }, 1);
                 },
@@ -445,7 +441,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             wampy.options({
                 autoReconnect: false,
                 onClose: function () {
-                    root.setTimeout(function () {
+                    setTimeout(function () {
                         wampy.connect();
                     }, 1);
                 },
@@ -529,7 +525,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             it('disallows to subscribe to topic with invalid URI', function (done) {
                 wampy.options({
                     onClose: function () {
-                        root.setTimeout(function () {
+                        setTimeout(function () {
                             wampy.options({
                                 onConnect: function () {
 
@@ -1045,7 +1041,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             before(function (done) {
                 wampy.options({
                     onClose: function () {
-                        root.setTimeout(function () {
+                        setTimeout(function () {
                             wampy.options({
                                 onConnect: function () {
                                     done();
@@ -1127,7 +1123,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
             it('disallows to register RPC with invalid URI', function (done) {
                 wampy.options({
                     onClose: function () {
-                        root.setTimeout(function () {
+                        setTimeout(function () {
                             wampy.connect();
                         }, 1);
                     },
@@ -1175,7 +1171,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 wampy.register('register.rpc1', function (e) {
                 });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                root.setTimeout(function () {
+                setTimeout(function () {
                     done();
                 }, 10);
             });
