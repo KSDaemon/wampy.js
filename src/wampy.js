@@ -1221,7 +1221,13 @@ class Wampy {
     /**
      * Publish a event to topic
      * @param {string} topicURI
-     * @param {string|number|Array|object} payload - optional parameter.
+     * @param {string|number|Array|object} payload - can be either a value of any type or null.  Also it
+     *                          is possible to pass array and object-like data simultaneously.
+     *                          In this case pass a hash-table with next attributes:
+     *                          {
+     *                             argsList: array payload (may be omitted)
+     *                             argsDict: object payload (may be omitted)
+     *                          }
      * @param {object} [callbacks] - optional hash table of callbacks:
      *                          { onSuccess: will be called when publishing would be confirmed
      *                            onError: will be called if publishing would be aborted }
@@ -1395,7 +1401,13 @@ class Wampy {
     /**
      * Remote Procedure Call
      * @param {string} topicURI
-     * @param {string|number|Array|object} payload - can be either a value of any type or null
+     * @param {string|number|Array|object} payload - can be either a value of any type or null.  Also it
+     *                          is possible to pass array and object-like data simultaneously.
+     *                          In this case pass a hash-table with next attributes:
+     *                          {
+     *                             argsList: array payload (may be omitted)
+     *                             argsDict: object payload (may be omitted)
+     *                          }
      * @param {function|object} callbacks - if it is a function - it will be treated as result callback function
      *                          or it can be hash table of callbacks:
      *                          { onSuccess: will be called with result on successful call

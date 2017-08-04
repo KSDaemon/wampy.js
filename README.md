@@ -501,7 +501,10 @@ Parameters:
 
 * **topicURI**. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-* **payload**. Publishing event data. Optional. May be any single value or array or hash-table object or null.
+* **payload**. Publishing event data. Optional. May be any single value or array or hash-table object or null. Also it
+is possible to pass array and object-like data simultaneously. In this case pass a hash-table with next attributes:
+    * **argsList**: array payload (may be omitted)
+    * **argsDict**: object payload (may be omitted)
 * **callbacks**. Optional hash table of callbacks:
     * **onSuccess**: will be called when publishing would be confirmed
     * **onError**: will be called if publishing would be aborted with one hash-table parameter with following attributes:
@@ -549,7 +552,10 @@ Parameters:
 
 * **topicURI**. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
-* **payload**. RPC data. Optional. May be any single value or array or hash-table object or null.
+* **payload**. RPC data. Optional. May be any single value or array or hash-table object or null. Also it
+is possible to pass array and object-like data simultaneously. In this case pass a hash-table with next attributes:
+    * **argsList**: array payload (may be omitted)
+    * **argsDict**: object payload (may be omitted)
 * **callbacks**. If it is a function - it will be treated as result callback function
              or it can be hash table of callbacks:
     * **onSuccess**: will be called with result on successful call with one hash-table parameter with following attributes: 
