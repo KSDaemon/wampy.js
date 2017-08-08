@@ -10,7 +10,7 @@
     "coveralls": "^2.13.0",
     "eslint": "^4.1.1",
     "grunt": "^1.0.1",
-    "grunt-babel": "^6.0.0",
+    "grunt-babel": "^7.0.0",
     "grunt-browserify": "^5.0.0",
     "grunt-contrib-clean": "^1.0.0",
     "grunt-contrib-compress": "^1.4.1",
