@@ -655,18 +655,21 @@ Must meet a WAMP Spec URI requirements.
         * **error**: string error description
         * **details**: hash-table with some error details
 
-Registered PRC during invocation will receive one hash-table argument with following attributes: 
-    * **argsList**: array payload (may be omitted)
-    * **argsDict**: object payload (may be omitted)
-    * **details**: some invocation options object. One attribute of interest in options is "receive_progress" (boolean), 
+Registered PRC during invocation will receive one hash-table argument with following attributes:
+ 
+* **argsList**: array payload (may be omitted)
+* **argsDict**: object payload (may be omitted)
+* **details**: some invocation options object. One attribute of interest in options is "receive_progress" (boolean), 
+
 which indicates, that caller is willing to receive progressive results, if possible. 
 
 RPC can return no result (undefined), or it must return an object with next attributes:
-    * **argsList**: array result or single value, (may be omitted)
-    * **argsDict**: object result payload (may be omitted)
-    * **options**: some result options object. Possible attribute of options is "progress": true, which
-   indicates, that it's a progressive result, so there will be more results in future. Be sure to unset "progress"
-   on last result message. 
+
+* **argsList**: array result or single value, (may be omitted)
+* **argsDict**: object result payload (may be omitted)
+* **options**: some result options object. Possible attribute of options is "progress": true, which
+indicates, that it's a progressive result, so there will be more results in future. Be sure to unset "progress"
+on last result message. 
 
 ```javascript
 const sqrt_f = function (data) { return { argsList: data.argsList[0]*data.argsList[0] } };
