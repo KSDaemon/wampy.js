@@ -576,7 +576,7 @@ class Wampy {
      * @private
      */
     _wsOnMessage (event) {
-        let data, id, i, msg, p;
+        let data, id, i, msg, p, self = this;
 
         this._log('[wampy] websocket message received', event.data);
 
@@ -842,55 +842,64 @@ class Wampy {
                     // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
                     //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 
+                    let invoke_result_handler = function (results) {
+                            // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
+                            let msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+
+                            if (self._isPlainObject(results)) {
+
+                                if (self._isPlainObject(results.options)) {
+                                    msg[2] = results.options;
+                                }
+
+                                if (self._isArray(results.argsList)) {
+                                    msg.push(results.argsList);
+                                } else if (typeof (results.argsList) !== 'undefined') {
+                                    msg.push([results.argsList]);
+                                }
+
+                                if (self._isPlainObject(results.argsDict)) {
+                                    if (msg.length === 3) {
+                                        msg.push([]);
+                                    }
+                                    msg.push(results.argsDict);
+                                }
+                            } else {
+                                msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+                            }
+                            self._send(msg);
+                        },
+                        invoke_error_handler = function (e) {
+                            let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
+                                data[1], e.details || {}, e.error || 'wamp.error.invocation_exception'];
+
+                            if (e.argsList && self._isArray(e.argsList)) {
+                                msg.push(e.argsList);
+                            }
+
+                            if (e.argsDict && self._isPlainObject(e.argsDict)) {
+                                if (msg.length === 5) {
+                                    msg.push([]);
+                                }
+                                msg.push(e.argsDict);
+                            }
+                            self._send(msg);
+                        };
+
                     p = new Promise((resolve, reject) => {
                         resolve(this._rpcRegs[data[2]].callbacks[0]({
                             details : data[3],
                             argsList: data[4],
-                            argsDict: data[5]
+                            argsDict: data[5],
+                            result_handler: invoke_result_handler,
+                            error_handler: invoke_error_handler
                         }));
                     });
 
                     p.then((results) => {
-                        // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
-                        msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-
-                        if (this._isPlainObject(results)) {
-
-                            if (this._isPlainObject(results.options)) {
-                                msg[2] = results.options;
-                            }
-
-                            if (this._isArray(results.argsList)) {
-                                msg.push(results.argsList);
-                            } else if (typeof (results.argsList) !== 'undefined') {
-                                msg.push([results.argsList]);
-                            }
-
-                            if (this._isPlainObject(results.argsDict)) {
-                                if (msg.length === 3) {
-                                    msg.push([]);
-                                }
-                                msg.push(results.argsDict);
-                            }
-                        } else {
-                            msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-                        }
-                        this._send(msg);
+                        invoke_result_handler(results);
                     }).catch(e => {
-                        let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                            data[1], e.details || {}, e.error || 'wamp.error.invocation_exception'];
-
-                        if (e.argsList && this._isArray(e.argsList)) {
-                            msg.push(e.argsList);
-                        }
-
-                        if (e.argsDict && this._isPlainObject(e.argsDict)) {
-                            if (msg.length === 5) {
-                                msg.push([]);
-                            }
-                            msg.push(e.argsDict);
-                        }
-                        this._send(msg);
+                        invoke_error_handler(e);
                     });
 
                 } else {
