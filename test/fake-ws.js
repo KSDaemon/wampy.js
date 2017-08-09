@@ -42,7 +42,7 @@ let sendDataCursor = 0,
 
         this.readyState = 1;    // Closed
 
-        var self = this;
+        let self = this;
 
         openTimer = root.setTimeout(function () {
             self.protocol = 'wamp.2.' + self.transportEncoding;
@@ -107,15 +107,13 @@ WebSocket.prototype.send = function (data) {
     let send_data, enc_data, rec_data, i;
 
     rec_data = self.decode(data);
-    send_data = sendData[sendDataCursor++];
+    send_data = JSON.parse(JSON.stringify(sendData[sendDataCursor++]));
 
     // console.log('Data to send to server:', rec_data);
     //console.log('Is silent:', send_data.silent ? 'yes' : 'no');
     if (send_data.silent) {
         return;
     }
-
-    // console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor);
 
     if (send_data.data) {
         // Prepare answer (copy request id from request to answer, etc)
@@ -125,6 +123,7 @@ WebSocket.prototype.send = function (data) {
                 send_data.data[send_data.to[i]] = rec_data[send_data.from[i]];
             }
         }
+        // console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor);
         enc_data = { data: self.encode(send_data.data) };
     }
 

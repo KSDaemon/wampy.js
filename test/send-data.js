@@ -1419,6 +1419,81 @@ const WAMP_MSG_SPEC = {
             from: [1, 2, 3, 4],
             to: [1, 2, 3, 4]
         },
+        // allows to return progressive results from asynchronous RPC
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                251   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                251, // Registration ID
+                { receive_progress: true },
+                [0]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
         // calls error handler if asynchronous RPC was rejected
         {
             data: [
