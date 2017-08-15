@@ -402,6 +402,27 @@ class Wampy {
     }
 
     /**
+     * Check source for valid type and converts it to WAMP-ready advanced options
+     * @param source Source value to check
+     * @param sourceType Single value expected type
+     * @returns []
+     * @private
+     */
+    _optionsConvertHelper (source, sourceType) {
+        let err = 0, target = null;
+
+        if (this._isArray(source) && source.length) {
+            target = source;
+        } else if (typeof source === sourceType) {
+            target = [source];
+        } else {
+            err = 1;
+        }
+
+        return [err, target];
+    }
+
+    /**
      * Validate uri
      * @param {string} uri
      * @returns {boolean}
@@ -1259,7 +1280,7 @@ class Wampy {
      * @returns {Wampy}
      */
     publish (topicURI, payload, callbacks, advancedOptions) {
-        let reqId, msg, err = false, hasPayload = false;
+        let reqId, msg, err = false, errCount = 0, hasPayload = false;
         const options = {};
 
         if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
@@ -1274,63 +1295,33 @@ class Wampy {
 
             if (this._isPlainObject(advancedOptions)) {
                 if (advancedOptions.exclude) {
-                    if (this._isArray(advancedOptions.exclude) && advancedOptions.exclude.length) {
-                        options.exclude = advancedOptions.exclude;
-                    } else if (typeof advancedOptions.exclude === 'number') {
-                        options.exclude = [advancedOptions.exclude];
-                    } else {
-                        err = true;
-                    }
+                    [err, options.exclude] = this._optionsConvertHelper(advancedOptions.exclude, 'number');
+                    errCount += err;
                 }
 
                 if (advancedOptions.exclude_authid) {
-                    if (this._isArray(advancedOptions.exclude_authid) && advancedOptions.exclude_authid.length) {
-                        options.exclude_authid = advancedOptions.exclude_authid;
-                    } else if (typeof advancedOptions.exclude_authid === 'string') {
-                        options.exclude_authid = [advancedOptions.exclude_authid];
-                    } else {
-                        err = true;
-                    }
+                    [err, options.exclude_authid] = this._optionsConvertHelper(advancedOptions.exclude_authid, 'string');
+                    errCount += err;
                 }
 
                 if (advancedOptions.exclude_authrole) {
-                    if (this._isArray(advancedOptions.exclude_authrole) && advancedOptions.exclude_authrole.length) {
-                        options.exclude_authrole = advancedOptions.exclude_authrole;
-                    } else if (typeof advancedOptions.exclude_authrole === 'string') {
-                        options.exclude_authrole = [advancedOptions.exclude_authrole];
-                    } else {
-                        err = true;
-                    }
+                    [err, options.exclude_authrole] = this._optionsConvertHelper(advancedOptions.exclude_authrole, 'string');
+                    errCount += err;
                 }
 
                 if (advancedOptions.eligible) {
-                    if (this._isArray(advancedOptions.eligible) && advancedOptions.eligible.length) {
-                        options.eligible = advancedOptions.eligible;
-                    } else if (typeof advancedOptions.eligible === 'number') {
-                        options.eligible = [advancedOptions.eligible];
-                    } else {
-                        err = true;
-                    }
+                    [err, options.eligible] = this._optionsConvertHelper(advancedOptions.eligible, 'number');
+                    errCount += err;
                 }
 
                 if (advancedOptions.eligible_authid) {
-                    if (this._isArray(advancedOptions.eligible_authid) && advancedOptions.eligible_authid.length) {
-                        options.eligible_authid = advancedOptions.eligible_authid;
-                    } else if (typeof advancedOptions.eligible_authid === 'string') {
-                        options.eligible_authid = [advancedOptions.eligible_authid];
-                    } else {
-                        err = true;
-                    }
+                    [err, options.eligible_authid] = this._optionsConvertHelper(advancedOptions.eligible_authid, 'string');
+                    errCount += err;
                 }
 
                 if (advancedOptions.eligible_authrole) {
-                    if (this._isArray(advancedOptions.eligible_authrole) && advancedOptions.eligible_authrole.length) {
-                        options.eligible_authrole = advancedOptions.eligible_authrole;
-                    } else if (typeof advancedOptions.eligible_authrole === 'string') {
-                        options.eligible_authrole = [advancedOptions.eligible_authrole];
-                    } else {
-                        err = true;
-                    }
+                    [err, options.eligible_authrole] = this._optionsConvertHelper(advancedOptions.eligible_authrole, 'string');
+                    errCount += err;
                 }
 
                 if (advancedOptions.hasOwnProperty('exclude_me')) {
@@ -1342,10 +1333,10 @@ class Wampy {
                 }
 
             } else {
-                err = true;
+                errCount++;
             }
 
-            if (err) {
+            if (errCount > 0) {
                 this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
