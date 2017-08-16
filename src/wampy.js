@@ -403,23 +403,27 @@ class Wampy {
 
     /**
      * Check source for valid type and converts it to WAMP-ready advanced options
+     * @param options Target options object
+     * @param targetOption Target option name
      * @param source Source value to check
      * @param sourceType Single value expected type
-     * @returns []
+     * @param err Error flag
+     * @return {[err,options]}
      * @private
      */
-    _optionsConvertHelper (source, sourceType) {
-        let err = 0, target = null;
+    _optionsConvertHelper (options, targetOption, source, sourceType, err) {
 
-        if (this._isArray(source) && source.length) {
-            target = source;
-        } else if (typeof source === sourceType) {
-            target = [source];
-        } else {
-            err = 1;
+        if (source) {
+            if (this._isArray(source) && source.length) {
+                options[targetOption] = source;
+            } else if (typeof source === sourceType) {
+                options[targetOption] = [source];
+            } else {
+                err = true;
+            }
         }
 
-        return [err, target];
+        return [err, options];
     }
 
     /**
@@ -1280,8 +1284,7 @@ class Wampy {
      * @returns {Wampy}
      */
     publish (topicURI, payload, callbacks, advancedOptions) {
-        let reqId, msg, err = false, errCount = 0, hasPayload = false;
-        const options = {};
+        let reqId, msg, err = false, hasPayload = false, options = {};
 
         if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
             return this;
@@ -1294,35 +1297,36 @@ class Wampy {
         if (typeof (advancedOptions) !== 'undefined') {
 
             if (this._isPlainObject(advancedOptions)) {
-                if (advancedOptions.exclude) {
-                    [err, options.exclude] = this._optionsConvertHelper(advancedOptions.exclude, 'number');
-                    errCount += err;
-                }
-
-                if (advancedOptions.exclude_authid) {
-                    [err, options.exclude_authid] = this._optionsConvertHelper(advancedOptions.exclude_authid, 'string');
-                    errCount += err;
-                }
-
-                if (advancedOptions.exclude_authrole) {
-                    [err, options.exclude_authrole] = this._optionsConvertHelper(advancedOptions.exclude_authrole, 'string');
-                    errCount += err;
-                }
-
-                if (advancedOptions.eligible) {
-                    [err, options.eligible] = this._optionsConvertHelper(advancedOptions.eligible, 'number');
-                    errCount += err;
-                }
-
-                if (advancedOptions.eligible_authid) {
-                    [err, options.eligible_authid] = this._optionsConvertHelper(advancedOptions.eligible_authid, 'string');
-                    errCount += err;
-                }
-
-                if (advancedOptions.eligible_authrole) {
-                    [err, options.eligible_authrole] = this._optionsConvertHelper(advancedOptions.eligible_authrole, 'string');
-                    errCount += err;
-                }
+                [err, options] = this._optionsConvertHelper(options,
+                    'exclude',
+                    advancedOptions.exclude,
+                    'number',
+                    err);
+                [err, options] = this._optionsConvertHelper(options,
+                    'exclude_authid',
+                    advancedOptions.exclude_authid,
+                    'string',
+                    err);
+                [err, options] = this._optionsConvertHelper(options,
+                    'exclude_authrole',
+                    advancedOptions.exclude_authrole,
+                    'string',
+                    err);
+                [err, options] = this._optionsConvertHelper(options,
+                    'eligible',
+                    advancedOptions.eligible,
+                    'number',
+                    err);
+                [err, options] = this._optionsConvertHelper(options,
+                    'eligible_authid',
+                    advancedOptions.eligible_authid,
+                    'string',
+                    err);
+                [err, options] = this._optionsConvertHelper(options,
+                    'eligible_authrole',
+                    advancedOptions.eligible_authrole,
+                    'string',
+                    err);
 
                 if (advancedOptions.hasOwnProperty('exclude_me')) {
                     options.exclude_me = advancedOptions.exclude_me !== false;
@@ -1333,10 +1337,10 @@ class Wampy {
                 }
 
             } else {
-                errCount++;
+                err = true;
             }
 
-            if (errCount > 0) {
+            if (err) {
                 this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
