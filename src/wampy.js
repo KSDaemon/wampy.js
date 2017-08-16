@@ -402,31 +402,6 @@ class Wampy {
     }
 
     /**
-     * Check source for valid type and converts it to WAMP-ready advanced options
-     * @param options Target options object
-     * @param targetOption Target option name
-     * @param source Source value to check
-     * @param sourceType Single value expected type
-     * @param err Error flag
-     * @return {[err,options]}
-     * @private
-     */
-    _optionsConvertHelper (options, targetOption, source, sourceType, err) {
-
-        if (source) {
-            if (this._isArray(source) && source.length) {
-                options[targetOption] = source;
-            } else if (typeof source === sourceType) {
-                options[targetOption] = [source];
-            } else {
-                err = true;
-            }
-        }
-
-        return [err, options];
-    }
-
-    /**
      * Validate uri
      * @param {string} uri
      * @returns {boolean}
@@ -1284,7 +1259,19 @@ class Wampy {
      * @returns {Wampy}
      */
     publish (topicURI, payload, callbacks, advancedOptions) {
-        let reqId, msg, err = false, hasPayload = false, options = {};
+        let reqId, msg, err = false, hasPayload = false;
+        const options = {},
+            _optionsConvertHelper = (option, sourceType) => {
+                if (advancedOptions[option]) {
+                    if (this._isArray(advancedOptions[option]) && advancedOptions[option].length) {
+                        options[option] = advancedOptions[option];
+                    } else if (typeof advancedOptions[option] === sourceType) {
+                        options[option] = [advancedOptions[option]];
+                    } else {
+                        err = true;
+                    }
+                }
+            };
 
         if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
             return this;
@@ -1297,36 +1284,12 @@ class Wampy {
         if (typeof (advancedOptions) !== 'undefined') {
 
             if (this._isPlainObject(advancedOptions)) {
-                [err, options] = this._optionsConvertHelper(options,
-                    'exclude',
-                    advancedOptions.exclude,
-                    'number',
-                    err);
-                [err, options] = this._optionsConvertHelper(options,
-                    'exclude_authid',
-                    advancedOptions.exclude_authid,
-                    'string',
-                    err);
-                [err, options] = this._optionsConvertHelper(options,
-                    'exclude_authrole',
-                    advancedOptions.exclude_authrole,
-                    'string',
-                    err);
-                [err, options] = this._optionsConvertHelper(options,
-                    'eligible',
-                    advancedOptions.eligible,
-                    'number',
-                    err);
-                [err, options] = this._optionsConvertHelper(options,
-                    'eligible_authid',
-                    advancedOptions.eligible_authid,
-                    'string',
-                    err);
-                [err, options] = this._optionsConvertHelper(options,
-                    'eligible_authrole',
-                    advancedOptions.eligible_authrole,
-                    'string',
-                    err);
+                _optionsConvertHelper('exclude', 'number');
+                _optionsConvertHelper('exclude_authid', 'string');
+                _optionsConvertHelper('exclude_authrole', 'string');
+                _optionsConvertHelper('eligible', 'number');
+                _optionsConvertHelper('eligible_authid', 'string');
+                _optionsConvertHelper('eligible_authrole', 'string');
 
                 if (advancedOptions.hasOwnProperty('exclude_me')) {
                     options.exclude_me = advancedOptions.exclude_me !== false;
