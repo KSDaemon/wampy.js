@@ -408,7 +408,7 @@ class Wampy {
      * @private
      */
     _validateURI (uri) {
-        const re = /^([0-9a-zA-Z_]{2,}\.)*([0-9a-zA-Z_]{2,})$/;
+        const re = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
         return !(!re.test(uri) || uri.indexOf('wamp') === 0);
     }
 

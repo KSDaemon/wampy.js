@@ -524,10 +524,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
                             wampy.options({
                                 onConnect: function () {
 
-                                    wampy.subscribe('q.w.e', function (e) {
-                                    });
-                                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
                                     wampy.subscribe('qwe.asd.zxc.', function (e) {
                                     });
                                     expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
@@ -544,11 +540,7 @@ describe('Wampy.js [with msgpack serializer]', function () {
                                     });
                                     expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
-                                    wampy.subscribe('q.w.e', function (e) {
-                                    });
-                                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                                    wampy.subscribe('q.w.e',
+                                    wampy.subscribe('qwe.asd.zxc.',
                                         {
                                             onSuccess: function (e) {
                                             },
@@ -759,9 +751,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('disallows to publish event to topic with invalid URI', function () {
-                wampy.publish('q.w.e', 'payload');
-                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
                 wampy.publish('qwe.asd.zxc.', 'payload');
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
 
@@ -1124,10 +1113,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
                     },
                     onConnect: function () {
 
-                        wampy.register('q.w.e', function (e) {
-                        });
-                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
                         wampy.register('qwe.asd.zxc.', function (e) {
                         });
                         expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
@@ -1191,10 +1176,6 @@ describe('Wampy.js [with msgpack serializer]', function () {
             });
 
             it('disallows to call RPC with invalid URI', function () {
-                wampy.call('q.w.e', 'payload', function (e) {
-                });
-                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
                 wampy.call('qwe.asd.zxc.', 'payload', function (e) {
                 });
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
