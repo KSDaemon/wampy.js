@@ -174,10 +174,10 @@ Also, you can use your own serializer. Just be sure, it is supported on WAMP rou
 ```javascript
 // in browser
 ws = new Wampy('ws://socket.server.com:5000/ws', {
-    serializer: new WampyMsgpackSerializer(msgpack5)
+    serializer: new MsgpackSerializer(msgpack5)
 });
 ws = new Wampy({
-    serializer: new WampyMsgpackSerializer(msgpack5)
+    serializer: new MsgpackSerializer(msgpack5)
 });
 
 // in node.js

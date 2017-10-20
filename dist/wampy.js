@@ -450,7 +450,7 @@ var Wampy = function () {
     }, {
         key: '_validateURI',
         value: function _validateURI(uri) {
-            var re = /^([0-9a-zA-Z_]{2,}\.)*([0-9a-zA-Z_]{2,})$/;
+            var re = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
             return !(!re.test(uri) || uri.indexOf('wamp') === 0);
         }
 
