@@ -51,12 +51,13 @@ autoreconnecting and use of Chaining Pattern. It has no external dependencies (b
 Wampy.js supports next WAMP roles and features:
 
 * Challenge Response Authentication (wampcra method)
-* publisher: advanced profile with features:
+* publisher:
     * subscriber blackwhite listing
     * publisher exclusion
     * publisher identification
-* subscriber: basic profile
-* caller: advanced profile with features:
+* subscriber:
+    * publication trustlevels
+* caller:
     * caller identification
     * progressive call results
     * call canceling

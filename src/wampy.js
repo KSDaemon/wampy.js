@@ -66,7 +66,11 @@ class Wampy {
                         publisher_identification: true
                     }
                 },
-                subscriber: {},
+                subscriber: {
+                    features: {
+                        publication_trustlevels: true
+                    }
+                },
                 caller: {
                     features: {
                         caller_identification: true,
