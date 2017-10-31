@@ -63,6 +63,7 @@ Wampy.js supports next WAMP roles and features:
     * call timeout
 * callee:
     * caller identification
+    * call trustlevels
 
 Wampy default serializer is JSON, but it also supports msgpack as serializer.
 In that case you need to include msgpack5.js as dependency. See [msgpack5][] for more info.
@@ -660,7 +661,8 @@ Registered PRC during invocation will receive one hash-table argument with follo
 * **argsList**: array payload (may be omitted)
 * **argsDict**: object payload (may be omitted)
 * **details**: some invocation options object. One attribute of interest in options is "receive_progress" (boolean), 
-which indicates, that caller is willing to receive progressive results, if possible. 
+which indicates, that caller is willing to receive progressive results, if possible. Another one is "trustlevel", which 
+indicates the call trust level, assigned by dealer (of course if it is configured accordingly).
 * **result_handler**: result handler for case when you want to send progressive results. Just call it with one parameter,
 same as you return from simple invocation. Also do not forget to set options: { progress: true } for intermediate results.
 * **error_handler**: error handler for case when you want to send progressive results and cought some exception or error.

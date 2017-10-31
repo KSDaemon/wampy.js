@@ -77,7 +77,8 @@ class Wampy {
                 },
                 callee: {
                     features: {
-                        caller_identification: true
+                        caller_identification: true,
+                        call_trustlevels: true
                     }
                 }
             }
@@ -533,7 +534,7 @@ class Wampy {
             return this;
         }
 
-        this._ws.binatyType = type;
+        this._ws.binaryType = type;
 
         // WAMP SPEC: [HELLO, Realm|uri, Details|dict]
         // Sending directly 'cause it's a hello msg and no sessionId check is needed
