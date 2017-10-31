@@ -307,9 +307,9 @@ class Wampy {
      * Internal logger
      * @private
      */
-    _log () {
+    _log(...args) {
         if (this._options.debug) {
-            console.log(arguments);
+            console.log(args);
         }
     }
 
@@ -327,13 +327,13 @@ class Wampy {
      * @returns {Object}
      * @private
      */
-    _merge () {
-        const obj = {}, l = arguments.length;
+    _merge(...args) {
+        const obj = {}, l = args.length;
         let i, attr;
 
         for (i = 0; i < l; i++) {
-            for (attr in arguments[i]) {
-                obj[attr] = arguments[i][attr];
+            for (attr in args[i]) {
+                obj[attr] = args[i][attr];
             }
         }
 
@@ -843,7 +843,7 @@ class Wampy {
                     // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
                     //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 
-                    let invoke_result_handler = function (results) {
+                    let invoke_result_handler = results => {
                             // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
                             let msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
 
@@ -870,19 +870,19 @@ class Wampy {
                             }
                             self._send(msg);
                         },
-                        invoke_error_handler = function (e) {
+                        invoke_error_handler = ({details, error, argsList, argsDict}) => {
                             let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                                data[1], e.details || {}, e.error || 'wamp.error.invocation_exception'];
+                                data[1], details || {}, error || 'wamp.error.invocation_exception'];
 
-                            if (e.argsList && self._isArray(e.argsList)) {
-                                msg.push(e.argsList);
+                            if (argsList && self._isArray(argsList)) {
+                                msg.push(argsList);
                             }
 
-                            if (e.argsDict && self._isPlainObject(e.argsDict)) {
+                            if (argsDict && self._isPlainObject(argsDict)) {
                                 if (msg.length === 5) {
                                     msg.push([]);
                                 }
-                                msg.push(e.argsDict);
+                                msg.push(argsDict);
                             }
                             self._send(msg);
                         };
@@ -932,7 +932,7 @@ class Wampy {
         this._log('[wampy] websocket error');
 
         if (this._options.onError) {
-            this._options.onError({ error: error });
+            this._options.onError({ error });
         }
     }
 
@@ -1140,7 +1140,7 @@ class Wampy {
 
             this._requests[reqId] = {
                 topic: topicURI,
-                callbacks: callbacks
+                callbacks
             };
 
             // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
@@ -1207,7 +1207,7 @@ class Wampy {
 
             this._requests[reqId] = {
                 topic: topicURI,
-                callbacks: callbacks
+                callbacks
             };
 
             // WAMP_SPEC: [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
@@ -1326,7 +1326,7 @@ class Wampy {
             default:
                 this._requests[reqId] = {
                     topic: topicURI,
-                    callbacks: callbacks
+                    callbacks
                 };
                 hasPayload = true;
                 break;
@@ -1566,7 +1566,7 @@ class Wampy {
 
             this._requests[reqId] = {
                 topic: topicURI,
-                callbacks: callbacks
+                callbacks
             };
 
             // WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
@@ -1612,7 +1612,7 @@ class Wampy {
 
             this._requests[reqId] = {
                 topic: topicURI,
-                callbacks: callbacks
+                callbacks
             };
 
             // WAMP SPEC: [UNREGISTER, Request|id, REGISTERED.Registration|id]
