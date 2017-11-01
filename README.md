@@ -444,8 +444,8 @@ Parameters:
 
 * **topicURI**. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-* **callbacks**. If it is a function - it will be treated as published event callback o
-r it can be hash table of callbacks:
+* **callbacks**. If it is a function - it will be treated as published event callback or 
+it can be hash table of callbacks:
     * **onSuccess**: will be called when subscription would be confirmed
     * **onError**: will be called if subscription would be aborted with one hash-table parameter with following attributes:
         * **error**: string error description
