@@ -102,12 +102,10 @@ ws.publish('client.message', 'Hi guys!');
 Installation
 ============
 
-Wampy.js can be installed using npm or bower or just by file-copy :)
+Wampy.js can be installed using npm or just by file-copy :)
 
 ```bash
 > npm install wampy
-# Or
-> bower install wampy.js
 ```
 
 For simple browser usage just download latest [browser.zip](../../releases/latest) archive and 
@@ -125,7 +123,7 @@ In case, you don't plan to use msgpack, just include clean wampy.min.js.
 
 In case you are using any kind of build tools and bundlers, like grunt/gulp/webpack/rollup/etc, 
 your entry point can be **src/wampy.js** if you transpile you code somehow, or **dist/wampy.js** (default package 
-entry point) which is already transpiled to "es2015" preset, so it is working out of the box, just bundle modules.
+entry point) which is already transpiled to "env" preset, so it is working out of the box, just bundle modules.
 
 [Back to TOC](#table-of-contents)
 
