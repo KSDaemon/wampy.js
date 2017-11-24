@@ -1130,7 +1130,7 @@ class Wampy {
     subscribe (topicURI, callbacks) {
         let reqId;
 
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'broker', callbacks)) {
+        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: true }, 'broker', callbacks)) {
             return this;
         }
 
@@ -1405,7 +1405,7 @@ class Wampy {
         let reqId, msg, err = false;
         const options = {};
 
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'dealer', callbacks)) {
+        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: true }, 'dealer', callbacks)) {
             return this;
         }
 
