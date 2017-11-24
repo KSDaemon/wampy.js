@@ -376,13 +376,13 @@ class Wampy {
 
     /**
      * Prerequisite checks for any wampy api call
-     * @param {string} topicURI
+     * @param {object} topicType { topic: URI, patternBased: true|false, allowWAMP: true|false }
      * @param {string} role
      * @param {object} callbacks
      * @returns {boolean}
      * @private
      */
-    _preReqChecks (topicURI, role, callbacks) {
+    _preReqChecks (topicType, role, callbacks) {
         let flag = true;
 
         if (this._cache.sessionId && !this._cache.server_wamp_features.roles[role]) {
@@ -390,7 +390,7 @@ class Wampy {
             flag = false;
         }
 
-        if (topicURI && !this._validateURI(topicURI)) {
+        if (topicType && !this._validateURI(topicType.topic, topicType.patternBased, topicType.allowWAMP)) {
             this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
             flag = false;
         }
@@ -409,12 +409,21 @@ class Wampy {
     /**
      * Validate uri
      * @param {string} uri
+     * @param {boolean} patternBased
+     * @param {boolean} allowWAMP
      * @returns {boolean}
      * @private
      */
-    _validateURI (uri) {
-        const re = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
-        return !(!re.test(uri) || uri.indexOf('wamp') === 0);
+    _validateURI (uri, patternBased, allowWAMP) {
+        const reBase = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
+        const rePattern = /^([0-9a-zA-Z_]+\.{1,2})*([0-9a-zA-Z_]+)$/;
+        const re = patternBased ? rePattern : reBase;
+
+        if (allowWAMP) {
+            return re.test(uri);
+        } else {
+            return !(!re.test(uri) || uri.indexOf('wamp') === 0);
+        }
     }
 
     /**
@@ -1121,7 +1130,7 @@ class Wampy {
     subscribe (topicURI, callbacks) {
         let reqId;
 
-        if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
+        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'broker', callbacks)) {
             return this;
         }
 
@@ -1278,7 +1287,7 @@ class Wampy {
                 }
             };
 
-        if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
+        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'broker', callbacks)) {
             return this;
         }
 
@@ -1396,7 +1405,7 @@ class Wampy {
         let reqId, msg, err = false;
         const options = {};
 
-        if (!this._preReqChecks(topicURI, 'dealer', callbacks)) {
+        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'dealer', callbacks)) {
             return this;
         }
 
@@ -1547,7 +1556,7 @@ class Wampy {
     register (topicURI, callbacks) {
         let reqId;
 
-        if (!this._preReqChecks(topicURI, 'dealer', callbacks)) {
+        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'dealer', callbacks)) {
             return this;
         }
 
@@ -1602,7 +1611,7 @@ class Wampy {
     unregister (topicURI, callbacks) {
         let reqId;
 
-        if (!this._preReqChecks(topicURI, 'dealer', callbacks)) {
+        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'dealer', callbacks)) {
             return this;
         }
 
