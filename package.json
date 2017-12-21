@@ -26,7 +26,7 @@
   },
   "main": "dist/wampy.js",
   "dependencies": {
-    "msgpack5": "^3.5.1",
+    "msgpack5": "^4.0.0",
     "websocket": "^1.0.24"
   },
   "repository": {
