@@ -11,9 +11,10 @@ addons:
 sudo: required
 
 before_install:
+    - pyenv shell 3.6
     - export PATH=$HOME/.local/bin:$PATH
-    - pip3.6 install --upgrade pip
-    - pip3.6 install --user crossbar
+    - pip install --upgrade pip
+    - pip install --user crossbar
     - crossbar start &
 
 after_script: "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- --compilers js:babel-core/register -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
