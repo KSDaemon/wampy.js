@@ -11,7 +11,7 @@ before_install:
     - export PATH=$HOME/.local/bin:$PATH
     - pip install --upgrade pip
     - pip install --user crossbar
-    - sh -c 'crossbar start &'
+    - crossbar start &
 
 after_script: "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- --compilers js:babel-core/register -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
 
