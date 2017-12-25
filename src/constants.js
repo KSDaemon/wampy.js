@@ -46,10 +46,6 @@ export const WAMP_ERROR_MSG = {
         code: 4,
         description: 'Invalid parameter(s) specified!'
     },
-    INVALID_SERIALIZER_TYPE: {
-        code: 5,
-        description: 'Serializer with unsupported type provided!'
-    },
     NO_SERIALIZER_AVAILABLE: {
         code: 6,
         description: 'Server has chosen a serializer, which is not available!'
