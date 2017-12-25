@@ -5,7 +5,7 @@ const msgpack = msgpack5();
 export class MsgpackSerializer {
     constructor () {
         this.protocol = 'msgpack';
-        this.binaryType = 'arraybuffer';
+        this.isBinary = true;
     }
 
     encode (data) {

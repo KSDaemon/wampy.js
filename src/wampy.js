@@ -15,7 +15,7 @@
  */
 
 import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, isNode } from './constants';
-import { getWebSocket, isBinaryTypeAllowed } from './utils';
+import { getWebSocket } from './utils';
 import { JsonSerializer } from './serializers/JsonSerializer';
 
 /**
@@ -422,7 +422,7 @@ class Wampy {
         if (allowWAMP) {
             return re.test(uri);
         } else {
-            return !(!re.test(uri) || uri.indexOf('wamp') === 0);
+            return !(!re.test(uri) || uri.indexOf('wamp.') === 0);
         }
     }
 
@@ -540,14 +540,9 @@ class Wampy {
 
         }
 
-        const type = this._options.serializer.binaryType;
-
-        if (!isBinaryTypeAllowed(type)) {
-            this._cache.opStatus = WAMP_ERROR_MSG.INVALID_SERIALIZER_TYPE;
-            return this;
+        if (this._options.serializer.isBinary) {
+            this._ws.binaryType = 'arraybuffer';
         }
-
-        this._ws.binaryType = type;
 
         // WAMP SPEC: [HELLO, Realm|uri, Details|dict]
         // Sending directly 'cause it's a hello msg and no sessionId check is needed

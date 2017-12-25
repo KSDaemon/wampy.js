@@ -49,7 +49,3 @@ export function getWebSocket (url, protocols, ws) {
 
     return null;
 }
-
-export function isBinaryTypeAllowed (type) {
-    return ALLOWED_BINARY_TYPES.indexOf(type) !== -1;
-}

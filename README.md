@@ -793,7 +793,7 @@ Custom serializer instance must meet a few requirements:
 * Have a `decode (data)` method, that returns decoded data
 * Have a `protocol` string property, that contains a protocol name. This name is concatenated with "wamp.2." string and
  is then passed as websocket subprotocol http header.
-* Have a `binaryType` string property, that contains a serialized data type. Allowed options are: ['blob', 'arraybuffer'].
+* Have a `isBinary` boolean property, that indicates, is this a binary protocol or not.
 
 Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or 
 [MsgpackSerializer.js](src/serializers/MsgpackSerializer.js) as examples.
