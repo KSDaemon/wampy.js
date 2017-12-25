@@ -6,18 +6,11 @@
 
 import { expect } from 'chai';
 const utils = require('./../src/utils');
-let getWebSocket = utils.getWebSocket, isBinaryTypeAllowed = utils.isBinaryTypeAllowed;
+let getWebSocket = utils.getWebSocket;
 const mock = require('mock-require');
 
 describe('Wampy.js Utils submodule', function () {
     this.timeout(0);
-
-    it('checks for valid payload data types', function () {
-        expect(isBinaryTypeAllowed('blob')).to.be.true;
-        expect(isBinaryTypeAllowed('arraybuffer')).to.be.true;
-        expect(isBinaryTypeAllowed('text')).to.be.false;
-        expect(isBinaryTypeAllowed('data')).to.be.false;
-    });
 
     describe('In node enviroment', function () {
 

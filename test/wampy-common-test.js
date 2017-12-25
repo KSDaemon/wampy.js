@@ -14,7 +14,6 @@ import { WebSocket, setProtocol as wsSetProtocol } from './fake-ws-set-protocol'
 import { Wampy } from './../src/wampy';
 import { JsonSerializer } from '../src/serializers/JsonSerializer';
 import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
-import { BadSerializer } from './BadSerializer';
 import { WAMP_ERROR_MSG } from './../src/constants';
 
 describe('Wampy.js Constructor', function () {
@@ -96,21 +95,6 @@ describe('Wampy.js Constructor', function () {
         root.setTimeout(function () {
             let opStatus = wampy.getOpStatus();
             expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_SERIALIZER_AVAILABLE);
-            done();
-        }, 20);
-
-    });
-
-    it('disallows to connect when trying to use custom serializer with not supported binaryType', function (done) {
-        let wampy = new Wampy(routerUrl, {
-            realm: 'AppRealm',
-            ws: WebSocket,
-            serializer: new BadSerializer()
-        });
-        wsSetProtocol('unsupported');
-        root.setTimeout(function () {
-            let opStatus = wampy.getOpStatus();
-            expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_SERIALIZER_TYPE);
             done();
         }, 20);
 
