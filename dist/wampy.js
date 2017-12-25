@@ -5,8 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.Wampy = undefined;
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       * Project: wampy.js
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       *
@@ -450,7 +448,7 @@ var Wampy = function () {
     }, {
         key: '_validateURI',
         value: function _validateURI(uri) {
-            var re = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
+            var re = /^([0-9a-zA-Z_]{2,}\.)*([0-9a-zA-Z_]{2,})$/;
             return !(!re.test(uri) || uri.indexOf('wamp') === 0);
         }
 
@@ -647,8 +645,7 @@ var Wampy = function () {
                 id = void 0,
                 i = void 0,
                 msg = void 0,
-                p = void 0,
-                self = this;
+                p = void 0;
 
             this._log('[wampy] websocket message received', event.data);
 
@@ -896,23 +893,31 @@ var Wampy = function () {
                         // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
                         //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 
-                        var invoke_result_handler = function invoke_result_handler(results) {
+                        p = new Promise(function (resolve, reject) {
+                            resolve(_this3._rpcRegs[data[2]].callbacks[0]({
+                                details: data[3],
+                                argsList: data[4],
+                                argsDict: data[5]
+                            }));
+                        });
+
+                        p.then(function (results) {
                             // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list, ArgumentsKw|dict)]
-                            var msg = [_constants.WAMP_MSG_SPEC.YIELD, data[1], {}];
+                            msg = [_constants.WAMP_MSG_SPEC.YIELD, data[1], {}];
 
-                            if (self._isPlainObject(results)) {
+                            if (_this3._isPlainObject(results)) {
 
-                                if (self._isPlainObject(results.options)) {
+                                if (_this3._isPlainObject(results.options)) {
                                     msg[2] = results.options;
                                 }
 
-                                if (self._isArray(results.argsList)) {
+                                if (_this3._isArray(results.argsList)) {
                                     msg.push(results.argsList);
                                 } else if (typeof results.argsList !== 'undefined') {
                                     msg.push([results.argsList]);
                                 }
 
-                                if (self._isPlainObject(results.argsDict)) {
+                                if (_this3._isPlainObject(results.argsDict)) {
                                     if (msg.length === 3) {
                                         msg.push([]);
                                     }
@@ -921,38 +926,21 @@ var Wampy = function () {
                             } else {
                                 msg = [_constants.WAMP_MSG_SPEC.YIELD, data[1], {}];
                             }
-                            self._send(msg);
-                        },
-                            invoke_error_handler = function invoke_error_handler(e) {
+                            _this3._send(msg);
+                        }).catch(function (e) {
                             var msg = [_constants.WAMP_MSG_SPEC.ERROR, _constants.WAMP_MSG_SPEC.INVOCATION, data[1], e.details || {}, e.error || 'wamp.error.invocation_exception'];
 
-                            if (e.argsList && self._isArray(e.argsList)) {
+                            if (e.argsList && _this3._isArray(e.argsList)) {
                                 msg.push(e.argsList);
                             }
 
-                            if (e.argsDict && self._isPlainObject(e.argsDict)) {
+                            if (e.argsDict && _this3._isPlainObject(e.argsDict)) {
                                 if (msg.length === 5) {
                                     msg.push([]);
                                 }
                                 msg.push(e.argsDict);
                             }
-                            self._send(msg);
-                        };
-
-                        p = new Promise(function (resolve, reject) {
-                            resolve(_this3._rpcRegs[data[2]].callbacks[0]({
-                                details: data[3],
-                                argsList: data[4],
-                                argsDict: data[5],
-                                result_handler: invoke_result_handler,
-                                error_handler: invoke_error_handler
-                            }));
-                        });
-
-                        p.then(function (results) {
-                            invoke_result_handler(results);
-                        }).catch(function (e) {
-                            invoke_error_handler(e);
+                            _this3._send(msg);
                         });
                     } else {
                         // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
@@ -1356,13 +1344,7 @@ var Wampy = function () {
         /**
          * Publish a event to topic
          * @param {string} topicURI
-         * @param {string|number|Array|object} payload - can be either a value of any type or null.  Also it
-         *                          is possible to pass array and object-like data simultaneously.
-         *                          In this case pass a hash-table with next attributes:
-         *                          {
-         *                             argsList: array payload (may be omitted)
-         *                             argsDict: object payload (may be omitted)
-         *                          }
+         * @param {string|number|Array|object} payload - optional parameter.
          * @param {object} [callbacks] - optional hash table of callbacks:
          *                          { onSuccess: will be called when publishing would be confirmed
          *                            onError: will be called if publishing would be aborted }
@@ -1388,24 +1370,11 @@ var Wampy = function () {
     }, {
         key: 'publish',
         value: function publish(topicURI, payload, callbacks, advancedOptions) {
-            var _this4 = this;
-
             var reqId = void 0,
                 msg = void 0,
                 err = false,
                 hasPayload = false;
-            var options = {},
-                _optionsConvertHelper = function _optionsConvertHelper(option, sourceType) {
-                if (advancedOptions[option]) {
-                    if (_this4._isArray(advancedOptions[option]) && advancedOptions[option].length) {
-                        options[option] = advancedOptions[option];
-                    } else if (_typeof(advancedOptions[option]) === sourceType) {
-                        options[option] = [advancedOptions[option]];
-                    } else {
-                        err = true;
-                    }
-                }
-            };
+            var options = {};
 
             if (!this._preReqChecks(topicURI, 'broker', callbacks)) {
                 return this;
@@ -1418,12 +1387,65 @@ var Wampy = function () {
             if (typeof advancedOptions !== 'undefined') {
 
                 if (this._isPlainObject(advancedOptions)) {
-                    _optionsConvertHelper('exclude', 'number');
-                    _optionsConvertHelper('exclude_authid', 'string');
-                    _optionsConvertHelper('exclude_authrole', 'string');
-                    _optionsConvertHelper('eligible', 'number');
-                    _optionsConvertHelper('eligible_authid', 'string');
-                    _optionsConvertHelper('eligible_authrole', 'string');
+                    if (advancedOptions.exclude) {
+                        if (this._isArray(advancedOptions.exclude) && advancedOptions.exclude.length) {
+                            options.exclude = advancedOptions.exclude;
+                        } else if (typeof advancedOptions.exclude === 'number') {
+                            options.exclude = [advancedOptions.exclude];
+                        } else {
+                            err = true;
+                        }
+                    }
+
+                    if (advancedOptions.exclude_authid) {
+                        if (this._isArray(advancedOptions.exclude_authid) && advancedOptions.exclude_authid.length) {
+                            options.exclude_authid = advancedOptions.exclude_authid;
+                        } else if (typeof advancedOptions.exclude_authid === 'string') {
+                            options.exclude_authid = [advancedOptions.exclude_authid];
+                        } else {
+                            err = true;
+                        }
+                    }
+
+                    if (advancedOptions.exclude_authrole) {
+                        if (this._isArray(advancedOptions.exclude_authrole) && advancedOptions.exclude_authrole.length) {
+                            options.exclude_authrole = advancedOptions.exclude_authrole;
+                        } else if (typeof advancedOptions.exclude_authrole === 'string') {
+                            options.exclude_authrole = [advancedOptions.exclude_authrole];
+                        } else {
+                            err = true;
+                        }
+                    }
+
+                    if (advancedOptions.eligible) {
+                        if (this._isArray(advancedOptions.eligible) && advancedOptions.eligible.length) {
+                            options.eligible = advancedOptions.eligible;
+                        } else if (typeof advancedOptions.eligible === 'number') {
+                            options.eligible = [advancedOptions.eligible];
+                        } else {
+                            err = true;
+                        }
+                    }
+
+                    if (advancedOptions.eligible_authid) {
+                        if (this._isArray(advancedOptions.eligible_authid) && advancedOptions.eligible_authid.length) {
+                            options.eligible_authid = advancedOptions.eligible_authid;
+                        } else if (typeof advancedOptions.eligible_authid === 'string') {
+                            options.eligible_authid = [advancedOptions.eligible_authid];
+                        } else {
+                            err = true;
+                        }
+                    }
+
+                    if (advancedOptions.eligible_authrole) {
+                        if (this._isArray(advancedOptions.eligible_authrole) && advancedOptions.eligible_authrole.length) {
+                            options.eligible_authrole = advancedOptions.eligible_authrole;
+                        } else if (typeof advancedOptions.eligible_authrole === 'string') {
+                            options.eligible_authrole = [advancedOptions.eligible_authrole];
+                        } else {
+                            err = true;
+                        }
+                    }
 
                     if (advancedOptions.hasOwnProperty('exclude_me')) {
                         options.exclude_me = advancedOptions.exclude_me !== false;
@@ -1502,13 +1524,7 @@ var Wampy = function () {
         /**
          * Remote Procedure Call
          * @param {string} topicURI
-         * @param {string|number|Array|object} payload - can be either a value of any type or null.  Also it
-         *                          is possible to pass array and object-like data simultaneously.
-         *                          In this case pass a hash-table with next attributes:
-         *                          {
-         *                             argsList: array payload (may be omitted)
-         *                             argsDict: object payload (may be omitted)
-         *                          }
+         * @param {string|number|Array|object} payload - can be either a value of any type or null
          * @param {function|object} callbacks - if it is a function - it will be treated as result callback function
          *                          or it can be hash table of callbacks:
          *                          { onSuccess: will be called with result on successful call

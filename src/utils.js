@@ -1,4 +1,4 @@
-import { isNode, ALLOWED_BINARY_TYPES } from './constants';
+import { isNode } from './constants';
 
 function getServerUrlBrowser (url) {
     let scheme, port;

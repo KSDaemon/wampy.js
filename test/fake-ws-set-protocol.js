@@ -4,6 +4,8 @@
  * Date: 16.06.17
  */
 
+import { JsonSerializer } from './../src/serializers/JsonSerializer';
+
 const TIMEOUT = 15,
 
     root = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]') ?
@@ -15,9 +17,9 @@ let protocol = 'json',
         this.url = url;
         this.protocols = protocols;
 
-        this.encoder = JSON;
-        this.encode = this.encoder.stringify;
-        this.decode = this.encoder.parse;
+        this.encoder = new JsonSerializer();
+        this.encode = this.encoder.encode;
+        this.decode = this.encoder.decode;
 
         this.onclose = null;
         this.onerror = null;
@@ -28,11 +30,9 @@ let protocol = 'json',
 
         this.readyState = 1;    // Closed
 
-        let self = this;
-
-        root.setTimeout(function () {
-            self.protocol = 'wamp.2.' + protocol;
-            self.onopen();
+        root.setTimeout(() => {
+            this.protocol = 'wamp.2.' + protocol;
+            this.onopen();
         }, TIMEOUT);
 
     },

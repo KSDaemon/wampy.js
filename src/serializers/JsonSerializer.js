@@ -10,6 +10,8 @@ export class JsonSerializer {
     }
 
     decode (data) {
-        return JSON.parse(data);
+        return new Promise(resolve => {
+            resolve(JSON.parse(data));
+        });
     }
 }
