@@ -13,6 +13,22 @@ export class MsgpackSerializer {
     }
 
     decode (data) {
-        return msgpack.decode(new Uint8Array(data));
+        return new Promise(resolve => {
+
+            const type = data.constructor.name;
+
+            if (type === 'ArrayBuffer' || type === 'Buffer') {
+                resolve(msgpack.decode(new Uint8Array(data)));
+            } else {
+                const reader = new FileReader();
+
+                reader.onload = function () {
+                    resolve(msgpack.decode(new Uint8Array(this.result)));
+                };
+
+                reader.readAsArrayBuffer(data);
+            }
+
+        });
     }
 }

@@ -4,11 +4,10 @@
  * Date: 07.04.15
  */
 
-const routerUrl = 'ws://fake.server.org/ws/',
-    anotherRouterUrl = 'ws://another.server.org/ws/',
-    root = (typeof process === 'object' &&
-    Object.prototype.toString.call(process) === '[object process]') ?
-        global : window;
+const isNode = typeof process === 'object' &&
+    Object.prototype.toString.call(process) === '[object process]',
+    routerUrl = 'ws://fake.server.org/ws/',
+    anotherRouterUrl = 'ws://another.server.org/ws/';
 
 import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
@@ -17,7 +16,7 @@ import { JsonSerializer } from '../src/serializers/JsonSerializer';
 import { WAMP_ERROR_MSG } from './../src/constants';
 
 describe('Wampy.js [with JSON serializer]', function () {
-    this.timeout(0);
+    this.timeout(10000);
 
     before(function () {
         WebSocketModule.startTimers();
@@ -47,30 +46,30 @@ describe('Wampy.js [with JSON serializer]', function () {
                     customFiled3: [1, 2, 3, 4, 5]
                 },
                 setoptions = {
-                    autoReconnect     : true,
-                    reconnectInterval : 10000,
-                    maxRetries        : 50,
-                    realm             : 'AppRealm',
+                    autoReconnect: true,
+                    reconnectInterval: 10000,
+                    maxRetries: 50,
+                    realm: 'AppRealm',
                     helloCustomDetails: helloCustomDetails,
-                    onChallenge       : function () {
+                    onChallenge: function () {
                         done('Reached onChallenge');
                     },
-                    authid            : 'userid',
-                    authmethods       : ['wampcra'],
-                    onConnect         : done,
-                    onClose           : function () {
+                    authid: 'userid',
+                    authmethods: ['wampcra'],
+                    onConnect: done,
+                    onClose: function () {
                         done('Reached onClose');
                     },
-                    onError           : function () {
+                    onError: function () {
                         done('Reached onError');
                     },
-                    onReconnect       : function () {
+                    onReconnect: function () {
                         done('Reached onReconnect');
                     },
                     onReconnectSuccess: function () {
                         done('Reached onReconnectSuccess');
                     },
-                    ws                : WebSocketModule.WebSocket
+                    ws: WebSocketModule.WebSocket
                 },
                 wampy = new Wampy(setoptions),
                 options = wampy.options();
@@ -167,6 +166,11 @@ describe('Wampy.js [with JSON serializer]', function () {
         });
 
         it('disallows to connect to a router if no url was specified during instantiation', function () {
+
+            if (!isNode) {
+                return;
+            }
+
             let wampy = new Wampy({ realm: 'AppRealm' }),
                 opStatus = wampy.connect().getOpStatus();
 
@@ -180,14 +184,14 @@ describe('Wampy.js [with JSON serializer]', function () {
                     customFiled3: [1, 2, 3, 4, 5]
                 },
                 options = wampy.options({
-                    autoReconnect: true,
-                    reconnectInterval: 1000,
-                    maxRetries: 5,
+                    autoReconnect     : true,
+                    reconnectInterval : 1000,
+                    maxRetries        : 5,
                     helloCustomDetails: helloCustomDetails,
-                    onChallenge: function () {
+                    onChallenge       : function () {
                     },
-                    authid: 'userid',
-                    authmethods: ['wampcra'],
+                    authid            : 'userid',
+                    authmethods       : ['wampcra'],
                 }).options();
 
             expect(options.autoReconnect).to.be.true;
@@ -294,7 +298,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done
             }).connect();
 
-            root.setTimeout(function () {
+            setTimeout(function () {
                 wampy.disconnect();
             }, 10);
         });
@@ -307,7 +311,7 @@ describe('Wampy.js [with JSON serializer]', function () {
         it('allows to connect to different WAMP server', function (done) {
             wampy.options({
                 onClose: function () {
-                    root.setTimeout(function () {
+                    setTimeout(function () {
                         wampy.connect(anotherRouterUrl);
                     }, 1);
                 },
@@ -318,11 +322,11 @@ describe('Wampy.js [with JSON serializer]', function () {
         it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
             wampy.options({
                 onClose: function () {
-                    root.setTimeout(function () {
+                    setTimeout(function () {
                         wampy.options({ onClose: done })
                             .connect(anotherRouterUrl);
 
-                        root.setTimeout(function () {
+                        setTimeout(function () {
                             wampy.abort();
                         }, 1);
 
@@ -390,9 +394,9 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onError: function () {
                 },
                 onReconnect: function () {
-                    let t = root.setInterval(function () {
+                    let t = setInterval(function () {
                         if (wampy._subsTopics.size === 2 && wampy._rpcNames.size === 3) {
-                            root.clearInterval(t);
+                            clearInterval(t);
                             t = null;
                             wampy.options({ onReconnect: null })
                                 .subscribe('subscribe.reconnection.check', {
@@ -415,7 +419,7 @@ describe('Wampy.js [with JSON serializer]', function () {
             wampy.options({
                 autoReconnect: true,
                 onClose: function () {
-                    root.setTimeout(function () {
+                    setTimeout(function () {
                         wampy.connect();
                     }, 1);
                 },
@@ -432,7 +436,7 @@ describe('Wampy.js [with JSON serializer]', function () {
             wampy.options({
                 autoReconnect: false,
                 onClose: function () {
-                    root.setTimeout(function () {
+                    setTimeout(function () {
                         wampy.connect();
                     }, 1);
                 },
@@ -516,7 +520,7 @@ describe('Wampy.js [with JSON serializer]', function () {
             it('disallows to subscribe to topic with invalid URI', function (done) {
                 wampy.options({
                     onClose: function () {
-                        root.setTimeout(function () {
+                        setTimeout(function () {
                             wampy.options({
                                 onConnect: function () {
 
@@ -1022,7 +1026,7 @@ describe('Wampy.js [with JSON serializer]', function () {
             before(function (done) {
                 wampy.options({
                     onClose: function () {
-                        root.setTimeout(function () {
+                        setTimeout(function () {
                             wampy.options({
                                 onConnect: function () {
                                     done();
@@ -1104,7 +1108,7 @@ describe('Wampy.js [with JSON serializer]', function () {
             it('disallows to register RPC with invalid URI', function (done) {
                 wampy.options({
                     onClose: function () {
-                        root.setTimeout(function () {
+                        setTimeout(function () {
                             wampy.connect();
                         }, 1);
                     },
@@ -1148,7 +1152,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 wampy.register('register.rpc1', function (e) {
                 });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                root.setTimeout(function () {
+                setTimeout(function () {
                     done();
                 }, 10);
             });

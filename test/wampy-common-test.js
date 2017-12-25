@@ -4,10 +4,12 @@
  * Date: 13.06.17
  */
 
+
+const isNode = typeof process === 'object' &&
+    Object.prototype.toString.call(process) === '[object process]';
+
 const routerUrl = 'ws://fake.server.org/ws/',
-    root = (typeof process === 'object' &&
-    Object.prototype.toString.call(process) === '[object process]') ?
-        global : window;
+    root = isNode ? global : window;
 
 import { expect } from 'chai';
 import { WebSocket, setProtocol as wsSetProtocol } from './fake-ws-set-protocol';
@@ -20,6 +22,10 @@ describe('Wampy.js Constructor', function () {
     this.timeout(0);
 
     it('disallows to connect on instantiation without websocket provided (in Node.js env)', function () {
+        if (!isNode) {
+            return;
+        }
+
         let wampy = new Wampy(routerUrl, { realm: 'AppRealm' }),
             opStatus = wampy.getOpStatus();
 
