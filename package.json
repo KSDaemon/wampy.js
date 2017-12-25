@@ -9,7 +9,7 @@
     "babelify": "^8.0.0",
     "chai": "^4.1.2",
     "coveralls": "^3.0.0",
-    "eslint": "^4.7.2",
+    "eslint": "^4.14.0",
     "grunt": "^1.0.1",
     "grunt-babel": "^7.0.0",
     "grunt-browserify": "^5.2.0",
@@ -17,7 +17,7 @@
     "grunt-contrib-compress": "^1.4.3",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-uglify": "^3.1.0",
+    "grunt-contrib-uglify": "^3.3.0",
     "istanbul": "^1.1.0-alpha.1",
     "load-grunt-tasks": "^3.5.2",
     "mocha": "^4.0.0",
@@ -26,8 +26,8 @@
   },
   "main": "dist/wampy.js",
   "dependencies": {
-    "msgpack5": "^3.5.1",
-    "websocket": "^1.0.24"
+    "msgpack5": "^4.0.0",
+    "websocket": "^1.0.25"
   },
   "repository": {
     "type": "git",
