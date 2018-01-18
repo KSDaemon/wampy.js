@@ -1123,8 +1123,10 @@ class Wampy {
             (this._isPlainObject(advancedOptions)) &&
             (advancedOptions.hasOwnProperty('match'))) {
 
-            options.match = /prefix|wildcard/.test(advancedOptions.match) ? advancedOptions.match : 'exact';
-            patternBased = true;
+            if (/prefix|wildcard/.test(advancedOptions.match)) {
+                options.match = advancedOptions.match;
+                patternBased = true;
+            }
         }
 
         if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: true }, 'broker', callbacks)) {
@@ -1560,8 +1562,10 @@ class Wampy {
             (this._isPlainObject(advancedOptions)) &&
             (advancedOptions.hasOwnProperty('match'))) {
 
-            options.match = /prefix|wildcard/.test(advancedOptions.match) ? advancedOptions.match : 'exact';
-            patternBased = true;
+            if (/prefix|wildcard/.test(advancedOptions.match)) {
+                options.match = advancedOptions.match;
+                patternBased = true;
+            }
         }
 
         if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: false }, 'dealer', callbacks)) {
