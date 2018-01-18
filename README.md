@@ -452,6 +452,8 @@ it can be hash table of callbacks:
         * **argsList**: array payload (may be omitted)
         * **argsDict**: object payload (may be omitted)
         * **details**: some publication options object. 
+* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+    * **match**: string matching policy ("prefix"|"wildcard")
 
 ```javascript
 ws.subscribe('chat.message.received', function (msg) { console.log('Received new chat message!'); });
@@ -654,6 +656,8 @@ Must meet a WAMP Spec URI requirements.
     * **onError**: will be called if registration would be aborted with one hash-table parameter with following attributes:
         * **error**: string error description
         * **details**: hash-table with some error details
+* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+    * **match**: string matching policy ("prefix"|"wildcard")
 
 Registered PRC during invocation will receive one hash-table argument with following attributes:
  
