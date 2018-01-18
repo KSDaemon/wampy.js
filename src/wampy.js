@@ -1110,13 +1110,24 @@ class Wampy {
      *                          { onSuccess: will be called when subscribe would be confirmed
      *                            onError: will be called if subscribe would be aborted
      *                            onEvent: will be called on receiving published event }
+     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     *                          { match: string matching policy ("prefix"|"wildcard") }
      *
      * @returns {Wampy}
      */
-    subscribe (topicURI, callbacks) {
-        let reqId;
+    subscribe (topicURI, callbacks, advancedOptions) {
+        let reqId, err = false, patternBased = false;
+        const options = {};
 
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: true }, 'broker', callbacks)) {
+        if ((typeof (advancedOptions) !== 'undefined') &&
+            (this._isPlainObject(advancedOptions)) &&
+            (advancedOptions.hasOwnProperty('match'))) {
+
+            options.match = /prefix|wildcard/.test(advancedOptions.match) ? advancedOptions.match : 'exact';
+            patternBased = true;
+        }
+
+        if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: true }, 'broker', callbacks)) {
             return this;
         }
 
@@ -1143,7 +1154,7 @@ class Wampy {
             };
 
             // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
-            this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, {}, topicURI]);
+            this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, options, topicURI]);
 
         } else {    // already have subscription to this topic
             // There is no such callback yet
