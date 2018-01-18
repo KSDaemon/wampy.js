@@ -1119,6 +1119,14 @@ class Wampy {
         let reqId, patternBased = false;
         const options = {};
 
+        if ((typeof (advancedOptions) !== 'undefined') &&
+            (this._isPlainObject(advancedOptions)) &&
+            (advancedOptions.hasOwnProperty('match'))) {
+
+            options.match = /prefix|wildcard/.test(advancedOptions.match) ? advancedOptions.match : 'exact';
+            patternBased = true;
+        }
+
         if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: true }, 'broker', callbacks)) {
             return this;
         }
@@ -1133,14 +1141,6 @@ class Wampy {
             }
 
             return this;
-        }
-
-        if ((typeof (advancedOptions) !== 'undefined') &&
-            (this._isPlainObject(advancedOptions)) &&
-            (advancedOptions.hasOwnProperty('match'))) {
-
-            options.match = /prefix|wildcard/.test(advancedOptions.match) ? advancedOptions.match : 'exact';
-            patternBased = true;
         }
 
         if (!this._subscriptions[topicURI] || !this._subscriptions[topicURI].callbacks.length) {
@@ -1548,12 +1548,23 @@ class Wampy {
      *                          { rpc: registered procedure
      *                            onSuccess: will be called on successful registration
      *                            onError: will be called if registration would be aborted }
+     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     *                          { match: string matching policy ("prefix"|"wildcard") }
      * @returns {Wampy}
      */
-    register (topicURI, callbacks) {
-        let reqId;
+    register (topicURI, callbacks, advancedOptions) {
+        let reqId, patternBased = false;
+        const options = {};
 
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'dealer', callbacks)) {
+        if ((typeof (advancedOptions) !== 'undefined') &&
+            (this._isPlainObject(advancedOptions)) &&
+            (advancedOptions.hasOwnProperty('match'))) {
+
+            options.match = /prefix|wildcard/.test(advancedOptions.match) ? advancedOptions.match : 'exact';
+            patternBased = true;
+        }
+
+        if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: false }, 'dealer', callbacks)) {
             return this;
         }
 
@@ -1580,7 +1591,7 @@ class Wampy {
             };
 
             // WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
-            this._send([WAMP_MSG_SPEC.REGISTER, reqId, {}, topicURI]);
+            this._send([WAMP_MSG_SPEC.REGISTER, reqId, options, topicURI]);
             this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
             this._cache.opStatus.reqId = reqId;
         } else {    // already have registration with such topicURI
