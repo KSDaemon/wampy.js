@@ -1116,16 +1116,8 @@ class Wampy {
      * @returns {Wampy}
      */
     subscribe (topicURI, callbacks, advancedOptions) {
-        let reqId, err = false, patternBased = false;
+        let reqId, patternBased = false;
         const options = {};
-
-        if ((typeof (advancedOptions) !== 'undefined') &&
-            (this._isPlainObject(advancedOptions)) &&
-            (advancedOptions.hasOwnProperty('match'))) {
-
-            options.match = /prefix|wildcard/.test(advancedOptions.match) ? advancedOptions.match : 'exact';
-            patternBased = true;
-        }
 
         if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: true }, 'broker', callbacks)) {
             return this;
@@ -1141,6 +1133,14 @@ class Wampy {
             }
 
             return this;
+        }
+
+        if ((typeof (advancedOptions) !== 'undefined') &&
+            (this._isPlainObject(advancedOptions)) &&
+            (advancedOptions.hasOwnProperty('match'))) {
+
+            options.match = /prefix|wildcard/.test(advancedOptions.match) ? advancedOptions.match : 'exact';
+            patternBased = true;
         }
 
         if (!this._subscriptions[topicURI] || !this._subscriptions[topicURI].callbacks.length) {
