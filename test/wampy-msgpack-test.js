@@ -607,6 +607,42 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
+            it('allows to subscribe to prefix-based topic', function (done) {
+                let i = 1;
+                wampy.subscribe('subscribe.prefix', function (e) {
+                    expect(e).to.be.an('object');
+
+                    if (i === 2) {
+                        expect(e.details).to.have.property('topic', 'subscribe.prefix.two.three');
+                        done();
+                    } else {
+                        expect(e.details).to.have.property('topic', 'subscribe.prefix.one');
+                        i++;
+                    }
+                }, { match: 'prefix' })
+                    .publish('subscribe.prefix.one', null, { exclude_me: false })
+                    .publish('subscribe.prefix.two.three', null, { exclude_me: false });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('allows to subscribe to wildcard-based topic', function (done) {
+                let i = 1;
+                wampy.subscribe('subscribe..wildcard', function (e) {
+                    expect(e).to.be.an('object');
+
+                    if (i === 2) {
+                        expect(e.details).to.have.property('topic', 'subscribe.two.wildcard');
+                        done();
+                    } else {
+                        expect(e.details).to.have.property('topic', 'subscribe.one.wildcard');
+                        i++;
+                    }
+                }, { match: 'wildcard' })
+                    .publish('subscribe.one.wildcard', null, { exclude_me: false })
+                    .publish('subscribe.two.wildcard', null, { exclude_me: false });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
             it('allows to publish event without payload', function (done) {
                 let i = 1;
                 wampy.subscribe('subscribe.topic3', function (e) {
@@ -1172,6 +1208,34 @@ describe('Wampy.js [with msgpack serializer]', function () {
                 });
             });
 
+            it('allows to register prefix-based RPC', function (done) {
+                wampy.register('register.prefix', {
+                    rpc: function (e) {
+                    },
+                    onSuccess: function () {
+                        done();
+                    },
+                    onError: function () {
+                        done('Error during RPC registration');
+                    }
+                }, { match: 'prefix' });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('allows to register wildcard-based RPC', function (done) {
+                wampy.register('register..wildcard', {
+                    rpc: function (e) {
+                    },
+                    onSuccess: function () {
+                        done();
+                    },
+                    onError: function () {
+                        done('Error during RPC registration');
+                    }
+                }, { match: 'wildcard' });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
             it('disallows to register RPC with same name', function () {
                 wampy.register('register.rpc2', function (e) {
                 });
@@ -1536,6 +1600,38 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         done('Error during RPC registration!');
                     }
                 });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('allows to invoke pattern-based RPC providing original uri in options', function (done) {
+                wampy.register('register.prefixbased', {
+                    rpc: function (e) {
+
+                        return new Promise(function (resolve, reject) {
+                            setTimeout(function () {
+                                expect(e.details).to.have.property('topic', 'register.prefixbased.maiden');
+                                resolve();
+                            }, 1);
+                        });
+                    },
+                    onSuccess: function (e) {
+                        wampy.call(
+                            'register.prefixbased.maiden',
+                            null,
+                            function (e) {
+                                expect(e).to.be.an('object');
+                                expect(e.details).to.be.an('object');
+                                expect(e.argsList).to.be.undefined;
+                                expect(e.argsDict).to.be.undefined;
+                                done();
+                            },
+                            { exclude_me: false }
+                        );
+                    },
+                    onError: function (e) {
+                        done('Error during RPC registration!');
+                    }
+                }, { match: 'prefix' });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 

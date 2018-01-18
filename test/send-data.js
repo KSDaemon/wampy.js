@@ -601,6 +601,98 @@ const WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
+        // allows to subscribe to prefix-based topic
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                399   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                419
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                429
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                399,
+                419,
+                { topic: 'subscribe.prefix.one' }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                399,
+                429,
+                { topic: 'subscribe.prefix.two.three' }
+            ]
+        },
+        // allows to subscribe to wildcard-based topic
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                3999   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                4199
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                4299
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                3999,
+                4199,
+                { topic: 'subscribe.one.wildcard' }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                3999,
+                4299,
+                { topic: 'subscribe.two.wildcard' }
+            ]
+        },
         // allows to publish event without payload
         {
             data: [
@@ -1086,6 +1178,26 @@ const WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
+        // allows to register prefix-based RPC
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                209   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to register wildcard-based RPC
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                2099   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
         // allows to call RPC without payload
         {
             data: [
@@ -1315,6 +1427,35 @@ const WAMP_MSG_SPEC = {
                 'RequestId',
                 22, // Registration ID
                 {}
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { }
+            ],
+            from: [1, 2],
+            to: [1, 2]
+        },
+        // allows to invoke pattern-based RPC providing original uri in options
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                2292   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                2292, // Registration ID
+                { topic: 'register.prefixbased.maiden' }
             ],
             from: [1],
             to: [1]
