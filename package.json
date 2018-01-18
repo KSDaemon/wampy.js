@@ -59,6 +59,6 @@
     "test:node": "node ./node_modules/.bin/mocha --exit --require babel-core/register -R spec",
     "test:node-no-crossbar": "node ./node_modules/.bin/mocha --exit --require babel-core/register -R spec 'test/!(wampy-crossbar)-test.js'",
     "test:browser": "node ./node_modules/karma/bin/karma start karma.conf.js",
-    "cover": "node ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- --exit --require babel-core/register -R spec"
+    "cover": "node ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- --exit --require babel-core/register -R spec 'test/!(wampy-crossbar)-test.js'"
   }
 }
