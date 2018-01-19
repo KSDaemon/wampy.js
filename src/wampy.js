@@ -35,7 +35,7 @@ class Wampy {
          * @type {string}
          * @private
          */
-        this.version = 'v6.0.0';
+        this.version = 'v6.1.0';
 
         /**
          * WS Url
@@ -68,6 +68,7 @@ class Wampy {
                 },
                 subscriber: {
                     features: {
+                        pattern_based_subscription: true,
                         publication_trustlevels: true
                     }
                 },
@@ -82,7 +83,9 @@ class Wampy {
                 callee: {
                     features: {
                         caller_identification: true,
-                        call_trustlevels: true
+                        call_trustlevels: true,
+                        pattern_based_registration: true,
+                        shared_registration: true
                     }
                 }
             }
