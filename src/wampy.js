@@ -1509,7 +1509,8 @@ class Wampy {
      * @returns {Wampy}
      */
     cancel (reqId, callbacks, advancedOptions) {
-        const options = { mode: 'skip' };
+        let err = false;
+        const options = {};
 
         if (!this._preReqChecks(null, 'dealer', callbacks)) {
             return this;
@@ -1525,11 +1526,31 @@ class Wampy {
             return this;
         }
 
-        if ((typeof (advancedOptions) !== 'undefined') &&
-            (this._isPlainObject(advancedOptions)) &&
-            (advancedOptions.hasOwnProperty('mode'))) {
+        if (typeof (advancedOptions) !== 'undefined') {
 
-            options.mode = /skip|kill|killnowait/.test(advancedOptions.mode) ? advancedOptions.mode : 'skip';
+            if (this._isPlainObject(advancedOptions)) {
+
+                if (advancedOptions.hasOwnProperty('mode')) {
+                    if (/skip|kill|killnowait/.test(advancedOptions.mode)) {
+                        options.mode = advancedOptions.mode;
+                    } else {
+                        err = true;
+                    }
+
+                }
+            } else {
+                err = true;
+            }
+
+            if (err) {
+                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
+
+                if (this._isPlainObject(callbacks) && callbacks.onError) {
+                    callbacks.onError({ error: this._cache.opStatus.description });
+                }
+
+                return this;
+            }
         }
 
         // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
