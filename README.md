@@ -433,7 +433,7 @@ ws = new Wampy('ws://wamp.router.url', {
 
 [Back to TOC](#table-of-contents)
 
-subscribe(topicURI, callbacks)
+subscribe(topicURI, callbacks[, advancedOptions])
 -----------------------------
 
 Subscribes for topicURI events. Supports chaining.
@@ -640,7 +640,7 @@ ws.cancel(status.reqId);
 
 [Back to TOC](#table-of-contents)
 
-register(topicURI, callbacks)
+register(topicURI, callbacks[, advancedOptions])
 -----------------------------------------------
 
 RPC registration for invocation. Supports chaining.
