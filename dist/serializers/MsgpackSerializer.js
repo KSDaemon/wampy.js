@@ -22,7 +22,7 @@ var MsgpackSerializer = exports.MsgpackSerializer = function () {
         _classCallCheck(this, MsgpackSerializer);
 
         this.protocol = 'msgpack';
-        this.binaryType = 'arraybuffer';
+        this.isBinary = true;
     }
 
     _createClass(MsgpackSerializer, [{

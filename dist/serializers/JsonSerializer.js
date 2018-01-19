@@ -13,7 +13,7 @@ var JsonSerializer = exports.JsonSerializer = function () {
         _classCallCheck(this, JsonSerializer);
 
         this.protocol = 'json';
-        this.binaryType = 'blob';
+        this.isBinary = true;
     }
 
     _createClass(JsonSerializer, [{

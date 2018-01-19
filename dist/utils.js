@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
     value: true
 });
 exports.getWebSocket = getWebSocket;
-exports.isBinaryTypeAllowed = isBinaryTypeAllowed;
 
 var _constants = require('./constants');
 
@@ -63,9 +62,5 @@ function getWebSocket(url, protocols, ws) {
     }
 
     return null;
-}
-
-function isBinaryTypeAllowed(type) {
-    return _constants.ALLOWED_BINARY_TYPES.indexOf(type) !== -1;
 }
 //# sourceMappingURL=utils.js.map
