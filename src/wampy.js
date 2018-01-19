@@ -1551,20 +1551,49 @@ class Wampy {
      *                            onSuccess: will be called on successful registration
      *                            onError: will be called if registration would be aborted }
      * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
-     *                          { match: string matching policy ("prefix"|"wildcard") }
+     *                          {
+     *                              match: string matching policy ("prefix"|"wildcard")
+     *                              invoke: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
+     *                          }
      * @returns {Wampy}
      */
     register (topicURI, callbacks, advancedOptions) {
-        let reqId, patternBased = false;
+        let reqId, patternBased = false, err = false;
         const options = {};
 
-        if ((typeof (advancedOptions) !== 'undefined') &&
-            (this._isPlainObject(advancedOptions)) &&
-            (advancedOptions.hasOwnProperty('match'))) {
+        if (typeof (advancedOptions) !== 'undefined') {
 
-            if (/prefix|wildcard/.test(advancedOptions.match)) {
-                options.match = advancedOptions.match;
-                patternBased = true;
+            if (this._isPlainObject(advancedOptions)) {
+
+                if (advancedOptions.hasOwnProperty('match')) {
+                    if (/prefix|wildcard/.test(advancedOptions.match)) {
+                        options.match = advancedOptions.match;
+                        patternBased = true;
+                    } else {
+                        err = true;
+                    }
+                }
+
+                if (advancedOptions.hasOwnProperty('invoke')) {
+                    if (/single|roundrobin|random|first|last/.test(advancedOptions.invoke)) {
+                        options.invoke = advancedOptions.invoke;
+                    } else {
+                        err = true;
+                    }
+                }
+
+            } else {
+                err = true;
+            }
+
+            if (err) {
+                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
+
+                if (this._isPlainObject(callbacks) && callbacks.onError) {
+                    callbacks.onError({ error: this._cache.opStatus.description });
+                }
+
+                return this;
             }
         }
 
