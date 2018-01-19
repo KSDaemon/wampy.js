@@ -658,6 +658,7 @@ Must meet a WAMP Spec URI requirements.
         * **details**: hash-table with some error details
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
     * **match**: string matching policy ("prefix"|"wildcard")
+    * **invoke**: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
 
 Registered PRC during invocation will receive one hash-table argument with following attributes:
  
