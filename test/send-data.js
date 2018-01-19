@@ -1198,6 +1198,16 @@ const WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
+        // allows to specify invocation policy during RPC registration
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                2599   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
         // allows to call RPC without payload
         {
             data: [
@@ -1338,6 +1348,17 @@ const WAMP_MSG_SPEC = {
                 'RequestId',
                 {},
                 [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // checks options during canceling RPC invocation
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { progress: true },
+                [50]
             ],
             from: [1],
             to: [1]

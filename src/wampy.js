@@ -690,8 +690,8 @@ class Wampy {
                             delete this._requests[data[2]];
 
                             break;
-                        case WAMP_MSG_SPEC.INVOCATION:
-                            break;
+                        // case WAMP_MSG_SPEC.INVOCATION:
+                        //     break;
                         case WAMP_MSG_SPEC.CALL:
 
                             // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,

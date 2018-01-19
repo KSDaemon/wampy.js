@@ -1184,6 +1184,36 @@ describe('Wampy.js [with JSON serializer]', function () {
                 }).disconnect();
             });
 
+            it('checks for valid advanced options during RPC registration', function () {
+                wampy.register(
+                    'qqq.www.eee',
+                    {
+                        rpc: function (e) { },
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.have.property('error', WAMP_ERROR_MSG.INVALID_PARAM.description);
+                        }
+                    },
+                    {
+                        match: "invalidoption",
+                        invoke: "invalidoption"
+                    }
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                wampy.register(
+                    'qqq.www.eee',
+                    {
+                        rpc: function (e) { },
+                        onSuccess: function (e) { },
+                        onError: function (e) {
+                            expect(e).to.have.property('error', WAMP_ERROR_MSG.INVALID_PARAM.description);
+                        }
+                    },
+                    'string instead of object'
+                );
+                expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+            });
+
             it('allows to register RPC', function (done) {
                 wampy.register('register.rpc1', function (e) {
                 });
@@ -1231,6 +1261,20 @@ describe('Wampy.js [with JSON serializer]', function () {
                         done('Error during RPC registration');
                     }
                 }, { match: 'wildcard' });
+                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            });
+
+            it('allows to specify invocation policy during RPC registration', function (done) {
+                wampy.register('register.invocation.policy', {
+                    rpc: function (e) {
+                    },
+                    onSuccess: function () {
+                        done();
+                    },
+                    onError: function () {
+                        done('Error during RPC registration');
+                    }
+                }, { invoke: 'roundrobin' });
                 expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
             });
 
@@ -1480,6 +1524,55 @@ describe('Wampy.js [with JSON serializer]', function () {
                         receive_progress: true
                     }
                 );
+            });
+
+            it('checks options during canceling RPC invocation', function (done) {
+                let reqId;
+
+                wampy.call(
+                    'call.rpc8',
+                    'payload',
+                    {
+                        onSuccess: function (e) {
+                            expect(e).to.be.an('object');
+                            expect(e.argsList).to.be.an('array');
+
+                            wampy.cancel(reqId,
+                                {
+                                    onSuccess: function () {
+                                    },
+                                    onError: function (e) {
+                                        expect(e).to.be.an('object');
+                                        expect(e).to.have.property('error', WAMP_ERROR_MSG.INVALID_PARAM.description);
+                                    }
+                                },
+                                {
+                                    mode: 'falseoption'
+                                }
+                            );
+                            wampy.cancel(reqId,
+                                {
+                                    onSuccess: function () {
+                                    },
+                                    onError: function (e) {
+                                        expect(e).to.be.an('object');
+                                        expect(e).to.have.property('error', WAMP_ERROR_MSG.INVALID_PARAM.description);
+                                    }
+                                },
+                                'string_instead_of_object'
+                            );
+                            done();
+                        },
+                        onError: function (e) {
+                            done();
+                        }
+                    },
+                    {
+                        receive_progress: true
+                    }
+                );
+
+                reqId = wampy.getOpStatus().reqId;
             });
 
             it('allows to cancel RPC invocation', function (done) {
