@@ -56,7 +56,8 @@ Wampy.js supports next WAMP roles and features:
     * publisher exclusion
     * publisher identification
 * subscriber:
-    * publication trustlevels
+    * pattern-based subscription
+    * publication trust levels
 * caller:
     * caller identification
     * progressive call results
@@ -64,7 +65,9 @@ Wampy.js supports next WAMP roles and features:
     * call timeout
 * callee:
     * caller identification
-    * call trustlevels
+    * call trust levels
+    * pattern-based registration
+    * shared registration
 
 Wampy default serializer is JSON, but it also supports msgpack as serializer.
 In that case you need to include msgpack5.js as dependency. See [msgpack5][] for more info.
