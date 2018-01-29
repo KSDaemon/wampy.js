@@ -1197,8 +1197,8 @@ describe('Wampy.js [with msgpack serializer]', function () {
                         }
                     },
                     {
-                        match: "invalidoption",
-                        invoke: "invalidoption"
+                        match: 'invalidoption',
+                        invoke: 'invalidoption'
                     }
                 );
                 expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
