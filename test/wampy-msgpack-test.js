@@ -9,11 +9,11 @@ const isNode = typeof process === 'object' &&
     routerUrl = 'ws://fake.server.org/ws/',
     anotherRouterUrl = 'ws://another.server.org/ws/';
 
-import {expect} from 'chai';
+import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws';
-import {MsgpackSerializer} from './../src/serializers/MsgpackSerializer';
-import {Wampy} from './../src/wampy';
-import {WAMP_ERROR_MSG} from './../src/constants';
+import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
+import { Wampy } from './../src/wampy';
+import { WAMP_ERROR_MSG } from './../src/constants';
 
 if (isNode) {
     global.Blob = function (parts) {
@@ -30,8 +30,8 @@ if (isNode) {
 }
 
 [
-    {ws: WebSocketModule.WebSocket, type: 'ArrayBuffer'},
-    {ws: WebSocketModule.WebSocketBlob, type: 'Blob'}
+    { ws: WebSocketModule.WebSocket, type: 'ArrayBuffer' },
+    { ws: WebSocketModule.WebSocketBlob, type: 'Blob' }
 ].forEach(function (item) {
 
     const fakeWs = item.ws;
@@ -196,7 +196,7 @@ if (isNode) {
                     return;
                 }
 
-                let wampy = new Wampy({realm: 'AppRealm'}),
+                let wampy = new Wampy({ realm: 'AppRealm' }),
                     opStatus = wampy.connect().getOpStatus();
 
                 expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
@@ -241,18 +241,18 @@ if (isNode) {
             });
 
             it('allows to disconnect from connected server', function (done) {
-                wampy.options({onConnect: null, onClose: done});
+                wampy.options({ onConnect: null, onClose: done });
                 wampy.disconnect();
             });
 
             it('disallows to connect on instantiation without specifying all of [onChallenge, authid, authmethods]', function () {
                 let opStatus;
 
-                wampy.options({authid: 'userid', authmethods: ['wampcra'], onChallenge: null}).connect();
+                wampy.options({ authid: 'userid', authmethods: ['wampcra'], onChallenge: null }).connect();
                 opStatus = wampy.getOpStatus();
                 expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-                wampy.options({authid: null, authmethods: ['wampcra'], onChallenge: null}).connect();
+                wampy.options({ authid: null, authmethods: ['wampcra'], onChallenge: null }).connect();
                 opStatus = wampy.getOpStatus();
                 expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
@@ -277,7 +277,7 @@ if (isNode) {
                 opStatus = wampy.getOpStatus();
                 expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-                wampy.options({authid: null, onChallenge: null});
+                wampy.options({ authid: null, onChallenge: null });
             });
 
             it('calls onError handler if authentication using CRA fails', function (done) {
@@ -311,7 +311,7 @@ if (isNode) {
             });
 
             it('automatically sends goodbye message on server initiated disconnect', function (done) {
-                wampy.options({onConnect: null, onClose: done})
+                wampy.options({ onConnect: null, onClose: done })
                     .connect();
             });
 
@@ -329,7 +329,7 @@ if (isNode) {
             });
 
             it('allows to connect to same WAMP server', function (done) {
-                wampy.options({onConnect: done})
+                wampy.options({ onConnect: done })
                     .connect();
             });
 
@@ -348,7 +348,7 @@ if (isNode) {
                 wampy.options({
                     onClose: function () {
                         setTimeout(function () {
-                            wampy.options({onClose: done})
+                            wampy.options({ onClose: done })
                                 .connect(anotherRouterUrl);
 
                             setTimeout(function () {
@@ -423,7 +423,7 @@ if (isNode) {
                             if (wampy._subsTopics.size === 2 && wampy._rpcNames.size === 3) {
                                 clearInterval(t);
                                 t = null;
-                                wampy.options({onReconnect: null})
+                                wampy.options({ onReconnect: null })
                                     .subscribe('subscribe.reconnection.check', {
                                         onSuccess: done,
                                         onError: function () {
@@ -641,9 +641,9 @@ if (isNode) {
                             expect(e.details).to.have.property('topic', 'subscribe.prefix.one');
                             i++;
                         }
-                    }, {match: 'prefix'})
-                        .publish('subscribe.prefix.one', null, {exclude_me: false})
-                        .publish('subscribe.prefix.two.three', null, {exclude_me: false});
+                    }, { match: 'prefix' })
+                        .publish('subscribe.prefix.one', null, { exclude_me: false })
+                        .publish('subscribe.prefix.two.three', null, { exclude_me: false });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
@@ -659,9 +659,9 @@ if (isNode) {
                             expect(e.details).to.have.property('topic', 'subscribe.one.wildcard');
                             i++;
                         }
-                    }, {match: 'wildcard'})
-                        .publish('subscribe.one.wildcard', null, {exclude_me: false})
-                        .publish('subscribe.two.wildcard', null, {exclude_me: false});
+                    }, { match: 'wildcard' })
+                        .publish('subscribe.one.wildcard', null, { exclude_me: false })
+                        .publish('subscribe.two.wildcard', null, { exclude_me: false });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
@@ -679,7 +679,7 @@ if (isNode) {
                         }
                     })
                         .publish('subscribe.topic3')
-                        .publish('subscribe.topic3', null, {exclude_me: false, disclose_me: true});
+                        .publish('subscribe.topic3', null, { exclude_me: false, disclose_me: true });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
@@ -698,7 +698,7 @@ if (isNode) {
                         }
                     })
                         .publish('subscribe.topic4', 25)
-                        .publish('subscribe.topic4', 25, null, {exclude_me: false, disclose_me: true});
+                        .publish('subscribe.topic4', 25, null, { exclude_me: false, disclose_me: true });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
@@ -717,7 +717,7 @@ if (isNode) {
                         }
                     })
                         .publish('subscribe.topic5', 'payload')
-                        .publish('subscribe.topic5', 'payload', null, {exclude_me: false, disclose_me: true});
+                        .publish('subscribe.topic5', 'payload', null, { exclude_me: false, disclose_me: true });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
@@ -737,12 +737,12 @@ if (isNode) {
                         }
                     })
                         .publish('subscribe.topic6', [1, 2, 3, 4, 5])
-                        .publish('subscribe.topic6', [1, 2, 3, 4, 5], null, {exclude_me: false, disclose_me: true});
+                        .publish('subscribe.topic6', [1, 2, 3, 4, 5], null, { exclude_me: false, disclose_me: true });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
                 it('allows to publish event with hash-table payload', function (done) {
-                    let i = 1, payload = {key1: 100, key2: 'string-key'};
+                    let i = 1, payload = { key1: 100, key2: 'string-key' };
 
                     wampy.subscribe('subscribe.topic7', function (e) {
                         expect(e).to.be.an('object');
@@ -758,14 +758,14 @@ if (isNode) {
                         }
                     })
                         .publish('subscribe.topic7', payload)
-                        .publish('subscribe.topic7', payload, null, {exclude_me: false, disclose_me: true})
-                        .publish('subscribe.topic7', {argsDict: payload}, null, {exclude_me: false, disclose_me: true});
+                        .publish('subscribe.topic7', payload, null, { exclude_me: false, disclose_me: true })
+                        .publish('subscribe.topic7', { argsDict: payload }, null, { exclude_me: false, disclose_me: true });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
                 it('allows to publish event with both array and hash-table payload', function (done) {
-                    let i = 1, dictpayload = {key1: 100, key2: 'string-key'},
-                        payload = {argsList: [1, 2, 3, 4, 5], argsDict: dictpayload};
+                    let i = 1, dictpayload = { key1: 100, key2: 'string-key' },
+                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
 
                     wampy.subscribe('subscribe.topic77', function (e) {
                         expect(e).to.be.an('object');
@@ -782,7 +782,7 @@ if (isNode) {
                         }
                     })
                         .publish('subscribe.topic77', payload)
-                        .publish('subscribe.topic77', payload, null, {exclude_me: false, disclose_me: true});
+                        .publish('subscribe.topic77', payload, null, { exclude_me: false, disclose_me: true });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
@@ -1010,8 +1010,8 @@ if (isNode) {
                             wampy.subscribe('subscribe.topic9', handler2)
                                 .subscribe('subscribe.topic9', handler3)
                                 .unsubscribe('subscribe.topic9', handler1)
-                                .unsubscribe('subscribe.topic9', {onEvent: handler3})
-                                .publish('subscribe.topic9', 'payload', null, {exclude_me: false});
+                                .unsubscribe('subscribe.topic9', { onEvent: handler3 })
+                                .publish('subscribe.topic9', 'payload', null, { exclude_me: false });
                         },
                         onError: function () {
                         },
@@ -1221,8 +1221,8 @@ if (isNode) {
                             }
                         },
                         {
-                            match: "invalidoption",
-                            invoke: "invalidoption"
+                            match: 'invalidoption',
+                            invoke: 'invalidoption'
                         }
                     );
                     expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
@@ -1274,7 +1274,7 @@ if (isNode) {
                         onError: function () {
                             done('Error during RPC registration');
                         }
-                    }, {match: 'prefix'});
+                    }, { match: 'prefix' });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
@@ -1288,7 +1288,7 @@ if (isNode) {
                         onError: function () {
                             done('Error during RPC registration');
                         }
-                    }, {match: 'wildcard'});
+                    }, { match: 'wildcard' });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
@@ -1302,7 +1302,7 @@ if (isNode) {
                         onError: function () {
                             done('Error during RPC registration');
                         }
-                    }, {invoke: 'roundrobin'});
+                    }, { invoke: 'roundrobin' });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
@@ -1483,7 +1483,7 @@ if (isNode) {
                 });
 
                 it('allows to call RPC with hash-table payload', function (done) {
-                    let i = 1, payload = {key1: 100, key2: 'string-key'},
+                    let i = 1, payload = { key1: 100, key2: 'string-key' },
                         cb = function (e) {
                             expect(e).to.be.an('object');
                             expect(e.argsList).to.be.an('array');
@@ -1499,12 +1499,12 @@ if (isNode) {
                         };
 
                     wampy.call('call.rpc5', payload, cb)
-                        .call('call.rpc5', {argsDict: payload}, cb);
+                        .call('call.rpc5', { argsDict: payload }, cb);
                 });
 
                 it('allows to call RPC with both array and hash-table payload', function (done) {
-                    let dictpayload = {key1: 100, key2: 'string-key'},
-                        payload = {argsList: [1, 2, 3, 4, 5], argsDict: dictpayload};
+                    let dictpayload = { key1: 100, key2: 'string-key' },
+                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
 
                     wampy.call('call.rpc5', payload, function (e) {
                         expect(e).to.be.an('object');
@@ -1681,7 +1681,7 @@ if (isNode) {
                                     expect(e.argsDict).to.be.undefined;
                                     done();
                                 },
-                                {exclude_me: false}
+                                { exclude_me: false }
                             );
                         },
                         onError: function (e) {
@@ -1696,7 +1696,7 @@ if (isNode) {
                         rpc: function (e) {
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
-                                    resolve({options: {extra: true}});
+                                    resolve({ options: { extra: true } });
                                 }, 1);
                             });
                         },
@@ -1712,7 +1712,7 @@ if (isNode) {
                                     expect(e.argsDict).to.be.undefined;
                                     done();
                                 },
-                                {exclude_me: false}
+                                { exclude_me: false }
                             );
                         },
                         onError: function (e) {
@@ -1744,13 +1744,13 @@ if (isNode) {
                                     expect(e.argsDict).to.be.undefined;
                                     done();
                                 },
-                                {exclude_me: false}
+                                { exclude_me: false }
                             );
                         },
                         onError: function (e) {
                             done('Error during RPC registration!');
                         }
-                    }, {match: 'prefix'});
+                    }, { match: 'prefix' });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
@@ -1759,7 +1759,7 @@ if (isNode) {
                         rpc: function (e) {
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
-                                    resolve({options: {}, argsList: 100});
+                                    resolve({ options: {}, argsList: 100 });
                                 }, 1);
                             });
                         },
@@ -1774,7 +1774,7 @@ if (isNode) {
                                     expect(e.argsList[0]).to.be.equal(100);
                                     done();
                                 },
-                                {exclude_me: false}
+                                { exclude_me: false }
                             );
                         },
                         onError: function (e) {
@@ -1789,7 +1789,7 @@ if (isNode) {
                         rpc: function (e) {
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
-                                    resolve({options: {}, argsList: [1, 2, 3, 4, 5]});
+                                    resolve({ options: {}, argsList: [1, 2, 3, 4, 5] });
                                 }, 1);
                             });
                         },
@@ -1805,7 +1805,7 @@ if (isNode) {
                                     expect(e.argsList[4]).to.be.equal(5);
                                     done();
                                 },
-                                {exclude_me: false}
+                                { exclude_me: false }
                             );
                         },
                         onError: function (e) {
@@ -1816,12 +1816,12 @@ if (isNode) {
                 });
 
                 it('allows to invoke asynchronous RPC with hash-table value', function (done) {
-                    let payload = {key1: 100, key2: 'string-key'};
+                    let payload = { key1: 100, key2: 'string-key' };
                     wampy.register('register.rpc6', {
                         rpc: function (e) {
                             return new Promise(function (resolve, reject) {
                                 setTimeout(function () {
-                                    resolve({options: {}, argsDict: payload});
+                                    resolve({ options: {}, argsDict: payload });
                                 }, 1);
                             });
                         },
@@ -1837,7 +1837,7 @@ if (isNode) {
                                     expect(e.argsDict).to.be.deep.equal(payload);
                                     done();
                                 },
-                                {exclude_me: false}
+                                { exclude_me: false }
                             );
                         },
                         onError: function (e) {
@@ -1856,13 +1856,13 @@ if (isNode) {
                                 for (let i = 1; i <= 5; i++) {
                                     (function (j, p) {
                                         setTimeout(function () {
-                                            e.result_handler({options: {progress: p}, argsList: j});
+                                            e.result_handler({ options: { progress: p }, argsList: j });
                                         }, 10 * j);
                                     }(i, i < 5));
                                 }
 
                                 setTimeout(function () {
-                                    resolve({options: {progress: true}, argsList: 0});
+                                    resolve({ options: { progress: true }, argsList: 0 });
                                 }, 1);
                             });
                         },
@@ -1884,7 +1884,7 @@ if (isNode) {
                                     }
 
                                 },
-                                {exclude_me: false}
+                                { exclude_me: false }
                             );
                         },
                         onError: function (e) {
@@ -1914,7 +1914,7 @@ if (isNode) {
                                         done();
                                     }
                                 },
-                                {exclude_me: false}
+                                { exclude_me: false }
                             );
                         },
                         onError: function (e) {
@@ -1940,7 +1940,7 @@ if (isNode) {
                                         done();
                                     }
                                 },
-                                {exclude_me: false}
+                                { exclude_me: false }
                             );
                         },
                         onError: function (e) {
@@ -1952,9 +1952,9 @@ if (isNode) {
 
                 it('calls error handler with custom data if asynchronous RPC raised exception', function (done) {
                     let definedUri = 'app.error.custom_invocation_exception',
-                        definedDetails = {key1: 'key1', key2: true, key3: 25},
+                        definedDetails = { key1: 'key1', key2: true, key3: 25 },
                         definedArgsList = [1, 2, 3, 4, 5],
-                        definedArgsDict = {key1: 'key1', key2: true, key3: 25};
+                        definedArgsDict = { key1: 'key1', key2: true, key3: 25 };
 
                     wampy.register('register.rpc88', {
                         rpc: function (e) {
@@ -2008,7 +2008,7 @@ if (isNode) {
                                                             done();
                                                         }
                                                     },
-                                                    {exclude_me: false}
+                                                    { exclude_me: false }
                                                 );
                                             },
                                             onError: function (e) {
@@ -2017,7 +2017,7 @@ if (isNode) {
                                         });
                                     }
                                 },
-                                {exclude_me: false}
+                                { exclude_me: false }
                             );
                         },
                         onError: function (e) {
@@ -2183,7 +2183,7 @@ if (isNode) {
 
                     wampy.call(
                         'call.rpc1',
-                        {k1: 1, k2: 2},
+                        { k1: 1, k2: 2 },
                         {
                             onSuccess: function (e) {
                                 done('Reached success. Check Server side');
@@ -2192,7 +2192,7 @@ if (isNode) {
                                 expect(e.error).to.be.equal('call.error');
                                 expect(e.argsList).to.be.an('array');
                                 expect(e.argsList).to.have.lengthOf(0);
-                                expect(e.argsDict).to.be.deep.equal({k1: 1, k2: 2});
+                                expect(e.argsDict).to.be.deep.equal({ k1: 1, k2: 2 });
 
                                 i++;
                                 if (i === 3) {

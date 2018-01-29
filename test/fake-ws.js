@@ -5,8 +5,8 @@
  */
 
 import sendData from './send-data';
-import {MsgpackSerializer} from './../src/serializers/MsgpackSerializer';
-import {JsonSerializer} from './../src/serializers/JsonSerializer';
+import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
+import { JsonSerializer } from './../src/serializers/JsonSerializer';
 
 const TIMEOUT = 15;
 
@@ -79,7 +79,7 @@ let sendDataCursor = 0,
         }, TIMEOUT);
     };
 
-function clearTimers() {
+function clearTimers () {
     if (openTimer) {
         clearTimeout(openTimer);
         openTimer = null;
@@ -91,11 +91,11 @@ function clearTimers() {
     }
 }
 
-function resetCursor() {
+function resetCursor () {
     sendDataCursor = 0;
 }
 
-function processQueue() {
+function processQueue () {
     let f;
 
     if (clientMessageQueue.length) {
@@ -104,7 +104,7 @@ function processQueue() {
     }
 }
 
-function startTimers() {
+function startTimers () {
     sendTimer = setInterval(processQueue, TIMEOUT);
 }
 
@@ -150,7 +150,7 @@ function startTimers() {
                     }
                 }
 
-                enc_data = {data: this.encode(send_data.data)};
+                enc_data = { data: this.encode(send_data.data) };
             }
 
             clientMessageQueue.push(() => {
@@ -180,5 +180,5 @@ function startTimers() {
     };
 });
 
-export {WebSocket, WebSocketBlob, startTimers, clearTimers, resetCursor};
+export { WebSocket, WebSocketBlob, startTimers, clearTimers, resetCursor };
 
