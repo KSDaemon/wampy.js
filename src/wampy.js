@@ -740,7 +740,7 @@ class Wampy {
 
                                 break;
                             default:
-                                this._hardClose();
+                                this._hardClose('wamp.error.system_shutdown', 'Received invalid ERROR message');
                                 break;
                         }
                     }

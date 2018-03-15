@@ -122,6 +122,193 @@ const WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // drops connection on receiving WELCOME message after session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                12345,
+                {}
+            ]
+        },
+        // drops connection on receiving CHALLENGE message after session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.CHALLENGE,
+                12345,
+                {}
+            ]
+        },
+        // drops connection on receiving GOODBYE message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving ERROR message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving invalid ERROR message after session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                12345,
+                12345
+            ]
+        },
+        // drops connection on receiving SUBSCRIBED message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving UNSUBSCRIBED message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.UNSUBSCRIBED,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving PUBLISHED message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving EVENT message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving RESULT message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving REGISTERED message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving UNREGISTERED message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.UNREGISTERED,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving INVOCATION message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving non-compliant WAMP message
+        {
+            data: [
+                12345,
+                {},
+                ''
+            ]
+        },
         // Instance before hook
         {
             data: [
