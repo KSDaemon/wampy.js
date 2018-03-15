@@ -141,7 +141,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received WELCOME message after session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -155,7 +155,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received CHALLENGE message after session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -169,7 +169,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received GOODBYE message before session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -183,7 +183,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received ERROR message before session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -197,7 +197,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received invalid ERROR message');
                 },
                 ws: WebSocketModule.WebSocket
@@ -211,7 +211,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received SUBSCRIBED message before session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -225,7 +225,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received UNSUBSCRIBED message before session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -239,7 +239,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received PUBLISHED message before session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -253,7 +253,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received EVENT message before session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -267,7 +267,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received RESULT message before session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -281,7 +281,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received REGISTERED message before session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -295,7 +295,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received UNREGISTERED message before session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -309,7 +309,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received INVOCATION message before session was established');
                 },
                 ws: WebSocketModule.WebSocket
@@ -323,7 +323,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 onClose: done,
                 onError: function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.error).to.be.equal('wamp.error.system_shutdown');
+                    expect(e.error).to.be.equal('wamp.error.protocol_violation');
                     expect(e.details).to.be.equal('Received non-compliant WAMP message');
                 },
                 ws: WebSocketModule.WebSocket

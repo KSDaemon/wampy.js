@@ -439,7 +439,7 @@ class Wampy {
         try {
             return this._options.serializer.encode(msg);
         } catch (e) {
-            this._hardClose('wamp.error.system_shutdown', 'Can not encode message');
+            this._hardClose('wamp.error.protocol_violation', 'Can not encode message');
         }
     }
 
@@ -602,7 +602,7 @@ class Wampy {
                 case WAMP_MSG_SPEC.WELCOME:
                     // WAMP SPEC: [WELCOME, Session|id, Details|dict]
                     if (this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received WELCOME message after session was established');
                     } else {
                         this._cache.sessionId = data[1];
@@ -642,7 +642,7 @@ class Wampy {
                 case WAMP_MSG_SPEC.CHALLENGE:
                     // WAMP SPEC: [CHALLENGE, AuthMethod|string, Extra|dict]
                     if (this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received CHALLENGE message after session was established');
                     } else {
                         if (this._options.authid && typeof this._options.onChallenge === 'function') {
@@ -688,7 +688,7 @@ class Wampy {
                 case WAMP_MSG_SPEC.GOODBYE:
                     // WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
                     if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received GOODBYE message before session was established');
                     } else {
                         if (!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
@@ -703,7 +703,7 @@ class Wampy {
                     // WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict,
                     //             Error|uri, (Arguments|list, ArgumentsKw|dict)]
                     if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received ERROR message before session was established');
                     } else {
                         switch (data[1]) {
@@ -740,7 +740,7 @@ class Wampy {
 
                                 break;
                             default:
-                                this._hardClose('wamp.error.system_shutdown', 'Received invalid ERROR message');
+                                this._hardClose('wamp.error.protocol_violation', 'Received invalid ERROR message');
                                 break;
                         }
                     }
@@ -748,7 +748,7 @@ class Wampy {
                 case WAMP_MSG_SPEC.SUBSCRIBED:
                     // WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
                     if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received SUBSCRIBED message before session was established');
                     } else {
                         if (this._requests[data[1]]) {
@@ -771,7 +771,7 @@ class Wampy {
                 case WAMP_MSG_SPEC.UNSUBSCRIBED:
                     // WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
                     if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received UNSUBSCRIBED message before session was established');
                     } else {
                         if (this._requests[data[1]]) {
@@ -794,7 +794,7 @@ class Wampy {
                 case WAMP_MSG_SPEC.PUBLISHED:
                     // WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
                     if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received PUBLISHED message before session was established');
                     } else {
                         if (this._requests[data[1]]) {
@@ -808,7 +808,7 @@ class Wampy {
                     break;
                 case WAMP_MSG_SPEC.EVENT:
                     if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received EVENT message before session was established');
                     } else {
                         if (this._subscriptions[data[1]]) {
@@ -829,7 +829,7 @@ class Wampy {
                     break;
                 case WAMP_MSG_SPEC.RESULT:
                     if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received RESULT message before session was established');
                     } else {
                         if (this._calls[data[1]]) {
@@ -855,7 +855,7 @@ class Wampy {
                 case WAMP_MSG_SPEC.REGISTERED:
                     // WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
                     if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received REGISTERED message before session was established');
                     } else {
                         if (this._requests[data[1]]) {
@@ -880,7 +880,7 @@ class Wampy {
                 case WAMP_MSG_SPEC.UNREGISTERED:
                     // WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
                     if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received UNREGISTERED message before session was established');
                     } else {
                         if (this._requests[data[1]]) {
@@ -902,7 +902,7 @@ class Wampy {
                     break;
                 case WAMP_MSG_SPEC.INVOCATION:
                     if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.system_shutdown',
+                        this._hardClose('wamp.error.protocol_violation',
                             'Received INVOCATION message before session was established');
                     } else {
                         if (this._rpcRegs[data[2]]) {
@@ -986,11 +986,11 @@ class Wampy {
                 //     // WAMP SPEC:
                 //     break;
                 default:
-                    this._hardClose('wamp.error.system_shutdown', 'Received non-compliant WAMP message');
+                    this._hardClose('wamp.error.protocol_violation', 'Received non-compliant WAMP message');
                     break;
             }
         }, err => {
-            this._hardClose('wamp.error.system_shutdown', 'Can not decode received message');
+            this._hardClose('wamp.error.protocol_violation', 'Can not decode received message');
         });
     }
 
