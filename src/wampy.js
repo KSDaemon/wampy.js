@@ -461,6 +461,10 @@ class Wampy {
      */
     _hardClose (errorUri, details) {
         this._log('[wampy] ' + details);
+        // Cleanup outgoing message queue
+        this._wsQueue = [];
+        this._send([WAMP_MSG_SPEC.ABORT, { message: details }, errorUri]);
+
         if (this._options.onError) {
             this._options.onError({ error: errorUri, details: details });
         }

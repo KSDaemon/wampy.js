@@ -155,6 +155,10 @@ const WAMP_MSG_SPEC = {
                 {}
             ]
         },
+        {
+            data: null,
+            silent: true
+        },
         // drops connection on receiving CHALLENGE message after session was established
         {
             data: [
@@ -187,6 +191,10 @@ const WAMP_MSG_SPEC = {
                 12345,
                 {}
             ]
+        },
+        {
+            data: null,
+            silent: true
         },
         // drops connection on receiving GOODBYE message before session was established
         {
@@ -236,6 +244,10 @@ const WAMP_MSG_SPEC = {
                 12345,
                 12345
             ]
+        },
+        {
+            data: null,
+            silent: true
         },
         // drops connection on receiving SUBSCRIBED message before session was established
         {
