@@ -697,7 +697,7 @@ class Wampy {
                     } else {
                         if (!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
                             this._cache.isSayingGoodbye = true;
-                            this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.error.goodbye_and_out']);
+                            this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.close.goodbye_and_out']);
                         }
                         this._cache.sessionId = null;
                         this._ws.close();
@@ -1149,7 +1149,7 @@ class Wampy {
         if (this._cache.sessionId) {
             // need to send goodbye message to server
             this._cache.isSayingGoodbye = true;
-            this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.error.system_shutdown']);
+            this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.close.system_shutdown']);
         } else if (this._ws) {
             this._ws.close();
         }
