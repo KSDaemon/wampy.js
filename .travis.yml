@@ -2,23 +2,23 @@ language: node_js
 node_js:
    - "node"
 
-python:
-  - "2.7"
-  - "3.6"
+#python:
+#  - "2.7"
+#  - "3.6"
 
 addons:
   chrome: stable
 
 sudo: required
 
-before_install:
-    - pyenv shell 3.6
-    - export PATH=$HOME/.local/bin:$PATH
-    - pip install --upgrade pip
-    - pip install --user crossbar
-    - crossbar start > /dev/null 2>&1 &
-    - sleep 5
-    - pyenv shell 2.7
+#before_install:
+#    - pyenv shell 3.6
+#    - export PATH=$HOME/.local/bin:$PATH
+#    - pip install --upgrade pip
+#    - pip install --user crossbar
+#    - crossbar start > /dev/null 2>&1 &
+#    - sleep 5
+#    - pyenv shell 2.7
 
 after_script: "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- --exit --require babel-core/register -R spec && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
 
