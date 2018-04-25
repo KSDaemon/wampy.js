@@ -14,23 +14,27 @@ describe('Wampy.js with Crossbar', function () {
             serializer: new JsonSerializer(),
             ws: w3cwebsocket,
             onConnect: () => {
-                server.register('sayhello', () => {
-                    return { argsList: 'hello' };
+                server.register('sayhello', {
+                    rpc: () => {
+                        return { argsList: 'hello' };
+                    },
+                    onSuccess: () => {
+                        const client = new Wampy('ws://localhost:8888/test', {
+                            realm: 'realm1',
+                            serializer: new JsonSerializer(),
+                            ws: w3cwebsocket,
+                            onConnect: () => {
+                                client.call('sayhello', [], result => {
+                                    expect(result.argsList.shift()).to.equal('hello');
+                                    done();
+                                });
+                            }
+                        });
+                    }
                 });
             }
         });
 
-        const client = new Wampy('ws://localhost:8888/test', {
-            realm: 'realm1',
-            serializer: new JsonSerializer(),
-            ws: w3cwebsocket,
-            onConnect: () => {
-                client.call('sayhello', [], result => {
-                    expect(result.argsList.shift()).to.equal('hello');
-                    done();
-                });
-            }
-        });
     });
 
     it('works with Msgpack serialization', function (done) {
@@ -40,20 +44,23 @@ describe('Wampy.js with Crossbar', function () {
             serializer: new MsgpackSerializer(),
             ws: w3cwebsocket,
             onConnect: () => {
-                server.register('sayhello', () => {
-                    return { argsList: 'hello' };
-                });
-            }
-        });
-
-        const client = new Wampy('ws://localhost:8888/test', {
-            realm: 'realm1',
-            serializer: new MsgpackSerializer(),
-            ws: w3cwebsocket,
-            onConnect: () => {
-                client.call('sayhello', [], result => {
-                    expect(result.argsList.shift()).to.equal('hello');
-                    done();
+                server.register('sayhello', {
+                    rpc: () => {
+                        return { argsList: 'hello' };
+                    },
+                    onSuccess: () => {
+                        const client = new Wampy('ws://localhost:8888/test', {
+                            realm: 'realm1',
+                            serializer: new MsgpackSerializer(),
+                            ws: w3cwebsocket,
+                            onConnect: () => {
+                                client.call('sayhello', [], result => {
+                                    expect(result.argsList.shift()).to.equal('hello');
+                                    done();
+                                });
+                            }
+                        });
+                    }
                 });
             }
         });
