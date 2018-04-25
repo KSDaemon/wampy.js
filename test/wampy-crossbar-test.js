@@ -44,7 +44,7 @@ describe('Wampy.js with Crossbar', function () {
             serializer: new MsgpackSerializer(),
             ws: w3cwebsocket,
             onConnect: () => {
-                server.register('sayhello', {
+                server.register('sayhello2', {
                     rpc: () => {
                         return { argsList: 'hello' };
                     },
@@ -54,7 +54,7 @@ describe('Wampy.js with Crossbar', function () {
                             serializer: new MsgpackSerializer(),
                             ws: w3cwebsocket,
                             onConnect: () => {
-                                client.call('sayhello', [], result => {
+                                client.call('sayhello2', [], result => {
                                     expect(result.argsList.shift()).to.equal('hello');
                                     done();
                                 });

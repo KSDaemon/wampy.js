@@ -596,9 +596,9 @@ class Wampy {
      * @private
      */
     _wsOnMessage (event) {
-        this._log('[wampy] websocket message received', event.data);
-
         this._decode(event.data).then(data => {
+
+            this._log('[wampy] websocket message received: ', data);
 
             let id, i, p, self = this;
 
