@@ -291,6 +291,18 @@ class Wampy {
             ws: null,
 
             /**
+             * User provided additional HTTP headers (for use in Node.js enviroment)
+             * @type {object}
+             */
+            additionalHeaders: null,
+
+            /**
+             * User provided WS Client Config Options (for use in Node.js enviroment)
+             * @type {object}
+             */
+            wsRequestOptions: null,
+
+            /**
              * User provided msgpack class
              * @type {object}
              */
@@ -1023,7 +1035,8 @@ class Wampy {
         }
 
         this._cache.reconnectingAttempts++;
-        this._ws = getWebSocket(this._url, this._protocols, this._options.ws);
+        this._ws = getWebSocket(this._url, this._protocols, this._options.ws,
+            this._options.additionalHeaders, this._options.wsRequestOptions);
         this._initWsCallbacks();
     }
 
@@ -1127,7 +1140,8 @@ class Wampy {
             }
 
             this._setWsProtocols();
-            this._ws = getWebSocket(this._url, this._protocols, this._options.ws);
+            this._ws = getWebSocket(this._url, this._protocols, this._options.ws,
+                this._options.additionalHeaders, this._options.wsRequestOptions);
             if (!this._ws) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_WS_OR_URL;
                 return this;

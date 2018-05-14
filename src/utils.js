@@ -28,7 +28,7 @@ function getServerUrlNode (url) {
     }
 }
 
-export function getWebSocket (url, protocols, ws) {
+export function getWebSocket (url, protocols, ws, headers, requestOptions) {
     const parsedUrl = isNode ? getServerUrlNode(url) : getServerUrlBrowser(url);
 
     if (!parsedUrl) {
@@ -36,7 +36,7 @@ export function getWebSocket (url, protocols, ws) {
     }
 
     if (ws) {   // User provided webSocket class
-        return new ws(parsedUrl, protocols);
+        return new ws(parsedUrl, protocols, null, headers, requestOptions);
     } else if (isNode) {    // we're in node, but no webSocket provided
         return null;
     } else if ('WebSocket' in window) {
