@@ -234,6 +234,10 @@ See [Challenge Response Authentication](#challenge-response-authentication) sect
 * **onReconnect**. Default value: null. Callback function. Fired every time on reconnection attempt.
 * **onReconnectSuccess**. Default value: null. Callback function. Fired every time when reconnection succeeded.
 * **ws**. Default value: null. User provided WebSocket class. Useful in node enviroment.
+* **additionalHeaders**. Default value: null. User provided additional HTTP headers (for use in Node.js enviroment)
+* **wsRequestOptions**. Default value: null. User provided WS Client Config Options (for use in Node.js enviroment). See 
+docs for [WebSocketClient](https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md), 
+[tls.connect options](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback)
 * **serializer**. Default value: JsonSerializer. User provided serializer class. Useful if you plan to use msgpack encoder
 instead of default json.
 In practice, [msgpack5][] tested and works well with [Wiola][], [msgpack-lite](https://github.com/kawanet/msgpack-lite)
