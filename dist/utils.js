@@ -40,7 +40,7 @@ function getServerUrlNode(url) {
     }
 }
 
-function getWebSocket(url, protocols, ws) {
+function getWebSocket(url, protocols, ws, headers, requestOptions) {
     var parsedUrl = _constants.isNode ? getServerUrlNode(url) : getServerUrlBrowser(url);
 
     if (!parsedUrl) {
@@ -49,7 +49,7 @@ function getWebSocket(url, protocols, ws) {
 
     if (ws) {
         // User provided webSocket class
-        return new ws(parsedUrl, protocols);
+        return new ws(parsedUrl, protocols, null, headers, requestOptions);
     } else if (_constants.isNode) {
         // we're in node, but no webSocket provided
         return null;
