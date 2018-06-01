@@ -23,6 +23,7 @@ If applicable, add screenshots to help explain your problem.
  - OS: [e.g. iOS/Mac/Linux/Windows]
  - Browser and version [e.g. Chrome, Opera, Firefox] or Node.js with version
  - Version of Wampy.js library
+ - WAMP Router and version
 
 **Additional context**
 Add any other context about the problem here.
