@@ -54,11 +54,44 @@ if (isNode) {
             it('allows to connect on instantiation if all required options specified', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
-                    onConnect: done,
+                    onConnect: function () {
+                        done();
+                    },
                     ws: fakeWs,
                     serializer: new MsgpackSerializer()
                 });
                 expect(wampy).to.be.an('object');
+            });
+
+            it('passes welcome details to onConnect() callback', function (done) {
+                let wampy = new Wampy(routerUrl, {
+                    realm: 'AppRealm',
+                    onConnect: function (welcomeDetails) {
+                        expect(welcomeDetails).to.be.an('object');
+                        done();
+                    },
+                    ws: fakeWs,
+                    serializer: new MsgpackSerializer()
+                });
+            });
+
+            it('passes welcome details to onReconnectSuccess() callback', function (done) {
+                let wampy = new Wampy(routerUrl, {
+                    autoReconnect: true,
+                    reconnectInterval : 500,
+                    realm: 'AppRealm',
+                    onClose: function () {
+                        setTimeout(function () {
+                            wampy.connect();
+                        }, 1);
+                    },
+                    onReconnectSuccess: function (welcomeDetails) {
+                        expect(welcomeDetails).to.be.an('object');
+                        done();
+                    },
+                    ws: fakeWs,
+                    serializer: new MsgpackSerializer()
+                }).disconnect();
             });
 
             it('allows to set different options on instantiation', function (done) {
@@ -78,7 +111,9 @@ if (isNode) {
                         },
                         authid: 'userid',
                         authmethods: ['wampcra'],
-                        onConnect: done,
+                        onConnect: function () {
+                            done();
+                        },
                         onClose: function () {
                             done('Reached onClose');
                         },
@@ -141,7 +176,9 @@ if (isNode) {
                     },
                     authid: 'user1',
                     authmethods: ['wampcra'],
-                    onConnect: done,
+                    onConnect: function () {
+                        done();
+                    },
                     onClose: function () {
                         done('Reached onClose');
                     },
@@ -525,7 +562,7 @@ if (isNode) {
             });
 
             it('allows to connect to same WAMP server', function (done) {
-                wampy.options({ onConnect: done })
+                wampy.options({ onConnect: function () { done(); } })
                     .connect();
             });
 
@@ -536,7 +573,9 @@ if (isNode) {
                             wampy.connect(anotherRouterUrl);
                         }, 1);
                     },
-                    onConnect: done
+                    onConnect: function () {
+                        done();
+                    }
                 }).disconnect();
             });
 
@@ -684,7 +723,9 @@ if (isNode) {
 
                 before(function (done) {
                     wampy.options({
-                        onConnect: done,
+                        onConnect: function () {
+                            done();
+                        },
                         onClose: null,
                         onReconnect: null,
                         onError: null

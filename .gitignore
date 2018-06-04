@@ -2,3 +2,4 @@ coverage/
 dist/browser*
 !/.crossbar/config.json
 .crossbar/
+node_modules/
