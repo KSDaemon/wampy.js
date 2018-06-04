@@ -100,6 +100,31 @@ const WAMP_MSG_SPEC = {
                         }
                     }
                 }
+            ],
+            close: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                7458547,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
             ]
         },
         // allows to set different options on instantiation

@@ -51,6 +51,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 ws: WebSocketModule.WebSocket,
                 serializer: new JsonSerializer()
             })
+            expect(wampy).to.be.an('object');
         });
 
         it('passes welcome details to onReconnectSuccess() callback', function (done) {
@@ -58,18 +59,14 @@ describe('Wampy.js [with JSON serializer]', function () {
                 autoReconnect: true,
                 reconnectInterval : 500,
                 realm: 'AppRealm',
-                onClose: function () {
-                    setTimeout(function () {
-                        wampy.connect();
-                    }, 1);
-                },
                 onReconnectSuccess: function (welcomeDetails) {
                     expect(welcomeDetails).to.be.an('object');
                     done();
                 },
                 ws: WebSocketModule.WebSocket,
                 serializer: new JsonSerializer()
-            }).disconnect();
+            });
+            expect(wampy).to.be.an('object');
         });
 
         it('allows to set different options on instantiation', function (done) {

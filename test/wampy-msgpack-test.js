@@ -73,6 +73,7 @@ if (isNode) {
                     ws: fakeWs,
                     serializer: new MsgpackSerializer()
                 });
+                expect(wampy).to.be.an('object');
             });
 
             it('passes welcome details to onReconnectSuccess() callback', function (done) {
@@ -80,18 +81,14 @@ if (isNode) {
                     autoReconnect: true,
                     reconnectInterval : 500,
                     realm: 'AppRealm',
-                    onClose: function () {
-                        setTimeout(function () {
-                            wampy.connect();
-                        }, 1);
-                    },
                     onReconnectSuccess: function (welcomeDetails) {
                         expect(welcomeDetails).to.be.an('object');
                         done();
                     },
                     ws: fakeWs,
                     serializer: new MsgpackSerializer()
-                }).disconnect();
+                });
+                expect(wampy).to.be.an('object');
             });
 
             it('allows to set different options on instantiation', function (done) {
