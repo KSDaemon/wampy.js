@@ -52,11 +52,61 @@ const WAMP_MSG_SPEC = {
                 }
             ]
         },
-        // allows to set different options on instantiation
+        // passes welcome details to onConnect() callback
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
                 2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        // passes welcome details to onReconnectSuccess() callback
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                3,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        // allows to set different options on instantiation
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                4,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {

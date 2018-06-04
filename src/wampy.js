@@ -630,7 +630,7 @@ class Wampy {
                             this._cache.reconnectingAttempts = 0;
 
                             if (this._options.onReconnectSuccess) {
-                                this._options.onReconnectSuccess();
+                                this._options.onReconnectSuccess(data[2]);
                             }
 
                             // Let's renew all previous state
@@ -640,7 +640,7 @@ class Wampy {
                         } else {
                             // Firing onConnect event on real connection to WAMP server
                             if (this._options.onConnect) {
-                                this._options.onConnect();
+                                this._options.onConnect(data[2]);
                             }
                         }
 

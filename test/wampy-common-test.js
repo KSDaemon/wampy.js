@@ -105,5 +105,4 @@ describe('Wampy.js Constructor', function () {
         }, 20);
 
     });
-
 });

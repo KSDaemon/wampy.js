@@ -32,11 +32,44 @@ describe('Wampy.js [with JSON serializer]', function () {
         it('allows to connect on instantiation if all required options specified', function (done) {
             let wampy = new Wampy(routerUrl, {
                 realm: 'AppRealm',
-                onConnect: done,
+                onConnect: function () {
+                    done();
+                },
                 ws: WebSocketModule.WebSocket,
                 serializer: new JsonSerializer()
             });
             expect(wampy).to.be.an('object');
+        });
+
+        it('passes welcome details to onConnect() callback', function (done) {
+            let wampy = new Wampy(routerUrl, {
+                realm: 'AppRealm',
+                onConnect: function (welcomeDetails) {
+                    expect(welcomeDetails).to.be.an('object');
+                    done();
+                },
+                ws: WebSocketModule.WebSocket,
+                serializer: new JsonSerializer()
+            })
+        });
+
+        it('passes welcome details to onReconnectSuccess() callback', function (done) {
+            let wampy = new Wampy(routerUrl, {
+                autoReconnect: true,
+                reconnectInterval : 500,
+                realm: 'AppRealm',
+                onClose: function () {
+                    setTimeout(function () {
+                        wampy.connect();
+                    }, 1);
+                },
+                onReconnectSuccess: function (welcomeDetails) {
+                    expect(welcomeDetails).to.be.an('object');
+                    done();
+                },
+                ws: WebSocketModule.WebSocket,
+                serializer: new JsonSerializer()
+            }).disconnect();
         });
 
         it('allows to set different options on instantiation', function (done) {
@@ -56,7 +89,9 @@ describe('Wampy.js [with JSON serializer]', function () {
                     },
                     authid: 'userid',
                     authmethods: ['wampcra'],
-                    onConnect: done,
+                    onConnect: function () {
+                        done();
+                    },
                     onClose: function () {
                         done('Reached onClose');
                     },
@@ -116,7 +151,9 @@ describe('Wampy.js [with JSON serializer]', function () {
                 },
                 authid: 'user1',
                 authmethods: ['wampcra'],
-                onConnect: done,
+                onConnect: function () {
+                    done();
+                },
                 onClose: function () {
                     done('Reached onClose');
                 },
@@ -500,7 +537,7 @@ describe('Wampy.js [with JSON serializer]', function () {
         });
 
         it('allows to connect to same WAMP server', function (done) {
-            wampy.options({ onConnect: done })
+            wampy.options({ onConnect: function () { done(); } })
                 .connect();
         });
 
@@ -511,7 +548,9 @@ describe('Wampy.js [with JSON serializer]', function () {
                         wampy.connect(anotherRouterUrl);
                     }, 1);
                 },
-                onConnect: done
+                onConnect: function () {
+                    done();
+                }
             }).disconnect();
         });
 
@@ -659,7 +698,9 @@ describe('Wampy.js [with JSON serializer]', function () {
 
             before(function (done) {
                 wampy.options({
-                    onConnect: done,
+                    onConnect: function () {
+                        done();
+                    },
                     onClose: null,
                     onReconnect: null,
                     onError: null
