@@ -2,15 +2,20 @@ language: node_js
 node_js:
    - "node"
 
+addons:
+  apt:
+    packages:
+      - docker-ce
+
 services:
   - docker
 
 sudo: required
 
 before_install:
-    - docker pull crossbario/crossbar
-    - docker run --rm -d -it -p 8888:8888 -v ${PWD}:/node crossbario/crossbar
-    - sleep 5
+    - docker build .crossbar -t wampy/crossbar
+    - docker run --rm --name crossbar -d -p 8888:8888 wampy/crossbar
+    - until docker logs crossbar | grep -qm 1 "Local node configuration applied successfully!"; do sleep 0.2 ; done
 
 after_script: "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- --exit --require babel-core/register -R spec 'test/!(wampy-crossbar)-test.js' && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
 
