@@ -36,6 +36,7 @@ Table of Contents
     * [register](#registertopicuri-callbacks)
     * [unregister](#unregistertopicuri-callbacks)
 * [Using custom serializer](#using-custom-serializer)
+* [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
 * [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Tests and code coverage](#tests-and-code-coverage)
 * [Copyright and License](#copyright-and-license)
@@ -238,8 +239,7 @@ This function receives welcome details as an argument.
 * **ws**. Default value: null. User provided WebSocket class. Useful in node enviroment.
 * **additionalHeaders**. Default value: null. User provided additional HTTP headers (for use in Node.js enviroment)
 * **wsRequestOptions**. Default value: null. User provided WS Client Config Options (for use in Node.js enviroment). See
-docs for [WebSocketClient](https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md),
-[tls.connect options](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback)
+docs for [WebSocketClient][], [tls.connect options][]
 * **serializer**. Default value: JsonSerializer. User provided serializer class. Useful if you plan to use msgpack encoder
 instead of default json.
 In practice, [msgpack5][] tested and works well with [Wiola][], [msgpack-lite](https://github.com/kawanet/msgpack-lite)
@@ -814,6 +814,45 @@ Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or
 
 [Back to TOC](#table-of-contents)
 
+Connecting through TLS in node environment
+==========================================
+
+Starting from v6.2.0 version you can pass additional HTTP Headers and TLS parameters to underlying socket connection 
+in node.js environment. See example below. For `wsRequestOptions` you can pass any option, described in 
+[tls.connect options][] documentation.
+
+```javascript
+const Wampy = require('wampy').Wampy;
+const w3cws = require('websocket').w3cwebsocket;
+let ws;
+
+ws = new Wampy('wss://wamp.router.url:8888/wamp-router', {
+    ws: w3cws,
+    realm: 'realm1',
+    additionalHeaders: {
+        'X-ACL-custom-token': 'dkfjhsdkjfhdkjs',
+        'X-another-custom-header': 'header-value'
+    },
+    wsRequestOptions: {
+        rejectUnauthorized: false,   // this setting allow to connect to untrusted (or self signed) TLS certificate,
+        checkServerIdentity: (servername, cert) => {
+            // A callback function to be used (instead of the builtin tls.checkServerIdentity() function) 
+            // when checking the server's hostname (or the provided servername when explicitly set) 
+            // against the certificate. This should return an <Error> if verification fails. 
+            // The method should return undefined if the servername and cert are verified.
+            if (servername !== 'MyTrustedServerName') {
+                return new Error('Bad server!');
+            }
+        }
+    },
+    onConnect: () => {
+        console.log('Connected to WAMP Router through TLS!');
+    }
+});
+```
+
+[Back to TOC](#table-of-contents)
+
 Quick comparison to other libs
 ==============================
 
@@ -895,6 +934,8 @@ with extension point support
 [Wiola]: http://ksdaemon.github.io/wiola/
 [msgpack5]: https://github.com/mcollina/msgpack5
 [WAMP Spec CRA]: https://tools.ietf.org/html/draft-oberstet-hybi-tavendo-wamp-02#section-13.7.2.3
+[WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
+[tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
 [wampy-cra]: https://github.com/KSDaemon/wampy-cra
 
 [npm-url]: https://www.npmjs.com/package/wampy
