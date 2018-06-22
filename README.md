@@ -834,6 +834,11 @@ ws = new Wampy('wss://wamp.router.url:8888/wamp-router', {
         'X-another-custom-header': 'header-value'
     },
     wsRequestOptions: {
+        ca: fs.readFileSync('ca-crt.pem'),
+        key: fs.readFileSync('client1-key.pem'),
+        cert: fs.readFileSync('client1-crt.pem'),
+        host: 'wamp.router.url',
+        port: 8888,
         rejectUnauthorized: false,   // this setting allow to connect to untrusted (or self signed) TLS certificate,
         checkServerIdentity: (servername, cert) => {
             // A callback function to be used (instead of the builtin tls.checkServerIdentity() function) 
