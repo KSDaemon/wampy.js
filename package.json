@@ -11,7 +11,7 @@
     "coveralls": "^3.0.2",
     "eslint": "^5.3.0",
     "grunt": "^1.0.3",
-    "grunt-babel": "^7.0.0",
+    "grunt-babel": "^8.0.0",
     "grunt-browserify": "^5.3.0",
     "grunt-contrib-clean": "^1.1.0",
     "grunt-contrib-compress": "^1.4.3",
