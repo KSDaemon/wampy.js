@@ -6,7 +6,7 @@
   "devDependencies": {
     "@babel/core": "^7.1.0",
     "@babel/preset-env": "^7.1.0",
-    "babel-register": "^6.26.0",
+    "@babel/register": "^7.0.0",
     "babelify": "^10.0.0",
     "chai": "^4.2.0",
     "coveralls": "^3.0.2",
@@ -59,9 +59,9 @@
     "lint": "node ./node_modules/eslint/bin/eslint src test Gruntfile.js",
     "lint:fix": "node ./node_modules/eslint/bin/eslint --fix src test Gruntfile.js",
     "test": "npm run test:node && npm run test:browser",
-    "test:node": "node ./node_modules/mocha/bin/mocha --exit --require babel-core/register -R spec",
-    "test:node-no-crossbar": "node ./node_modules/mocha/bin/mocha --exit --require babel-core/register -R spec 'test/!(wampy-crossbar)-test.js'",
+    "test:node": "node ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec",
+    "test:node-no-crossbar": "node ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec 'test/!(wampy-crossbar)-test.js'",
     "test:browser": "node ./node_modules/karma/bin/karma start karma.conf.js",
-    "cover": "node ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- --exit --require babel-core/register -R spec 'test/!(wampy-crossbar)-test.js'"
+    "cover": "node ./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha -- --exit --require @babel/register -R spec 'test/!(wampy-crossbar)-test.js'"
   }
 }
