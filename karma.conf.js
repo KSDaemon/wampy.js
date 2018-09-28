@@ -15,7 +15,7 @@ module.exports = function (config) {
         },
 
         browserify: {
-            transform: [['babelify', { 'presets': ['env'] }]]
+            transform: [['babelify', { 'presets': ['@babel/preset-env'] }]]
         },
         coverageReporter: {
             dir: 'coverage/',
