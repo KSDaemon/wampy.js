@@ -50,7 +50,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                 },
                 ws: WebSocketModule.WebSocket,
                 serializer: new JsonSerializer()
-            })
+            });
             expect(wampy).to.be.an('object');
         });
 
