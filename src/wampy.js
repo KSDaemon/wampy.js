@@ -1553,7 +1553,7 @@ class Wampy {
         // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
         msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
 
-        if (payload !== null) {
+        if (payload !== null && typeof (payload) !== 'undefined') {
             if (this._isArray(payload)) {
                 msg.push(payload);
             } else if (this._isPlainObject(payload)) {
