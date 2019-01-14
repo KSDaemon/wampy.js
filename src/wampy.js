@@ -35,7 +35,7 @@ class Wampy {
          * @type {string}
          * @private
          */
-        this.version = 'v6.2.0';
+        this.version = 'v6.2.1';
 
         /**
          * WS Url
@@ -630,7 +630,7 @@ class Wampy {
                             this._cache.reconnectingAttempts = 0;
 
                             if (this._options.onReconnectSuccess) {
-                                this._options.onReconnectSuccess();
+                                this._options.onReconnectSuccess(data[2]);
                             }
 
                             // Let's renew all previous state
@@ -640,7 +640,7 @@ class Wampy {
                         } else {
                             // Firing onConnect event on real connection to WAMP server
                             if (this._options.onConnect) {
-                                this._options.onConnect();
+                                this._options.onConnect(data[2]);
                             }
                         }
 
@@ -1553,7 +1553,7 @@ class Wampy {
         // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
         msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
 
-        if (payload !== null) {
+        if (payload !== null && typeof (payload) !== 'undefined') {
             if (this._isArray(payload)) {
                 msg.push(payload);
             } else if (this._isPlainObject(payload)) {

@@ -36,6 +36,7 @@ Table of Contents
     * [register](#registertopicuri-callbacks)
     * [unregister](#unregistertopicuri-callbacks)
 * [Using custom serializer](#using-custom-serializer)
+* [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
 * [Quick comparison to other libs](#quick-comparison-to-other-libs)
 * [Tests and code coverage](#tests-and-code-coverage)
 * [Copyright and License](#copyright-and-license)
@@ -44,8 +45,8 @@ Table of Contents
 Description
 ===========
 
-Wampy.js is javascript library, that runs both in browser and node.js enviroments, and even in react native enviroment. 
-It implements [WAMP][] v2 specification on top of WebSocket object, also provides additional features like 
+Wampy.js is javascript library, that runs both in browser and node.js enviroments, and even in react native enviroment.
+It implements [WAMP][] v2 specification on top of WebSocket object, also provides additional features like
 autoreconnecting and use of Chaining Pattern. It has no external dependencies (by default) and is easy to use.
 
 Wampy.js supports next WAMP roles and features:
@@ -111,8 +112,8 @@ Wampy.js can be installed using npm or just by file-copy :)
 > npm install wampy
 ```
 
-For simple browser usage just download latest [browser.zip](../../releases/latest) archive and 
-add wampy-all.min.js file to your page. It contains msgpack encoder plus wampy itself. 
+For simple browser usage just download latest [browser.zip](../../releases/latest) archive and
+add wampy-all.min.js file to your page. It contains msgpack encoder plus wampy itself.
 
 ```html
 <script src="browser/wampy-all.min.js"></script>
@@ -124,8 +125,8 @@ In case, you don't plan to use msgpack, just include clean wampy.min.js.
 <script src="browser/wampy.min.js"></script>
 ```
 
-In case you are using any kind of build tools and bundlers, like grunt/gulp/webpack/rollup/etc, 
-your entry point can be **src/wampy.js** if you transpile you code somehow, or **dist/wampy.js** (default package 
+In case you are using any kind of build tools and bundlers, like grunt/gulp/webpack/rollup/etc,
+your entry point can be **src/wampy.js** if you transpile you code somehow, or **dist/wampy.js** (default package
 entry point) which is already transpiled to "env" preset, so it is working out of the box, just bundle modules.
 
 [Back to TOC](#table-of-contents)
@@ -171,7 +172,7 @@ ws = new Wampy({ reconnectInterval: 1*1000, ws: w3cws });
 
 ```
 
-Json serializer will be used by default. If you want to use msgpack serializer, pass it through options. 
+Json serializer will be used by default. If you want to use msgpack serializer, pass it through options.
 Also, you can use your own serializer. Just be sure, it is supported on WAMP router side!
 
 ```javascript
@@ -229,15 +230,16 @@ This function receives two arguments: auth method and challenge details.
 Function should return computed signature, based on challenge details.
 See [Challenge Response Authentication](#challenge-response-authentication) section and [WAMP Spec CRA][] for more info.
 * **onConnect**. Default value: null. Callback function. Fired when connection to wamp server is established.
+This function receives welcome details as an argument.
 * **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
 * **onError**. Default value: null. Callback function. Fired on error in websocket communication.
 * **onReconnect**. Default value: null. Callback function. Fired every time on reconnection attempt.
 * **onReconnectSuccess**. Default value: null. Callback function. Fired every time when reconnection succeeded.
+This function receives welcome details as an argument.
 * **ws**. Default value: null. User provided WebSocket class. Useful in node enviroment.
 * **additionalHeaders**. Default value: null. User provided additional HTTP headers (for use in Node.js enviroment)
-* **wsRequestOptions**. Default value: null. User provided WS Client Config Options (for use in Node.js enviroment). See 
-docs for [WebSocketClient](https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md), 
-[tls.connect options](https://nodejs.org/api/tls.html#tls_tls_connect_options_callback)
+* **wsRequestOptions**. Default value: null. User provided WS Client Config Options (for use in Node.js enviroment). See
+docs for [WebSocketClient][], [tls.connect options][]
 * **serializer**. Default value: JsonSerializer. User provided serializer class. Useful if you plan to use msgpack encoder
 instead of default json.
 In practice, [msgpack5][] tested and works well with [Wiola][], [msgpack-lite](https://github.com/kawanet/msgpack-lite)
@@ -249,11 +251,11 @@ ws.options();
 ws.options({
     reconnectInterval: 1000,
     maxRetries: 999,
-    onConnect: function () { console.log('Yahoo! We are online!'); },
+    onConnect: function (welcomeDetails) { console.log('Yahoo! We are online! Details:', welcomeDetails); },
     onClose: function () { console.log('See you next time!'); },
     onError: function () { console.log('Breakdown happened'); },
     onReconnect: function () { console.log('Reconnecting...'); },
-    onReconnectSuccess: function () { console.log('Reconnection succeeded...'); }
+    onReconnectSuccess: function (welcomeDetails) { console.log('Reconnection succeeded. Details:', welcomeDetails); }
 });
 ```
 
@@ -449,16 +451,16 @@ Parameters:
 
 * **topicURI**. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-* **callbacks**. If it is a function - it will be treated as published event callback or 
+* **callbacks**. If it is a function - it will be treated as published event callback or
 it can be hash table of callbacks:
     * **onSuccess**: will be called when subscription would be confirmed
     * **onError**: will be called if subscription would be aborted with one hash-table parameter with following attributes:
         * **error**: string error description
         * **details**: hash-table with some error details
-    * **onEvent**:   will be called on receiving published event with one hash-table parameter with following attributes: 
+    * **onEvent**:   will be called on receiving published event with one hash-table parameter with following attributes:
         * **argsList**: array payload (may be omitted)
         * **argsDict**: object payload (may be omitted)
-        * **details**: some publication options object. 
+        * **details**: some publication options object.
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
     * **match**: string matching policy ("prefix"|"wildcard")
 
@@ -489,7 +491,7 @@ Must meet a WAMP Spec URI requirements.
     * **onError**: will be called if unsubscribe would be aborted with one hash-table parameter with following attributes:
         * **error**: string error description
         * **details**: hash-table with some error details
-    * **onEvent**: published event callback instance to remove or it can be not specified, 
+    * **onEvent**: published event callback instance to remove or it can be not specified,
                    in this case all callbacks and subscription will be removed.
 
 ```javascript
@@ -533,7 +535,7 @@ is possible to pass array and object-like data simultaneously. In this case pass
     * **exclude_me**: bool flag of receiving publishing event by initiator
                          (if it is subscribed to this topic)
     * **disclose_me**: bool flag of disclosure of publisher identity (its WAMP session ID)
-                         to receivers of a published event 
+                         to receivers of a published event
 
 ```javascript
 ws.publish('user.logged.in');
@@ -567,16 +569,16 @@ is possible to pass array and object-like data simultaneously. In this case pass
     * **argsDict**: object payload (may be omitted)
 * **callbacks**. If it is a function - it will be treated as result callback function
              or it can be hash table of callbacks:
-    * **onSuccess**: will be called with result on successful call with one hash-table parameter with following attributes: 
+    * **onSuccess**: will be called with result on successful call with one hash-table parameter with following attributes:
         * **details**: hash-table with some additional details
         * **argsList**: optional array containing the original list of positional result
                         elements as returned by the _Callee_
         * **argsDict**: optional hash-table containing the original dictionary of keyword result
-                        elements as returned by the _Callee_  
+                        elements as returned by the _Callee_
     * **onError**: will be called if invocation would be aborted with one hash-table parameter with following attributes:
         * **error**: string error description
         * **details**: hash-table with some error details
-        * **argsList**: optional array containing the original error payload list as returned 
+        * **argsList**: optional array containing the original error payload list as returned
                         by the _Callee_ to the _Dealer_
         * **argsDict**: optional hash-table containing the original error
                         payload dictionary as returned by the _Callee_ to the _Dealer_
@@ -585,12 +587,12 @@ is possible to pass array and object-like data simultaneously. In this case pass
                         to endpoints of a routed call
     * **receive_progress**: bool flag for receiving progressive results. In this case onSuccess function
                         will be called every time on receiving result
-    * **timeout**: integer timeout (in ms) for the call to finish 
+    * **timeout**: integer timeout (in ms) for the call to finish
 
 ```javascript
-ws.call('server.time', null, 
-    function (result) { 
-        console.log('Server time is ' + result.argsList[0]); 
+ws.call('server.time', null,
+    function (result) {
+        console.log('Server time is ' + result.argsList[0]);
     }
 );
 
@@ -625,10 +627,10 @@ Parameters:
 * **reqId**. Required. Request ID of RPC call that need to be canceled.
 * **callbacks**. Optional. If it is a function - it will be called if successfully sent canceling message
             or it can be hash table of callbacks:
-    * **onSuccess**: will be called if successfully sent canceling message 
-    * **onError**: will be called if some error occurred 
+    * **onSuccess**: will be called if successfully sent canceling message
+    * **onError**: will be called if some error occurred
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-    * **mode**: string|one of the possible modes: "skip" | "kill" | "killnowait". Skip is default. 
+    * **mode**: string|one of the possible modes: "skip" | "kill" | "killnowait". Skip is default.
 
 ```javascript
 ws.call('start.migration', null, {
@@ -668,11 +670,11 @@ Must meet a WAMP Spec URI requirements.
     * **invoke**: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
 
 Registered PRC during invocation will receive one hash-table argument with following attributes:
- 
+
 * **argsList**: array payload (may be omitted)
 * **argsDict**: object payload (may be omitted)
-* **details**: some invocation options object. One attribute of interest in options is "receive_progress" (boolean), 
-which indicates, that caller is willing to receive progressive results, if possible. Another one is "trustlevel", which 
+* **details**: some invocation options object. One attribute of interest in options is "receive_progress" (boolean),
+which indicates, that caller is willing to receive progressive results, if possible. Another one is "trustlevel", which
 indicates the call trust level, assigned by dealer (of course if it is configured accordingly).
 * **result_handler**: result handler for case when you want to send progressive results. Just call it with one parameter,
 same as you return from simple invocation. Also do not forget to set options: { progress: true } for intermediate results.
@@ -684,7 +686,7 @@ RPC can return no result (undefined), or it must return an object with next attr
 * **argsDict**: object result payload (may be omitted)
 * **options**: some result options object. Possible attribute of options is "progress": true, which
 indicates, that it's a progressive result, so there will be more results in future. Be sure to unset "progress"
-on last result message. 
+on last result message.
 
 ```javascript
 const sqrt_f = function (data) { return { argsList: data.argsList[0]*data.argsList[0] } };
@@ -719,8 +721,8 @@ const getUserName = function () {
 ws.register('get.user.name', getUserName);
 ```
 
-Also it is possible to abort rpc processing and throw error with custom application specific data. 
-This data will be passed to caller onError callback. 
+Also it is possible to abort rpc processing and throw error with custom application specific data.
+This data will be passed to caller onError callback.
 
 Exception object with custom data may have next attributes:
 * **error**. String with custom error uri. Must meet a WAMP Spec URI requirements.
@@ -731,35 +733,35 @@ Exception object with custom data may have next attributes:
 For more details see [WAMP specification 9.2.5](https://tools.ietf.org/html/draft-oberstet-hybi-tavendo-wamp-02#section-9.2.5).
 
 **Note:** Any other type of errors (like built in Javascript runtime TypeErrors, ReferenceErrors) and exceptions are catched by wampy and sent back to the client's side, not just this type of custom errors. In this case the details of the error can be lost.
-  
+
 ```javascript
 const getSystemInfo = function () {
 
     // Application logic
-    
+
     // for example, you need to get data from db
     // and at this time you can't connect to db
-    // you can throw exception with some details for client application 
+    // you can throw exception with some details for client application
 
     const UserException = function () {
         this.error = 'app.error.no_database_connection';
-        this.details = { 
+        this.details = {
          errorCode: 'ECONNREFUSED'
          errorMessage: 'Connection refused by a remote host.',
-         database: 'db', 
-         host: '1.2.3.4', 
-         port: 5432, 
-         dbtype: 'postgres' 
+         database: 'db',
+         host: '1.2.3.4',
+         port: 5432,
+         dbtype: 'postgres'
        };
         this.argsList = ['Not able to connect to the database.'];
         this.argsDict = {};
     };
-    
+
     throw new UserException();
 };
 
 ws.register('get.system.info', getSystemInfo);
-```  
+```
 
 [Back to TOC](#table-of-contents)
 
@@ -797,7 +799,7 @@ ws.unregister('sqrt.value', {
 Using custom serializer
 =======================
 
-From v5.0 version there is option to provide custom serializer. 
+From v5.0 version there is option to provide custom serializer.
 
 Custom serializer instance must meet a few requirements:
 
@@ -807,8 +809,52 @@ Custom serializer instance must meet a few requirements:
  is then passed as websocket subprotocol http header.
 * Have a `isBinary` boolean property, that indicates, is this a binary protocol or not.
 
-Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or 
+Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or
 [MsgpackSerializer.js](src/serializers/MsgpackSerializer.js) as examples.
+
+[Back to TOC](#table-of-contents)
+
+Connecting through TLS in node environment
+==========================================
+
+Starting from v6.2.0 version you can pass additional HTTP Headers and TLS parameters to underlying socket connection 
+in node.js environment. See example below. For `wsRequestOptions` you can pass any option, described in 
+[tls.connect options][] documentation.
+
+```javascript
+const Wampy = require('wampy').Wampy;
+const w3cws = require('websocket').w3cwebsocket;
+let ws;
+
+ws = new Wampy('wss://wamp.router.url:8888/wamp-router', {
+    ws: w3cws,
+    realm: 'realm1',
+    additionalHeaders: {
+        'X-ACL-custom-token': 'dkfjhsdkjfhdkjs',
+        'X-another-custom-header': 'header-value'
+    },
+    wsRequestOptions: {
+        ca: fs.readFileSync('ca-crt.pem'),
+        key: fs.readFileSync('client1-key.pem'),
+        cert: fs.readFileSync('client1-crt.pem'),
+        host: 'wamp.router.url',
+        port: 8888,
+        rejectUnauthorized: false,   // this setting allow to connect to untrusted (or self signed) TLS certificate,
+        checkServerIdentity: (servername, cert) => {
+            // A callback function to be used (instead of the builtin tls.checkServerIdentity() function) 
+            // when checking the server's hostname (or the provided servername when explicitly set) 
+            // against the certificate. This should return an <Error> if verification fails. 
+            // The method should return undefined if the servername and cert are verified.
+            if (servername !== 'MyTrustedServerName') {
+                return new Error('Bad server!');
+            }
+        }
+    },
+    onConnect: () => {
+        console.log('Connected to WAMP Router through TLS!');
+    }
+});
+```
 
 [Back to TOC](#table-of-contents)
 
@@ -893,6 +939,8 @@ with extension point support
 [Wiola]: http://ksdaemon.github.io/wiola/
 [msgpack5]: https://github.com/mcollina/msgpack5
 [WAMP Spec CRA]: https://tools.ietf.org/html/draft-oberstet-hybi-tavendo-wamp-02#section-13.7.2.3
+[WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
+[tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
 [wampy-cra]: https://github.com/KSDaemon/wampy-cra
 
 [npm-url]: https://www.npmjs.com/package/wampy

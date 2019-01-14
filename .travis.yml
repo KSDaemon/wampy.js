@@ -2,22 +2,20 @@ language: node_js
 node_js:
    - "node"
 
-#python:
-#  - "2.7"
-#  - "3.6"
-
 addons:
-  chrome: stable
+  apt:
+    packages:
+      - docker-ce
+
+services:
+  - docker
 
 sudo: required
 
 before_install:
-    - pyenv shell 3.6
-    - export PATH=$HOME/.local/bin:$PATH
-    - pip install --upgrade pip
-    - pip install --user crossbar
-    - crossbar start > /dev/null 2>&1 &
-    - sleep 5
+    - docker build .crossbar -t wampy/crossbar
+    - docker run --rm --name crossbar -d -p 8888:8888 wampy/crossbar
+    - until docker logs crossbar | grep -qm 1 "Ok, local node configuration booted successfully"; do sleep 0.2 ; done
 
 after_script: "./node_modules/istanbul/lib/cli.js cover ./node_modules/mocha/bin/_mocha --report lcovonly -- --exit --require babel-core/register -R spec 'test/!(wampy-crossbar)-test.js' && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage"
 
@@ -28,4 +26,3 @@ notifications:
       - andrew.bakal@gmail.com
     on_success: change
     on_failure: always
-

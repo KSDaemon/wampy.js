@@ -21,7 +21,7 @@ module.exports = function (grunt) {
         browserify: {
             dist4Browser: {
                 options     : {
-                    transform: [['babelify', { 'presets': ['env'] }]]
+                    transform: [['babelify', { 'presets': ['@babel/preset-env'] }]]
                 },
                 files  : {
                     'dist/browser/wampy.js': 'src/browser.js',
