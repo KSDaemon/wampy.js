@@ -20,7 +20,7 @@
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-uglify": "^4.0.0",
     "istanbul": "^1.1.0-alpha.1",
-    "karma": "^3.1.4",
+    "karma": "^4.0.0",
     "karma-browserify": "^6.0.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "^1.1.2",
