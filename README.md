@@ -186,7 +186,7 @@ ws = new Wampy({
 
 // in node.js
 import {Wampy} from 'wampy';
-import {MsgpackSerializer} from 'wampy/dist/serializers';
+import {MsgpackSerializer} from 'wampy/dist/serializers/MsgpackSerializer';
 import {w3cws} from 'websocket';
 
 const msgpack5 = require('msgpack5');
@@ -817,8 +817,8 @@ Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or
 Connecting through TLS in node environment
 ==========================================
 
-Starting from v6.2.0 version you can pass additional HTTP Headers and TLS parameters to underlying socket connection 
-in node.js environment. See example below. For `wsRequestOptions` you can pass any option, described in 
+Starting from v6.2.0 version you can pass additional HTTP Headers and TLS parameters to underlying socket connection
+in node.js environment. See example below. For `wsRequestOptions` you can pass any option, described in
 [tls.connect options][] documentation.
 
 ```javascript
@@ -841,9 +841,9 @@ ws = new Wampy('wss://wamp.router.url:8888/wamp-router', {
         port: 8888,
         rejectUnauthorized: false,   // this setting allow to connect to untrusted (or self signed) TLS certificate,
         checkServerIdentity: (servername, cert) => {
-            // A callback function to be used (instead of the builtin tls.checkServerIdentity() function) 
-            // when checking the server's hostname (or the provided servername when explicitly set) 
-            // against the certificate. This should return an <Error> if verification fails. 
+            // A callback function to be used (instead of the builtin tls.checkServerIdentity() function)
+            // when checking the server's hostname (or the provided servername when explicitly set)
+            // against the certificate. This should return an <Error> if verification fails.
             // The method should return undefined if the servername and cert are verified.
             if (servername !== 'MyTrustedServerName') {
                 return new Error('Bad server!');
