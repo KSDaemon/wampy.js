@@ -773,7 +773,8 @@ class Wampy {
                         if (this._requests[data[1]]) {
                             this._subscriptions[this._requests[data[1]].topic] = this._subscriptions[data[2]] = {
                                 id: data[2],
-                                callbacks: [this._requests[data[1]].callbacks.onEvent]
+                                callbacks: [this._requests[data[1]].callbacks.onEvent],
+                                advancedOptions: this._requests[data[1]].advancedOptions
                             };
 
                             this._subsTopics.add(this._requests[data[1]].topic);
@@ -1058,7 +1059,7 @@ class Wampy {
         for (let topic of st) {
             i = subs[topic].callbacks.length;
             while (i--) {
-                this.subscribe(topic, subs[topic].callbacks[i]);
+                this.subscribe(topic, subs[topic].callbacks[i], subs[topic].advancedOptions);
             }
         }
     }
@@ -1245,7 +1246,8 @@ class Wampy {
 
             this._requests[reqId] = {
                 topic: topicURI,
-                callbacks
+                callbacks,
+                advancedOptions
             };
 
             // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
