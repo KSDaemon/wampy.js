@@ -237,6 +237,12 @@ class Wampy {
             helloCustomDetails: null,
 
             /**
+             * Validation of the topic URI structure
+             * @type {string} - strict or loose
+             */
+            uriValidation: 'strict',
+
+            /**
              * Authentication id to use in challenge
              * @type {string}
              */
@@ -433,8 +439,18 @@ class Wampy {
      * @private
      */
     _validateURI (uri, patternBased, allowWAMP) {
-        const reBase = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
-        const rePattern = /^([0-9a-zA-Z_]+\.{1,2})*([0-9a-zA-Z_]+)$/;
+        let reBase;
+        let rePattern;
+
+        if (this._options.uriValidation === 'strict') {
+            reBase = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
+            rePattern = /^([0-9a-zA-Z_]+\.{1,2})*([0-9a-zA-Z_]+)$/;
+        } else if (this._options.uriValidation === 'loose') {
+            reBase = /^([^\s.#]+\.)*([^\s.#]+)$/;
+            rePattern = /^([^\s.#]+\.{1,2})*([^\s.#]+)$/;
+        } else {
+            return false;
+        }
         const re = patternBased ? rePattern : reBase;
 
         if (allowWAMP) {

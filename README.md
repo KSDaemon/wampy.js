@@ -222,6 +222,7 @@ or had registered some procedures, Wampy will resubscribe to that topics and rer
 will be called
 * **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
 * **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
+* **uriValidation**. Default value: strict. Can be changed to loose for less strict URI validation.
 * **authid**. Default value: null. Authentication (user) id to use in challenge.
 * **authmethods**. Default value: []. Array of strings of supported authentication methods.
 * **onChallenge**. Default value: null. Callback function.
