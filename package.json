@@ -61,11 +61,13 @@
     "lint:fix": "node ./node_modules/eslint/bin/eslint --fix src test Gruntfile.js",
     "test": "npm run test:node && npm run test:browser",
     "test:node": "NODE_ENV=test nyc ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec",
-    "test:node-no-crossbar": "nyc ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec 'test/!(wampy-crossbar)-test.js'",
+    "test:node-no-crossbar": "NODE_ENV=test nyc ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec 'test/!(wampy-crossbar)-test.js'",
     "test:browser": "node ./node_modules/karma/bin/karma start karma.conf.js",
     "cover": "nyc report"
   },
   "nyc": {
+    "sourceMap": false,
+    "instrument": false,
     "include": [
       "src/**/*.js"
     ],
