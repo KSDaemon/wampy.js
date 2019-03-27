@@ -7,6 +7,7 @@
     "@babel/core": "^7.4.0",
     "@babel/preset-env": "^7.4.2",
     "@babel/register": "^7.4.0",
+    "babel-plugin-istanbul": "^5.1.1",
     "babelify": "^10.0.0",
     "chai": "^4.2.0",
     "coveralls": "^3.0.3",
@@ -59,7 +60,7 @@
     "lint": "node ./node_modules/eslint/bin/eslint src test Gruntfile.js",
     "lint:fix": "node ./node_modules/eslint/bin/eslint --fix src test Gruntfile.js",
     "test": "npm run test:node && npm run test:browser",
-    "test:node": "nyc ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec",
+    "test:node": "NODE_ENV=test nyc ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec",
     "test:node-no-crossbar": "nyc ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec 'test/!(wampy-crossbar)-test.js'",
     "test:browser": "node ./node_modules/karma/bin/karma start karma.conf.js",
     "cover": "nyc report"
