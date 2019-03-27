@@ -1,4 +1,9 @@
 {
     "presets": [ "@babel/preset-env" ],
-    "sourceMaps": true
+    "sourceMaps": true,
+    "env": {
+        "test": {
+            "plugins": [ "istanbul" ]
+        }
+    }
 }
