@@ -382,10 +382,41 @@ class Wampy {
      * @private
      */
     _isPlainObject (obj) {
-        return  typeof obj === 'object' // separate from primitives
-                && obj !== null         // is obvious
-                && obj.constructor === Object // separate instances (Array, DOM, ...)
-                && Object.prototype.toString.call(obj) === '[object Object]'; // separate build-in like Math
+        if (!this._isObject(obj)) {
+            return false;
+        }
+
+        // If has modified constructor
+        const ctor = obj.constructor;
+        if (typeof ctor !== 'function') {
+            return false;
+        }
+
+        // If has modified prototype
+        const prot = ctor.prototype;
+        if (this._isObject(prot) === false) {
+            return false;
+        }
+
+        // If constructor does not have an Object-specific method
+        if (prot.hasOwnProperty('isPrototypeOf') === false) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if value is an object
+     * @param obj
+     * @returns {boolean}
+     * @private
+     */
+    _isObject (obj) {
+        return  obj !== null
+                && typeof obj === 'object'
+                && Array.isArray(obj) === false
+                && Object.prototype.toString.call(obj) === '[object Object]';
     }
 
     /**
