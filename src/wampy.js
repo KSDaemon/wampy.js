@@ -35,7 +35,7 @@ class Wampy {
          * @type {string}
          * @private
          */
-        this.version = 'v6.2.1';
+        this.version = 'v6.2.2';
 
         /**
          * WS Url
@@ -59,33 +59,33 @@ class Wampy {
         this._wamp_features = {
             agent: 'Wampy.js ' + this.version,
             roles: {
-                publisher: {
+                publisher : {
                     features: {
                         subscriber_blackwhite_listing: true,
-                        publisher_exclusion: true,
-                        publisher_identification: true
+                        publisher_exclusion          : true,
+                        publisher_identification     : true
                     }
                 },
                 subscriber: {
                     features: {
                         pattern_based_subscription: true,
-                        publication_trustlevels: true
+                        publication_trustlevels   : true
                     }
                 },
-                caller: {
+                caller    : {
                     features: {
-                        caller_identification: true,
+                        caller_identification   : true,
                         progressive_call_results: true,
-                        call_canceling: true,
-                        call_timeout: true
+                        call_canceling          : true,
+                        call_timeout            : true
                     }
                 },
-                callee: {
+                callee    : {
                     features: {
-                        caller_identification: true,
-                        call_trustlevels: true,
+                        caller_identification     : true,
+                        call_trustlevels          : true,
                         pattern_based_registration: true,
-                        shared_registration: true
+                        shared_registration       : true
                     }
                 }
             }
@@ -237,6 +237,12 @@ class Wampy {
             helloCustomDetails: null,
 
             /**
+             * Validation of the topic URI structure
+             * @type {string} - strict or loose
+             */
+            uriValidation: 'strict',
+
+            /**
              * Authentication id to use in challenge
              * @type {string}
              */
@@ -376,7 +382,41 @@ class Wampy {
      * @private
      */
     _isPlainObject (obj) {
-        return (!!obj) && (obj.constructor === Object);
+        if (!this._isObject(obj)) {
+            return false;
+        }
+
+        // If has modified constructor
+        const ctor = obj.constructor;
+        if (typeof ctor !== 'function') {
+            return false;
+        }
+
+        // If has modified prototype
+        const prot = ctor.prototype;
+        if (this._isObject(prot) === false) {
+            return false;
+        }
+
+        // If constructor does not have an Object-specific method
+        if (prot.hasOwnProperty('isPrototypeOf') === false) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if value is an object
+     * @param obj
+     * @returns {boolean}
+     * @private
+     */
+    _isObject (obj) {
+        return obj !== null
+            && typeof obj === 'object'
+            && Array.isArray(obj) === false
+            && Object.prototype.toString.call(obj) === '[object Object]';
     }
 
     /**
@@ -430,8 +470,18 @@ class Wampy {
      * @private
      */
     _validateURI (uri, patternBased, allowWAMP) {
-        const reBase = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
-        const rePattern = /^([0-9a-zA-Z_]+\.{1,2})*([0-9a-zA-Z_]+)$/;
+        let reBase;
+        let rePattern;
+
+        if (this._options.uriValidation === 'strict') {
+            reBase = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
+            rePattern = /^([0-9a-zA-Z_]+\.{1,2})*([0-9a-zA-Z_]+)$/;
+        } else if (this._options.uriValidation === 'loose') {
+            reBase = /^([^\s.#]+\.)*([^\s.#]+)$/;
+            rePattern = /^([^\s.#]+\.{1,2})*([^\s.#]+)$/;
+        } else {
+            return false;
+        }
         const re = patternBased ? rePattern : reBase;
 
         if (allowWAMP) {
@@ -515,7 +565,7 @@ class Wampy {
 
         // Just keep attrs that are have to be present
         this._cache = {
-            reqId: 0,
+            reqId               : 0,
             reconnectingAttempts: 0
         };
     }
@@ -560,7 +610,13 @@ class Wampy {
             // Server have chosen not our preferred protocol
 
             // Falling back to json if possible
-            if (serverProtocol === 'json') {
+            //FIXME Temp hack for React Native Environment.
+            // Due to bug (facebook/react-native#24796), it doesn't provide selected subprotocol.
+            // Remove when ^^^ bug will be fixed.
+            if (serverProtocol === 'json' ||
+                (typeof navigator != 'undefined' &&
+                    navigator.product === 'ReactNative' &&
+                    typeof this._ws.protocol === 'undefined')) {
                 this._options.serializer = new JsonSerializer();
             } else {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_SERIALIZER_AVAILABLE;
@@ -590,7 +646,9 @@ class Wampy {
         if ((this._cache.sessionId || this._cache.reconnectingAttempts) &&
             this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries && !this._cache.isSayingGoodbye) {
             this._cache.sessionId = null;
-            this._cache.timer = setTimeout(() => { this._wsReconnect(); }, this._options.reconnectInterval);
+            this._cache.timer = setTimeout(() => {
+                this._wsReconnect();
+            }, this._options.reconnectInterval);
         } else {
             // No reconnection needed or reached max retries count
             if (this._options.onClose) {
@@ -731,8 +789,8 @@ class Wampy {
 
                                 this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
                                 this._requests[data[2]].callbacks.onError({
-                                    error: data[4],
-                                    details: data[3],
+                                    error   : data[4],
+                                    details : data[3],
                                     argsList: data[5],
                                     argsDict: data[6]
                                 });
@@ -747,8 +805,8 @@ class Wampy {
                                 //             Error|uri, Arguments|list, ArgumentsKw|dict]
                                 this._calls[data[2]] && this._calls[data[2]].onError &&
                                 this._calls[data[2]].onError({
-                                    error: data[4],
-                                    details: data[3],
+                                    error   : data[4],
+                                    details : data[3],
                                     argsList: data[5],
                                     argsDict: data[6]
                                 });
@@ -769,8 +827,9 @@ class Wampy {
                     } else {
                         if (this._requests[data[1]]) {
                             this._subscriptions[this._requests[data[1]].topic] = this._subscriptions[data[2]] = {
-                                id: data[2],
-                                callbacks: [this._requests[data[1]].callbacks.onEvent]
+                                id             : data[2],
+                                callbacks      : [this._requests[data[1]].callbacks.onEvent],
+                                advancedOptions: this._requests[data[1]].advancedOptions
                             };
 
                             this._subsTopics.add(this._requests[data[1]].topic);
@@ -835,7 +894,7 @@ class Wampy {
                             i = this._subscriptions[data[1]].callbacks.length;
                             while (i--) {
                                 this._subscriptions[data[1]].callbacks[i]({
-                                    details: data[3],
+                                    details : data[3],
                                     argsList: data[4],
                                     argsDict: data[5]
                                 });
@@ -854,7 +913,7 @@ class Wampy {
                             //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
 
                             this._calls[data[1]].onSuccess({
-                                details: data[2],
+                                details : data[2],
                                 argsList: data[3],
                                 argsDict: data[4]
                             });
@@ -876,7 +935,7 @@ class Wampy {
                     } else {
                         if (this._requests[data[1]]) {
                             this._rpcRegs[this._requests[data[1]].topic] = this._rpcRegs[data[2]] = {
-                                id: data[2],
+                                id       : data[2],
                                 callbacks: [this._requests[data[1]].callbacks.rpc]
                             };
 
@@ -1055,7 +1114,7 @@ class Wampy {
         for (let topic of st) {
             i = subs[topic].callbacks.length;
             while (i--) {
-                this.subscribe(topic, subs[topic].callbacks[i]);
+                this.subscribe(topic, subs[topic].callbacks[i], subs[topic].advancedOptions);
             }
         }
     }
@@ -1219,7 +1278,9 @@ class Wampy {
             }
         }
 
-        if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: true }, 'broker', callbacks)) {
+        if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: true },
+            'broker',
+            callbacks)) {
             return this;
         }
 
@@ -1242,7 +1303,8 @@ class Wampy {
 
             this._requests[reqId] = {
                 topic: topicURI,
-                callbacks
+                callbacks,
+                advancedOptions
             };
 
             // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
@@ -1708,7 +1770,9 @@ class Wampy {
             }
         }
 
-        if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: false }, 'dealer', callbacks)) {
+        if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: false },
+            'dealer',
+            callbacks)) {
             return this;
         }
 

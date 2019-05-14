@@ -28,12 +28,12 @@ Table of Contents
     * [disconnect](#disconnect)
     * [abort](#abort)
     * [Challenge Response Authentication](#challenge-response-authentication)
-    * [subscribe](#subscribetopicuri-callbacks)
+    * [subscribe](#subscribetopicuri-callbacks-advancedoptions)
     * [unsubscribe](#unsubscribetopicuri-callbacks)
     * [publish](#publishtopicuri-payload-callbacks-advancedoptions)
     * [call](#calltopicuri-payload-callbacks-advancedoptions)
     * [cancel](#cancelreqid-callbacks-advancedoptions)
-    * [register](#registertopicuri-callbacks)
+    * [register](#registertopicuri-callbacks-advancedoptions)
     * [unregister](#unregistertopicuri-callbacks)
 * [Using custom serializer](#using-custom-serializer)
 * [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
@@ -186,7 +186,7 @@ ws = new Wampy({
 
 // in node.js
 import {Wampy} from 'wampy';
-import {MsgpackSerializer} from 'wampy/dist/serializers';
+import {MsgpackSerializer} from 'wampy/dist/serializers/MsgpackSerializer';
 import {w3cws} from 'websocket';
 
 const msgpack5 = require('msgpack5');
@@ -222,6 +222,7 @@ or had registered some procedures, Wampy will resubscribe to that topics and rer
 will be called
 * **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
 * **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
+* **uriValidation**. Default value: strict. Can be changed to loose for less strict URI validation.
 * **authid**. Default value: null. Authentication (user) id to use in challenge.
 * **authmethods**. Default value: []. Array of strings of supported authentication methods.
 * **onChallenge**. Default value: null. Callback function.
@@ -817,8 +818,8 @@ Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or
 Connecting through TLS in node environment
 ==========================================
 
-Starting from v6.2.0 version you can pass additional HTTP Headers and TLS parameters to underlying socket connection 
-in node.js environment. See example below. For `wsRequestOptions` you can pass any option, described in 
+Starting from v6.2.0 version you can pass additional HTTP Headers and TLS parameters to underlying socket connection
+in node.js environment. See example below. For `wsRequestOptions` you can pass any option, described in
 [tls.connect options][] documentation.
 
 ```javascript
@@ -841,9 +842,9 @@ ws = new Wampy('wss://wamp.router.url:8888/wamp-router', {
         port: 8888,
         rejectUnauthorized: false,   // this setting allow to connect to untrusted (or self signed) TLS certificate,
         checkServerIdentity: (servername, cert) => {
-            // A callback function to be used (instead of the builtin tls.checkServerIdentity() function) 
-            // when checking the server's hostname (or the provided servername when explicitly set) 
-            // against the certificate. This should return an <Error> if verification fails. 
+            // A callback function to be used (instead of the builtin tls.checkServerIdentity() function)
+            // when checking the server's hostname (or the provided servername when explicitly set)
+            // against the certificate. This should return an <Error> if verification fails.
             // The method should return undefined if the servername and cert are verified.
             if (servername !== 'MyTrustedServerName') {
                 return new Error('Bad server!');
@@ -933,6 +934,10 @@ with extension point support
 * [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
 
 [Back to TOC](#table-of-contents)
+
+Thanks JetBrains for support! Best IDEs for every language!
+
+[![JetBrains](https://user-images.githubusercontent.com/458096/54276284-086cad00-459e-11e9-9684-47536d9520c4.png)](https://www.jetbrains.com/?from=wampy.js)
 
 [WAMP]: http://wamp-proto.org/
 [WAMP specification]: http://wamp-proto.org/

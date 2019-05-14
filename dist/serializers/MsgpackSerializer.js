@@ -7,7 +7,7 @@ exports.MsgpackSerializer = void 0;
 
 var _msgpack = _interopRequireDefault(require("msgpack5"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -15,7 +15,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-var msgpack = (0, _msgpack.default)();
+var msgpack = (0, _msgpack["default"])();
 
 var MsgpackSerializer =
 /*#__PURE__*/

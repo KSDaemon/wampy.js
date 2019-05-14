@@ -80,6 +80,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                     reconnectInterval: 10000,
                     maxRetries: 50,
                     realm: 'AppRealm',
+                    uriValidation: 'loose',
                     helloCustomDetails: helloCustomDetails,
                     onChallenge: function () {
                         done('Reached onChallenge');
@@ -110,6 +111,7 @@ describe('Wampy.js [with JSON serializer]', function () {
             expect(options.reconnectInterval).to.be.equal(10000);
             expect(options.maxRetries).to.be.equal(50);
             expect(options.realm).to.be.equal('AppRealm');
+            expect(options.uriValidation).to.be.equal('loose');
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onChallenge).to.be.a('function');
             expect(options.authid).to.be.equal('userid');
@@ -128,6 +130,7 @@ describe('Wampy.js [with JSON serializer]', function () {
             expect(options.reconnectInterval).to.be.equal(10000);
             expect(options.maxRetries).to.be.equal(50);
             expect(options.realm).to.be.equal('AppRealm');
+            expect(options.uriValidation).to.be.equal('loose');
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onChallenge).to.be.a('function');
             expect(options.authid).to.be.equal('userid');
@@ -417,6 +420,7 @@ describe('Wampy.js [with JSON serializer]', function () {
                     autoReconnect     : true,
                     reconnectInterval : 1000,
                     maxRetries        : 5,
+                    uriValidation     : 'loose',
                     helloCustomDetails: helloCustomDetails,
                     onChallenge       : function () {
                     },
@@ -427,6 +431,7 @@ describe('Wampy.js [with JSON serializer]', function () {
             expect(options.autoReconnect).to.be.true;
             expect(options.reconnectInterval).to.be.equal(1000);
             expect(options.maxRetries).to.be.equal(5);
+            expect(options.uriValidation).to.be.equal('loose');
             expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
             expect(options.onChallenge).to.be.a('function');
             expect(options.authid).to.be.equal('userid');
@@ -695,12 +700,13 @@ describe('Wampy.js [with JSON serializer]', function () {
 
             before(function (done) {
                 wampy.options({
-                    onConnect: function () {
+                    uriValidation: 'strict',
+                    onConnect    : function () {
                         done();
                     },
-                    onClose: null,
-                    onReconnect: null,
-                    onError: null
+                    onClose      : null,
+                    onReconnect  : null,
+                    onError      : null
                 })
                     .connect();
             });
@@ -785,7 +791,6 @@ describe('Wampy.js [with JSON serializer]', function () {
                                     );
 
                                     done();
-
                                 }
                             }).connect();
                         }, 1);
