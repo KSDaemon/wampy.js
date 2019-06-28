@@ -35,7 +35,7 @@ class Wampy {
          * @type {string}
          * @private
          */
-        this.version = 'v5.0.1';
+        this.version = 'v5.0.2';
 
         /**
          * WS Url
@@ -520,7 +520,7 @@ class Wampy {
             throw new Error('Binary type is not allowed: ' + type);
         }
 
-        this._ws.binatyType = type;
+        this._ws.binaryType = type;
 
         // WAMP SPEC: [HELLO, Realm|uri, Details|dict]
         // Sending directly 'cause it's a hello msg and no sessionId check is needed
