@@ -1,4 +1,11 @@
 {
-    "presets": [ "es2015" ],
-    "sourceMaps": true
+    "presets": [ "@babel/preset-env" ],
+    "sourceMaps": true,
+    "env": {
+        "test": {
+            "plugins": [
+                "istanbul"
+            ]
+        }
+    }
 }

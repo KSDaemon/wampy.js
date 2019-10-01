@@ -46,6 +46,10 @@ export const WAMP_ERROR_MSG = {
         code: 4,
         description: 'Invalid parameter(s) specified!'
     },
+    NO_SERIALIZER_AVAILABLE: {
+        code: 6,
+        description: 'Server has chosen a serializer, which is not available!'
+    },
     NON_EXIST_UNSUBSCRIBE: {
         code: 7,
         description: 'Trying to unsubscribe from non existent subscription!'

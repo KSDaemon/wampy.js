@@ -52,11 +52,86 @@ const WAMP_MSG_SPEC = {
                 }
             ]
         },
-        // allows to set different options on instantiation
+        // passes welcome details to onConnect() callback
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
                 2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        // passes welcome details to onReconnectSuccess() callback
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                3,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            close: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                7458547,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        // allows to set different options on instantiation
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                4,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {
@@ -120,6 +195,205 @@ const WAMP_MSG_SPEC = {
                         }
                     }
                 }
+            ]
+        },
+        // drops connection on receiving WELCOME message after session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                12345,
+                {}
+            ]
+        },
+        {
+            data: null,
+            silent: true
+        },
+        // drops connection on receiving CHALLENGE message after session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.CHALLENGE,
+                12345,
+                {}
+            ]
+        },
+        {
+            data: null,
+            silent: true
+        },
+        // drops connection on receiving GOODBYE message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving ERROR message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving invalid ERROR message after session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                12345,
+                12345
+            ]
+        },
+        {
+            data: null,
+            silent: true
+        },
+        // drops connection on receiving SUBSCRIBED message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving UNSUBSCRIBED message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.UNSUBSCRIBED,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving PUBLISHED message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving EVENT message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving RESULT message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving REGISTERED message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving UNREGISTERED message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.UNREGISTERED,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving INVOCATION message before session was established
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                {},
+                ''
+            ]
+        },
+        // drops connection on receiving non-compliant WAMP message
+        {
+            data: [
+                12345,
+                {},
+                ''
             ]
         },
         // Instance before hook
@@ -601,7 +875,99 @@ const WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
-        // allows to publish/subscribe event without payload
+        // allows to subscribe to prefix-based topic
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                399   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                419
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                429
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                399,
+                419,
+                { topic: 'subscribe.prefix.one' }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                399,
+                429,
+                { topic: 'subscribe.prefix.two.three' }
+            ]
+        },
+        // allows to subscribe to wildcard-based topic
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                3999   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                4199
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                4299
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                3999,
+                4199,
+                { topic: 'subscribe.one.wildcard' }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                3999,
+                4299,
+                { topic: 'subscribe.two.wildcard' }
+            ]
+        },
+        // allows to publish event without payload
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
@@ -647,7 +1013,7 @@ const WAMP_MSG_SPEC = {
                 {}
             ]
         },
-        // allows to publish/subscribe event with int payload
+        // allows to publish event with int payload
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
@@ -695,7 +1061,7 @@ const WAMP_MSG_SPEC = {
                 [25]
             ]
         },
-        // allows to publish/subscribe event with string payload
+        // allows to publish event with string payload
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
@@ -743,7 +1109,7 @@ const WAMP_MSG_SPEC = {
                 ['payload']
             ]
         },
-        // allows to publish/subscribe event with array payload
+        // allows to publish event with array payload
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
@@ -791,7 +1157,7 @@ const WAMP_MSG_SPEC = {
                 [1, 2, 3, 4, 5]
             ]
         },
-        // allows to publish/subscribe event with hash-table payload
+        // allows to publish event with hash-table payload
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
@@ -817,6 +1183,15 @@ const WAMP_MSG_SPEC = {
                 122
             ],
             from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                123
+            ],
+            from: [1],
             to: [1],
             next: true
         },
@@ -826,7 +1201,7 @@ const WAMP_MSG_SPEC = {
                 11,
                 121,
                 {},
-                null,
+                [],
                 { key1: 100, key2: 'string-key' }
             ],
             next: true
@@ -837,7 +1212,68 @@ const WAMP_MSG_SPEC = {
                 11,
                 122,
                 {},
-                null,
+                [],
+                { key1: 100, key2: 'string-key' }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                11,
+                123,
+                {},
+                [],
+                { key1: 100, key2: 'string-key' }
+            ]
+        },
+        // allows to publish event with both array and hash-table payload
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                1177   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                12177
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                12277
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                1177,
+                12177,
+                {},
+                [1, 2, 3, 4, 5],
+                { key1: 100, key2: 'string-key' }
+            ],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                1177,
+                12277,
+                {},
+                [1, 2, 3, 4, 5],
                 { key1: 100, key2: 'string-key' }
             ]
         },
@@ -868,36 +1304,6 @@ const WAMP_MSG_SPEC = {
                 14,
                 {},
                 ['payload']
-            ]
-        },
-        // allows to receive events with array and hash-table payload at the same time
-        {
-            data: [
-                WAMP_MSG_SPEC.SUBSCRIBED,
-                'RequestId',
-                118   // Subscription id need in next publish msg
-            ],
-            from: [1],
-            to: [1]
-        },
-        {
-            data: [
-                WAMP_MSG_SPEC.PUBLISHED,
-                'RequestId',
-                1225
-            ],
-            from: [1],
-            to: [1],
-            next: true
-        },
-        {
-            data: [
-                WAMP_MSG_SPEC.EVENT,
-                118,
-                1225,
-                {},
-                [1, 2, 3, 4, 5],
-                { key1: 100, key2: 'string-key' }
             ]
         },
         // allows to unsubscribe from topic only specified handler
@@ -1046,6 +1452,36 @@ const WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
+        // allows to register prefix-based RPC
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                209   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to register wildcard-based RPC
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                2099   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to specify invocation policy during RPC registration
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                2599   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
         // allows to call RPC without payload
         {
             data: [
@@ -1095,7 +1531,30 @@ const WAMP_MSG_SPEC = {
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
                 {},
-                null,
+                [],
+                { key1: 100, key2: 'string-key' }
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [],
+                { key1: 100, key2: 'string-key' }
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with both array and hash-table payload
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [1, 2, 3, 4, 5],
                 { key1: 100, key2: 'string-key' }
             ],
             from: [1],
@@ -1163,6 +1622,17 @@ const WAMP_MSG_SPEC = {
                 'RequestId',
                 {},
                 [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // checks options during canceling RPC invocation
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { progress: true },
+                [50]
             ],
             from: [1],
             to: [1]
@@ -1260,10 +1730,39 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                {}
+                { }
+            ],
+            from: [1, 2],
+            to: [1, 2]
+        },
+        // allows to invoke pattern-based RPC providing original uri in options
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                2292   // Registration ID
             ],
             from: [1],
             to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                2292, // Registration ID
+                { topic: 'register.prefixbased.maiden' }
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { }
+            ],
+            from: [1, 2],
+            to: [1, 2]
         },
         // allows to invoke asynchronous RPC with single value
         {
@@ -1290,11 +1789,10 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                {},
-                [100]
+                {}
             ],
-            from: [1],
-            to: [1]
+            from: [1, 2, 3],
+            to: [1, 2, 3]
         },
         // allows to invoke asynchronous RPC with array value
         {
@@ -1321,11 +1819,10 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                {},
-                [1, 2, 3, 4, 5]
+                {}
             ],
-            from: [1],
-            to: [1]
+            from: [1, 2, 3],
+            to: [1, 2, 3]
         },
         // allows to invoke asynchronous RPC with hash-table value
         {
@@ -1343,7 +1840,7 @@ const WAMP_MSG_SPEC = {
                 'RequestId',
                 25, // Registration ID
                 {},
-                null,
+                [],
                 { key1: 100, key2: 'string-key' }
             ],
             from: [1],
@@ -1353,12 +1850,85 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                {},
-                null,
-                { key1: 100, key2: 'string-key' }
+                {}
+            ],
+            from: [1, 2, 3, 4],
+            to: [1, 2, 3, 4]
+        },
+        // allows to return progressive results from asynchronous RPC
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                251   // Registration ID
             ],
             from: [1],
             to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                251, // Registration ID
+                { receive_progress: true },
+                [0]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {}
+            ],
+            from: [1, 2, 3],
+            to: [1, 2, 3]
         },
         // calls error handler if asynchronous RPC was rejected
         {
@@ -1485,7 +2055,7 @@ const WAMP_MSG_SPEC = {
                 'RequestId',
                 {},
                 'app.error.custom_invocation_exception',
-                null,
+                [],
                 { key1: 'key1', key2: true, key3: 25 }
             ],
             from: [2],
@@ -1579,7 +2149,7 @@ const WAMP_MSG_SPEC = {
                 'RequestId',
                 {},
                 'call.error',
-                null,
+                [],
                 { k1: 1, k2: 2 }
             ],
             from: [1],

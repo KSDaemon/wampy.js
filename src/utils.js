@@ -1,4 +1,4 @@
-import { isNode, ALLOWED_BINARY_TYPES } from './constants';
+import { isNode } from './constants';
 
 function getServerUrlBrowser (url) {
     let scheme, port;
@@ -15,7 +15,7 @@ function getServerUrlBrowser (url) {
     } else if (url[0] === '/') {    // just path on current server
         port = window.location.port !== '' ? ':' + window.location.port : '';
         return scheme + window.location.hostname + port + url;
-    } else {    // domain
+    } else {    // assuming just domain+path
         return scheme + url;
     }
 }
@@ -28,7 +28,7 @@ function getServerUrlNode (url) {
     }
 }
 
-export function getWebSocket (url, protocols, ws) {
+export function getWebSocket (url, protocols, ws, headers, requestOptions) {
     const parsedUrl = isNode ? getServerUrlNode(url) : getServerUrlBrowser(url);
 
     if (!parsedUrl) {
@@ -36,7 +36,7 @@ export function getWebSocket (url, protocols, ws) {
     }
 
     if (ws) {   // User provided webSocket class
-        return new ws(parsedUrl, protocols);
+        return new ws(parsedUrl, protocols, null, headers, requestOptions);
     } else if (isNode) {    // we're in node, but no webSocket provided
         return null;
     } else if ('WebSocket' in window) {
@@ -48,8 +48,4 @@ export function getWebSocket (url, protocols, ws) {
     }
 
     return null;
-}
-
-export function isBinaryTypeAllowed (type) {
-    return ALLOWED_BINARY_TYPES.indexOf(type) !== -1;
 }

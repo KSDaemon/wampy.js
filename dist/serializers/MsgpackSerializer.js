@@ -1,42 +1,60 @@
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
-    value: true
+  value: true
 });
-exports.MsgpackSerializer = undefined;
+exports.MsgpackSerializer = void 0;
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _msgpack = _interopRequireDefault(require("msgpack5"));
 
-var _msgpack = require('msgpack5');
-
-var _msgpack2 = _interopRequireDefault(_msgpack);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var msgpack = (0, _msgpack2.default)();
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-var MsgpackSerializer = exports.MsgpackSerializer = function () {
-    function MsgpackSerializer() {
-        _classCallCheck(this, MsgpackSerializer);
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
-        this.protocol = 'msgpack';
-        this.binaryType = 'arraybuffer';
+var msgpack = (0, _msgpack["default"])();
+
+var MsgpackSerializer =
+/*#__PURE__*/
+function () {
+  function MsgpackSerializer() {
+    _classCallCheck(this, MsgpackSerializer);
+
+    this.protocol = 'msgpack';
+    this.isBinary = true;
+  }
+
+  _createClass(MsgpackSerializer, [{
+    key: "encode",
+    value: function encode(data) {
+      return msgpack.encode(data);
     }
+  }, {
+    key: "decode",
+    value: function decode(data) {
+      return new Promise(function (resolve) {
+        var type = data.constructor.name;
 
-    _createClass(MsgpackSerializer, [{
-        key: 'encode',
-        value: function encode(data) {
-            return msgpack.encode(data);
-        }
-    }, {
-        key: 'decode',
-        value: function decode(data) {
-            return msgpack.decode(new Uint8Array(data));
-        }
-    }]);
+        if (type === 'ArrayBuffer' || type === 'Buffer') {
+          resolve(msgpack.decode(new Uint8Array(data)));
+        } else {
+          var reader = new FileReader();
 
-    return MsgpackSerializer;
+          reader.onload = function () {
+            resolve(msgpack.decode(new Uint8Array(this.result)));
+          };
+
+          reader.readAsArrayBuffer(data);
+        }
+      });
+    }
+  }]);
+
+  return MsgpackSerializer;
 }();
+
+exports.MsgpackSerializer = MsgpackSerializer;
 //# sourceMappingURL=MsgpackSerializer.js.map
