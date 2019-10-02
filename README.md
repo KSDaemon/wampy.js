@@ -1,7 +1,7 @@
 wampy.js
 ========
 
-Simple WAMP (WebSocket Application Messaging Protocol) Javascript client-side implementation
+Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation (Browser and node.js)
 
 [![NPM version][npm-image]][npm-url]
 [![Build Status][travis-image]][travis-url]
