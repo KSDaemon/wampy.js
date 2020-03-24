@@ -37,7 +37,7 @@
   "main": "dist/wampy.js",
   "dependencies": {
     "msgpack5": "^4.2.1",
-    "wampy-cra": "^0.1.1",
+    "wampy-cra": "^0.1.2",
     "websocket": "^1.0.31"
   },
   "repository": {
