@@ -69,7 +69,8 @@ class Wampy {
                 subscriber: {
                     features: {
                         pattern_based_subscription: true,
-                        publication_trustlevels   : true
+                        publication_trustlevels   : true,
+                        publisher_identification  : true
                     }
                 },
                 caller    : {
