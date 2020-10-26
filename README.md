@@ -82,8 +82,8 @@ Usage example
 
 ```javascript
 const ws = new Wampy('/ws/', { realm: 'AppRealm' });
-ws.subscribe('system.monitor.update', function (dataArr, dataObj) { console.log('Received system.monitor.update event!'); })
-  .subscribe('client.message', function (dataArr, dataObj) { console.log('Received client.message event!'); })
+ws.subscribe('system.monitor.update', function (dataArr) { console.log('Received system.monitor.update event!'); })
+  .subscribe('client.message', function (dataArr) { console.log('Received client.message event!'); })
 
 ws.call('get.server.time', null, {
     onSuccess: function (dataArr, dataObj) {
