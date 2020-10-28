@@ -59,6 +59,7 @@ Wampy.js supports next WAMP roles and features:
 * subscriber:
     * pattern-based subscription
     * publication trust levels
+    * publisher identification
 * caller:
     * caller identification
     * progressive call results
