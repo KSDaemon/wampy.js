@@ -59,6 +59,7 @@ Wampy.js supports next WAMP roles and features:
 * subscriber:
     * pattern-based subscription
     * publication trust levels
+    * publisher identification
 * caller:
     * caller identification
     * progressive call results
@@ -82,16 +83,16 @@ Usage example
 
 ```javascript
 const ws = new Wampy('/ws/', { realm: 'AppRealm' });
-ws.subscribe('system.monitor.update', function (dataArr, dataObj) { console.log('Received system.monitor.update event!'); })
-  .subscribe('client.message', function (dataArr, dataObj) { console.log('Received client.message event!'); })
+ws.subscribe('system.monitor.update', function (eventData) { console.log('Received system.monitor.update event!', eventData); })
+  .subscribe('client.message', function (eventData) { console.log('Received client.message event!', eventData); })
 
 ws.call('get.server.time', null, {
-    onSuccess: function (dataArr, dataObj) {
+    onSuccess: function (resultData) {
         console.log('RPC successfully called');
-        console.log('Server time is ' + dataArr[0]);
+        console.log('Server time is ' + resultData.argsDict.serverTime);
     },
-    onError: function (err, detailsObj) {
-        console.log('RPC call failed with error ' + err);
+    onError: function (errData) {
+        console.log('RPC call failed with error ' + errData.error);
     }
 });
 
@@ -466,12 +467,12 @@ it can be hash table of callbacks:
     * **match**: string matching policy ("prefix"|"wildcard")
 
 ```javascript
-ws.subscribe('chat.message.received', function (msg) { console.log('Received new chat message!'); });
+ws.subscribe('chat.message.received', function (eventData) { console.log('Received new chat message!', eventData); });
 
 ws.subscribe('some.another.topic', {
    onSuccess: function () { console.log('Successfully subscribed to topic'); },
-   onError: function (err) { console.log('Subscription error:' + err.error); },
-   onEvent: function (result) { console.log('Received topic event'); }
+   onError: function (errData) { console.log('Subscription error:' + err.error); },
+   onEvent: function (eventData) { console.log('Received topic event', eventData); }
 });
 ```
 
@@ -548,7 +549,7 @@ ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
 });
 ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
   onSuccess: function () { console.log('User successfully modified'); },
-  onError: function (err, details) { console.log('User modification failed', err); }
+  onError: function (errData) { console.log('User modification failed', errData.error, errData.details); }
 });
 ws.publish('chat.message.received', ['Private message'], null, { eligible: 123456789 });
 ```
@@ -611,7 +612,7 @@ ws.call('restore.backup', { backupFile: 'backup.zip' }, {
         console.log('Backup successfully restored');
     },
     onError: function (err) {
-        console.log('Restore failed!', err.error);
+        console.log('Restore failed!', err.error, err.details);
     }
 });
 ```

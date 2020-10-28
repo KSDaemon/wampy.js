@@ -17,9 +17,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
 var msgpack = (0, _msgpack["default"])();
 
-var MsgpackSerializer =
-/*#__PURE__*/
-function () {
+var MsgpackSerializer = /*#__PURE__*/function () {
   function MsgpackSerializer() {
     _classCallCheck(this, MsgpackSerializer);
 

@@ -35,7 +35,7 @@ class Wampy {
          * @type {string}
          * @private
          */
-        this.version = 'v6.2.2';
+        this.version = 'v6.3.0';
 
         /**
          * WS Url
@@ -69,7 +69,8 @@ class Wampy {
                 subscriber: {
                     features: {
                         pattern_based_subscription: true,
-                        publication_trustlevels   : true
+                        publication_trustlevels   : true,
+                        publisher_identification  : true
                     }
                 },
                 caller    : {
