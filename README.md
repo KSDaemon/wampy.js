@@ -9,8 +9,7 @@ Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation
 [![Dependency Status][depstat-image]][depstat-url]
 [![DevDependency Status][depstat-dev-image]][depstat-dev-url]
 [![MIT License][license-image]][license-url]
-[![Greenkeeper badge][greenkeeper-image]][greenkeeper-url]
-[![Gitter Chat][gitter-image]][gitter-url]
+[![Known Vulnerabilities][snyk-image]][snyk-url]
 
 Table of Contents
 =================
@@ -964,13 +963,10 @@ Thanks JetBrains for support! Best IDEs for every language!
 [depstat-dev-url]: https://david-dm.org/KSDaemon/wampy.js
 [depstat-dev-image]: https://david-dm.org/KSDaemon/wampy.js/dev-status.svg?style=flat
 
-[gitter-url]: https://gitter.im/KSDaemon/wampy.js
-[gitter-image]: https://badges.gitter.im/Join%20Chat.svg
-
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: http://opensource.org/licenses/MIT
 
-[greenkeeper-image]: https://badges.greenkeeper.io/KSDaemon/wampy.js.svg
-[greenkeeper-url]: https://greenkeeper.io/
+[snyk-image]: https://snyk.io/test/github/KSDaemon/wampy.js/badge.svg?targetFile=package.json
+[snyk-url]: https://snyk.io/test/github/KSDaemon/wampy.js?targetFile=package.json
 
 [DefinitelyTyped.org]: http://definitelytyped.org/
