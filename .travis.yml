@@ -1,4 +1,6 @@
 language: node_js
+os: linux
+dist: xenial
 node_js:
    - "node"
 
@@ -9,8 +11,6 @@ addons:
 
 services:
   - docker
-
-sudo: required
 
 before_install:
     - docker build .crossbar -t wampy/crossbar
