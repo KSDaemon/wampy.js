@@ -14,32 +14,34 @@ Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation
 Table of Contents
 =================
 
-* [Description](#description)
-* [Usage example](#usage-example)
-* [Installation](#installation)
-* [Updating versions](#updating-versions)
-* [API](#api)
-    * [Constructor](#constructorurl-options)
-    * [options](#optionsopts)
-    * [getOpStatus](#getopstatus)
-    * [getSessionId](#getsessionid)
-    * [connect](#connecturl)
-    * [disconnect](#disconnect)
-    * [abort](#abort)
-    * [Challenge Response Authentication](#challenge-response-authentication)
-    * [subscribe](#subscribetopicuri-callbacks-advancedoptions)
-    * [unsubscribe](#unsubscribetopicuri-callbacks)
-    * [publish](#publishtopicuri-payload-callbacks-advancedoptions)
-    * [call](#calltopicuri-payload-callbacks-advancedoptions)
-    * [cancel](#cancelreqid-callbacks-advancedoptions)
-    * [register](#registertopicuri-callbacks-advancedoptions)
-    * [unregister](#unregistertopicuri-callbacks)
-* [Using custom serializer](#using-custom-serializer)
-* [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
-* [Quick comparison to other libs](#quick-comparison-to-other-libs)
-* [Tests and code coverage](#tests-and-code-coverage)
-* [Copyright and License](#copyright-and-license)
-* [See Also](#see-also)
+- [wampy.js](#wampyjs)
+- [Table of Contents](#table-of-contents)
+- [Description](#description)
+- [Usage example](#usage-example)
+- [Installation](#installation)
+- [Updating versions](#updating-versions)
+- [API](#api)
+  - [Constructor([url[, options]])](#constructorurl-options)
+  - [options([opts])](#optionsopts)
+  - [getOpStatus()](#getopstatus)
+  - [getSessionId()](#getsessionid)
+  - [connect([url])](#connecturl)
+  - [disconnect()](#disconnect)
+  - [abort()](#abort)
+  - [Challenge Response Authentication](#challenge-response-authentication)
+  - [subscribe(topicURI, callbacks[, advancedOptions])](#subscribetopicuri-callbacks-advancedoptions)
+  - [unsubscribe(topicURI[, callbacks])](#unsubscribetopicuri-callbacks)
+  - [publish(topicURI[, payload[, callbacks[, advancedOptions]]])](#publishtopicuri-payload-callbacks-advancedoptions)
+  - [call(topicURI[, payload[, callbacks[, advancedOptions]]])](#calltopicuri-payload-callbacks-advancedoptions)
+  - [cancel(reqId[, callbacks[, advancedOptions]])](#cancelreqid-callbacks-advancedoptions)
+  - [register(topicURI, callbacks[, advancedOptions])](#registertopicuri-callbacks-advancedoptions)
+  - [unregister(topicURI[, callbacks])](#unregistertopicuri-callbacks)
+- [Using custom serializer](#using-custom-serializer)
+- [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
+- [Quick comparison to other libs](#quick-comparison-to-other-libs)
+- [Tests and code coverage](#tests-and-code-coverage)
+- [Copyright and License](#copyright-and-license)
+- [See Also](#see-also)
 
 Description
 ===========
@@ -937,7 +939,7 @@ with extension point support
 
 Thanks JetBrains for support! Best IDEs for every language!
 
-[![JetBrains](https://user-images.githubusercontent.com/458096/54276284-086cad00-459e-11e9-9684-47536d9520c4.png)](https://www.jetbrains.com/?from=wampy.js)
+[![jetbrains logo]][jetbrains url]
 
 [WAMP]: http://wamp-proto.org/
 [WAMP specification]: http://wamp-proto.org/
@@ -970,3 +972,6 @@ Thanks JetBrains for support! Best IDEs for every language!
 [snyk-url]: https://snyk.io/test/github/KSDaemon/wampy.js?targetFile=package.json
 
 [DefinitelyTyped.org]: http://definitelytyped.org/
+
+[jetbrains logo]: jetbrains.svg
+[jetbrains url]: (https://www.jetbrains.com)
