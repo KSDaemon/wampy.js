@@ -38,7 +38,7 @@
   "dependencies": {
     "msgpack5": "^5.3.2",
     "wampy-cra": "^0.1.2",
-    "websocket": "^1.0.33"
+    "websocket": "^1.0.34"
   },
   "repository": {
     "type": "git",
