@@ -1,6 +1,6 @@
 {
   "name": "wampy",
-  "version": "6.3.1",
+  "version": "6.4.1",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation",
   "author": "Konstantin Burkalev <KSDaemon@ya.ru> (http://ksdaemon.ru)",
   "devDependencies": {
