@@ -221,7 +221,7 @@ try to reconnect to WAMP server, and if you were subscribed to any topics,
 or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.
 * **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
 * **maxRetries**. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
-will be called
+will be called. Set to 0 to disable limit.
 * **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
 * **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
 * **uriValidation**. Default value: strict. Can be changed to loose for less strict URI validation.

@@ -645,7 +645,10 @@ class Wampy {
 
         // Automatic reconnection
         if ((this._cache.sessionId || this._cache.reconnectingAttempts) &&
-            this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries && !this._cache.isSayingGoodbye) {
+            this._options.autoReconnect &&
+            (this._options.maxRetries === 0 ||
+             this._cache.reconnectingAttempts < this._options.maxRetries) &&
+            !this._cache.isSayingGoodbye) {
             this._cache.sessionId = null;
             this._cache.timer = setTimeout(() => {
                 this._wsReconnect();
