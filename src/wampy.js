@@ -536,7 +536,7 @@ class Wampy {
 
     /**
      * Send encoded message to server
-     * @param {Array} msg
+     * @param {Array|undefined} msg
      * @private
      */
     _send (msg) {
