@@ -1273,8 +1273,8 @@ class Wampy {
         const options = {};
 
         if ((typeof (advancedOptions) !== 'undefined') &&
-            (this._isPlainObject(advancedOptions)) &&
-            (advancedOptions.hasOwnProperty('match'))) {
+            this._isPlainObject(advancedOptions) &&
+            Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
 
             if (/prefix|wildcard/.test(advancedOptions.match)) {
                 options.match = advancedOptions.match;
