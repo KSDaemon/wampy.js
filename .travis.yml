@@ -13,6 +13,7 @@ services:
   - docker
 
 before_install:
+    - export CHROME_BIN=chromium-browser
     - docker build .crossbar -t wampy/crossbar
     - docker run --rm --name crossbar -d -p 8888:8888 wampy/crossbar
     - until docker logs crossbar | grep -qm 1 "NODE_BOOT_COMPLETE"; do sleep 0.2 ; done
