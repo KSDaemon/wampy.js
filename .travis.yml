@@ -4,6 +4,7 @@ node_js:
    - "node"
 
 addons:
+  chrome: stable
   apt:
     packages:
       - docker-ce
