@@ -953,8 +953,8 @@ Thanks JetBrains for support! Best IDEs for every language!
 [npm-url]: https://www.npmjs.com/package/wampy
 [npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
 
-[travis-url]: https://travis-ci.org/KSDaemon/wampy.js
-[travis-image]: https://img.shields.io/travis/KSDaemon/wampy.js/dev.svg?style=flat
+[travis-url]: https://travis-ci.com/KSDaemon/wampy.js
+[travis-image]: https://travis-ci.com/KSDaemon/wampy.js.svg?branch=dev
 
 [coveralls-url]: https://coveralls.io/github/KSDaemon/wampy.js
 [coveralls-image]: https://img.shields.io/coveralls/KSDaemon/wampy.js/dev.svg?style=flat
