@@ -4,13 +4,12 @@ node_js:
    - "node"
 
 addons:
-  chrome: stable
   apt:
     packages:
       - docker-ce
 
 env:
-  - CHROME_BIN=google-chrome-stable
+  - CHROME_BIN=chromium-browser
 
 services:
   - docker
