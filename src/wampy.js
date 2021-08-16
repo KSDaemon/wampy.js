@@ -400,7 +400,7 @@ class Wampy {
         }
 
         // If constructor does not have an Object-specific method
-        if (prot.hasOwnProperty('isPrototypeOf') === false) {
+        if (Object.hasOwnProperty.call(prot,'isPrototypeOf') === false) {
             return false;
         }
 
@@ -1481,11 +1481,11 @@ class Wampy {
                 _optionsConvertHelper('eligible_authid', 'string');
                 _optionsConvertHelper('eligible_authrole', 'string');
 
-                if (advancedOptions.hasOwnProperty('exclude_me')) {
+                if (Object.hasOwnProperty.call(advancedOptions, 'exclude_me')) {
                     options.exclude_me = advancedOptions.exclude_me !== false;
                 }
 
-                if (advancedOptions.hasOwnProperty('disclose_me')) {
+                if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
                     options.disclose_me = advancedOptions.disclose_me === true;
                 }
 
@@ -1600,15 +1600,15 @@ class Wampy {
         if (typeof (advancedOptions) !== 'undefined') {
 
             if (this._isPlainObject(advancedOptions)) {
-                if (advancedOptions.hasOwnProperty('disclose_me')) {
+                if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
                     options.disclose_me = advancedOptions.disclose_me === true;
                 }
 
-                if (advancedOptions.hasOwnProperty('receive_progress')) {
+                if (Object.hasOwnProperty.call(advancedOptions, 'receive_progress')) {
                     options.receive_progress = advancedOptions.receive_progress === true;
                 }
 
-                if (advancedOptions.hasOwnProperty('timeout')) {
+                if (Object.hasOwnProperty.call(advancedOptions, 'timeout')) {
                     if (typeof advancedOptions.timeout === 'number') {
                         options.timeout = advancedOptions.timeout;
                     } else {
@@ -1707,7 +1707,7 @@ class Wampy {
 
             if (this._isPlainObject(advancedOptions)) {
 
-                if (advancedOptions.hasOwnProperty('mode')) {
+                if (Object.hasOwnProperty.call(advancedOptions, 'mode')) {
                     if (/skip|kill|killnowait/.test(advancedOptions.mode)) {
                         options.mode = advancedOptions.mode;
                     } else {
@@ -1763,7 +1763,7 @@ class Wampy {
 
             if (this._isPlainObject(advancedOptions)) {
 
-                if (advancedOptions.hasOwnProperty('match')) {
+                if (Object.hasOwnProperty.call(advancedOptions, 'match')) {
                     if (/prefix|wildcard/.test(advancedOptions.match)) {
                         options.match = advancedOptions.match;
                         patternBased = true;
@@ -1772,7 +1772,7 @@ class Wampy {
                     }
                 }
 
-                if (advancedOptions.hasOwnProperty('invoke')) {
+                if (Object.hasOwnProperty.call(advancedOptions, 'invoke')) {
                     if (/single|roundrobin|random|first|last/.test(advancedOptions.invoke)) {
                         options.invoke = advancedOptions.invoke;
                     } else {
