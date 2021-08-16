@@ -1339,7 +1339,10 @@ class Wampy {
             }
 
             if (callbacks.onSuccess) {
-                callbacks.onSuccess();
+                callbacks.onSuccess({
+                    topic: topicURI,
+                    subscriptionId: this._subscriptions[topicURI].id
+                });
             }
         }
 
