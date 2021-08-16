@@ -456,7 +456,10 @@ Parameters:
 Must meet a WAMP Spec URI requirements.
 * **callbacks**. If it is a function - it will be treated as published event callback or
 it can be hash table of callbacks:
-    * **onSuccess**: will be called when subscription would be confirmed
+    * **onSuccess**: will be called when subscription would be confirmed with one hash-table parameter with following attributes:
+        * **topic**
+        * **requestId**
+        * **subscriptionId**
     * **onError**: will be called if subscription would be aborted with one hash-table parameter with following attributes:
         * **error**: string error description
         * **details**: hash-table with some error details
@@ -471,7 +474,7 @@ it can be hash table of callbacks:
 ws.subscribe('chat.message.received', function (eventData) { console.log('Received new chat message!', eventData); });
 
 ws.subscribe('some.another.topic', {
-   onSuccess: function () { console.log('Successfully subscribed to topic'); },
+   onSuccess: function (details) { console.log('Successfully subscribed to topic: ' + details.topic); },
    onError: function (errData) { console.log('Subscription error:' + err.error); },
    onEvent: function (eventData) { console.log('Received topic event', eventData); }
 });
@@ -490,7 +493,9 @@ Parameters:
 Must meet a WAMP Spec URI requirements.
 * **callbacks**. If it is a function - it will be treated as published event callback to remove
              or it can be hash table of callbacks:
-    * **onSuccess**: will be called when unsubscription would be confirmed
+    * **onSuccess**: will be called when unsubscription would be confirmed with one hash-table parameter with following attributes:
+        * **topic**
+        * **requestId**
     * **onError**: will be called if unsubscribe would be aborted with one hash-table parameter with following attributes:
         * **error**: string error description
         * **details**: hash-table with some error details
@@ -520,7 +525,10 @@ is possible to pass array and object-like data simultaneously. In this case pass
     * **argsList**: array payload (may be omitted)
     * **argsDict**: object payload (may be omitted)
 * **callbacks**. Optional hash table of callbacks:
-    * **onSuccess**: will be called when publishing would be confirmed
+    * **onSuccess**: will be called when publishing would be confirmed with one hash-table parameter with following attributes:
+        * **topic**
+        * **requestId**
+        * **publicationId**
     * **onError**: will be called if publishing would be aborted with one hash-table parameter with following attributes:
         * **error**: string error description
         * **details**: hash-table with some error details
@@ -664,7 +672,10 @@ Must meet a WAMP Spec URI requirements.
 * **callbacks**. Required. If it is a function - it will be treated as rpc itself
              or it can be hash table of callbacks:
     * **rpc**: registered procedure
-    * **onSuccess**: will be called on successful registration
+    * **onSuccess**: will be called on successful registration with one hash-table parameter with following attributes:
+        * **topic**
+        * **requestId**
+        * **registrationId**
     * **onError**: will be called if registration would be aborted with one hash-table parameter with following attributes:
         * **error**: string error description
         * **details**: hash-table with some error details
@@ -779,7 +790,9 @@ Parameters:
 Must meet a WAMP Spec URI requirements.
 * **callbacks**. Optional. If it is a function - it will be called on successful unregistration
              or it can be hash table of callbacks:
-    * **onSuccess**: will be called on successful unregistration
+    * **onSuccess**: will be called on successful unregistration with one hash-table parameter with following attributes:
+        * **topic**
+        * **requestId**
     * **onError**: will be called if unregistration would be aborted with one hash-table parameter with following attributes:
         * **error**: string error description
         * **details**: hash-table with some error details
