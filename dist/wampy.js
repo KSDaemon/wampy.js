@@ -11,7 +11,7 @@ var _utils = require("./utils");
 
 var _JsonSerializer = require("./serializers/JsonSerializer");
 
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -42,7 +42,7 @@ var Wampy = /*#__PURE__*/function () {
      * @type {string}
      * @private
      */
-    this.version = 'v6.3.1';
+    this.version = 'v6.4.1';
     /**
      * WS Url
      * @type {string}
@@ -435,7 +435,7 @@ var Wampy = /*#__PURE__*/function () {
       } // If constructor does not have an Object-specific method
 
 
-      if (prot.hasOwnProperty('isPrototypeOf') === false) {
+      if (Object.hasOwnProperty.call(prot, 'isPrototypeOf') === false) {
         return false;
       }
 
@@ -592,7 +592,7 @@ var Wampy = /*#__PURE__*/function () {
     }
     /**
      * Send encoded message to server
-     * @param {Array} msg
+     * @param {Array|undefined} msg
      * @private
      */
 
@@ -712,7 +712,7 @@ var Wampy = /*#__PURE__*/function () {
       this._log('[wampy] websocket disconnected. Info: ', event); // Automatic reconnection
 
 
-      if ((this._cache.sessionId || this._cache.reconnectingAttempts) && this._options.autoReconnect && this._cache.reconnectingAttempts < this._options.maxRetries && !this._cache.isSayingGoodbye) {
+      if ((this._cache.sessionId || this._cache.reconnectingAttempts) && this._options.autoReconnect && (this._options.maxRetries === 0 || this._cache.reconnectingAttempts < this._options.maxRetries) && !this._cache.isSayingGoodbye) {
         this._cache.sessionId = null;
         this._cache.timer = setTimeout(function () {
           _this2._wsReconnect();
@@ -918,7 +918,11 @@ var Wampy = /*#__PURE__*/function () {
                 _this3._subsTopics.add(_this3._requests[data[1]].topic);
 
                 if (_this3._requests[data[1]].callbacks.onSuccess) {
-                  _this3._requests[data[1]].callbacks.onSuccess();
+                  _this3._requests[data[1]].callbacks.onSuccess({
+                    topic: _this3._requests[data[1]].topic,
+                    requestId: data[1],
+                    subscriptionId: data[2]
+                  });
                 }
 
                 delete _this3._requests[data[1]];
@@ -942,7 +946,10 @@ var Wampy = /*#__PURE__*/function () {
                 }
 
                 if (_this3._requests[data[1]].callbacks.onSuccess) {
-                  _this3._requests[data[1]].callbacks.onSuccess();
+                  _this3._requests[data[1]].callbacks.onSuccess({
+                    topic: _this3._requests[data[1]].topic,
+                    requestId: data[1]
+                  });
                 }
 
                 delete _this3._requests[data[1]];
@@ -958,7 +965,11 @@ var Wampy = /*#__PURE__*/function () {
             } else {
               if (_this3._requests[data[1]]) {
                 if (_this3._requests[data[1]].callbacks && _this3._requests[data[1]].callbacks.onSuccess) {
-                  _this3._requests[data[1]].callbacks.onSuccess();
+                  _this3._requests[data[1]].callbacks.onSuccess({
+                    topic: _this3._requests[data[1]].topic,
+                    requestId: data[1],
+                    publicationId: data[2]
+                  });
                 }
 
                 delete _this3._requests[data[1]];
@@ -1027,7 +1038,11 @@ var Wampy = /*#__PURE__*/function () {
                 _this3._rpcNames.add(_this3._requests[data[1]].topic);
 
                 if (_this3._requests[data[1]].callbacks && _this3._requests[data[1]].callbacks.onSuccess) {
-                  _this3._requests[data[1]].callbacks.onSuccess();
+                  _this3._requests[data[1]].callbacks.onSuccess({
+                    topic: _this3._requests[data[1]].topic,
+                    requestId: data[1],
+                    registrationId: data[2]
+                  });
                 }
 
                 delete _this3._requests[data[1]];
@@ -1054,7 +1069,10 @@ var Wampy = /*#__PURE__*/function () {
                 }
 
                 if (_this3._requests[data[1]].callbacks && _this3._requests[data[1]].callbacks.onSuccess) {
-                  _this3._requests[data[1]].callbacks.onSuccess();
+                  _this3._requests[data[1]].callbacks.onSuccess({
+                    topic: _this3._requests[data[1]].topic,
+                    requestId: data[1]
+                  });
                 }
 
                 delete _this3._requests[data[1]];
@@ -1404,7 +1422,7 @@ var Wampy = /*#__PURE__*/function () {
           patternBased = false;
       var options = {};
 
-      if (typeof advancedOptions !== 'undefined' && this._isPlainObject(advancedOptions) && advancedOptions.hasOwnProperty('match')) {
+      if (typeof advancedOptions !== 'undefined' && this._isPlainObject(advancedOptions) && Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
         if (/prefix|wildcard/.test(advancedOptions.match)) {
           options.match = advancedOptions.match;
           patternBased = true;
@@ -1453,7 +1471,10 @@ var Wampy = /*#__PURE__*/function () {
         }
 
         if (callbacks.onSuccess) {
-          callbacks.onSuccess();
+          callbacks.onSuccess({
+            topic: topicURI,
+            subscriptionId: this._subscriptions[topicURI].id
+          });
         }
       }
 
@@ -1610,11 +1631,11 @@ var Wampy = /*#__PURE__*/function () {
 
           _optionsConvertHelper('eligible_authrole', 'string');
 
-          if (advancedOptions.hasOwnProperty('exclude_me')) {
+          if (Object.hasOwnProperty.call(advancedOptions, 'exclude_me')) {
             options.exclude_me = advancedOptions.exclude_me !== false;
           }
 
-          if (advancedOptions.hasOwnProperty('disclose_me')) {
+          if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
             options.disclose_me = advancedOptions.disclose_me === true;
           }
         } else {
@@ -1746,15 +1767,15 @@ var Wampy = /*#__PURE__*/function () {
 
       if (typeof advancedOptions !== 'undefined') {
         if (this._isPlainObject(advancedOptions)) {
-          if (advancedOptions.hasOwnProperty('disclose_me')) {
+          if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
             options.disclose_me = advancedOptions.disclose_me === true;
           }
 
-          if (advancedOptions.hasOwnProperty('receive_progress')) {
+          if (Object.hasOwnProperty.call(advancedOptions, 'receive_progress')) {
             options.receive_progress = advancedOptions.receive_progress === true;
           }
 
-          if (advancedOptions.hasOwnProperty('timeout')) {
+          if (Object.hasOwnProperty.call(advancedOptions, 'timeout')) {
             if (typeof advancedOptions.timeout === 'number') {
               options.timeout = advancedOptions.timeout;
             } else {
@@ -1858,7 +1879,7 @@ var Wampy = /*#__PURE__*/function () {
 
       if (typeof advancedOptions !== 'undefined') {
         if (this._isPlainObject(advancedOptions)) {
-          if (advancedOptions.hasOwnProperty('mode')) {
+          if (Object.hasOwnProperty.call(advancedOptions, 'mode')) {
             if (/skip|kill|killnowait/.test(advancedOptions.mode)) {
               options.mode = advancedOptions.mode;
             } else {
@@ -1916,7 +1937,7 @@ var Wampy = /*#__PURE__*/function () {
 
       if (typeof advancedOptions !== 'undefined') {
         if (this._isPlainObject(advancedOptions)) {
-          if (advancedOptions.hasOwnProperty('match')) {
+          if (Object.hasOwnProperty.call(advancedOptions, 'match')) {
             if (/prefix|wildcard/.test(advancedOptions.match)) {
               options.match = advancedOptions.match;
               patternBased = true;
@@ -1925,7 +1946,7 @@ var Wampy = /*#__PURE__*/function () {
             }
           }
 
-          if (advancedOptions.hasOwnProperty('invoke')) {
+          if (Object.hasOwnProperty.call(advancedOptions, 'invoke')) {
             if (/single|roundrobin|random|first|last/.test(advancedOptions.invoke)) {
               options.invoke = advancedOptions.invoke;
             } else {
