@@ -35,7 +35,7 @@ class Wampy {
          * @type {string}
          * @private
          */
-        this.version = 'v6.4.1';
+        this.version = 'v6.4.0';
 
         /**
          * WS Url
