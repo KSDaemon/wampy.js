@@ -839,7 +839,11 @@ class Wampy {
                             this._subsTopics.add(this._requests[data[1]].topic);
 
                             if (this._requests[data[1]].callbacks.onSuccess) {
-                                this._requests[data[1]].callbacks.onSuccess();
+                                this._requests[data[1]].callbacks.onSuccess({
+                                    topic: this._requests[data[1]].topic,
+                                    requestId: data[1],
+                                    subscriptionId: data[2]
+                                });
                             }
 
                             delete this._requests[data[1]];
@@ -863,7 +867,10 @@ class Wampy {
                             }
 
                             if (this._requests[data[1]].callbacks.onSuccess) {
-                                this._requests[data[1]].callbacks.onSuccess();
+                                this._requests[data[1]].callbacks.onSuccess({
+                                    topic: this._requests[data[1]].topic,
+                                    requestId: data[1]
+                                });
                             }
 
                             delete this._requests[data[1]];
@@ -878,7 +885,11 @@ class Wampy {
                     } else {
                         if (this._requests[data[1]]) {
                             if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-                                this._requests[data[1]].callbacks.onSuccess();
+                                this._requests[data[1]].callbacks.onSuccess({
+                                    topic: this._requests[data[1]].topic,
+                                    requestId: data[1],
+                                    publicationId: data[2]
+                                });
                             }
 
                             delete this._requests[data[1]];
@@ -946,7 +957,11 @@ class Wampy {
                             this._rpcNames.add(this._requests[data[1]].topic);
 
                             if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-                                this._requests[data[1]].callbacks.onSuccess();
+                                this._requests[data[1]].callbacks.onSuccess({
+                                    topic: this._requests[data[1]].topic,
+                                    requestId: data[1],
+                                    registrationId: data[2]
+                                });
                             }
 
                             delete this._requests[data[1]];
@@ -972,7 +987,10 @@ class Wampy {
                             }
 
                             if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-                                this._requests[data[1]].callbacks.onSuccess();
+                                this._requests[data[1]].callbacks.onSuccess({
+                                    topic: this._requests[data[1]].topic,
+                                    requestId: data[1]
+                                });
                             }
 
                             delete this._requests[data[1]];

@@ -662,7 +662,9 @@ if (isNode) {
                                 t = null;
                                 wampy.options({ onReconnect: null })
                                     .subscribe('subscribe.reconnection.check', {
-                                        onSuccess: done,
+                                        onSuccess: function () {
+                                            done();
+                                        },
                                         onError: function () {
                                             done('Error during subscribing');
                                         },

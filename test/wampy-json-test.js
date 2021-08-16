@@ -637,7 +637,9 @@ describe('Wampy.js [with JSON serializer]', function () {
                             t = null;
                             wampy.options({ onReconnect: null })
                                 .subscribe('subscribe.reconnection.check', {
-                                    onSuccess: done,
+                                    onSuccess: function () {
+                                        done();
+                                    },
                                     onError: function () {
                                         done('Error during subscribing');
                                     },
@@ -814,7 +816,9 @@ describe('Wampy.js [with JSON serializer]', function () {
 
             it('allows to subscribe to topic with notification on subscribing', function (done) {
                 wampy.subscribe('subscribe.topic2', {
-                    onSuccess: done,
+                    onSuccess: function () {
+                        done();
+                    },
                     onError: function () {
                         done('Error during subscribing');
                     },
