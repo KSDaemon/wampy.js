@@ -176,7 +176,7 @@ class Wampy {
 
         /**
          * Stored Pub/Sub topics
-         * @type {Array}
+         * @type {Set}
          * @private
          */
         this._subsTopics = new Set();
@@ -190,7 +190,7 @@ class Wampy {
 
         /**
          * Stored RPC names
-         * @type {Array}
+         * @type {Set}
          * @private
          */
         this._rpcNames = new Set();
@@ -400,7 +400,7 @@ class Wampy {
         }
 
         // If constructor does not have an Object-specific method
-        if (Object.hasOwnProperty.call(prot,'isPrototypeOf') === false) {
+        if (Object.hasOwnProperty.call(prot, 'isPrototypeOf') === false) {
             return false;
         }
 
