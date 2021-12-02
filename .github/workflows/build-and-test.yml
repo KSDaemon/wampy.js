@@ -26,5 +26,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: ./node_modules/nyc/bin/nyc.js report --reporter=lcovonly
-      - run: cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js
-      - run: rm -rf ./coverage
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
