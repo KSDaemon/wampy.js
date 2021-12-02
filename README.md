@@ -4,10 +4,8 @@ wampy.js
 Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation (Browser and node.js)
 
 [![NPM version][npm-image]][npm-url]
-[![Build Status][travis-image]][travis-url]
+![Build Status][gh-build-test-image]
 [![Code coverage][coveralls-image]][coveralls-url]
-[![Dependency Status][depstat-image]][depstat-url]
-[![DevDependency Status][depstat-dev-image]][depstat-dev-url]
 [![MIT License][license-image]][license-url]
 [![Known Vulnerabilities][snyk-image]][snyk-url]
 
@@ -966,17 +964,10 @@ Thanks JetBrains for support! Best IDEs for every language!
 [npm-url]: https://www.npmjs.com/package/wampy
 [npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
 
-[travis-url]: https://travis-ci.com/KSDaemon/wampy.js
-[travis-image]: https://travis-ci.com/KSDaemon/wampy.js.svg?branch=dev
+[gh-build-test-image]: https://github.com/KSDaemon/wampy.js/actions/workflows/build-and-test.yml/badge.svg
 
 [coveralls-url]: https://coveralls.io/github/KSDaemon/wampy.js
 [coveralls-image]: https://img.shields.io/coveralls/KSDaemon/wampy.js/dev.svg?style=flat
-
-[depstat-url]: https://david-dm.org/KSDaemon/wampy.js
-[depstat-image]: https://david-dm.org/KSDaemon/wampy.js.svg?style=flat
-
-[depstat-dev-url]: https://david-dm.org/KSDaemon/wampy.js
-[depstat-dev-image]: https://david-dm.org/KSDaemon/wampy.js/dev-status.svg?style=flat
 
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg
 [license-url]: http://opensource.org/licenses/MIT
