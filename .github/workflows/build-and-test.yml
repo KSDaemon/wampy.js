@@ -25,7 +25,8 @@ jobs:
       - run: until docker logs crossbar | grep -qm 1 "NODE_BOOT_COMPLETE"; do sleep 0.2 ; done
       - run: npm ci
       - run: npm test
-      - run: ./node_modules/nyc/bin/nyc.js report --reporter=lcovonly
+      - name: Create test coverage report
+        run: ./node_modules/nyc/bin/nyc.js report --reporter=lcovonly
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
