@@ -1,5 +1,5 @@
 import msgpack5 from "msgpack5";
-import { Serializer } from "../typedefs";
+import { Dict, Serializer } from "../typedefs";
 
 const msgpack = msgpack5();
 
@@ -15,7 +15,7 @@ export class MsgpackSerializer implements Serializer {
         return msgpack.encode(data);
     }
 
-    decode(data: ArrayBuffer | Buffer) {
+    decode(data: ArrayBuffer | Buffer): Promise<Dict> {
         return new Promise((resolve) => {
             const type = data.constructor.name;
 
@@ -39,3 +39,4 @@ export class MsgpackSerializer implements Serializer {
         });
     }
 }
+export default MsgpackSerializer;
