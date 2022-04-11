@@ -1,29 +1,29 @@
-export enum WAMP_MSG_SPEC {
-    HELLO = 1,
-    WELCOME = 2,
-    ABORT = 3,
-    CHALLENGE = 4,
-    AUTHENTICATE = 5,
-    GOODBYE = 6,
-    ERROR = 8,
-    PUBLISH = 16,
-    PUBLISHED = 17,
-    SUBSCRIBE = 32,
-    SUBSCRIBED = 33,
-    UNSUBSCRIBE = 34,
-    UNSUBSCRIBED = 35,
-    EVENT = 36,
-    CALL = 48,
-    CANCEL = 49,
-    RESULT = 50,
-    REGISTER = 64,
-    REGISTERED = 65,
-    UNREGISTER = 66,
-    UNREGISTERED = 67,
-    INVOCATION = 68,
-    INTERRUPT = 69,
-    YIELD = 70,
-}
+export const WAMP_MSG_SPEC = {
+    HELLO: 1,
+    WELCOME: 2,
+    ABORT: 3,
+    CHALLENGE: 4,
+    AUTHENTICATE: 5,
+    GOODBYE: 6,
+    ERROR: 8,
+    PUBLISH: 16,
+    PUBLISHED: 17,
+    SUBSCRIBE: 32,
+    SUBSCRIBED: 33,
+    UNSUBSCRIBE: 34,
+    UNSUBSCRIBED: 35,
+    EVENT: 36,
+    CALL: 48,
+    CANCEL: 49,
+    RESULT: 50,
+    REGISTER: 64,
+    REGISTERED: 65,
+    UNREGISTER: 66,
+    UNREGISTERED: 67,
+    INVOCATION: 68,
+    INTERRUPT: 69,
+    YIELD: 70,
+} as const;
 
 export const WAMP_ERROR_MSG = {
     SUCCESS: {
@@ -98,3 +98,10 @@ export const ALLOWED_BINARY_TYPES = ["blob", "arraybuffer"] as const;
 export const isNode =
     typeof process === "object" &&
     Object.prototype.toString.call(process) === "[object process]";
+
+export default {
+    isNode,
+    ALLOWED_BINARY_TYPES,
+    WAMP_ERROR_MSG,
+    WAMP_MSG_SPEC,
+};
