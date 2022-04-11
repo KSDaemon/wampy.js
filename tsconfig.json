@@ -1,0 +1,12 @@
+{
+    "include": ["src/**/*"],
+    "compilerOptions": {
+        "declaration": true,
+        "declarationMap": true,
+        "declarationDir": "./types",
+        "outDir": "./dist",
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "strict": true
+    }
+}

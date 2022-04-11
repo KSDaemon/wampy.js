@@ -1,0 +1,2 @@
+export declare function getWebSocket(url: string, protocols: string | string[], ws: new (arg0: any, arg1: any, arg2: any, arg3: any, arg4: any) => any, headers: any, requestOptions: any): any;
+//# sourceMappingURL=utils.d.ts.map
