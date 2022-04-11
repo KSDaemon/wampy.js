@@ -1,6 +1,8 @@
 {
     "include": ["src/**/*"],
     "compilerOptions": {
+        "moduleResolution": "node",
+        "target": "es5",
         "declaration": true,
         "declarationMap": true,
         "declarationDir": "./types",
