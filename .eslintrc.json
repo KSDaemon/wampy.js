@@ -1,11 +1,11 @@
 {
     "extends": "eslint:recommended",
     "rules": {
-        "indent": ["error", 4, {"SwitchCase": 1}],
+        "indent": ["error", 4, { "SwitchCase": 1 }],
         "quotes": ["error", "single"],
         "linebreak-style": ["error", "unix"],
         "semi": ["error", "always"],
-        "no-unused-vars": ["warn", {"vars": "all", "args": "none"}],
+        "no-unused-vars": ["warn", { "vars": "all", "args": "none" }],
         "no-console": "off",
         "curly": "warn",
         "radix": "error",
@@ -24,7 +24,10 @@
         "max-params": ["error", 5],
         "no-trailing-spaces": ["warn", { "skipBlankLines": true }],
         "object-curly-spacing": ["warn", "always"],
-        "keyword-spacing": ["warn", { "before": true, "after": true, "overrides": {} }],
+        "keyword-spacing": [
+            "warn",
+            { "before": true, "after": true, "overrides": {} }
+        ],
         "space-before-blocks": "warn",
         "space-before-function-paren": "warn",
         "space-in-parens": ["warn", "never"],
