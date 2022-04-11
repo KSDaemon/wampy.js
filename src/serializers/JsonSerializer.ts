@@ -1,6 +1,6 @@
-import { Dict } from "../typedefs";
+import { Dict, Serializer } from "../typedefs";
 
-export class JsonSerializer {
+export class JsonSerializer implements Serializer {
     public readonly protocol: string;
     public readonly isBinary: boolean;
     constructor() {
@@ -8,11 +8,11 @@ export class JsonSerializer {
         this.isBinary = true;
     }
 
-    encode(data: any) {
+    encode(data: Dict | any[]): string {
         return JSON.stringify(data);
     }
 
-    async decode(data: any): Promise<Dict> {
+    async decode(data: string): Promise<Dict> {
         return JSON.parse(data);
     }
 }
