@@ -4,13 +4,20 @@ export type Callback = (...args: any[]) => void;
 
 export type EventCallback = (event: any, ...args: any[]) => void;
 
-export type ErrorCallback = (error: any, ...args: any[]) => void;
+export interface ErrorData {
+    error: string;
+    details?: string;
+}
+export type ErrorCallback = (error: ErrorData, ...args: any[]) => void;
 
 export interface DefaultCallbacks extends Dict<Callback | undefined> {
     onSuccess?: Callback;
     onError?: ErrorCallback;
-    onEvent?: Callback;
+    onEvent?: EventCallback;
 }
+
+export type SuccessOrError = Pick<DefaultCallbacks, "onSuccess" | "onError">;
+
 export interface WampyWs extends Dict {
     onopen?: Callback;
     onclose?: EventCallback;
@@ -18,8 +25,117 @@ export interface WampyWs extends Dict {
     onerror?: ErrorCallback;
     close?: Callback;
     send?: Callback;
+    protocol?: string;
     binaryType?: string;
     readyState?: number;
+}
+
+export interface WampyOptions extends Dict {
+    /**
+     * Logging
+     */
+    debug: boolean;
+
+    /**
+     * Reconnecting flag
+     */
+    autoReconnect: boolean;
+
+    /**
+     * Reconnecting interval (in ms)
+     */
+    reconnectInterval: number;
+
+    /**
+     * Maximum reconnection retries
+     */
+    maxRetries: number;
+
+    /**
+     * WAMP Realm to join
+     */
+    realm: string | null;
+
+    /**
+     * Custom attributes to send to router on hello
+     */
+    helloCustomDetails: Dict | null;
+
+    /**
+     * Validation of the topic URI structure
+     */
+    uriValidation: "strict" | "loose";
+
+    /**
+     * Authentication id to use in challenge
+     */
+    authid: string | null;
+
+    /**
+     * Supported authentication methods
+     */
+    authmethods: any[];
+
+    /**
+     * onChallenge callback
+     * @type {Callback}
+     */
+    onChallenge: Callback | null;
+
+    /**
+     * onConnect callback
+     * @type {Callback}
+     */
+    onConnect: Callback | null;
+
+    /**
+     * onClose callback
+     * @type {Callback}
+     */
+    onClose: Callback | null;
+
+    /**
+     * onError callback
+     * @type {ErrorCallback}
+     */
+    onError: ErrorCallback | null;
+
+    /**
+     * onReconnect callback
+     * @type {Callback}
+     */
+    onReconnect: Callback | null;
+
+    /**
+     * onReconnectSuccess callback
+     */
+    onReconnectSuccess: Callback | null;
+
+    /**
+     * User provided WebSocket class
+     */
+    ws: typeof WebSocket | null;
+
+    /**
+     * User provided additional HTTP headers (for use in Node.js enviroment)
+     * @type {Dict}
+     */
+    additionalHeaders: Dict | null;
+
+    /**
+     * User provided WS Client Config Options (for use in Node.js enviroment)
+     */
+    wsRequestOptions: Dict | null;
+
+    /**
+     * User provided msgpack class
+     */
+    serializer: Serializer;
+}
+
+export interface RpcRegistration extends Dict {
+    id: string;
+    callbacks: Callback[];
 }
 
 /**
@@ -85,8 +201,29 @@ export interface WampyCache {
     /**
      * Status of last operation
      */
-    opStatus?: { code: number; description: string; reqId?: number };
+    opStatus?: {
+        /**
+         * Status code\
+         * `0` if success
+         * >0 if error
+         */
+        code: number;
+        /**
+         * Details about the error
+         */
+        description: string;
+        /**
+         * Last send request id
+         */
+        reqId?: number;
+    };
+    /**
+     * Timer for reconnection
+     */
     timer?: NodeJS.Timeout | null;
+    /**
+     * Reconnection attempts
+     */
     reconnectingAttempts?: number;
 }
 
@@ -94,15 +231,15 @@ export interface Serializer {
     protocol: string;
     isBinary: boolean;
     encode(data: any): any;
-    decode(data: any): Dict;
+    decode(data: any): Promise<Dict>;
 }
 
-export interface AdvancedOptions {
+export interface PublishAdvancedOptions {
     /**
      * WAMP session id(s) that won't receive a published event,\
      * even though they may be subscribed
      */
-    exclude?: Int | Int[];
+    exclude?: number | number[];
     /**
      * Authentication id(s) that won't receive a published event,\
      * even though they may be subscribed
@@ -116,7 +253,7 @@ export interface AdvancedOptions {
     /**
      * WAMP session id(s) that are allowed to receive a published event
      */
-    eligible?: Int | Int[];
+    eligible?: number | number[];
     /**
      * Authentication id(s) that are allowed to receive a published event
      */
@@ -135,8 +272,6 @@ export interface AdvancedOptions {
     disclose_me: boolean;
 }
 
-export type Int = number;
-
 export interface WampyData extends Dict {
     details: Dict;
     argsList: any[];
@@ -145,4 +280,19 @@ export interface WampyData extends Dict {
 
 export interface WampyErrorData extends WampyData {
     error: any;
+}
+
+export interface TopicType {
+    /**
+     * Topic name
+     */
+    topic: string;
+    /**
+     * Is it pattern based
+     */
+    patternBased: boolean;
+    /**
+     * Does it allow wamp?
+     */
+    allowWAMP: boolean;
 }
