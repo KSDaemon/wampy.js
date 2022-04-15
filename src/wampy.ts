@@ -29,7 +29,12 @@ import type {
     WampyWs,
     WampyData,
     WampyErrorData,
-    AdvancedOptions,
+    PublishAdvancedOptions,
+    RpcRegistration,
+    WampyOptions,
+    SuccessOrError,
+    TopicType,
+    ErrorData,
 } from "./typedefs";
 
 /**
@@ -60,15 +65,42 @@ export class Wampy {
      * Internal cache for object lifetime
      */
     protected _cache: WampyCache;
-    protected _ws: WampyWs;
+    /**
+     * WebSocket object
+     */
+    protected _ws: WampyWs | null;
+    /**
+     * Internal queue for websocket requests, for case of disconnect
+     */
     protected _wsQueue: any[];
+    /**
+     * Internal queue for wamp requests
+     */
     protected _requests: Dict;
+    /**
+     * Stored RPC
+     */
     protected _calls: Dict | null;
+    /**
+     * Stored Pub/Sub
+     */
     protected _subscriptions: Dict;
+    /**
+     * Stored Pub/Sub topics
+     */
     protected _subsTopics: Set<string>;
-    protected _rpcRegs: Dict;
+    /**
+     * Stored RPC Registrations
+     */
+    protected _rpcRegs: Dict<RpcRegistration>;
+    /**
+     * Stored RPC names
+     */
     protected _rpcNames: Set<string>;
-    protected _options: Dict;
+    /**
+     * Options hash-table
+     */
+    protected _options: WampyOptions;
 
     /**
      * @param url Ws URL
@@ -120,75 +152,16 @@ export class Wampy {
             isSayingGoodbye: false,
             opStatus: { code: 0, description: "Success!", reqId: 0 },
             timer: null,
-
-            /**
-             * Reconnection attempts
-             * @type {number}
-             */
             reconnectingAttempts: 0,
         };
-
-        /**
-         * WebSocket object
-         * @type {Dict<Callback>|null}
-         * @protected
-         */
-        this._ws = {};
-
-        /**
-         * Internal queue for websocket requests, for case of disconnect
-         * @type {any[]}
-         * @protected
-         */
+        this._ws = null;
         this._wsQueue = [];
-
-        /**
-         * Internal queue for wamp requests
-         * @type {Dict}
-         * @protected
-         */
         this._requests = {};
-
-        /**
-         * Stored RPC
-         * @type {Dict<Callback>}
-         * @protected
-         */
         this._calls = {};
-
-        /**
-         * Stored Pub/Sub
-         * @type {Dict}
-         * @protected
-         */
         this._subscriptions = {};
-
-        /**
-         * Stored Pub/Sub topics
-         * @type {Set<string>}
-         * @protected
-         */
         this._subsTopics = new Set();
-
-        /**
-         * Stored RPC Registrations
-         * @type {Dict}
-         * @protected
-         */
         this._rpcRegs = {};
-
-        /**
-         * Stored RPC names
-         * @type {Set}
-         * @protected
-         */
         this._rpcNames = new Set();
-
-        /**
-         * Options hash-table
-         * @type {Dict}
-         * @protected
-         */
         this._options = {
             /**
              * Logging
@@ -306,9 +279,9 @@ export class Wampy {
         };
 
         if (this._isPlainObject(options)) {
-            this._options = this._merge(this._options, options);
+            this._options = this._merge(this._options, options) as WampyOptions;
         } else if (this._isPlainObject(url)) {
-            this._options = this._merge(this._options, url);
+            this._options = this._merge(this._options, url) as WampyOptions;
         }
 
         if (this._url) {
@@ -318,10 +291,12 @@ export class Wampy {
 
     /* Internal utils methods */
     /**
-     * Internal logger
+     * Internal logger for debugging
+     * @param args Args to pass into `console.log`
+     * @internal
      * @protected
      */
-    protected _log(...args: any) {
+    protected _log(...args: any): void {
         if (this._options.debug) {
             console.log(args);
         }
@@ -329,7 +304,7 @@ export class Wampy {
 
     /**
      * Get the new unique request id
-     * @returns {number}
+     * @internal
      * @protected
      */
     protected _getReqId(): number {
@@ -338,16 +313,16 @@ export class Wampy {
 
     /**
      * Merge argument objects into one
-     * @returns {Dict}
+     * @param args - Objects to merge into one
+     * @internal
      * @protected
      */
     protected _merge(...args: Dict[]): Dict {
-        const obj: Dict = {},
-            l = args.length;
-        let i, attr;
+        const obj: Dict = {};
+        const len = args.length;
 
-        for (i = 0; i < l; i++) {
-            for (attr in args[i]) {
+        for (let i = 0; i < len; i++) {
+            for (let attr in args[i]) {
                 obj[attr] = args[i][attr];
             }
         }
@@ -356,38 +331,40 @@ export class Wampy {
     }
 
     /**
-     * Check if value is array
-     * @param {*} obj
-     * @returns {obj is Array}
+     * Checks if a value is an array
+     * @param obj - value to check
+     * @internal
      * @protected
      */
-    protected _isArray(obj: any): obj is Array<any> {
+    protected _isArray(obj: unknown): obj is any[] {
         return !!obj && Array.isArray(obj);
     }
 
     /**
-     * Check if value is object literal
-     * @param obj
+     * Checks if a value is an object literal
+     * @param obj Value to check
+     * @internal
+     * @protected
      */
-    protected _isPlainObject(obj: any): obj is Dict {
+    protected _isPlainObject(obj: unknown): obj is Dict {
         if (!this._isObject(obj)) {
             return false;
         }
 
         // If has modified constructor
-        const ctor = obj.constructor;
-        if (typeof ctor !== "function") {
+        const constructor = obj?.constructor;
+        if (typeof constructor !== "function") {
             return false;
         }
 
         // If has modified prototype
-        const prot = ctor.prototype;
-        if (this._isObject(prot) === false) {
+        const proto = constructor.prototype;
+        if (this._isObject(proto) === false) {
             return false;
         }
 
         // If constructor does not have an Object-specific method
-        if (Object.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
+        if (Object.hasOwnProperty.call(proto, "isPrototypeOf") === false) {
             return false;
         }
 
@@ -396,11 +373,11 @@ export class Wampy {
 
     /**
      * Check if value is an object
-     * @param {*} obj
-     * @returns {boolean}
+     * @param obj Value to check
+     * @internal
      * @protected
      */
-    protected _isObject(obj: any): boolean {
+    protected _isObject(obj: unknown): obj is object {
         return (
             obj !== null &&
             typeof obj === "object" &&
@@ -413,7 +390,7 @@ export class Wampy {
      * Fix websocket protocols based on options
      * @protected
      */
-    protected _setWsProtocols() {
+    protected _setWsProtocols(): void {
         if (!(this._options.serializer instanceof JsonSerializer)) {
             this._protocols.unshift(
                 "wamp.2." + this._options.serializer.protocol
@@ -423,16 +400,19 @@ export class Wampy {
 
     /**
      * Prerequisite checks for any wampy api call
-     * @param topicType { topic: URI, patternBased: true|false, allowWAMP: true|false }
-     * @param  role
+     * @param topicType
+     * @param role
      * @param callbacks
-     * @returns {boolean}
      * @protected
      */
     protected _preReqChecks(
-        topicType: { topic: string; patternBased: boolean; allowWAMP: boolean },
+        topicType: TopicType,
         role: string,
-        callbacks: Callback | DefaultCallbacks
+        callbacks?:
+            | { onError: ErrorCallback }
+            | SuccessOrError
+            | DefaultCallbacks
+            | Callback
     ): boolean {
         let flag = true;
 
@@ -473,10 +453,9 @@ export class Wampy {
 
     /**
      * Validate uri
-     * @param {string} uri
-     * @param {boolean} patternBased
-     * @param {boolean} allowWAMP
-     * @returns {boolean}
+     * @param uri Uri of the topic
+     * @param patternBased boolean
+     * @param allowWAMP boolean
      * @protected
      */
     protected _validateURI(
@@ -507,8 +486,7 @@ export class Wampy {
 
     /**
      * Encode WAMP message
-     * @param {any[]} msg
-     * @returns {*}
+     * @param msg Array of messages to encode
      * @protected
      */
     protected _encode(msg: any[]): any {
@@ -524,21 +502,20 @@ export class Wampy {
 
     /**
      * Decode WAMP message
-     * @param  msg
-     * @returns {Promise}
+     * @param msg Message to decode
      * @protected
      */
-    protected _decode(msg: any): Promise<any> {
-        return this._options.serializer.decode(msg);
+    protected async _decode(msg: any): Promise<any> {
+        return await this._options.serializer.decode(msg);
     }
 
     /**
      * Hard close of connection due to protocol violations
-     * @param {string} errorUri
-     * @param {string} details
+     * @param errorUri url of the error
+     * @param details Details about the error
      * @protected
      */
-    protected _hardClose(errorUri: string, details: string) {
+    protected _hardClose(errorUri: string, details: string): void {
         this._log("[wampy] " + details);
         // Cleanup outgoing message queue
         this._wsQueue = [];
@@ -552,10 +529,10 @@ export class Wampy {
 
     /**
      * Send encoded message to server
-     * @param {any[]} [msg]
+     * @param msg Message to send to server
      * @protected
      */
-    protected _send(msg?: any[]) {
+    protected _send(msg?: any[]): void {
         if (msg) {
             this._wsQueue.push(this._encode(msg));
         }
@@ -571,7 +548,7 @@ export class Wampy {
      * Reset internal state and cache
      * @protected
      */
-    protected _resetState() {
+    protected _resetState(): void {
         this._wsQueue = [];
         this._subscriptions = {};
         this._subsTopics = new Set();
@@ -591,7 +568,7 @@ export class Wampy {
      * Initialize internal websocket callbacks
      * @protected
      */
-    protected _initWsCallbacks() {
+    protected _initWsCallbacks(): void {
         if (this._ws) {
             this._ws.onopen = () => {
                 this._wsOnOpen();
@@ -612,12 +589,12 @@ export class Wampy {
      * Internal websocket on open callback
      * @protected
      */
-    protected _wsOnOpen() {
+    protected _wsOnOpen(): this {
         const options = this._merge(
-                this._options.helloCustomDetails,
+                this._options.helloCustomDetails!,
                 this._wamp_features
             ),
-            serverProtocol = this._ws!.protocol
+            serverProtocol = this._ws?.protocol
                 ? this._ws!.protocol.split(".")[2]
                 : "";
 
@@ -657,14 +634,15 @@ export class Wampy {
         this._ws!.send!(
             this._encode([WAMP_MSG_SPEC.HELLO, this._options.realm, options])
         );
+        return this;
     }
 
     /**
      * Internal websocket on close callback
-     * @param {object} event
+     * @param event
      * @protected
      */
-    protected _wsOnClose(event: object) {
+    protected _wsOnClose(event: Dict): void {
         this._log("[wampy] websocket disconnected. Info: ", event);
 
         // Automatic reconnection
@@ -691,8 +669,8 @@ export class Wampy {
     }
 
     /**
-     * Internal websocket on event callback
-     * @param {object} event
+     * Internal websocket onEvent callback
+     * @param event Event for callback
      * @protected
      */
     protected _wsOnMessage(event: Dict) {
@@ -764,7 +742,7 @@ export class Wampy {
                             ) {
                                 p = new Promise((resolve, reject) => {
                                     resolve(
-                                        this._options.onChallenge(
+                                        this._options.onChallenge!(
                                             data[1],
                                             data[2]
                                         )
@@ -1296,7 +1274,7 @@ export class Wampy {
                         break;
                 }
             },
-            (err) => {
+            (_err) => {
                 this._hardClose(
                     "wamp.error.protocol_violation",
                     "Can not decode received message"
@@ -1307,14 +1285,14 @@ export class Wampy {
 
     /**
      * Internal websocket on error callback
-     * @param {object} error
+     * @param error Error arg to pass into onError callback
      * @protected
      */
-    protected _wsOnError(error: object) {
+    protected _wsOnError(error: ErrorData): void {
         this._log("[wampy] websocket error");
 
         if (this._options.onError) {
-            this._options.onError({ error });
+            this._options.onError(error);
         }
     }
 
@@ -1322,7 +1300,7 @@ export class Wampy {
      * Reconnect to server in case of websocket error
      * @protected
      */
-    protected _wsReconnect() {
+    protected _wsReconnect(): void {
         this._log("[wampy] websocket reconnecting...");
 
         if (this._options.onReconnect) {
@@ -1333,7 +1311,7 @@ export class Wampy {
         this._ws = getWebSocket(
             this._url!,
             this._protocols,
-            this._options.ws,
+            this._options.ws!,
             this._options.additionalHeaders,
             this._options.wsRequestOptions
         );
@@ -1344,7 +1322,7 @@ export class Wampy {
      * Resubscribe to topics in case of communication error
      * @protected
      */
-    protected _renewSubscriptions() {
+    protected _renewSubscriptions(): void {
         let i: number;
         const subs = this._subscriptions,
             st = this._subsTopics;
@@ -1368,7 +1346,7 @@ export class Wampy {
      * Reregister RPCs in case of communication error
      * @protected
      */
-    protected _renewRegistrations() {
+    protected _renewRegistrations(): void {
         const rpcs = this._rpcRegs,
             rn = this._rpcNames;
 
@@ -1385,29 +1363,21 @@ export class Wampy {
     /**
      * Get or set Wampy options
      *
-     * To get options - call without parameters
+     * To get options - call without parameters\
      * To set options - pass hash-table with options values
-     *
-     * @param {object} [opts]
-     * @returns {*}
+     * @param opts WampyOptions to merge with current options
      */
-    public options(opts: object): any {
+    public options(opts?: Partial<WampyOptions>): this | WampyOptions {
         if (typeof opts === "undefined") {
-            return this._options;
         } else if (this._isPlainObject(opts)) {
-            this._options = this._merge(this._options, opts);
+            this._options = this._merge(this._options, opts) as WampyOptions;
             return this;
         }
+        return this._options;
     }
 
     /**
      * Get the status of last operation
-     *
-     * @returns {object} with 2 fields: code, description
-     *      code: 0 - if operation was successful
-     *      code > 0 - if error occurred
-     *      description contains details about error
-     *      reqId: last send request ID
      */
     public getOpStatus(): WampyCache["opStatus"] {
         return this._cache.opStatus;
@@ -1415,19 +1385,16 @@ export class Wampy {
 
     /**
      * Get the WAMP Session ID
-     *
-     * @returns {string} Session ID
      */
-    getSessionId(): string {
+    public getSessionId(): string {
         return this._cache.sessionId!;
     }
 
     /**
      * Connect to server
-     * @param {string} [url] New url (optional)
-     * @returns {this}
+     * @param url New url (optional)
      */
-    connect(url?: string): this {
+    public connect(url?: string): this {
         if (url) {
             this._url = url;
         }
@@ -1468,9 +1435,8 @@ export class Wampy {
 
     /**
      * Disconnect from server
-     * @returns {this}
      */
-    disconnect(): this {
+    public disconnect(): this {
         if (this._cache.sessionId) {
             // need to send goodbye message to server
             this._cache.isSayingGoodbye = true;
@@ -1490,10 +1456,8 @@ export class Wampy {
 
     /**
      * Abort WAMP session establishment
-     *
-     * @returns {this}
      */
-    abort(): this {
+    public abort(): this {
         if (!this._cache.sessionId && this._ws!.readyState === 1) {
             this._send([WAMP_MSG_SPEC.ABORT, {}, "wamp.error.abort"]);
             this._cache.sessionId = null;
@@ -1507,22 +1471,14 @@ export class Wampy {
 
     /**
      * Subscribe to a topic on a broker
-     *
-     * @param {string} topicURI
-     * @param {function|object} callbacks - if it is a function - it will be treated as published event callback
-     *                          or it can be hash table of callbacks:
-     *                          { onSuccess: will be called when subscribe would be confirmed
-     *                            onError: will be called if subscribe would be aborted
-     *                            onEvent: will be called on receiving published event }
-     * @param {{match: 'prefix'|'wildcard'}} advancedOptions - optional parameter. Must include any or all of the options:\
-     *                          { match: string matching policy ("prefix"|"wildcard") }
-     *
-     * @returns {this}
+     * @param topicURI - Uri to subscribe to
+     * @param callbacks - if it is a function, it will be treated as published event callback or it can be hash table of callbacks
+     * @param  advancedOptions - optional parameter
      */
-    subscribe(
+    public subscribe(
         topicURI: string,
-        callbacks: Callback | DefaultCallbacks,
-        advancedOptions: { match: "prefix" | "wildcard" }
+        callbacks: EventCallback | DefaultCallbacks,
+        advancedOptions?: { match: "prefix" | "wildcard" }
     ): this {
         let reqId: number,
             patternBased = false;
@@ -1547,7 +1503,6 @@ export class Wampy {
                     allowWAMP: true,
                 },
                 "broker",
-                // @ts-ignore
                 callbacks
             )
         ) {
@@ -1611,17 +1566,12 @@ export class Wampy {
 
     /**
      * Unsubscribe from topic
-     * @param {string} topicURI
-     * @param {EventCallback|import('./typedefs').DefaultCallbacks} callbacks - if it is a function - it will be treated as
-     *                          published event callback to remove or it can be hash table of callbacks:
-     *                          { onSuccess: will be called when unsubscribe would be confirmed
-     *                            onError: will be called if unsubscribe would be aborted
-     *                            onEvent: published event callback to remove }
-     * @returns {this}
+     * @param topicURI Topic to unsubscribe from
+     * @param callbacks - if it is a function, it will be treated as published event callback to remove. Or it can be hash table of callbacks
      */
     unsubscribe(
         topicURI: string,
-        callbacks: EventCallback | DefaultCallbacks
+        callbacks?: EventCallback | DefaultCallbacks
     ): this {
         let reqId: number,
             i = -1;
@@ -1690,40 +1640,16 @@ export class Wampy {
 
     /**
      * Publish a event to topic
-     * @param {string} topicURI
-     * @param {string|number|any[]|object} payload - can be either a value of any type or null.  Also it
-     *                          is possible to pass array and object-like data simultaneously.
-     *                          In this case pass a hash-table with next attributes:
-     *                          {
-     *                             argsList: array payload (may be omitted)
-     *                             argsDict: object payload (may be omitted)
-     *                          }
-     * @param {{onSuccess?: Callback, onError?: Callback}} [callbacks] - optional hash table of callbacks:
-     *                          { onSuccess: will be called when publishing would be confirmed
-     *                            onError: will be called if publishing would be aborted }
-     * @param {import('./typedefs').AdvancedOptions} [advancedOptions] - optional parameter. Must include any or all of the options:
-     *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
-     *                                      even though they may be subscribed
-     *                            exclude_authid: string|array Authentication id(s) that won't receive
-     *                                      a published event, even though they may be subscribed
-     *                            exclude_authrole: string|array Authentication role(s) that won't receive
-     *                                      a published event, even though they may be subscribed
-     *                            eligible: integer|array WAMP session id(s) that are allowed
-     *                                      to receive a published event
-     *                            eligible_authid: string|array Authentication id(s) that are allowed
-     *                                      to receive a published event
-     *                            eligible_authrole: string|array Authentication role(s) that are allowed
-     *                                      to receive a published event
-     *                            exclude_me: bool flag of receiving publishing event by initiator
-     *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
-     *                                      to receivers of a published event }
-     * @returns {this}
+     * @param topicURI
+     * @param payload - payload to publish
+     * @param callbacks - optional hash table of callbacks:
+     * @param advancedOptions - optional parameter
      */
     publish(
         topicURI: string,
-        payload: string | number | any[] | Dict,
-        callbacks: { onSuccess?: Callback; onError?: Callback },
-        advancedOptions: AdvancedOptions
+        payload: string | number | any[] | { argsList: any[]; argsDict: Dict },
+        callbacks?: SuccessOrError,
+        advancedOptions?: PublishAdvancedOptions
     ): this {
         let reqId: number,
             msg: any[],
@@ -1731,10 +1657,10 @@ export class Wampy {
             hasPayload = false;
         const options: Dict = {},
             _optionsConvertHelper = (
-                option: keyof AdvancedOptions,
+                option: keyof PublishAdvancedOptions,
                 sourceType: string
             ) => {
-                if (advancedOptions[option]) {
+                if (advancedOptions && advancedOptions[option]) {
                     if (
                         this._isArray(advancedOptions[option]) &&
                         // @ts-ignore
@@ -1853,25 +1779,16 @@ export class Wampy {
     /**
      * Remote Procedure Call
      * @param topicURI - Uri to call
-     * @param payload - can be either a value of any type or null.\
-     *                  Also it is possible to pass array and object-like data simultaneously.\
-     *                  In this case pass a hash-table with next attributes:\
-     *                  {\
-     *                      argsList: array payload (may be omitted)\
-     *                      argsDict: object payload (may be omitted)\
-     *                  }
-     * @param  callbacks - if it is a function - it will be treated as result callback function\
-     *                     or it can be hash table of callbacks:\
-     *                     {\
-     *                          onSuccess: will be called with result on successful call\
-     *                          onError: will be called if invocation would be aborted\
-     *                     }
+     * @param payload - Payload to call with
+     * @param  callbacks - if it is a function, it will be treated `as onSuccess` callback function, or hash table of callbacks
      * @param advancedOptions - optional parameter. Must include any or all of the options:
-     *                          { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
-     *                                  to endpoints of a routed call
-     *                            receive_progress: bool flag for receiving progressive results. In this case
-     *                                  onSuccess function will be called every time on receiving result
-     *                            timeout: integer timeout (in ms) for the call to finish }
+     * ```ts
+     * {
+     *      disclose_me: boolean // flag of disclosure of Caller identity (WAMP session ID) to endpoints of a routed call
+     *      receive_progress: boolean // flag for receiving progressive results. In this case onSuccess function will be called every time on receiving result
+     *      timeout: number // (in ms) for the call to finish
+     * }
+     * ```
      * @returns {this}
      */
     call(
@@ -1882,8 +1799,8 @@ export class Wampy {
             | any[]
             | Dict
             | { argsList: any[]; argsDict: Dict },
-        callbacks: Callback | DefaultCallbacks,
-        advancedOptions: {
+        callbacks?: Callback | DefaultCallbacks,
+        advancedOptions?: {
             /**
              * flag of disclosure of Caller identity (WAMP session ID) to endpoints of a routed call
              */
@@ -2015,21 +1932,18 @@ export class Wampy {
      * RPC invocation cancelling
      *
      * @param reqId RPC call request ID
-     * @param callbacks - if it is a function - it will be called if successfully
-     *                          sent canceling message or it can be hash table of callbacks:
-     *                          { onSuccess: will be called if successfully sent canceling message
-     *                            onError: will be called if some error occurred }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
-     *                          { mode: string|one of the possible modes:
-     *                                  "skip" | "kill" | "killnowait". Skip is default.
-     *                          }
-     *
-     * @returns {this}
+     * @param callbacks - if it is a function, it will be treated as `onSuccess` callback
+     * @param advancedOptions - optional parameter. Must include any or all of the options:
+     * ```ts
+     * {
+     *      mode: "skip" | "kill" | "killnowait"// Skip is default.
+     * }
+     * ```
      */
     cancel(
         reqId: number,
-        callbacks: Callback | DefaultCallbacks,
-        advancedOptions: { mode?: "skip" | "kill" | "killnowait" }
+        callbacks?: Callback | DefaultCallbacks,
+        advancedOptions?: { mode?: "skip" | "kill" | "killnowait" }
     ): this {
         let err = false;
         const options: Dict<string> = {};
@@ -2088,22 +2002,31 @@ export class Wampy {
 
     /**
      * RPC registration for invocation
-     * @param {string} topicURI
-     * @param  callbacks - if it is a function - it will be treated as rpc itself
+     * @param topicURI uri of the topic
+     * @param  callbacks - if it is a function, it will be treated as rpc callback
      *                          or it can be hash table of callbacks:
-     *                          { rpc: registered procedure
-     *                            onSuccess: will be called on successful registration
-     *                            onError: will be called if registration would be aborted }
+     * ```ts
+     * {
+     *      rpc: Callback
+     *      onSuccess: Callback
+     *      onError: ErrorCallback
+     * }
+     * ```
      * @param advancedOptions - optional parameter
-     * @returns {this}
+     * ```ts
+     * {
+     *      match: "prefix"|"wildcard";
+     *      invoke: "single" | "roundrobin" | "random" | "first" | "last";
+     * }
+     * ```
      */
-    register(
+    public register(
         topicURI: string,
         /**
          * if it is a function - it will be treated as rpc itself\
          * it can be hash table of callbacks
          */
-        callbacks:
+        callbacks?:
             | Callback
             | {
                   /**
@@ -2235,14 +2158,13 @@ export class Wampy {
 
     /**
      * RPC unregistration for invocation
-     * @param {string} topicURI
-     * @param {function|object} callbacks - if it is a function, it will be called on successful unregistration
-     *                          or it can be hash table of callbacks:
-     *                          { onSuccess: will be called on successful unregistration
-     *                            onError: will be called if unregistration would be aborted }
-     * @returns {this}
+     * @param topicURI - topic to unregister from
+     * @param callbacks - if it is a function, it will treated as onSuccess callback
      */
-    unregister(topicURI: string, callbacks: Callback | Dict<Callback>): this {
+    unregister(
+        topicURI: string,
+        callbacks?: Callback | Pick<DefaultCallbacks, "onSuccess" | "onError">
+    ): this {
         let reqId: number;
 
         if (typeof callbacks === "function") {
