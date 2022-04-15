@@ -2,10 +2,10 @@
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.MsgpackSerializer = void 0;
 var msgpack5_1 = __importDefault(require("msgpack5"));
-var msgpack = (0, msgpack5_1["default"])();
+var msgpack = (0, msgpack5_1.default)();
 var MsgpackSerializer = /** @class */ (function () {
     function MsgpackSerializer() {
         this.protocol = "msgpack";
@@ -32,4 +32,5 @@ var MsgpackSerializer = /** @class */ (function () {
     return MsgpackSerializer;
 }());
 exports.MsgpackSerializer = MsgpackSerializer;
+exports.default = MsgpackSerializer;
 //# sourceMappingURL=MsgpackSerializer.js.map

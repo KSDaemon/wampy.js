@@ -1,7 +1,12 @@
 "use strict";
-exports.__esModule = true;
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.getWebSocket = void 0;
 var constants_1 = require("./constants");
+/**
+ * Gets the server url from the browser
+ * @param url Full url to parse
+ * @returns
+ */
 function getServerUrlBrowser(url) {
     var scheme, port;
     if (/^ws(s)?:\/\//.test(url)) {
@@ -23,6 +28,11 @@ function getServerUrlBrowser(url) {
         return scheme + url;
     }
 }
+/**
+ * Gets the server url from node
+ * @param url The url to parse
+ * @returns
+ */
 function getServerUrlNode(url) {
     if (/^ws(s)?:\/\//.test(url)) {
         // ws scheme is specified
@@ -32,6 +42,15 @@ function getServerUrlNode(url) {
         return null;
     }
 }
+/**
+ *
+ * @param url Url for the websocket
+ * @param protocols Protocols for the websocket
+ * @param ws Websock
+ * @param headers
+ * @param requestOptions
+ * @returns
+ */
 function getWebSocket(url, protocols, ws, headers, requestOptions) {
     var parsedUrl = constants_1.isNode ? getServerUrlNode(url) : getServerUrlBrowser(url);
     if (!parsedUrl) {
@@ -39,6 +58,7 @@ function getWebSocket(url, protocols, ws, headers, requestOptions) {
     }
     if (ws) {
         // User provided webSocket class
+        // @ts-ignore
         return new ws(parsedUrl, protocols, null, headers, requestOptions);
     }
     else if (constants_1.isNode) {

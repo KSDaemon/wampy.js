@@ -14,7 +14,43 @@
  * See @license text at http://www.opensource.org/licenses/mit-license.php
  *
  */
-exports.__esModule = true;
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.Wampy = void 0;
 var constants_1 = require("./constants");
 var utils_1 = require("./utils");
@@ -42,33 +78,33 @@ var Wampy = /** @class */ (function () {
                     features: {
                         subscriber_blackwhite_listing: true,
                         publisher_exclusion: true,
-                        publisher_identification: true
-                    }
+                        publisher_identification: true,
+                    },
                 },
                 subscriber: {
                     features: {
                         pattern_based_subscription: true,
                         publication_trustlevels: true,
-                        publisher_identification: true
-                    }
+                        publisher_identification: true,
+                    },
                 },
                 caller: {
                     features: {
                         caller_identification: true,
                         progressive_call_results: true,
                         call_canceling: true,
-                        call_timeout: true
-                    }
+                        call_timeout: true,
+                    },
                 },
                 callee: {
                     features: {
                         caller_identification: true,
                         call_trustlevels: true,
                         pattern_based_registration: true,
-                        shared_registration: true
-                    }
-                }
-            }
+                        shared_registration: true,
+                    },
+                },
+            },
         };
         this._cache = {
             sessionId: null,
@@ -77,65 +113,16 @@ var Wampy = /** @class */ (function () {
             isSayingGoodbye: false,
             opStatus: { code: 0, description: "Success!", reqId: 0 },
             timer: null,
-            /**
-             * Reconnection attempts
-             * @type {number}
-             */
-            reconnectingAttempts: 0
+            reconnectingAttempts: 0,
         };
-        /**
-         * WebSocket object
-         * @type {Dict<Callback>|null}
-         * @protected
-         */
-        this._ws = {};
-        /**
-         * Internal queue for websocket requests, for case of disconnect
-         * @type {any[]}
-         * @protected
-         */
+        this._ws = null;
         this._wsQueue = [];
-        /**
-         * Internal queue for wamp requests
-         * @type {Dict}
-         * @protected
-         */
         this._requests = {};
-        /**
-         * Stored RPC
-         * @type {Dict<Callback>}
-         * @protected
-         */
         this._calls = {};
-        /**
-         * Stored Pub/Sub
-         * @type {Dict}
-         * @protected
-         */
         this._subscriptions = {};
-        /**
-         * Stored Pub/Sub topics
-         * @type {Set<string>}
-         * @protected
-         */
         this._subsTopics = new Set();
-        /**
-         * Stored RPC Registrations
-         * @type {Dict}
-         * @protected
-         */
         this._rpcRegs = {};
-        /**
-         * Stored RPC names
-         * @type {Set}
-         * @protected
-         */
         this._rpcNames = new Set();
-        /**
-         * Options hash-table
-         * @type {Dict}
-         * @protected
-         */
         this._options = {
             /**
              * Logging
@@ -231,7 +218,7 @@ var Wampy = /** @class */ (function () {
              * User provided msgpack class
              * @type {Dict<Callback>}
              */
-            serializer: new JsonSerializer_1.JsonSerializer()
+            serializer: new JsonSerializer_1.JsonSerializer(),
         };
         if (this._isPlainObject(options)) {
             this._options = this._merge(this._options, options);
@@ -245,7 +232,9 @@ var Wampy = /** @class */ (function () {
     }
     /* Internal utils methods */
     /**
-     * Internal logger
+     * Internal logger for debugging
+     * @param args Args to pass into `console.log`
+     * @internal
      * @protected
      */
     Wampy.prototype._log = function () {
@@ -259,7 +248,7 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Get the new unique request id
-     * @returns {number}
+     * @internal
      * @protected
      */
     Wampy.prototype._getReqId = function () {
@@ -267,7 +256,8 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Merge argument objects into one
-     * @returns {Dict}
+     * @param args - Objects to merge into one
+     * @internal
      * @protected
      */
     Wampy.prototype._merge = function () {
@@ -275,52 +265,54 @@ var Wampy = /** @class */ (function () {
         for (var _i = 0; _i < arguments.length; _i++) {
             args[_i] = arguments[_i];
         }
-        var obj = {}, l = args.length;
-        var i, attr;
-        for (i = 0; i < l; i++) {
-            for (attr in args[i]) {
+        var obj = {};
+        var len = args.length;
+        for (var i = 0; i < len; i++) {
+            for (var attr in args[i]) {
                 obj[attr] = args[i][attr];
             }
         }
         return obj;
     };
     /**
-     * Check if value is array
-     * @param {*} obj
-     * @returns {obj is Array}
+     * Checks if a value is an array
+     * @param obj - value to check
+     * @internal
      * @protected
      */
     Wampy.prototype._isArray = function (obj) {
         return !!obj && Array.isArray(obj);
     };
     /**
-     * Check if value is object literal
-     * @param obj
+     * Checks if a value is an object literal
+     * @param obj Value to check
+     * @internal
+     * @protected
      */
     Wampy.prototype._isPlainObject = function (obj) {
         if (!this._isObject(obj)) {
             return false;
         }
         // If has modified constructor
-        var ctor = obj.constructor;
-        if (typeof ctor !== "function") {
+        var constructor = obj === null || obj === void 0 ? void 0 : obj.constructor;
+        if (typeof constructor !== "function") {
             return false;
         }
         // If has modified prototype
-        var prot = ctor.prototype;
-        if (this._isObject(prot) === false) {
+        var proto = constructor.prototype;
+        if (this._isObject(proto) === false) {
             return false;
         }
         // If constructor does not have an Object-specific method
-        if (Object.hasOwnProperty.call(prot, "isPrototypeOf") === false) {
+        if (Object.hasOwnProperty.call(proto, "isPrototypeOf") === false) {
             return false;
         }
         return true;
     };
     /**
      * Check if value is an object
-     * @param {*} obj
-     * @returns {boolean}
+     * @param obj Value to check
+     * @internal
      * @protected
      */
     Wampy.prototype._isObject = function (obj) {
@@ -340,10 +332,9 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Prerequisite checks for any wampy api call
-     * @param topicType { topic: URI, patternBased: true|false, allowWAMP: true|false }
-     * @param  role
+     * @param topicType
+     * @param role
      * @param callbacks
-     * @returns {boolean}
      * @protected
      */
     Wampy.prototype._preReqChecks = function (topicType, role, callbacks) {
@@ -371,10 +362,9 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Validate uri
-     * @param {string} uri
-     * @param {boolean} patternBased
-     * @param {boolean} allowWAMP
-     * @returns {boolean}
+     * @param uri Uri of the topic
+     * @param patternBased boolean
+     * @param allowWAMP boolean
      * @protected
      */
     Wampy.prototype._validateURI = function (uri, patternBased, allowWAMP) {
@@ -401,8 +391,7 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Encode WAMP message
-     * @param {any[]} msg
-     * @returns {*}
+     * @param msg Array of messages to encode
      * @protected
      */
     Wampy.prototype._encode = function (msg) {
@@ -415,17 +404,23 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Decode WAMP message
-     * @param  msg
-     * @returns {Promise}
+     * @param msg Message to decode
      * @protected
      */
     Wampy.prototype._decode = function (msg) {
-        return this._options.serializer.decode(msg);
+        return __awaiter(this, void 0, void 0, function () {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this._options.serializer.decode(msg)];
+                    case 1: return [2 /*return*/, _a.sent()];
+                }
+            });
+        });
     };
     /**
      * Hard close of connection due to protocol violations
-     * @param {string} errorUri
-     * @param {string} details
+     * @param errorUri url of the error
+     * @param details Details about the error
      * @protected
      */
     Wampy.prototype._hardClose = function (errorUri, details) {
@@ -440,7 +435,7 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Send encoded message to server
-     * @param {any[]} [msg]
+     * @param msg Message to send to server
      * @protected
      */
     Wampy.prototype._send = function (msg) {
@@ -468,7 +463,7 @@ var Wampy = /** @class */ (function () {
         // Just keep attrs that are have to be present
         this._cache = {
             reqId: 0,
-            reconnectingAttempts: 0
+            reconnectingAttempts: 0,
         };
     };
     /**
@@ -497,7 +492,8 @@ var Wampy = /** @class */ (function () {
      * @protected
      */
     Wampy.prototype._wsOnOpen = function () {
-        var options = this._merge(this._options.helloCustomDetails, this._wamp_features), serverProtocol = this._ws.protocol
+        var _a;
+        var options = this._merge(this._options.helloCustomDetails, this._wamp_features), serverProtocol = ((_a = this._ws) === null || _a === void 0 ? void 0 : _a.protocol)
             ? this._ws.protocol.split(".")[2]
             : "";
         if (this._options.authid) {
@@ -528,10 +524,11 @@ var Wampy = /** @class */ (function () {
         // WAMP SPEC: [HELLO, Realm|uri, Details|dict]
         // Sending directly 'cause it's a hello msg and no sessionId check is needed
         this._ws.send(this._encode([constants_1.WAMP_MSG_SPEC.HELLO, this._options.realm, options]));
+        return this;
     };
     /**
      * Internal websocket on close callback
-     * @param {object} event
+     * @param event
      * @protected
      */
     Wampy.prototype._wsOnClose = function (event) {
@@ -558,8 +555,8 @@ var Wampy = /** @class */ (function () {
         }
     };
     /**
-     * Internal websocket on event callback
-     * @param {object} event
+     * Internal websocket onEvent callback
+     * @param event Event for callback
      * @protected
      */
     Wampy.prototype._wsOnMessage = function (event) {
@@ -601,7 +598,7 @@ var Wampy = /** @class */ (function () {
                     if (_this._options.onError) {
                         _this._options.onError({
                             error: data[2],
-                            details: data[1]
+                            details: data[1],
                         });
                     }
                     _this._ws.close();
@@ -624,18 +621,18 @@ var Wampy = /** @class */ (function () {
                                     key,
                                     {},
                                 ]));
-                            })["catch"](function (e) {
+                            }).catch(function (e) {
                                 _this._ws.send(_this._encode([
                                     constants_1.WAMP_MSG_SPEC.ABORT,
                                     {
-                                        message: "Exception in onChallenge handler raised!"
+                                        message: "Exception in onChallenge handler raised!",
                                     },
                                     "wamp.error.cannot_authenticate",
                                 ]));
                                 if (_this._options.onError) {
                                     _this._options.onError({
                                         error: constants_1.WAMP_ERROR_MSG.CRA_EXCEPTION
-                                            .description
+                                            .description,
                                     });
                                 }
                                 _this._ws.close();
@@ -648,14 +645,14 @@ var Wampy = /** @class */ (function () {
                                 constants_1.WAMP_MSG_SPEC.ABORT,
                                 {
                                     message: constants_1.WAMP_ERROR_MSG.NO_CRA_CB_OR_ID
-                                        .description
+                                        .description,
                                 },
                                 "wamp.error.cannot_authenticate",
                             ]));
                             if (_this._options.onError) {
                                 _this._options.onError({
                                     error: constants_1.WAMP_ERROR_MSG.NO_CRA_CB_OR_ID
-                                        .description
+                                        .description,
                                 });
                             }
                             _this._ws.close();
@@ -703,7 +700,7 @@ var Wampy = /** @class */ (function () {
                                         error: data[4],
                                         details: data[3],
                                         argsList: data[5],
-                                        argsDict: data[6]
+                                        argsDict: data[6],
                                     });
                                 delete _this._requests[data[2]];
                                 break;
@@ -718,7 +715,7 @@ var Wampy = /** @class */ (function () {
                                         error: data[4],
                                         details: data[3],
                                         argsList: data[5],
-                                        argsDict: data[6]
+                                        argsDict: data[6],
                                     });
                                 delete _this._calls[data[2]];
                                 break;
@@ -741,7 +738,7 @@ var Wampy = /** @class */ (function () {
                                     _this._requests[data[1]].callbacks
                                         .onEvent,
                                 ],
-                                advancedOptions: _this._requests[data[1]].advancedOptions
+                                advancedOptions: _this._requests[data[1]].advancedOptions,
                             };
                             _this._subsTopics.add(_this._requests[data[1]].topic);
                             if (_this._requests[data[1]].callbacks.onSuccess) {
@@ -749,7 +746,7 @@ var Wampy = /** @class */ (function () {
                                     topic: _this._requests[data[1]]
                                         .topic,
                                     requestId: data[1],
-                                    subscriptionId: data[2]
+                                    subscriptionId: data[2],
                                 });
                             }
                             delete _this._requests[data[1]];
@@ -768,13 +765,13 @@ var Wampy = /** @class */ (function () {
                             delete _this._subscriptions[_this._requests[data[1]].topic];
                             delete _this._subscriptions[id];
                             if (_this._subsTopics.has(_this._requests[data[1]].topic)) {
-                                _this._subsTopics["delete"](_this._requests[data[1]].topic);
+                                _this._subsTopics.delete(_this._requests[data[1]].topic);
                             }
                             if (_this._requests[data[1]].callbacks.onSuccess) {
                                 _this._requests[data[1]].callbacks.onSuccess({
                                     topic: _this._requests[data[1]]
                                         .topic,
-                                    requestId: data[1]
+                                    requestId: data[1],
                                 });
                             }
                             delete _this._requests[data[1]];
@@ -794,7 +791,7 @@ var Wampy = /** @class */ (function () {
                                     topic: _this._requests[data[1]]
                                         .topic,
                                     requestId: data[1],
-                                    publicationId: data[2]
+                                    publicationId: data[2],
                                 });
                             }
                             delete _this._requests[data[1]];
@@ -816,7 +813,7 @@ var Wampy = /** @class */ (function () {
                                 _this._subscriptions[data[1]].callbacks[i]({
                                     details: data[3],
                                     argsList: data[4],
-                                    argsDict: data[5]
+                                    argsDict: data[5],
                                 });
                             }
                         }
@@ -833,7 +830,7 @@ var Wampy = /** @class */ (function () {
                             _this._calls[data[1]].onSuccess({
                                 details: data[2],
                                 argsList: data[3],
-                                argsDict: data[4]
+                                argsDict: data[4],
                             });
                             if (!(data[2].progress &&
                                 data[2].progress === true)) {
@@ -859,7 +856,7 @@ var Wampy = /** @class */ (function () {
                                     callbacks: [
                                         _this._requests[data[1]].callbacks
                                             .rpc,
-                                    ]
+                                    ],
                                 };
                             _this._rpcNames.add(_this._requests[data[1]].topic);
                             if (_this._requests[data[1]].callbacks &&
@@ -868,7 +865,7 @@ var Wampy = /** @class */ (function () {
                                     topic: _this._requests[data[1]]
                                         .topic,
                                     requestId: data[1],
-                                    registrationId: data[2]
+                                    registrationId: data[2],
                                 });
                             }
                             delete _this._requests[data[1]];
@@ -891,14 +888,14 @@ var Wampy = /** @class */ (function () {
                             delete _this._rpcRegs[_this._requests[data[1]].topic];
                             delete _this._rpcRegs[id];
                             if (_this._rpcNames.has(_this._requests[data[1]].topic)) {
-                                _this._rpcNames["delete"](_this._requests[data[1]].topic);
+                                _this._rpcNames.delete(_this._requests[data[1]].topic);
                             }
                             if (_this._requests[data[1]].callbacks &&
                                 _this._requests[data[1]].callbacks.onSuccess) {
                                 _this._requests[data[1]].callbacks.onSuccess({
                                     topic: _this._requests[data[1]]
                                         .topic,
-                                    requestId: data[1]
+                                    requestId: data[1],
                                 });
                             }
                             delete _this._requests[data[1]];
@@ -976,12 +973,12 @@ var Wampy = /** @class */ (function () {
                                     argsList: data[4],
                                     argsDict: data[5],
                                     result_handler: invoke_result_handler_1,
-                                    error_handler: invoke_error_handler_1
+                                    error_handler: invoke_error_handler_1,
                                 }));
                             });
                             p.then(function (results) {
                                 invoke_result_handler_1(results);
-                            })["catch"](function (e) {
+                            }).catch(function (e) {
                                 invoke_error_handler_1(e);
                             });
                         }
@@ -1009,19 +1006,19 @@ var Wampy = /** @class */ (function () {
                     _this._hardClose("wamp.error.protocol_violation", "Received non-compliant WAMP message");
                     break;
             }
-        }, function (err) {
+        }, function (_err) {
             _this._hardClose("wamp.error.protocol_violation", "Can not decode received message");
         });
     };
     /**
      * Internal websocket on error callback
-     * @param {object} error
+     * @param error Error arg to pass into onError callback
      * @protected
      */
     Wampy.prototype._wsOnError = function (error) {
         this._log("[wampy] websocket error");
         if (this._options.onError) {
-            this._options.onError({ error: error });
+            this._options.onError(error);
         }
     };
     /**
@@ -1072,45 +1069,34 @@ var Wampy = /** @class */ (function () {
     /**
      * Get or set Wampy options
      *
-     * To get options - call without parameters
+     * To get options - call without parameters\
      * To set options - pass hash-table with options values
-     *
-     * @param {object} [opts]
-     * @returns {*}
+     * @param opts WampyOptions to merge with current options
      */
     Wampy.prototype.options = function (opts) {
         if (typeof opts === "undefined") {
-            return this._options;
         }
         else if (this._isPlainObject(opts)) {
             this._options = this._merge(this._options, opts);
             return this;
         }
+        return this._options;
     };
     /**
      * Get the status of last operation
-     *
-     * @returns {object} with 2 fields: code, description
-     *      code: 0 - if operation was successful
-     *      code > 0 - if error occurred
-     *      description contains details about error
-     *      reqId: last send request ID
      */
     Wampy.prototype.getOpStatus = function () {
         return this._cache.opStatus;
     };
     /**
      * Get the WAMP Session ID
-     *
-     * @returns {string} Session ID
      */
     Wampy.prototype.getSessionId = function () {
         return this._cache.sessionId;
     };
     /**
      * Connect to server
-     * @param {string} [url] New url (optional)
-     * @returns {this}
+     * @param url New url (optional)
      */
     Wampy.prototype.connect = function (url) {
         if (url) {
@@ -1142,7 +1128,6 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Disconnect from server
-     * @returns {this}
      */
     Wampy.prototype.disconnect = function () {
         if (this._cache.sessionId) {
@@ -1162,8 +1147,6 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Abort WAMP session establishment
-     *
-     * @returns {this}
      */
     Wampy.prototype.abort = function () {
         if (!this._cache.sessionId && this._ws.readyState === 1) {
@@ -1176,17 +1159,9 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Subscribe to a topic on a broker
-     *
-     * @param {string} topicURI
-     * @param {function|object} callbacks - if it is a function - it will be treated as published event callback
-     *                          or it can be hash table of callbacks:
-     *                          { onSuccess: will be called when subscribe would be confirmed
-     *                            onError: will be called if subscribe would be aborted
-     *                            onEvent: will be called on receiving published event }
-     * @param {{match: 'prefix'|'wildcard'}} advancedOptions - optional parameter. Must include any or all of the options:\
-     *                          { match: string matching policy ("prefix"|"wildcard") }
-     *
-     * @returns {this}
+     * @param topicURI - Uri to subscribe to
+     * @param callbacks - if it is a function, it will be treated as published event callback or it can be hash table of callbacks
+     * @param  advancedOptions - optional parameter
      */
     Wampy.prototype.subscribe = function (topicURI, callbacks, advancedOptions) {
         var reqId, patternBased = false;
@@ -1202,10 +1177,8 @@ var Wampy = /** @class */ (function () {
         if (!this._preReqChecks({
             topic: topicURI,
             patternBased: patternBased,
-            allowWAMP: true
-        }, "broker", 
-        // @ts-ignore
-        callbacks)) {
+            allowWAMP: true,
+        }, "broker", callbacks)) {
             return this;
         }
         if (typeof callbacks === "function") {
@@ -1226,7 +1199,7 @@ var Wampy = /** @class */ (function () {
             this._requests[reqId] = {
                 topic: topicURI,
                 callbacks: callbacks,
-                advancedOptions: advancedOptions
+                advancedOptions: advancedOptions,
             };
             // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
             this._send([constants_1.WAMP_MSG_SPEC.SUBSCRIBE, reqId, options, topicURI]);
@@ -1240,7 +1213,7 @@ var Wampy = /** @class */ (function () {
             if (callbacks.onSuccess) {
                 callbacks.onSuccess({
                     topic: topicURI,
-                    subscriptionId: this._subscriptions[topicURI].id
+                    subscriptionId: this._subscriptions[topicURI].id,
                 });
             }
         }
@@ -1250,13 +1223,8 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Unsubscribe from topic
-     * @param {string} topicURI
-     * @param {EventCallback|import('./typedefs').DefaultCallbacks} callbacks - if it is a function - it will be treated as
-     *                          published event callback to remove or it can be hash table of callbacks:
-     *                          { onSuccess: will be called when unsubscribe would be confirmed
-     *                            onError: will be called if unsubscribe would be aborted
-     *                            onEvent: published event callback to remove }
-     * @returns {this}
+     * @param topicURI Topic to unsubscribe from
+     * @param callbacks - if it is a function, it will be treated as published event callback to remove. Or it can be hash table of callbacks
      */
     Wampy.prototype.unsubscribe = function (topicURI, callbacks) {
         var reqId, i = -1;
@@ -1291,7 +1259,7 @@ var Wampy = /** @class */ (function () {
             }
             this._requests[reqId] = {
                 topic: topicURI,
-                callbacks: callbacks
+                callbacks: callbacks,
             };
             // WAMP_SPEC: [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
             this._send([
@@ -1315,40 +1283,16 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * Publish a event to topic
-     * @param {string} topicURI
-     * @param {string|number|any[]|object} payload - can be either a value of any type or null.  Also it
-     *                          is possible to pass array and object-like data simultaneously.
-     *                          In this case pass a hash-table with next attributes:
-     *                          {
-     *                             argsList: array payload (may be omitted)
-     *                             argsDict: object payload (may be omitted)
-     *                          }
-     * @param {{onSuccess?: Callback, onError?: Callback}} [callbacks] - optional hash table of callbacks:
-     *                          { onSuccess: will be called when publishing would be confirmed
-     *                            onError: will be called if publishing would be aborted }
-     * @param {import('./typedefs').AdvancedOptions} [advancedOptions] - optional parameter. Must include any or all of the options:
-     *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
-     *                                      even though they may be subscribed
-     *                            exclude_authid: string|array Authentication id(s) that won't receive
-     *                                      a published event, even though they may be subscribed
-     *                            exclude_authrole: string|array Authentication role(s) that won't receive
-     *                                      a published event, even though they may be subscribed
-     *                            eligible: integer|array WAMP session id(s) that are allowed
-     *                                      to receive a published event
-     *                            eligible_authid: string|array Authentication id(s) that are allowed
-     *                                      to receive a published event
-     *                            eligible_authrole: string|array Authentication role(s) that are allowed
-     *                                      to receive a published event
-     *                            exclude_me: bool flag of receiving publishing event by initiator
-     *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
-     *                                      to receivers of a published event }
-     * @returns {this}
+     * @param topicURI
+     * @param payload - payload to publish
+     * @param callbacks - optional hash table of callbacks:
+     * @param advancedOptions - optional parameter
      */
     Wampy.prototype.publish = function (topicURI, payload, callbacks, advancedOptions) {
         var _this = this;
         var reqId, msg, err = false, hasPayload = false;
         var options = {}, _optionsConvertHelper = function (option, sourceType) {
-            if (advancedOptions[option]) {
+            if (advancedOptions && advancedOptions[option]) {
                 if (_this._isArray(advancedOptions[option]) &&
                     // @ts-ignore
                     advancedOptions[option].length) {
@@ -1390,7 +1334,7 @@ var Wampy = /** @class */ (function () {
                 this._cache.opStatus = constants_1.WAMP_ERROR_MSG.INVALID_PARAM;
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
                     callbacks.onError({
-                        error: this._cache.opStatus.description
+                        error: this._cache.opStatus.description,
                     });
                 }
                 return this;
@@ -1406,7 +1350,7 @@ var Wampy = /** @class */ (function () {
             default:
                 this._requests[reqId] = {
                     topic: topicURI,
-                    callbacks: callbacks
+                    callbacks: callbacks,
                 };
                 hasPayload = true;
                 break;
@@ -1448,25 +1392,16 @@ var Wampy = /** @class */ (function () {
     /**
      * Remote Procedure Call
      * @param topicURI - Uri to call
-     * @param payload - can be either a value of any type or null.\
-     *                  Also it is possible to pass array and object-like data simultaneously.\
-     *                  In this case pass a hash-table with next attributes:\
-     *                  {\
-     *                      argsList: array payload (may be omitted)\
-     *                      argsDict: object payload (may be omitted)\
-     *                  }
-     * @param  callbacks - if it is a function - it will be treated as result callback function\
-     *                     or it can be hash table of callbacks:\
-     *                     {\
-     *                          onSuccess: will be called with result on successful call\
-     *                          onError: will be called if invocation would be aborted\
-     *                     }
+     * @param payload - Payload to call with
+     * @param  callbacks - if it is a function, it will be treated `as onSuccess` callback function, or hash table of callbacks
      * @param advancedOptions - optional parameter. Must include any or all of the options:
-     *                          { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
-     *                                  to endpoints of a routed call
-     *                            receive_progress: bool flag for receiving progressive results. In this case
-     *                                  onSuccess function will be called every time on receiving result
-     *                            timeout: integer timeout (in ms) for the call to finish }
+     * ```ts
+     * {
+     *      disclose_me: boolean // flag of disclosure of Caller identity (WAMP session ID) to endpoints of a routed call
+     *      receive_progress: boolean // flag for receiving progressive results. In this case onSuccess function will be called every time on receiving result
+     *      timeout: number // (in ms) for the call to finish
+     * }
+     * ```
      * @returns {this}
      */
     Wampy.prototype.call = function (topicURI, payload, callbacks, advancedOptions) {
@@ -1511,7 +1446,7 @@ var Wampy = /** @class */ (function () {
                 this._cache.opStatus = constants_1.WAMP_ERROR_MSG.INVALID_PARAM;
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
                     callbacks.onError({
-                        error: this._cache.opStatus.description
+                        error: this._cache.opStatus.description,
                     });
                 }
                 return this;
@@ -1558,16 +1493,13 @@ var Wampy = /** @class */ (function () {
      * RPC invocation cancelling
      *
      * @param reqId RPC call request ID
-     * @param callbacks - if it is a function - it will be called if successfully
-     *                          sent canceling message or it can be hash table of callbacks:
-     *                          { onSuccess: will be called if successfully sent canceling message
-     *                            onError: will be called if some error occurred }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
-     *                          { mode: string|one of the possible modes:
-     *                                  "skip" | "kill" | "killnowait". Skip is default.
-     *                          }
-     *
-     * @returns {this}
+     * @param callbacks - if it is a function, it will be treated as `onSuccess` callback
+     * @param advancedOptions - optional parameter. Must include any or all of the options:
+     * ```ts
+     * {
+     *      mode: "skip" | "kill" | "killnowait"// Skip is default.
+     * }
+     * ```
      */
     Wampy.prototype.cancel = function (reqId, callbacks, advancedOptions) {
         var _a;
@@ -1606,7 +1538,7 @@ var Wampy = /** @class */ (function () {
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
                     // @ts-ignore
                     callbacks.onError({
-                        error: this._cache.opStatus.description
+                        error: this._cache.opStatus.description,
                     });
                 }
                 return this;
@@ -1622,14 +1554,23 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * RPC registration for invocation
-     * @param {string} topicURI
-     * @param  callbacks - if it is a function - it will be treated as rpc itself
+     * @param topicURI uri of the topic
+     * @param  callbacks - if it is a function, it will be treated as rpc callback
      *                          or it can be hash table of callbacks:
-     *                          { rpc: registered procedure
-     *                            onSuccess: will be called on successful registration
-     *                            onError: will be called if registration would be aborted }
+     * ```ts
+     * {
+     *      rpc: Callback
+     *      onSuccess: Callback
+     *      onError: ErrorCallback
+     * }
+     * ```
      * @param advancedOptions - optional parameter
-     * @returns {this}
+     * ```ts
+     * {
+     *      match: "prefix"|"wildcard";
+     *      invoke: "single" | "roundrobin" | "random" | "first" | "last";
+     * }
+     * ```
      */
     Wampy.prototype.register = function (topicURI, 
     /**
@@ -1668,7 +1609,7 @@ var Wampy = /** @class */ (function () {
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
                     // @ts-ignore
                     callbacks.onError({
-                        error: this._cache.opStatus.description
+                        error: this._cache.opStatus.description,
                     });
                 }
                 return this;
@@ -1677,7 +1618,7 @@ var Wampy = /** @class */ (function () {
         if (!this._preReqChecks({
             topic: topicURI,
             patternBased: patternBased,
-            allowWAMP: false
+            allowWAMP: false,
         }, "dealer", callbacks)) {
             return this;
         }
@@ -1698,7 +1639,7 @@ var Wampy = /** @class */ (function () {
             reqId = this._getReqId();
             this._requests[reqId] = {
                 topic: topicURI,
-                callbacks: callbacks
+                callbacks: callbacks,
             };
             // WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
             this._send([constants_1.WAMP_MSG_SPEC.REGISTER, reqId, options, topicURI]);
@@ -1716,12 +1657,8 @@ var Wampy = /** @class */ (function () {
     };
     /**
      * RPC unregistration for invocation
-     * @param {string} topicURI
-     * @param {function|object} callbacks - if it is a function, it will be called on successful unregistration
-     *                          or it can be hash table of callbacks:
-     *                          { onSuccess: will be called on successful unregistration
-     *                            onError: will be called if unregistration would be aborted }
-     * @returns {this}
+     * @param topicURI - topic to unregister from
+     * @param callbacks - if it is a function, it will treated as onSuccess callback
      */
     Wampy.prototype.unregister = function (topicURI, callbacks) {
         var reqId;
@@ -1736,7 +1673,7 @@ var Wampy = /** @class */ (function () {
             reqId = this._getReqId();
             this._requests[reqId] = {
                 topic: topicURI,
-                callbacks: callbacks
+                callbacks: callbacks,
             };
             // WAMP SPEC: [UNREGISTER, Request|id, REGISTERED.Registration|id]
             this._send([
@@ -1759,5 +1696,5 @@ var Wampy = /** @class */ (function () {
     return Wampy;
 }());
 exports.Wampy = Wampy;
-exports["default"] = Wampy;
+exports.default = Wampy;
 //# sourceMappingURL=wampy.js.map
