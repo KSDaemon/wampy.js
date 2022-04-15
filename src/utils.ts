@@ -1,6 +1,11 @@
 import { isNode } from "./constants";
 
-function getServerUrlBrowser(url: string) {
+/**
+ * Gets the server url from the browser
+ * @param url Full url to parse
+ * @returns
+ */
+function getServerUrlBrowser(url: string): string {
     let scheme: string, port: string;
 
     if (/^ws(s)?:\/\//.test(url)) {
@@ -23,7 +28,12 @@ function getServerUrlBrowser(url: string) {
     }
 }
 
-function getServerUrlNode(url: string) {
+/**
+ * Gets the server url from node
+ * @param url The url to parse
+ * @returns
+ */
+function getServerUrlNode(url: string): string | null {
     if (/^ws(s)?:\/\//.test(url)) {
         // ws scheme is specified
         return url;
@@ -32,12 +42,21 @@ function getServerUrlNode(url: string) {
     }
 }
 
+/**
+ *
+ * @param url Url for the websocket
+ * @param protocols Protocols for the websocket
+ * @param ws Websock
+ * @param headers
+ * @param requestOptions
+ * @returns
+ */
 export function getWebSocket(
     url: string,
     protocols: string | string[],
-    ws: new (arg0: any, arg1: any, arg2: any, arg3: any, arg4: any) => any,
-    headers: any,
-    requestOptions: any
+    ws?: typeof WebSocket | null,
+    headers?: unknown,
+    requestOptions?: unknown
 ) {
     const parsedUrl = isNode ? getServerUrlNode(url) : getServerUrlBrowser(url);
 
@@ -47,6 +66,7 @@ export function getWebSocket(
 
     if (ws) {
         // User provided webSocket class
+        // @ts-ignore
         return new ws(parsedUrl, protocols, null, headers, requestOptions);
     } else if (isNode) {
         // we're in node, but no webSocket provided
