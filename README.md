@@ -758,7 +758,7 @@ const getSystemInfo = function () {
     const UserException = function () {
         this.error = 'app.error.no_database_connection';
         this.details = {
-         errorCode: 'ECONNREFUSED'
+         errorCode: 'ECONNREFUSED',
          errorMessage: 'Connection refused by a remote host.',
          database: 'db',
          host: '1.2.3.4',
