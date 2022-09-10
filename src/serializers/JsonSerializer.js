@@ -2,7 +2,7 @@ export class JsonSerializer {
 
     constructor () {
         this.protocol = 'json';
-        this.isBinary = true;
+        this.isBinary = false;
     }
 
     encode (data) {

@@ -73,10 +73,11 @@ Wampy.js supports next WAMP roles and features:
     * pattern-based registration
     * shared registration
 
-Wampy default serializer is JSON, but it also supports msgpack as serializer.
-In that case you need to include msgpack5.js as dependency. See [msgpack5][] for more info.
+Wampy supports next serializers:
 
-For WAMP v1 implementation, please see tag v0.1.0.
+* JSON (default, native)
+* MsgPack (See [msgpack5][] for more info)
+* CBOR (See [cbor][] for more info)
 
 [Back to TOC](#table-of-contents)
 
@@ -953,7 +954,7 @@ Wampy.js uses mocha and chai for tests and istanbul for code coverage. You can r
 ```bash
 # run tests with mocha (use your own favorite reporter)
 > mocha -R spec
-# or use standart npm test command
+# or use standard npm test command
 > npm test
 
 # for code coverage report run
@@ -1011,7 +1012,8 @@ Thanks JetBrains for support! Best IDEs for every language!
 [Wiola]: http://ksdaemon.github.io/wiola/
 [Loowy]: https://github.com/KSDaemon/Loowy
 [msgpack5]: https://github.com/mcollina/msgpack5
-[WAMP Spec CRA]: https://tools.ietf.org/html/draft-oberstet-hybi-tavendo-wamp-02#section-13.7.2.3
+[cbor]: https://github.com/hildjj/node-cbor
+[WAMP Spec CRA]: https://wamp-proto.org/wamp_latest_ietf.html#name-challenge-response-authenti
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
 [tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
 [wampy-cra]: https://github.com/KSDaemon/wampy-cra

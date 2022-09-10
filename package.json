@@ -1,6 +1,6 @@
 {
   "name": "wampy",
-  "version": "6.4.2",
+  "version": "6.5.0",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation",
   "author": "Konstantin Burkalev <KSDaemon@ya.ru> (https://ksdaemon.ru)",
   "devDependencies": {
@@ -36,6 +36,8 @@
   },
   "main": "dist/wampy.js",
   "dependencies": {
+    "cbor": "^8.1.0",
+    "cbor-web": "^8.1.0",
     "msgpack5": "^6.0.2",
     "wampy-cra": "^0.1.2",
     "websocket": "^1.0.34"

@@ -5,8 +5,9 @@
  */
 
 import sendData from './send-data';
-import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
-import { JsonSerializer } from './../src/serializers/JsonSerializer';
+import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer';
+import { JsonSerializer } from '../src/serializers/JsonSerializer';
+import { CborSerializer } from '../src/serializers/CborSerializer';
 
 const TIMEOUT = 15;
 
@@ -20,11 +21,17 @@ let sendDataCursor = 0,
         this.protocols = protocols;
         this.transportEncoding = this.protocols[0].split('.')[2];
 
-        if (this.transportEncoding === 'msgpack') {
-            this.binaryType = 'arraybuffer';
-            this.encoder = new MsgpackSerializer();
-        } else {
-            this.encoder = new JsonSerializer();
+        switch (this.transportEncoding) {
+            case 'msgpack':
+                this.binaryType = 'arraybuffer';
+                this.encoder = new MsgpackSerializer();
+                break;
+            case 'cbor':
+                this.binaryType = 'arraybuffer';
+                this.encoder = new CborSerializer();
+                break;
+            default:
+                this.encoder = new JsonSerializer();
         }
 
         this.encode = this.encoder.encode;
@@ -49,17 +56,22 @@ let sendDataCursor = 0,
         this.protocols = protocols;
         this.transportEncoding = this.protocols[0].split('.')[2];
 
-        if (this.transportEncoding === 'msgpack') {
-            this.binaryType = 'arraybuffer';
-            this.encoder = new MsgpackSerializer();
-
-            this.encode = function (data) {
-                return new Blob([new Uint8Array(this.encoder.encode(data))]);
-            };
-
-        } else {
-            this.encoder = new JsonSerializer();
-            this.encode = this.encoder.encode;
+        switch (this.transportEncoding) {
+            case 'msgpack':
+                this.binaryType = 'arraybuffer';
+                this.encoder = new MsgpackSerializer();
+                this.encode = function (data) {
+                    return new Blob([new Uint8Array(this.encoder.encode(data))]);
+                };
+                break;
+            case 'cbor':
+                this.binaryType = 'arraybuffer';
+                this.encoder = new CborSerializer();
+                this.encode = this.encoder.encode;
+                break;
+            default:
+                this.encoder = new JsonSerializer();
+                this.encode = this.encoder.encode;
         }
 
         this.decode = this.encoder.decode;
