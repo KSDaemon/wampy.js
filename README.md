@@ -26,6 +26,7 @@ Table of Contents
   - [connect([url])](#connecturl)
   - [disconnect()](#disconnect)
   - [abort()](#abort)
+  - [Ticket-based Authentication](#ticket-based-authentication)
   - [Challenge Response Authentication](#challenge-response-authentication)
   - [subscribe(topicURI, callbacks[, advancedOptions])](#subscribetopicuri-callbacks-advancedoptions)
   - [unsubscribe(topicURI[, callbacks])](#unsubscribetopicuri-callbacks)
@@ -50,7 +51,9 @@ autoreconnecting and use of Chaining Pattern. It has no external dependencies (b
 
 Wampy.js supports next WAMP roles and features:
 
-* Challenge Response Authentication (wampcra method)
+* Authentication:
+    * Ticket-based Authentication
+    * Challenge Response Authentication (wampcra method)
 * publisher:
     * subscriber blackwhite listing
     * publisher exclusion
@@ -330,6 +333,57 @@ ws.abort();
 ```
 
 [Back to TOC](#table-of-contents)
+
+Ticket-based Authentication
+---------------------------
+
+With Ticket-based authentication, the client needs to present the server an authentication "ticket" -
+some magic value to authenticate itself to the server. It can be user password, authentication token or
+any other kind of client secret. To use it you need to provide "ticket" in "authmethods", authid and
+onChallenge callback as wampy instance options.
+
+```javascript
+'use strict';
+
+const Wampy = require('wampy').Wampy;
+let ws;
+
+/**
+ * Ticket authentication
+ */
+ws = new Wampy('ws://wamp.router.url', {
+    realm: 'realm1',
+    authid: 'joe',
+    authmethods: ['ticket'],
+    onChallenge: (method, info) => {
+        console.log('Requested challenge with ', method, info);
+        return 'joe secret key or password';
+    },
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+
+/**
+ * Promise-based ticket authentication
+ */
+ws = new Wampy('ws://wamp.router.url', {
+    realm: 'realm1',
+    authid: 'micky',
+    authmethods: ['ticket'],
+    onChallenge: (method, info) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                console.log('Requested challenge with ', method, info);
+                resolve('micky secret key or password');
+            }, 2000);
+        });
+    },
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+```
 
 Challenge Response Authentication
 ---------------------------------
