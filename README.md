@@ -812,7 +812,7 @@ const getSystemInfo = function () {
     const UserException = function () {
         this.error = 'app.error.no_database_connection';
         this.details = {
-         errorCode: 'ECONNREFUSED'
+         errorCode: 'ECONNREFUSED',
          errorMessage: 'Connection refused by a remote host.',
          database: 'db',
          host: '1.2.3.4',
@@ -995,7 +995,7 @@ See Also
 
 * [WAMP specification][]
 * [Wiola][] - WAMP Router in Lua on top of nginx/openresty
-* [Loowy](https://github.com/KSDaemon/Loowy) - LUA WAMP client
+* [Loowy][] - LUA WAMP client
 * [msgpack5][] - A msgpack v5 implementation for node.js and the browser,
 with extension point support
 * [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
@@ -1009,6 +1009,7 @@ Thanks JetBrains for support! Best IDEs for every language!
 [WAMP]: http://wamp-proto.org/
 [WAMP specification]: http://wamp-proto.org/
 [Wiola]: http://ksdaemon.github.io/wiola/
+[Loowy]: https://github.com/KSDaemon/Loowy
 [msgpack5]: https://github.com/mcollina/msgpack5
 [WAMP Spec CRA]: https://tools.ietf.org/html/draft-oberstet-hybi-tavendo-wamp-02#section-13.7.2.3
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
