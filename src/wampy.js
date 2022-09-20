@@ -18,6 +18,8 @@ import { WAMP_MSG_SPEC, WAMP_ERROR_MSG } from './constants';
 import { getWebSocket } from './utils';
 import { JsonSerializer } from './serializers/JsonSerializer';
 
+const jsonSerializer = new JsonSerializer();
+
 /**
  * WAMP Client Class
  */
@@ -63,14 +65,16 @@ class Wampy {
                     features: {
                         subscriber_blackwhite_listing: true,
                         publisher_exclusion          : true,
-                        publisher_identification     : true
+                        publisher_identification     : true,
+                        payload_passthru_mode        : true
                     }
                 },
                 subscriber: {
                     features: {
                         pattern_based_subscription: true,
                         publication_trustlevels   : true,
-                        publisher_identification  : true
+                        publisher_identification  : true,
+                        payload_passthru_mode     : true
                     }
                 },
                 caller    : {
@@ -78,7 +82,8 @@ class Wampy {
                         caller_identification   : true,
                         progressive_call_results: true,
                         call_canceling          : true,
-                        call_timeout            : true
+                        call_timeout            : true,
+                        payload_passthru_mode   : true
                     }
                 },
                 callee    : {
@@ -86,7 +91,9 @@ class Wampy {
                         caller_identification     : true,
                         call_trustlevels          : true,
                         pattern_based_registration: true,
-                        shared_registration       : true
+                        shared_registration       : true,
+                        payload_passthru_mode     : true
+
                     }
                 }
             }
@@ -100,7 +107,7 @@ class Wampy {
         this._cache = {
             /**
              * WAMP Session ID
-             * @type {string}
+             * @type {string|null}
              */
             sessionId: null,
 
@@ -227,7 +234,7 @@ class Wampy {
 
             /**
              * WAMP Realm to join
-             * @type {string}
+             * @type {string|null}
              */
             realm: null,
 
@@ -245,7 +252,7 @@ class Wampy {
 
             /**
              * Authentication id to use in challenge
-             * @type {string}
+             * @type {string|null}
              */
             authid: null,
 
@@ -310,10 +317,18 @@ class Wampy {
             wsRequestOptions: null,
 
             /**
-             * User provided msgpack class
+             * User provided Serializer class
              * @type {object}
              */
-            serializer: new JsonSerializer()
+            serializer: jsonSerializer,
+
+            /**
+             * User provided Serializers for Payload Passthru Mode
+             * @type {object}
+             */
+            payloadSerializers: {
+                json: jsonSerializer
+            }
         };
 
         if (this._isPlainObject(options)) {
@@ -387,24 +402,20 @@ class Wampy {
             return false;
         }
 
-        // If has modified constructor
+        // If obj has modified constructor
         const ctor = obj.constructor;
         if (typeof ctor !== 'function') {
             return false;
         }
 
-        // If has modified prototype
+        // If obj has modified prototype
         const prot = ctor.prototype;
         if (this._isObject(prot) === false) {
             return false;
         }
 
         // If constructor does not have an Object-specific method
-        if (Object.hasOwnProperty.call(prot, 'isPrototypeOf') === false) {
-            return false;
-        }
-
-        return true;
+        return Object.hasOwnProperty.call(prot, 'isPrototypeOf') !== false;
     }
 
     /**
@@ -611,13 +622,9 @@ class Wampy {
             // Server have chosen not our preferred protocol
 
             // Falling back to json if possible
-            //FIXME Temp hack for React Native Environment.
-            // Due to bug (facebook/react-native#24796), it doesn't provide selected subprotocol.
-            // Remove when ^^^ bug will be fixed.
-            if (serverProtocol === 'json' ||
-                (typeof navigator != 'undefined' &&
-                    navigator.product === 'ReactNative' &&
-                    typeof this._ws.protocol === 'undefined')) {
+            // Temp hack for React Native Environment is removed as
+            // (facebook/react-native#24796) was resolved
+            if (serverProtocol === 'json') {
                 this._options.serializer = new JsonSerializer();
             } else {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_SERIALIZER_AVAILABLE;
@@ -1748,7 +1755,7 @@ class Wampy {
      *                          { rpc: registered procedure
      *                            onSuccess: will be called on successful registration
      *                            onError: will be called if registration would be aborted }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          {
      *                              match: string matching policy ("prefix"|"wildcard")
      *                              invoke: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
