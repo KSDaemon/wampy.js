@@ -474,6 +474,17 @@ class Wampy {
     }
 
     /**
+     * Check for specified feature in a role of connected WAMP Router
+     * @param {string} role
+     * @param {string} feature
+     * @returns {boolean}
+     * @private
+     */
+    _checkRouterFeature (role, feature) {
+        return this._cache.server_wamp_features.roles[role].features[feature] === true;
+    }
+
+    /**
      * Validate uri
      * @param {string} uri
      * @param {boolean} patternBased
@@ -501,6 +512,45 @@ class Wampy {
         } else {
             return !(!re.test(uri) || uri.indexOf('wamp.') === 0);
         }
+    }
+
+    /**
+     * Prepares payload for adding to WAMP message
+     * @param {string|number|Array|object} payload
+     * @param {Object} options
+     * @returns {Object}
+     * @private
+     */
+    _preparePayload (payload, options) {
+        let payloadItems = [], err = false, status = '', argsList, argsDict;
+
+        if (this._isArray(payload)) {
+            payloadItems.push(payload);
+        } else if (this._isPlainObject(payload)) {
+            // It's a wampy unified form of payload passing
+            if (payload.argsList || payload.argsDict) {
+                if (payload.argsList) {
+                    payloadItems.push(payload.argsList);
+                }
+
+                if (payload.argsDict) {
+                    if (payloadItems.length === 4) {
+                        payloadItems.push([]);
+                    }
+                    payloadItems.push(payload.argsDict);
+                }
+            } else {
+                payloadItems.push([], payload);
+            }
+        } else {    // assume it's a single value
+            payloadItems.push([payload]);
+        }
+
+        if (err) {
+            this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
+        }
+
+        return { err, payloadItems, status };
     }
 
     /**
@@ -1466,6 +1516,7 @@ class Wampy {
                         options[option] = [advancedOptions[option]];
                     } else {
                         err = true;
+                        this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
                     }
                 }
             };
@@ -1496,12 +1547,42 @@ class Wampy {
                     options.disclose_me = advancedOptions.disclose_me === true;
                 }
 
+                // Check and handle Payload PassThru Mode
+                // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                let pptScheme = advancedOptions.ppt_scheme;
+
+                if (pptScheme) {
+
+                    if (!this._checkRouterFeature('broker', 'payload_passthru_mode')) {
+                        err = true;
+                        this._cache.opStatus = WAMP_ERROR_MSG.PPT_NOT_SUPPORTED;
+                    }
+
+                    if (pptScheme.search(/^(wamp$|mqtt$|x_)/) < 0) {
+                        err = true;
+                        this._cache.opStatus = WAMP_ERROR_MSG.PPT_INVALID_SCHEME;
+                    }
+
+                    options.ppt_scheme = pptScheme;
+
+                    if (advancedOptions.ppt_serializer) {
+                        options.ppt_serializer = advancedOptions.ppt_serializer;
+                    }
+                    if (advancedOptions.ppt_cipher) {
+                        options.ppt_cipher = advancedOptions.ppt_cipher;
+                    }
+                    if (advancedOptions.ppt_keyid) {
+                        options.ppt_keyid = advancedOptions.ppt_keyid;
+                    }
+
+                }
+
             } else {
                 err = true;
+                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
             }
 
             if (err) {
-                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
                     callbacks.onError({ error: this._cache.opStatus.description });
@@ -1533,27 +1614,16 @@ class Wampy {
 
         if (hasPayload) {
             // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-            if (this._isArray(payload)) {
-                msg.push(payload);
-            } else if (this._isPlainObject(payload)) {
-                // It's a wampy unified form of payload passing
-                if (payload.argsList || payload.argsDict) {
-                    if (payload.argsList) {
-                        msg.push(payload.argsList);
-                    }
+            let res = this._preparePayload(payload, options);
 
-                    if (payload.argsDict) {
-                        if (msg.length === 4) {
-                            msg.push([]);
-                        }
-                        msg.push(payload.argsDict);
-                    }
-                } else {
-                    msg.push([], payload);
+            if (res.err) {
+                if (this._isPlainObject(callbacks) && callbacks.onError) {
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
-            } else {    // assume it's a single value
-                msg.push([payload]);
+
+                return this;
             }
+            msg = msg.concat(res.payloadItems);
         }
 
         this._send(msg);
@@ -1648,27 +1718,16 @@ class Wampy {
         msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
 
         if (payload !== null && typeof (payload) !== 'undefined') {
-            if (this._isArray(payload)) {
-                msg.push(payload);
-            } else if (this._isPlainObject(payload)) {
-                // It's a wampy unified form of payload passing
-                if (payload.argsList || payload.argsDict) {
-                    if (payload.argsList) {
-                        msg.push(payload.argsList);
-                    }
+            let res = this._preparePayload(payload, options);
 
-                    if (payload.argsDict) {
-                        if (msg.length === 4) {
-                            msg.push([]);
-                        }
-                        msg.push(payload.argsDict);
-                    }
-                } else {
-                    msg.push([], payload);
+            if (res.err) {
+                if (this._isPlainObject(callbacks) && callbacks.onError) {
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
-            } else {    // assume it's a single value
-                msg.push([payload]);
+
+                return this;
             }
+            msg = msg.concat(res.payloadItems);
         }
 
         this._send(msg);
