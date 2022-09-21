@@ -89,6 +89,22 @@ export const WAMP_ERROR_MSG = {
     CRA_EXCEPTION: {
         code: 24,
         description: 'Exception raised during CRA challenge processing'
+    },
+    PPT_NOT_SUPPORTED: {
+        code: 25,
+        description: 'Payload Passthru Mode is not supported by the router'
+    },
+    PPT_INVALID_SCHEME: {
+        code: 26,
+        description: 'Provided PPT scheme is invalid'
+    },
+    PPT_SRLZ_INVALID: {
+        code: 27,
+        description: 'Provided PPT serializer is invalid or not supported'
+    },
+    PPT_SRLZ_ERR: {
+        code: 28,
+        description: 'Can not serialize/deserialize payload'
     }
 };
 
