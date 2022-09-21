@@ -14,7 +14,7 @@
  *
  */
 
-import { WAMP_MSG_SPEC, WAMP_ERROR_MSG } from './constants';
+import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS } from './constants';
 import { getWebSocket } from './utils';
 import { JsonSerializer } from './serializers/JsonSerializer';
 
@@ -485,6 +485,32 @@ class Wampy {
     }
 
     /**
+     * Check for PPT mode options correctness
+     * @param {string} role WAMP Router Role to check support
+     * @param {object} options
+     * @returns {boolean}
+     * @private
+     */
+    _checkPPTOptions (role, options) {
+        if (!this._checkRouterFeature('broker', 'payload_passthru_mode')) {
+            this._cache.opStatus = WAMP_ERROR_MSG.PPT_NOT_SUPPORTED;
+            return false;
+        }
+
+        if (options.ppt_scheme.search(/^(wamp$|mqtt$|x_)/) < 0) {
+            this._cache.opStatus = WAMP_ERROR_MSG.PPT_INVALID_SCHEME;
+            return false;
+        }
+
+        if (options.ppt_scheme === 'wamp' && !E2EE_SERIALIZERS.includes(options.ppt_serializer)) {
+            this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_INVALID;
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Validate uri
      * @param {string} uri
      * @param {boolean} patternBased
@@ -522,35 +548,74 @@ class Wampy {
      * @private
      */
     _preparePayload (payload, options) {
-        let payloadItems = [], err = false, status = '', argsList, argsDict;
+        let payloadItems = [], err = false, argsList, argsDict;
 
         if (this._isArray(payload)) {
-            payloadItems.push(payload);
+            argsList = payload;
         } else if (this._isPlainObject(payload)) {
             // It's a wampy unified form of payload passing
             if (payload.argsList || payload.argsDict) {
                 if (payload.argsList) {
-                    payloadItems.push(payload.argsList);
+                    argsList = payload.argsList;
                 }
 
                 if (payload.argsDict) {
-                    if (payloadItems.length === 4) {
-                        payloadItems.push([]);
-                    }
-                    payloadItems.push(payload.argsDict);
+                    argsDict = payload.argsDict;
                 }
             } else {
-                payloadItems.push([], payload);
+                argsDict = payload;
             }
         } else {    // assume it's a single value
-            payloadItems.push([payload]);
+            argsList = [payload];
         }
 
-        if (err) {
-            this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
+        // Check and handle Payload PassThru Mode
+        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+        if (options.ppt_scheme) {
+            let binPayload, pptPayload = { args: argsList, kwargs: argsDict };
+
+            if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+                let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+
+                if (!pptSerializer) {
+                    err = true;
+                    this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_INVALID;
+                    return { err, payloadItems };
+                }
+
+                try {
+                    binPayload = pptSerializer.encode(pptPayload);
+                } catch (e) {
+                    err = true;
+                    this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_ERR;
+                    return { err, payloadItems };
+                }
+            } else {
+                binPayload = pptPayload;
+            }
+
+            // wamp scheme means Payload End-to-End Encryption
+            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
+            if (options.ppt_scheme === 'wamp') {
+
+                // TODO: implement End-to-End Encryption
+            }
+
+            payloadItems.push([binPayload]);
+
+        } else {
+            if (argsList) {
+                payloadItems.push(argsList);
+            }
+            if (argsDict) {
+                if (!argsList) {
+                    payloadItems.push([]);
+                }
+                payloadItems.push(argsDict);
+            }
         }
 
-        return { err, payloadItems, status };
+        return { err, payloadItems };
     }
 
     /**
@@ -1552,16 +1617,7 @@ class Wampy {
                 let pptScheme = advancedOptions.ppt_scheme;
 
                 if (pptScheme) {
-
-                    if (!this._checkRouterFeature('broker', 'payload_passthru_mode')) {
-                        err = true;
-                        this._cache.opStatus = WAMP_ERROR_MSG.PPT_NOT_SUPPORTED;
-                    }
-
-                    if (pptScheme.search(/^(wamp$|mqtt$|x_)/) < 0) {
-                        err = true;
-                        this._cache.opStatus = WAMP_ERROR_MSG.PPT_INVALID_SCHEME;
-                    }
+                    err = !this._checkPPTOptions('broker', advancedOptions);
 
                     options.ppt_scheme = pptScheme;
 
@@ -1574,7 +1630,6 @@ class Wampy {
                     if (advancedOptions.ppt_keyid) {
                         options.ppt_keyid = advancedOptions.ppt_keyid;
                     }
-
                 }
 
             } else {
@@ -1693,12 +1748,32 @@ class Wampy {
                     }
                 }
 
+                // Check and handle Payload PassThru Mode
+                // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                let pptScheme = advancedOptions.ppt_scheme;
+
+                if (pptScheme) {
+                    err = !this._checkPPTOptions('dealer', advancedOptions);
+
+                    options.ppt_scheme = pptScheme;
+
+                    if (advancedOptions.ppt_serializer) {
+                        options.ppt_serializer = advancedOptions.ppt_serializer;
+                    }
+                    if (advancedOptions.ppt_cipher) {
+                        options.ppt_cipher = advancedOptions.ppt_cipher;
+                    }
+                    if (advancedOptions.ppt_keyid) {
+                        options.ppt_keyid = advancedOptions.ppt_keyid;
+                    }
+                }
+
             } else {
                 err = true;
+                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
             }
 
             if (err) {
-                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
                     callbacks.onError({ error: this._cache.opStatus.description });
