@@ -350,7 +350,7 @@ class Wampy {
      */
     _log (...args) {
         if (this._options.debug) {
-            console.log(args);
+            console.log('[wampy]', args);
         }
     }
 
@@ -555,8 +555,10 @@ class Wampy {
         } else if (this._isPlainObject(payload)) {
             // It's a wampy unified form of payload passing
             if (payload.argsList || payload.argsDict) {
-                if (payload.argsList) {
+                if (this._isArray(payload.argsList)) {
                     argsList = payload.argsList;
+                } else if (typeof (payload.argsList) !== 'undefined') {
+                    argsList = [payload.argsList];
                 }
 
                 if (payload.argsDict) {
@@ -649,7 +651,7 @@ class Wampy {
      * @private
      */
     _hardClose (errorUri, details) {
-        this._log('[wampy] ' + details);
+        this._log(details);
         // Cleanup outgoing message queue
         this._wsQueue = [];
         this._send([WAMP_MSG_SPEC.ABORT, { message: details }, errorUri]);
@@ -731,7 +733,7 @@ class Wampy {
             options.authid = this._options.authid;
         }
 
-        this._log('[wampy] websocket connected');
+        this._log('websocket connected');
 
         if (this._options.serializer.protocol !== serverProtocol) {
             // Server have chosen not our preferred protocol
@@ -763,7 +765,7 @@ class Wampy {
      * @private
      */
     _wsOnClose (event) {
-        this._log('[wampy] websocket disconnected. Info: ', event);
+        this._log('websocket disconnected. Info: ', event);
 
         // Automatic reconnection
         if ((this._cache.sessionId || this._cache.reconnectingAttempts) &&
@@ -794,7 +796,7 @@ class Wampy {
     _wsOnMessage (event) {
         this._decode(event.data).then(data => {
 
-            this._log('[wampy] websocket message received: ', data);
+            this._log('websocket message received: ', data);
 
             let id, i, p, self = this;
 
@@ -1024,16 +1026,66 @@ class Wampy {
                             'Received EVENT message before session was established');
                     } else {
                         if (this._subscriptions[data[1]]) {
+                            let argsList, argsDict, options = data[3];
 
                             // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
                             //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
 
+                            // Check and handle Payload PassThru Mode
+                            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                            if (options.ppt_scheme) {
+                                let decodedPayload, pptPayload = data[4][0];
+
+                                if (!this._checkPPTOptions('broker', options)) {
+                                    // Since it is async publication, and no link to
+                                    // original publication - as it was already published
+                                    // we can not reply with error, only log it.
+                                    // Although the router should handle it
+
+                                    this._log(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
+                                    break;
+                                }
+
+                                // wamp scheme means Payload End-to-End Encryption
+                                // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
+                                if (options.ppt_scheme === 'wamp') {
+
+                                    // TODO: implement End-to-End Encryption
+
+                                }
+
+                                if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+                                    let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+
+                                    if (!pptSerializer) {
+                                        this._log(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
+                                        break;
+                                    }
+
+                                    try {
+                                        decodedPayload = pptSerializer.decode(pptPayload);
+                                    } catch (e) {
+                                        this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
+                                        break;
+                                    }
+                                } else {
+                                    decodedPayload = pptPayload;
+                                }
+
+                                argsList = decodedPayload.args;
+                                argsDict = decodedPayload.kwargs;
+
+                            } else {
+                                argsList = data[4];
+                                argsDict = data[5];
+                            }
+
                             i = this._subscriptions[data[1]].callbacks.length;
                             while (i--) {
                                 this._subscriptions[data[1]].callbacks[i]({
-                                    details : data[3],
-                                    argsList: data[4],
-                                    argsDict: data[5]
+                                    details : options,
+                                    argsList: argsList,
+                                    argsDict: argsDict
                                 });
                             }
                         }
@@ -1045,16 +1097,77 @@ class Wampy {
                             'Received RESULT message before session was established');
                     } else {
                         if (this._calls[data[1]]) {
+                            let argsList, argsDict, options = data[2];
 
                             // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
                             //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
 
+                            // Check and handle Payload PassThru Mode
+                            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                            if (options.ppt_scheme) {
+                                let decodedPayload, pptPayload = data[3][0];
+
+                                if (!this._checkPPTOptions('dealer', options)) {
+                                    this._log(this._cache.opStatus.description);
+                                    this._calls[data[1]].onError({
+                                        error   : this._cache.opStatus.description,
+                                        details : data[2],
+                                        argsList: data[3],
+                                        argsDict: data[4]
+                                    });
+                                    delete this._calls[data[1]];
+                                    break;
+                                }
+
+                                // wamp scheme means Payload End-to-End Encryption
+                                // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
+                                if (options.ppt_scheme === 'wamp') {
+
+                                    // TODO: implement End-to-End Encryption
+
+                                }
+
+                                if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+                                    let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+
+                                    if (!pptSerializer) {
+                                        this._log(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
+                                        this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_INVALID;
+                                        this._calls[data[1]].onError({
+                                            error   : WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description,
+                                            details : data[2],
+                                            argsList: data[3],
+                                            argsDict: data[4]
+                                        });
+                                        delete this._calls[data[1]];
+                                        break;
+                                    }
+
+                                    try {
+                                        decodedPayload = pptSerializer.decode(pptPayload);
+                                    } catch (e) {
+                                        this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
+                                        this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_ERR;
+                                        break;
+                                    }
+                                } else {
+                                    decodedPayload = pptPayload;
+                                }
+
+                                argsList = decodedPayload.args;
+                                argsDict = decodedPayload.kwargs;
+
+                            } else {
+                                argsList = data[3];
+                                argsDict = data[4];
+                            }
+
                             this._calls[data[1]].onSuccess({
-                                details : data[2],
-                                argsList: data[3],
-                                argsDict: data[4]
+                                details : options,
+                                argsList: argsList,
+                                argsDict: argsDict
                             });
-                            if (!(data[2].progress && data[2].progress === true)) {
+                            if (!(options.progress && options.progress === true)) {
                                 // We receive final result (progressive or not)
                                 delete this._calls[data[1]];
                             }
@@ -1125,39 +1238,12 @@ class Wampy {
                             'Received INVOCATION message before session was established');
                     } else {
                         if (this._rpcRegs[data[2]]) {
+                            let argsList, argsDict, options = data[3];
 
                             // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
                             //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
 
-                            let invoke_result_handler = results => {
-                                    // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list,
-                                    // ArgumentsKw|dict)]
-                                    let msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-
-                                    if (self._isPlainObject(results)) {
-
-                                        if (self._isPlainObject(results.options)) {
-                                            msg[2] = results.options;
-                                        }
-
-                                        if (self._isArray(results.argsList)) {
-                                            msg.push(results.argsList);
-                                        } else if (typeof (results.argsList) !== 'undefined') {
-                                            msg.push([results.argsList]);
-                                        }
-
-                                        if (self._isPlainObject(results.argsDict)) {
-                                            if (msg.length === 3) {
-                                                msg.push([]);
-                                            }
-                                            msg.push(results.argsDict);
-                                        }
-                                    } else {
-                                        msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-                                    }
-                                    self._send(msg);
-                                },
-                                invoke_error_handler = ({ details, error, argsList, argsDict }) => {
+                            let invoke_error_handler = ({ details, error, argsList, argsDict }) => {
                                     let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
                                         data[1], details || {}, error || 'wamp.error.invocation_exception'];
 
@@ -1172,13 +1258,118 @@ class Wampy {
                                         msg.push(argsDict);
                                     }
                                     self._send(msg);
+                                },
+                                invoke_result_handler = results => {
+                                    // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list,
+                                    // ArgumentsKw|dict)]
+                                    let msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+
+                                    if (self._isPlainObject(results)) {
+
+                                        if (self._isPlainObject(results.options)) {
+                                            let options = results.options;
+
+                                            // Check and handle Payload PassThru Mode
+                                            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                                            let pptScheme = results.options.ppt_scheme;
+
+                                            if (pptScheme) {
+                                                if (!this._checkPPTOptions('dealer', results.options)) {
+                                                    invoke_error_handler({
+                                                        details: results.options,
+                                                        error: this._cache.opStatus.description,
+                                                        argsList: results.argsList,
+                                                        argsDict: results.argsDict
+                                                    });
+                                                    return;
+                                                }
+
+                                                options.ppt_scheme = pptScheme;
+
+                                                if (results.options.ppt_serializer) {
+                                                    options.ppt_serializer = results.options.ppt_serializer;
+                                                }
+                                                if (results.options.ppt_cipher) {
+                                                    options.ppt_cipher = results.options.ppt_cipher;
+                                                }
+                                                if (results.options.ppt_keyid) {
+                                                    options.ppt_keyid = results.options.ppt_keyid;
+                                                }
+                                            }
+
+                                            msg[2] = options;
+                                        }
+
+                                    }
+
+                                    if (results !== null && typeof (results) !== 'undefined') {
+                                        let res = this._preparePayload(results, options);
+
+                                        if (res.err) {
+                                            invoke_error_handler({
+                                                details: results.options,
+                                                error: this._cache.opStatus.description,
+                                                argsList: results.argsList,
+                                                argsDict: results.argsDict
+                                            });
+                                            return;
+                                        }
+                                        msg = msg.concat(res.payloadItems);
+
+                                    }
+
+                                    self._send(msg);
                                 };
+
+                            // Check and handle Payload PassThru Mode
+                            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                            if (options.ppt_scheme) {
+                                let decodedPayload, pptPayload = data[4][0];
+
+                                if (!this._checkPPTOptions('dealer', options)) {
+                                    this._log(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
+                                    break;
+                                }
+
+                                // wamp scheme means Payload End-to-End Encryption
+                                // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
+                                if (options.ppt_scheme === 'wamp') {
+
+                                    // TODO: implement End-to-End Encryption
+
+                                }
+
+                                if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+                                    let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+
+                                    if (!pptSerializer) {
+                                        this._log(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
+                                        break;
+                                    }
+
+                                    try {
+                                        decodedPayload = pptSerializer.decode(pptPayload);
+                                    } catch (e) {
+                                        this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
+                                        break;
+                                    }
+                                } else {
+                                    decodedPayload = pptPayload;
+                                }
+
+                                argsList = decodedPayload.args;
+                                argsDict = decodedPayload.kwargs;
+
+                            } else {
+                                argsList = data[4];
+                                argsDict = data[5];
+                            }
 
                             p = new Promise((resolve, reject) => {
                                 resolve(this._rpcRegs[data[2]].callbacks[0]({
-                                    details       : data[3],
-                                    argsList      : data[4],
-                                    argsDict      : data[5],
+                                    details       : options,
+                                    argsList      : argsList,
+                                    argsDict      : argsDict,
                                     result_handler: invoke_result_handler,
                                     error_handler : invoke_error_handler
                                 }));
@@ -1219,7 +1410,7 @@ class Wampy {
      * @private
      */
     _wsOnError (error) {
-        this._log('[wampy] websocket error');
+        this._log('websocket error');
 
         if (this._options.onError) {
             this._options.onError({ error });
@@ -1231,7 +1422,7 @@ class Wampy {
      * @private
      */
     _wsReconnect () {
-        this._log('[wampy] websocket reconnecting...');
+        this._log('websocket reconnecting...');
 
         if (this._options.onReconnect) {
             this._options.onReconnect();
