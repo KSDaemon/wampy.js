@@ -26,7 +26,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - name: Create test coverage report
-        run: ./node_modules/nyc/bin/nyc.js report --reporter=lcovonly
+        run: ./node_modules/c8/bin/c8.js report --reporter=lcovonly
       - name: Coveralls
         uses: coverallsapp/github-action@master
         with:
