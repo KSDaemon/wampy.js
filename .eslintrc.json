@@ -32,7 +32,7 @@
         "space-unary-ops": ["warn", { "words": true, "nonwords": false }]
     },
     "parserOptions": {
-        "ecmaVersion": 6,
+        "ecmaVersion": 8,
         "sourceType": "module"
     },
     "env": {
