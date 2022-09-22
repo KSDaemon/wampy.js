@@ -13,10 +13,10 @@ const routerUrl = 'ws://fake.server.org/ws/',
 
 import { expect } from 'chai';
 import { WebSocket, setProtocol as wsSetProtocol } from './fake-ws-set-protocol';
-import { Wampy } from './../src/wampy';
+import { Wampy } from '../src/wampy';
 import { JsonSerializer } from '../src/serializers/JsonSerializer';
-import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
-import { WAMP_ERROR_MSG } from './../src/constants';
+import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer';
+import { WAMP_ERROR_MSG } from '../src/constants';
 
 describe('Wampy.js Constructor', function () {
     this.timeout(0);

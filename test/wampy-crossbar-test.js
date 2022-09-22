@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
-import { JsonSerializer } from './../src/serializers/JsonSerializer';
-import { Wampy } from './../src/wampy';
+import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer';
+import { JsonSerializer } from '../src/serializers/JsonSerializer';
+import { Wampy } from '../src/wampy';
 import { w3cwebsocket } from 'websocket';
 
 describe('Wampy.js with Crossbar', function () {
