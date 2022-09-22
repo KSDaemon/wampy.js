@@ -1,0 +1,14 @@
+{
+    "all": true,
+    "sourceMap": false,
+    "include": [
+        "src/**/*.js"
+    ],
+    "report-dir": "./coverage",
+    "temp-dir": "./coverage",
+    "reporter": [
+        "lcov",
+        "text-summary",
+        "html"
+    ]
+}

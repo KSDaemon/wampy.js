@@ -8,14 +8,33 @@ const isNode = typeof process === 'object' &&
     Object.prototype.toString.call(process) === '[object process]';
 
 import { expect } from 'chai';
-const utils = require('./../src/utils');
+import * as utils  from './../src/utils.js';
 let getWebSocket = utils.getWebSocket;
-const mock = require('mock-require');
+
+function getPseudoBrowserWebSocket (url, protocols, ws, headers, requestOptions) {
+    const parsedUrl = utils.getServerUrlBrowser(url);
+
+    if (!parsedUrl) {
+        return null;
+    }
+
+    if (ws) {   // User provided webSocket class
+        return new ws(parsedUrl, protocols, null, headers, requestOptions);
+    } else if ('WebSocket' in window) {
+        // Chrome, MSIE, newer Firefox
+        return new window.WebSocket(parsedUrl, protocols);
+    } else if ('MozWebSocket' in window) {
+        // older versions of Firefox
+        return new window.MozWebSocket(parsedUrl, protocols);
+    }
+
+    return null;
+}
 
 describe('Wampy.js Utils submodule', function () {
     this.timeout(0);
 
-    describe('In node enviroment', function () {
+    describe('In node environment', function () {
 
         if (!isNode) {
             return;
@@ -42,15 +61,14 @@ describe('Wampy.js Utils submodule', function () {
 
     });
 
-    describe('In browser enviroment (node-mock)', function () {
+    describe('In browser environment (node-mock)', function () {
 
         if (!isNode) {
             return;
         }
 
         before(function () {
-            mock('./../src/constants', { isNode: false });
-            getWebSocket = mock.reRequire('./../src/utils').getWebSocket;
+            getWebSocket = getPseudoBrowserWebSocket;
             global.window = { WebSocket: function (url) { this.name = 'WebSocket'; this.url = url; } };
         });
 
@@ -178,7 +196,6 @@ describe('Wampy.js Utils submodule', function () {
         });
 
         after(function () {
-            mock.stopAll();
             delete global.window;
         });
 

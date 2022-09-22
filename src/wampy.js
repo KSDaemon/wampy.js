@@ -14,9 +14,9 @@
  *
  */
 
-import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS } from './constants';
-import { getWebSocket } from './utils';
-import { JsonSerializer } from './serializers/JsonSerializer';
+import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS } from './constants.js';
+import { getWebSocket } from './utils.js';
+import { JsonSerializer } from './serializers/JsonSerializer.js';
 
 const jsonSerializer = new JsonSerializer();
 
@@ -1594,7 +1594,7 @@ class Wampy {
      *                          { onSuccess: will be called when subscribe would be confirmed
      *                            onError: will be called if subscribe would be aborted
      *                            onEvent: will be called on receiving published event }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { match: string matching policy ("prefix"|"wildcard") }
      *
      * @returns {Wampy}
@@ -1743,7 +1743,7 @@ class Wampy {
      * @param {object} [callbacks] - optional hash table of callbacks:
      *                          { onSuccess: will be called when publishing would be confirmed
      *                            onError: will be called if publishing would be aborted }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
      *                                      even though they may be subscribed
      *                            exclude_authid: string|array Authentication id(s) that won't receive
@@ -1892,7 +1892,7 @@ class Wampy {
      *                          or it can be hash table of callbacks:
      *                          { onSuccess: will be called with result on successful call
      *                            onError: will be called if invocation would be aborted }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
      *                                  to endpoints of a routed call
      *                            receive_progress: bool flag for receiving progressive results. In this case
@@ -2010,7 +2010,7 @@ class Wampy {
      *                          sent canceling message or it can be hash table of callbacks:
      *                          { onSuccess: will be called if successfully sent canceling message
      *                            onError: will be called if some error occurred }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { mode: string|one of the possible modes:
      *                                  "skip" | "kill" | "killnowait". Skip is default.
      *                          }

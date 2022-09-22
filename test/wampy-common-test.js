@@ -10,12 +10,12 @@ const isNode = typeof process === 'object' &&
     anotherRouterUrl = 'ws://another.server.org/ws/';
 
 import { expect } from 'chai';
-import * as WebSocketModule from './fake-ws';
-import { Wampy } from '../src/wampy';
-import { JsonSerializer } from '../src/serializers/JsonSerializer';
-import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer';
-import { CborSerializer } from '../src/serializers/CborSerializer';
-import { WAMP_ERROR_MSG } from '../src/constants';
+import * as WebSocketModule from './fake-ws.js';
+import { Wampy } from '../src/wampy.js';
+import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
+import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
+import { CborSerializer } from '../src/serializers/CborSerializer.js';
+import { WAMP_ERROR_MSG } from '../src/constants.js';
 
 if (isNode) {
     global.Blob = function (parts) {

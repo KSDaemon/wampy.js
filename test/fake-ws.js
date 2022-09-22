@@ -4,10 +4,10 @@
  * Date: 07.04.15
  */
 
-import sendData from './send-data';
-import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer';
-import { JsonSerializer } from '../src/serializers/JsonSerializer';
-import { CborSerializer } from '../src/serializers/CborSerializer';
+import sendData from './send-data.js';
+import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
+import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
+import { CborSerializer } from '../src/serializers/CborSerializer.js';
 
 const TIMEOUT = 15;
 
