@@ -4,10 +4,12 @@
  * Date: 07.04.15
  */
 
+import { cloneDeep } from 'lodash-es';
 import sendData from './send-data.js';
 import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
 import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
 import { CborSerializer } from '../src/serializers/CborSerializer.js';
+import { WAMP_MSG_SPEC } from '../src/constants.js';
 
 const TIMEOUT = 15;
 
@@ -140,10 +142,48 @@ function startTimers () {
     };
 
     WebSocket.prototype.send = function (data) {
-        let send_data, enc_data, i;
 
         this.decode(data).then(rec_data => {
-            send_data = sendData[sendDataCursor++];
+            let send_data, enc_data, i, opts, pptSerializer;
+
+            send_data = cloneDeep(sendData[sendDataCursor++]);
+
+            if ((rec_data[0] === WAMP_MSG_SPEC.CALL ||
+                rec_data[0] === WAMP_MSG_SPEC.PUBLISH ||
+                rec_data[0] === WAMP_MSG_SPEC.YIELD) &&
+                send_data.data &&
+                (send_data.data[0] === WAMP_MSG_SPEC.EVENT ||
+                send_data.data[0] === WAMP_MSG_SPEC.RESULT)) {
+
+                if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
+                    opts = send_data.data[3];
+                } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
+                    opts = send_data.data[2];
+                }
+
+                // Check for PPT mode and encode payload with appreciate serializer
+                if (opts.ppt_scheme &&
+                    opts.ppt_serializer &&
+                    opts.ppt_serializer !== 'native') {
+                    switch (opts.ppt_serializer) {
+                        case 'cbor':
+                            pptSerializer = new CborSerializer();
+                            break;
+                        case 'msgpack':
+                            pptSerializer = new MsgpackSerializer();
+                            break;
+                        case 'json':
+                            pptSerializer = new JsonSerializer();
+                            break;
+                    }
+
+                    if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
+                        send_data.data[4] = [pptSerializer.encode(send_data.data[4][0])];
+                    } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
+                        send_data.data[3] = [pptSerializer.encode(send_data.data[3][0])];
+                    }
+                }
+            }
 
             //console.log('Data to send to server:', rec_data);
             //console.log('Is silent:', send_data.silent ? 'yes' : 'no');

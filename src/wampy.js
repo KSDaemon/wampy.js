@@ -490,7 +490,7 @@ class Wampy {
      * @private
      */
     _checkPPTOptions (role, options) {
-        if (!this._checkRouterFeature('broker', 'payload_passthru_mode')) {
+        if (!this._checkRouterFeature(role, 'payload_passthru_mode')) {
             this._cache.opStatus = WAMP_ERROR_MSG.PPT_NOT_SUPPORTED;
             return false;
         }

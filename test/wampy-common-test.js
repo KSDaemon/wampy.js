@@ -43,7 +43,7 @@ serializers.forEach(function (item) {
     const { serializer, ws, name } = item;
 
     describe(`Wampy.js with ${name}`, function () {
-        this.timeout(10000);
+        this.timeout(2000);
 
         before(function () {
             WebSocketModule.startTimers();
@@ -2464,8 +2464,738 @@ serializers.forEach(function (item) {
 
             });
 
+            describe('Payload PassThru Mode', function () {
+
+                if (name === 'JSON Serializer' || name === 'MsgPack Serializer w/ Blob') {
+                    return;
+                }
+
+                before(function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            msgpack: new MsgpackSerializer(),
+                            cbor: new CborSerializer()
+                        },
+                        onClose: function () {
+                            setTimeout(function () {
+                                wampy.options({
+                                    onConnect: function () {
+                                        done();
+                                    }
+                                })
+                                    .connect();
+                            }, 1);
+                        }
+                    }).disconnect();
+                });
+
+                it('disallows to publish event if server does not support PPT Mode', function () {
+                    wampy.publish('qwe.asd.zxc',
+                        25,
+                        {
+                            onSuccess: function (e) {
+                            },
+                            onError: function (e) {
+                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
+                            }
+                        },
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme'
+                        }
+                    );
+                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED);
+                });
+
+                it('disallows to call rpc if server does not support PPT Mode', function (done) {
+                    wampy.call('call.rpc1', 'payload',
+                        {
+                            onSuccess: function (e) {
+                            },
+                            onError: function (e) {
+                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
+                            }
+                        },
+                        { ppt_scheme: 'x_custom_scheme' }
+                    );
+                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED);
+
+                    // To enable ppt mode on server for future tests
+                    wampy.options({
+                        onClose: function () {
+                            setTimeout(function () {
+                                wampy.options({
+                                    onConnect: function () {
+                                        done();
+                                    }
+                                })
+                                    .connect();
+                            }, 1);
+                        }
+                    }).disconnect();
+
+                });
+
+                it('disallows to call RPC with invalid ppt serializer', function (done) {
+                    wampy.call('rpc.call', 25, {
+                        onSuccess: function () {
+                            done('RPC should not be called');
+                        },
+                        onError: function (e) {
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
+                            done();
+                        }
+                    }, { ppt_scheme: 'x_custom', ppt_serializer: 'invalid_serializer' });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.code);
+                });
+
+                it('disallows to publish with invalid ppt serializer', function (done) {
+                    wampy.publish('qwe.asd.zxc', 25, {
+                        onSuccess: function () {
+                            done('Event should not be published');
+                        },
+                        onError: function (e) {
+                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
+                            done();
+                        }
+                    }, { ppt_scheme: 'x_custom', ppt_serializer: 'invalid_serializer' });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.code);
+                });
+
+                it('disallows to publish event if PPT Scheme is incorrect', function () {
+                    wampy.publish('qwe.asd.zxc',
+                        25,
+                        {
+                            onSuccess: function (e) {
+                            },
+                            onError: function (e) {
+                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME.description);
+                            }
+                        },
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'invalid_scheme'
+                        }
+                    );
+                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME);
+                });
+
+                it('disallows to call rpc if PPT Scheme is incorrect', function () {
+                    wampy.call('call.rpc1', 'payload',
+                        {
+                            onSuccess: function (e) {
+                            },
+                            onError: function (e) {
+                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME.description);
+                            }
+                        },
+                        { ppt_scheme: 'invalid_scheme' }
+                    );
+                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME);
+                });
+
+                it('allows to publish event with int payload in ppt mode (custom scheme, native serializer)', function (done) {
+                    wampy.subscribe('subscribe.topic4', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(25);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                        done();
+                    })
+                        .publish('subscribe.topic4',
+                            25,
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with string payload in ppt mode (custom scheme, native serializer)', function (done) {
+                    wampy.subscribe('subscribe.topic5', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal('payload');
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                        done();
+                    })
+                        .publish('subscribe.topic5',
+                            'payload',
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with array payload in ppt mode (custom scheme, native serializer)', function (done) {
+                    wampy.subscribe('subscribe.topic6', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                        done();
+                    })
+                        .publish('subscribe.topic6',
+                            [1, 2, 3, 4, 5],
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
+                    let payload = { key1: 100, key2: 'string-key' };
+
+                    wampy.subscribe('subscribe.topic7', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsList).to.have.lengthOf(0);
+                        expect(e.argsDict).to.be.an('object');
+                        expect(e.argsDict).to.be.deep.equal(payload);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                        done();
+                    })
+                        .publish('subscribe.topic7',
+                            { argsDict: payload },
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
+                    let dictpayload = { key1: 100, key2: 'string-key' },
+                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                    wampy.subscribe('subscribe.topic77', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.argsDict).to.be.an('object');
+                        expect(e.argsDict).to.be.deep.equal(dictpayload);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                        done();
+                    })
+                        .publish('subscribe.topic77',
+                            payload,
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to call RPC with int payload in ppt mode (custom scheme, native serializer)', function (done) {
+                    wampy.call('call.rpc2', 25, function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(25);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme' });
+                });
+
+                it('allows to call RPC with string payload in ppt mode (custom scheme, native serializer)', function (done) {
+                    wampy.call('call.rpc3', 'payload', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal('payload');
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme' });
+                });
+
+                it('allows to call RPC with array payload in ppt mode (custom scheme, native serializer)', function (done) {
+                    wampy.call('call.rpc4', [1, 2, 3, 4, 5], function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme' });
+                });
+
+                it('allows to call RPC with hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
+                    let i = 1, payload = { key1: 100, key2: 'string-key' },
+                        cb = function (e) {
+                            expect(e).to.be.an('object');
+                            expect(e.argsList).to.be.an('array');
+                            expect(e.argsList).to.have.lengthOf(0);
+                            expect(e.argsDict).to.be.an('object');
+                            expect(e.argsDict).to.be.deep.equal(payload);
+                            expect(e.details).to.be.an('object');
+                            expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                            if (i === 2) {
+                                done();
+                            } else {
+                                i++;
+                            }
+                        };
+
+                    wampy.call('call.rpc5', payload, cb, { ppt_scheme: 'x_custom_scheme' })
+                        .call('call.rpc5', { argsDict: payload }, cb, { ppt_scheme: 'x_custom_scheme' });
+                });
+
+                it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
+                    let dictpayload = { key1: 100, key2: 'string-key' },
+                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                    wampy.call('call.rpc5', payload, function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.argsDict).to.be.an('object');
+                        expect(e.argsDict).to.be.deep.equal(dictpayload);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme' });
+                });
+
+                it('allows to publish event with int payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                    wampy.subscribe('subscribe.topic4.cbor', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(25);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                        done();
+                    })
+                        .publish('subscribe.topic4.cbor',
+                            25,
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                                ppt_serializer: 'cbor'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with string payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                    wampy.subscribe('subscribe.topic5.cbor', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal('payload');
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                        done();
+                    })
+                        .publish('subscribe.topic5.cbor',
+                            'payload',
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                                ppt_serializer: 'cbor'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with array payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                    wampy.subscribe('subscribe.topic6.cbor', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                        done();
+                    })
+                        .publish('subscribe.topic6.cbor',
+                            [1, 2, 3, 4, 5],
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                                ppt_serializer: 'cbor'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                    let payload = { key1: 100, key2: 'string-key' };
+
+                    wampy.subscribe('subscribe.topic7.cbor', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsList).to.have.lengthOf(0);
+                        expect(e.argsDict).to.be.an('object');
+                        expect(e.argsDict).to.be.deep.equal(payload);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                        done();
+                    })
+                        .publish('subscribe.topic7.cbor',
+                            { argsDict: payload },
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                                ppt_serializer: 'cbor'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                    let dictpayload = { key1: 100, key2: 'string-key' },
+                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                    wampy.subscribe('subscribe.topic8.cbor', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.argsDict).to.be.an('object');
+                        expect(e.argsDict).to.be.deep.equal(dictpayload);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                        done();
+                    })
+                        .publish('subscribe.topic8.cbor',
+                            payload,
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                                ppt_serializer: 'cbor'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to call RPC with int payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                    wampy.call('call.rpc2', 25, function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(25);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('cbor');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                });
+
+                it('allows to call RPC with string payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                    wampy.call('call.rpc3', 'payload', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal('payload');
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('cbor');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                });
+
+                it('allows to call RPC with array payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                    wampy.call('call.rpc4', [1, 2, 3, 4, 5], function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('cbor');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                });
+
+                it('allows to call RPC with hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                    let i = 1, payload = { key1: 100, key2: 'string-key' },
+                        cb = function (e) {
+                            expect(e).to.be.an('object');
+                            expect(e.argsList).to.be.an('array');
+                            expect(e.argsList).to.have.lengthOf(0);
+                            expect(e.argsDict).to.be.an('object');
+                            expect(e.argsDict).to.be.deep.equal(payload);
+                            expect(e.details).to.be.an('object');
+                            expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                            expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                            if (i === 2) {
+                                done();
+                            } else {
+                                i++;
+                            }
+                        };
+
+                    wampy.call('call.rpc5', payload, cb, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' })
+                        .call('call.rpc5', { argsDict: payload }, cb, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                });
+
+                it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                    let dictpayload = { key1: 100, key2: 'string-key' },
+                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                    wampy.call('call.rpc5', payload, function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.argsDict).to.be.an('object');
+                        expect(e.argsDict).to.be.deep.equal(dictpayload);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('cbor');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                });
+
+                it('allows to publish event with int payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                    wampy.subscribe('subscribe.topic4.msgpack', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(25);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                        done();
+                    })
+                        .publish('subscribe.topic4.msgpack',
+                            25,
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                                ppt_serializer: 'msgpack'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with string payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                    wampy.subscribe('subscribe.topic5.msgpack', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal('payload');
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                        done();
+                    })
+                        .publish('subscribe.topic5.msgpack',
+                            'payload',
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                                ppt_serializer: 'msgpack'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with array payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                    wampy.subscribe('subscribe.topic6.msgpack', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                        done();
+                    })
+                        .publish('subscribe.topic6.msgpack',
+                            [1, 2, 3, 4, 5],
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                                ppt_serializer: 'msgpack'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                    let payload = { key1: 100, key2: 'string-key' };
+
+                    wampy.subscribe('subscribe.topic7.msgpack', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsList).to.have.lengthOf(0);
+                        expect(e.argsDict).to.be.an('object');
+                        expect(e.argsDict).to.be.deep.equal(payload);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                        done();
+                    })
+                        .publish('subscribe.topic7.msgpack',
+                            { argsDict: payload },
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                                ppt_serializer: 'msgpack'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                    let dictpayload = { key1: 100, key2: 'string-key' },
+                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                    wampy.subscribe('subscribe.topic8.msgpack', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.argsDict).to.be.an('object');
+                        expect(e.argsDict).to.be.deep.equal(dictpayload);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                        done();
+                    })
+                        .publish('subscribe.topic8.msgpack',
+                            payload,
+                            null,
+                            {
+                                exclude_me: false,
+                                ppt_scheme: 'x_custom_scheme',
+                                ppt_serializer: 'msgpack'
+                            });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to call RPC with int payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                    wampy.call('call.rpc2', 25, function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(25);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                });
+
+                it('allows to call RPC with string payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                    wampy.call('call.rpc3', 'payload', function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal('payload');
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                });
+
+                it('allows to call RPC with array payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                    wampy.call('call.rpc4', [1, 2, 3, 4, 5], function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsDict).to.be.undefined;
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                });
+
+                it('allows to call RPC with hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                    let i = 1, payload = { key1: 100, key2: 'string-key' },
+                        cb = function (e) {
+                            expect(e).to.be.an('object');
+                            expect(e.argsList).to.be.an('array');
+                            expect(e.argsList).to.have.lengthOf(0);
+                            expect(e.argsDict).to.be.an('object');
+                            expect(e.argsDict).to.be.deep.equal(payload);
+                            expect(e.details).to.be.an('object');
+                            expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                            expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                            if (i === 2) {
+                                done();
+                            } else {
+                                i++;
+                            }
+                        };
+
+                    wampy.call('call.rpc5', payload, cb, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' })
+                        .call('call.rpc5', { argsDict: payload }, cb, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                });
+
+                it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                    let dictpayload = { key1: 100, key2: 'string-key' },
+                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                    wampy.call('call.rpc5', payload, function (e) {
+                        expect(e).to.be.an('object');
+                        expect(e.argsList).to.be.an('array');
+                        expect(e.argsList[0]).to.be.equal(1);
+                        expect(e.argsList[4]).to.be.equal(5);
+                        expect(e.argsDict).to.be.an('object');
+                        expect(e.argsDict).to.be.deep.equal(dictpayload);
+                        expect(e.details).to.be.an('object');
+                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
+                        done();
+                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                });
+
+            });
         });
-
     });
-
 });

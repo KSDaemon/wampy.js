@@ -2154,7 +2154,703 @@ const WAMP_MSG_SPEC = {
             ],
             from: [1],
             to: [2]
+        },
+        // Begin of Payload PassThru Mode module
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                7,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                5465724,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true,
+                                payload_passthru_mode: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true,
+                                payload_passthru_mode: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        // allows to publish event with int payload in ppt mode (custom scheme, native serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                784571   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                61123
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                784571,
+                61123,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme' },
+                [{ args: [25] }]
+            ],
+        },
+        // allows to publish event with string payload in ppt mode (custom scheme, native serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                7234   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                81
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                7234,
+                81,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme' },
+                [{ args: ['payload'] }]
+            ]
+        },
+        // allows to publish event with array payload in ppt mode (custom scheme, native serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                94654   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                101
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                94654,
+                101,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme' },
+                [{ args: [1, 2, 3, 4, 5] }]
+            ]
+        },
+        // allows to publish event with hash-table payload in ppt mode (custom scheme, native serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                11   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                123
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                11,
+                123,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme' },
+                [{ args: [], kwargs: { key1: 100, key2: 'string-key' } }]
+            ]
+        },
+        // allows to publish event with both array and hash-table payload in ppt mode (custom scheme, native serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                1177   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                12177
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                1177,
+                12177,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme' },
+                [{ args: [1, 2, 3, 4, 5], kwargs: { key1: 100, key2: 'string-key' } }]
+            ]
+        },
+        // allows to call RPC with int payload in ppt mode (custom scheme, native serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme' },
+                [{ args: [25] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with string payload in ppt mode (custom scheme, native serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme' },
+                [{ args: ['payload'] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with array payload in ppt mode (custom scheme, native serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme' },
+                [{ args: [1, 2, 3, 4, 5] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with hash-table payload in ppt mode (custom scheme, native serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme' },
+                [{ args: [], kwargs: { key1: 100, key2: 'string-key' } }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme' },
+                [{ args: [], kwargs: { key1: 100, key2: 'string-key' } }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, native serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme' },
+                [{ args: [1, 2, 3, 4, 5], kwargs: { key1: 100, key2: 'string-key' } }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to publish event with int payload in ppt mode (custom scheme, cbor serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                56477   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                234712
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                56477,
+                234712,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [25] }]
+            ],
+        },
+        // allows to publish event with string payload in ppt mode (custom scheme, cbor serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                512722   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                127621
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                512722,
+                127621,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: ['payload'] }]
+            ]
+        },
+        // allows to publish event with array payload in ppt mode (custom scheme, cbor serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                2467812   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                3242
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                2467812,
+                3242,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [1, 2, 3, 4, 5] }]
+            ]
+        },
+        // allows to publish event with hash-table payload in ppt mode (custom scheme, cbor serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                21777   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                44177
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                21777,
+                44177,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [], kwargs: { key1: 100, key2: 'string-key' } }]
+            ]
+        },
+        // allows to publish event with both array and hash-table payload in ppt mode (custom scheme, cbor serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                87945422   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                217477
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                87945422,
+                217477,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [1, 2, 3, 4, 5], kwargs: { key1: 100, key2: 'string-key' } }]
+            ]
+        },
+        // allows to call RPC with int payload in ppt mode (custom scheme, cbor serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [25] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with string payload in ppt mode (custom scheme, cbor serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: ['payload'] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with array payload in ppt mode (custom scheme, cbor serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [1, 2, 3, 4, 5] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with hash-table payload in ppt mode (custom scheme, cbor serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [], kwargs: { key1: 100, key2: 'string-key' } }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [], kwargs: { key1: 100, key2: 'string-key' } }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, cbor serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [1, 2, 3, 4, 5], kwargs: { key1: 100, key2: 'string-key' } }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to publish event with int payload in ppt mode (custom scheme, msgpack serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                98127   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                8715727
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                98127,
+                8715727,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: [25] }]
+            ],
+        },
+        // allows to publish event with string payload in ppt mode (custom scheme, msgpack serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                24579   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                246724
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                24579,
+                246724,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: ['payload'] }]
+            ]
+        },
+        // allows to publish event with array payload in ppt mode (custom scheme, msgpack serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                6742711   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                2756412
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                6742711,
+                2756412,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: [1, 2, 3, 4, 5] }]
+            ]
+        },
+        // allows to publish event with hash-table payload in ppt mode (custom scheme, msgpack serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                545777   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                9876521
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                545777,
+                9876521,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: [], kwargs: { key1: 100, key2: 'string-key' } }]
+            ]
+        },
+        // allows to publish event with both array and hash-table payload in ppt mode (custom scheme, msgpack serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                32748   // Subscription id need in next publish msg
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                252474
+            ],
+            from: [1],
+            to: [1],
+            next: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.EVENT,
+                32748,
+                252474,
+                { exclude_me: false, ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: [1, 2, 3, 4, 5], kwargs: { key1: 100, key2: 'string-key' } }]
+            ]
+        },
+        // allows to call RPC with int payload in ppt mode (custom scheme, msgpack serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: [25] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with string payload in ppt mode (custom scheme, msgpack serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: ['payload'] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with array payload in ppt mode (custom scheme, msgpack serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: [1, 2, 3, 4, 5] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with hash-table payload in ppt mode (custom scheme, msgpack serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: [], kwargs: { key1: 100, key2: 'string-key' } }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: [], kwargs: { key1: 100, key2: 'string-key' } }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, msgpack serializer)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' },
+                [{ args: [1, 2, 3, 4, 5], kwargs: { key1: 100, key2: 'string-key' } }]
+            ],
+            from: [1],
+            to: [1]
         }
+
     ];
 
 export default sendData;
