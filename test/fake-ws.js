@@ -4,7 +4,7 @@
  * Date: 07.04.15
  */
 
-import { cloneDeep } from 'lodash-es';
+import lodash from 'lodash';
 import sendData from './send-data.js';
 import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
 import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
@@ -146,7 +146,7 @@ function startTimers () {
         this.decode(data).then(rec_data => {
             let send_data, enc_data, i, opts, pptSerializer;
 
-            send_data = cloneDeep(sendData[sendDataCursor++]);
+            send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
 
             if ((rec_data[0] === WAMP_MSG_SPEC.CALL ||
                 rec_data[0] === WAMP_MSG_SPEC.PUBLISH ||
