@@ -38,7 +38,6 @@
   "type": "module",
   "dependencies": {
     "cbor": "^8.1.0",
-    "cbor-web": "^8.1.0",
     "msgpack5": "^6.0.2",
     "wampy-cra": "^0.1.2",
     "websocket": "^1.0.34"
