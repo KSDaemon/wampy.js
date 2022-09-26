@@ -263,6 +263,12 @@ class Wampy {
             authmethods: [],
 
             /**
+             * Additional authentication options (used in WAMP CryptoSign for example)
+             * @type {object}
+             */
+            authextra: {},
+
+            /**
              * onChallenge callback
              * @type {function}
              */
