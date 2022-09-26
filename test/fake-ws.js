@@ -11,7 +11,7 @@ import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
 import { CborSerializer } from '../src/serializers/CborSerializer.js';
 import { WAMP_MSG_SPEC } from '../src/constants.js';
 
-const TIMEOUT = 15;
+const TIMEOUT = 20;
 
 let sendDataCursor = 0,
     clientMessageQueue = [],
@@ -153,12 +153,15 @@ function startTimers () {
                 rec_data[0] === WAMP_MSG_SPEC.YIELD) &&
                 send_data.data &&
                 (send_data.data[0] === WAMP_MSG_SPEC.EVENT ||
-                send_data.data[0] === WAMP_MSG_SPEC.RESULT)) {
+                send_data.data[0] === WAMP_MSG_SPEC.RESULT ||
+                send_data.data[0] === WAMP_MSG_SPEC.INVOCATION)) {
 
                 if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
                     opts = send_data.data[3];
                 } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
                     opts = send_data.data[2];
+                } else if (send_data.data[0] === WAMP_MSG_SPEC.INVOCATION) {
+                    opts = send_data.data[3];
                 }
 
                 // Check for PPT mode and encode payload with appreciate serializer
@@ -178,15 +181,29 @@ function startTimers () {
                     }
 
                     if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
-                        send_data.data[4] = [pptSerializer.encode(send_data.data[4][0])];
+                        send_data.data[4] = [
+                            send_data.ruinPayload ?
+                                pptSerializer.encode(send_data.data[4][0]) + '123' :
+                                pptSerializer.encode(send_data.data[4][0])
+                        ];
                     } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
-                        send_data.data[3] = [pptSerializer.encode(send_data.data[3][0])];
+                        send_data.data[3] = [
+                            send_data.ruinPayload ?
+                                pptSerializer.encode(send_data.data[3][0]) + '123' :
+                                pptSerializer.encode(send_data.data[3][0])
+                        ];
+                    } else if (send_data.data[0] === WAMP_MSG_SPEC.INVOCATION) {
+                        send_data.data[4] = [
+                            send_data.ruinPayload ?
+                                pptSerializer.encode(send_data.data[4][0]) + '123' :
+                                pptSerializer.encode(send_data.data[4][0])
+                        ];
                     }
                 }
             }
 
-            //console.log('Data to send to server:', rec_data);
-            //console.log('Is silent:', send_data.silent ? 'yes' : 'no');
+            // console.log('Data received by server:', rec_data);
+            // console.log('Is silent answer? ', send_data.silent ? 'yes' : 'no');
             if (send_data.silent) {
                 return;
             }

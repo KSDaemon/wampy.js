@@ -2479,6 +2479,7 @@ serializers.forEach(function (item) {
                             msgpack: new MsgpackSerializer(),
                             cbor: new CborSerializer()
                         },
+                        onError: null,
                         onClose: function () {
                             setTimeout(function () {
                                 wampy.options({
@@ -3197,6 +3198,320 @@ serializers.forEach(function (item) {
                     }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 });
 
+                it('doesn\'t fail if event in ppt mode was received, while ppt serializer is not supported', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                        }
+                    }).subscribe('subscribe.topic.ppt.no.srzlr', function () {
+                        // Bad event is omitted and the next one is received
+                        done();
+                    });
+                });
+
+                it('doesn\'t fail if event in ppt mode was received, while payload decode fails', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            cbor: new CborSerializer()
+                        }
+                    }).subscribe('subscribe.topic.ppt.srzlr.fails', function () {
+                        // Bad event is omitted and the next one is received
+                        done();
+                    });
+                });
+
+                it('calls error handler if RPC Result is in ppt mode, while ppt serializer is not supported', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer()
+                        }
+                    }).register('register.rpc.ppt.no.srlzr', {
+                        rpc: function () {
+
+                        },
+                        onSuccess: function (e) {
+                            wampy.call(
+                                'register.rpc.ppt.no.srlzr',
+                                100,
+                                {
+                                    onSuccess: function () {
+                                        done('RPC call was successfull, while it should not be');
+                                    },
+                                    onError: function () {
+                                        done();
+                                    }
+                                },
+                                { exclude_me: false }
+                            );
+                        },
+                        onError: function (e) {
+                            done('Error during RPC registration!');
+                        }
+                    });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('calls error handler if RPC Result is in ppt mode, while ppt decoding fails', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            cbor: new CborSerializer()
+                        }
+                    }).register('register.rpc.ppt.srlzr.fail', {
+                        rpc: function () {
+
+                        },
+                        onSuccess: function (e) {
+                            wampy.call(
+                                'register.rpc.ppt.srlzr.fail',
+                                100,
+                                {
+                                    onSuccess: function () {
+                                        done('RPC call was successfull, while it should not be');
+                                    },
+                                    onError: function () {
+                                        done();
+                                    }
+                                },
+                                { exclude_me: false }
+                            );
+                        },
+                        onError: function (e) {
+                            done('Error during RPC registration!');
+                        }
+                    });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('calls error handler if RPC Invocation is in ppt mode, while ppt serializer is not supported', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer()
+                        }
+                    }).register('register.rpc.ppt.invoke.no.srlzr', {
+                        rpc: function () {
+
+                        },
+                        onSuccess: function (e) {
+                            wampy.call(
+                                'register.rpc.ppt.invoke.no.srlzr',
+                                100,
+                                {
+                                    onSuccess: function () {
+                                        done('RPC call was successfull, while it should not be');
+                                    },
+                                    onError: function () {
+                                        done();
+                                    }
+                                },
+                                { exclude_me: false }
+                            );
+                        },
+                        onError: function (e) {
+                            done('Error during RPC registration!');
+                        }
+                    });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('calls error handler if RPC Invocation is in ppt mode, while ppt decoding fails', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            cbor: new CborSerializer()
+                        }
+                    }).register('register.rpc.ppt.invoke.srlzr.fail', {
+                        rpc: function () {
+
+                        },
+                        onSuccess: function (e) {
+                            wampy.call(
+                                'register.rpc.ppt.invoke.srlzr.fail',
+                                100,
+                                {
+                                    onSuccess: function () {
+                                        done('RPC call was successfull, while it should not be');
+                                    },
+                                    onError: function () {
+                                        done();
+                                    }
+                                },
+                                { exclude_me: false }
+                            );
+                        },
+                        onError: function (e) {
+                            done('Error during RPC registration!');
+                        }
+                    });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('allows to receive RPC Invocation in ppt mode', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            msgpack: new MsgpackSerializer(),
+                            cbor: new CborSerializer()
+                        }
+                    }).register('register.rpc.ppt.invoke', {
+                        rpc: function () {
+                            return {
+                                argsList: [100],
+                                options: { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
+                            };
+                        },
+                        onSuccess: function (e) {
+                            wampy.call(
+                                'register.rpc.ppt.invoke',
+                                100,
+                                {
+                                    onSuccess: function () {
+                                        done();
+                                    },
+                                    onError: function (e) {
+                                        done('Error during RPC Call');
+                                    }
+                                },
+                                { exclude_me: false }
+                            );
+                        },
+                        onError: function (e) {
+                            done('Error during RPC registration!');
+                        }
+                    });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('doesn\'t fail if event in ppt mode was received, while broker didn\'t announce it', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            msgpack: new MsgpackSerializer(),
+                            cbor: new CborSerializer()
+                        },
+                        onClose: function () {
+                            setTimeout(function () {
+                                wampy.options({
+                                    onConnect: function () {
+                                        wampy.subscribe('subscribe.topic.noppt', function () {
+                                            // Bad event is omitted and the next one is received
+                                            done();
+                                        });
+                                    }
+                                })
+                                    .connect();
+                            }, 1);
+                        }
+                    }).disconnect();
+                });
+
+                it('calls error handler if RPC Result in ppt mode was received, while dealer didn\'t announce it', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            msgpack: new MsgpackSerializer(),
+                            cbor: new CborSerializer()
+                        }
+                    }).register('register.rpc.no.ppt', {
+                        rpc: function () {
+
+                        },
+                        onSuccess: function (e) {
+                            wampy.call(
+                                'register.rpc.no.ppt',
+                                100,
+                                {
+                                    onSuccess: function () {
+                                    },
+                                    onError: function () {
+                                        done();
+                                    }
+                                },
+                                { exclude_me: false }
+                            );
+                        },
+                        onError: function (e) {
+                            done('Error during RPC registration!');
+                        }
+                    });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('aborts connection when receiving invocation in ppt mode, while dealer didn\'t announce it', function (done) {
+                    // This case should not happen at all, but for safety
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            msgpack: new MsgpackSerializer(),
+                            cbor: new CborSerializer()
+                        },
+                        onError: function (e) {
+                            done();
+                        }
+                    }).register('register.rpc.ppt.no.dealer.fail', {
+                        rpc: function () {
+
+                        },
+                        onSuccess: function (e) {
+                            wampy.call(
+                                'register.rpc.ppt.no.dealer.fail',
+                                100,
+                                {
+                                    onSuccess: function () {
+                                        done('RPC call was successfull, while it should not be');
+                                    },
+                                    onError: function () {
+                                        done('Error during RPC call');
+                                    }
+                                },
+                                { exclude_me: false }
+                            );
+                        },
+                        onError: function (e) {
+                            done('Error during RPC registration!');
+                        }
+                    });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
+                it('aborts connection if RPC YIELD is in ppt mode, while dealer didn\'t announce it', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            cbor: new CborSerializer()
+                        },
+                        onError: function (e) {
+                            done();
+                        }
+                    }).register('register.rpc.ppt.yield.noppt', {
+                        rpc: function () {
+                            return {
+                                argsList: [100],
+                                options: { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
+                            };
+                        },
+                        onSuccess: function (e) {
+                            wampy.call(
+                                'register.rpc.ppt.yield.noppt',
+                                100,
+                                {
+                                    onSuccess: function () {
+                                        done('RPC call was successfull, while it should not be');
+                                    },
+                                    onError: function () {
+                                        done('RPC call errored, while it should not be');
+                                    }
+                                },
+                                { exclude_me: false }
+                            );
+                        },
+                        onError: function (e) {
+                            done('Error during RPC registration!');
+                        }
+                    }).connect();
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
             });
         });
     });

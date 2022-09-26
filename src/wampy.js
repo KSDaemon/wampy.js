@@ -1151,6 +1151,12 @@ class Wampy {
                                 } catch (e) {
                                     this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
                                     this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_ERR;
+                                    this._calls[data[1]].onError({
+                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description,
+                                        details : data[2],
+                                        argsList: data[3],
+                                        argsDict: data[4]
+                                    });
                                     break;
                                 }
                             } else {
@@ -1278,12 +1284,18 @@ class Wampy {
 
                                         if (pptScheme) {
                                             if (!this._checkPPTOptions('dealer', results.options)) {
-                                                invoke_error_handler({
-                                                    details : results.options,
-                                                    error   : this._cache.opStatus.description,
-                                                    argsList: results.argsList,
-                                                    argsDict: results.argsDict
-                                                });
+
+                                                if (this._cache.opStatus.code === WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.code) {
+                                                    // This case should not happen at all, but for safety
+                                                    this._hardClose('wamp.error.protocol_violation', 'Trying to send YIELD in PPT Mode, while Dealer didn\'t announce it');
+                                                } else {
+                                                    invoke_error_handler({
+                                                        details : results.options,
+                                                        error   : this._cache.opStatus.description,
+                                                        argsList: results.argsList,
+                                                        argsDict: results.argsDict
+                                                    });
+                                                }
                                                 return;
                                             }
 
@@ -1330,7 +1342,9 @@ class Wampy {
                             let decodedPayload, pptPayload = data[4][0];
 
                             if (!this._checkPPTOptions('dealer', options)) {
+                                // This case should not happen at all, but for safety
                                 this._log(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
+                                this._hardClose('wamp.error.protocol_violation', 'Received INVOCATION in PPT Mode, while Dealer didn\'t announce it');
                                 break;
                             }
 
@@ -1347,6 +1361,12 @@ class Wampy {
 
                                 if (!pptSerializer) {
                                     this._log(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
+                                    invoke_error_handler({
+                                        details : data[3],
+                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description,
+                                        argsList: data[4],
+                                        argsDict: data[5]
+                                    });
                                     break;
                                 }
 
@@ -1354,6 +1374,12 @@ class Wampy {
                                     decodedPayload = await pptSerializer.decode(pptPayload);
                                 } catch (e) {
                                     this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
+                                    invoke_error_handler({
+                                        details : data[3],
+                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_ERR.description,
+                                        argsList: data[4],
+                                        argsDict: data[5]
+                                    });
                                     break;
                                 }
                             } else {
