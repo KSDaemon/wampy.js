@@ -3183,15 +3183,11 @@ const WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
-        {
-            data: null,
-            silent: true
-        },
         // aborts connection if RPC YIELD is in ppt mode, while dealer didn't announce it
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
-                7,
+                127,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {
@@ -3231,10 +3227,6 @@ const WAMP_MSG_SPEC = {
             ],
             from: [1],
             to: [1]
-        },
-        {
-            data: null,
-            silent: true
         }
     ];
 

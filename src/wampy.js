@@ -657,6 +657,7 @@ class Wampy {
         if (this._options.onError) {
             this._options.onError({ error: errorUri, details: details });
         }
+        this._cache.sessionId = 0;
         this._ws.close();
     }
 

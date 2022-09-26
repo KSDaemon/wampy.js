@@ -11,7 +11,7 @@ import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
 import { CborSerializer } from '../src/serializers/CborSerializer.js';
 import { WAMP_MSG_SPEC } from '../src/constants.js';
 
-const TIMEOUT = 20;
+const TIMEOUT = 15;
 
 let sendDataCursor = 0,
     clientMessageQueue = [],
@@ -145,7 +145,6 @@ function startTimers () {
 
         this.decode(data).then(rec_data => {
             let send_data, enc_data, i, opts, pptSerializer;
-
             send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
 
             if ((rec_data[0] === WAMP_MSG_SPEC.CALL ||
@@ -227,10 +226,10 @@ function startTimers () {
                     this.onmessage(enc_data);
                 }
 
-                // console.log('processsing message: data? ', send_data.data ? 'yes' : 'no',
-                //    ' next? ', send_data.next ? 'yes' : 'no',
-                //    ' abort? ', send_data.abort ? 'yes' : 'no',
-                //    ' close? ', send_data.close ? 'yes' : 'no')
+                // console.log('Processing message: data? ', send_data.data ? 'yes' : 'no',
+                //     ' next? ', send_data.next ? 'yes' : 'no',
+                //     ' abort? ', send_data.abort ? 'yes' : 'no',
+                //     ' close? ', send_data.close ? 'yes' : 'no')
                 if (send_data.next) {           // Send to client next message
                     setTimeout(() => {
                         this.send(data);
