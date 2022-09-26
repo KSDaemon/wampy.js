@@ -4,10 +4,12 @@
  * Date: 07.04.15
  */
 
-import sendData from './send-data';
-import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer';
-import { JsonSerializer } from '../src/serializers/JsonSerializer';
-import { CborSerializer } from '../src/serializers/CborSerializer';
+import lodash from 'lodash';
+import sendData from './send-data.js';
+import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
+import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
+import { CborSerializer } from '../src/serializers/CborSerializer.js';
+import { WAMP_MSG_SPEC } from '../src/constants.js';
 
 const TIMEOUT = 15;
 
@@ -140,13 +142,67 @@ function startTimers () {
     };
 
     WebSocket.prototype.send = function (data) {
-        let send_data, enc_data, i;
 
         this.decode(data).then(rec_data => {
-            send_data = sendData[sendDataCursor++];
+            let send_data, enc_data, i, opts, pptSerializer;
+            send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
 
-            //console.log('Data to send to server:', rec_data);
-            //console.log('Is silent:', send_data.silent ? 'yes' : 'no');
+            if ((rec_data[0] === WAMP_MSG_SPEC.CALL ||
+                rec_data[0] === WAMP_MSG_SPEC.PUBLISH ||
+                rec_data[0] === WAMP_MSG_SPEC.YIELD) &&
+                send_data.data &&
+                (send_data.data[0] === WAMP_MSG_SPEC.EVENT ||
+                send_data.data[0] === WAMP_MSG_SPEC.RESULT ||
+                send_data.data[0] === WAMP_MSG_SPEC.INVOCATION)) {
+
+                if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
+                    opts = send_data.data[3];
+                } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
+                    opts = send_data.data[2];
+                } else if (send_data.data[0] === WAMP_MSG_SPEC.INVOCATION) {
+                    opts = send_data.data[3];
+                }
+
+                // Check for PPT mode and encode payload with appreciate serializer
+                if (opts.ppt_scheme &&
+                    opts.ppt_serializer &&
+                    opts.ppt_serializer !== 'native') {
+                    switch (opts.ppt_serializer) {
+                        case 'cbor':
+                            pptSerializer = new CborSerializer();
+                            break;
+                        case 'msgpack':
+                            pptSerializer = new MsgpackSerializer();
+                            break;
+                        case 'json':
+                            pptSerializer = new JsonSerializer();
+                            break;
+                    }
+
+                    if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
+                        send_data.data[4] = [
+                            send_data.ruinPayload ?
+                                pptSerializer.encode(send_data.data[4][0]) + '123' :
+                                pptSerializer.encode(send_data.data[4][0])
+                        ];
+                    } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
+                        send_data.data[3] = [
+                            send_data.ruinPayload ?
+                                pptSerializer.encode(send_data.data[3][0]) + '123' :
+                                pptSerializer.encode(send_data.data[3][0])
+                        ];
+                    } else if (send_data.data[0] === WAMP_MSG_SPEC.INVOCATION) {
+                        send_data.data[4] = [
+                            send_data.ruinPayload ?
+                                pptSerializer.encode(send_data.data[4][0]) + '123' :
+                                pptSerializer.encode(send_data.data[4][0])
+                        ];
+                    }
+                }
+            }
+
+            // console.log('Data received by server:', rec_data);
+            // console.log('Is silent answer? ', send_data.silent ? 'yes' : 'no');
             if (send_data.silent) {
                 return;
             }
@@ -170,10 +226,10 @@ function startTimers () {
                     this.onmessage(enc_data);
                 }
 
-                // console.log('processsing message: data? ', send_data.data ? 'yes' : 'no',
-                //    ' next? ', send_data.next ? 'yes' : 'no',
-                //    ' abort? ', send_data.abort ? 'yes' : 'no',
-                //    ' close? ', send_data.close ? 'yes' : 'no')
+                // console.log('Processing message: data? ', send_data.data ? 'yes' : 'no',
+                //     ' next? ', send_data.next ? 'yes' : 'no',
+                //     ' abort? ', send_data.abort ? 'yes' : 'no',
+                //     ' close? ', send_data.close ? 'yes' : 'no')
                 if (send_data.next) {           // Send to client next message
                     setTimeout(() => {
                         this.send(data);

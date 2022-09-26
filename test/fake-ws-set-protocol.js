@@ -4,7 +4,7 @@
  * Date: 16.06.17
  */
 
-import { JsonSerializer } from '../src/serializers/JsonSerializer';
+import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
 
 const TIMEOUT = 15,
 

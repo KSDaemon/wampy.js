@@ -14,9 +14,11 @@
  *
  */
 
-import { WAMP_MSG_SPEC, WAMP_ERROR_MSG } from './constants';
-import { getWebSocket } from './utils';
-import { JsonSerializer } from './serializers/JsonSerializer';
+import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS } from './constants.js';
+import { getWebSocket } from './utils.js';
+import { JsonSerializer } from './serializers/JsonSerializer.js';
+
+const jsonSerializer = new JsonSerializer();
 
 /**
  * WAMP Client Class
@@ -63,14 +65,16 @@ class Wampy {
                     features: {
                         subscriber_blackwhite_listing: true,
                         publisher_exclusion          : true,
-                        publisher_identification     : true
+                        publisher_identification     : true,
+                        payload_passthru_mode        : true
                     }
                 },
                 subscriber: {
                     features: {
                         pattern_based_subscription: true,
                         publication_trustlevels   : true,
-                        publisher_identification  : true
+                        publisher_identification  : true,
+                        payload_passthru_mode     : true
                     }
                 },
                 caller    : {
@@ -78,7 +82,8 @@ class Wampy {
                         caller_identification   : true,
                         progressive_call_results: true,
                         call_canceling          : true,
-                        call_timeout            : true
+                        call_timeout            : true,
+                        payload_passthru_mode   : true
                     }
                 },
                 callee    : {
@@ -86,7 +91,9 @@ class Wampy {
                         caller_identification     : true,
                         call_trustlevels          : true,
                         pattern_based_registration: true,
-                        shared_registration       : true
+                        shared_registration       : true,
+                        payload_passthru_mode     : true
+
                     }
                 }
             }
@@ -100,7 +107,7 @@ class Wampy {
         this._cache = {
             /**
              * WAMP Session ID
-             * @type {string}
+             * @type {string|null}
              */
             sessionId: null,
 
@@ -227,7 +234,7 @@ class Wampy {
 
             /**
              * WAMP Realm to join
-             * @type {string}
+             * @type {string|null}
              */
             realm: null,
 
@@ -245,7 +252,7 @@ class Wampy {
 
             /**
              * Authentication id to use in challenge
-             * @type {string}
+             * @type {string|null}
              */
             authid: null,
 
@@ -310,10 +317,18 @@ class Wampy {
             wsRequestOptions: null,
 
             /**
-             * User provided msgpack class
+             * User provided Serializer class
              * @type {object}
              */
-            serializer: new JsonSerializer()
+            serializer: jsonSerializer,
+
+            /**
+             * User provided Serializers for Payload Passthru Mode
+             * @type {object}
+             */
+            payloadSerializers: {
+                json: jsonSerializer
+            }
         };
 
         if (this._isPlainObject(options)) {
@@ -335,7 +350,7 @@ class Wampy {
      */
     _log (...args) {
         if (this._options.debug) {
-            console.log(args);
+            console.log('[wampy]', args);
         }
     }
 
@@ -387,24 +402,20 @@ class Wampy {
             return false;
         }
 
-        // If has modified constructor
+        // If obj has modified constructor
         const ctor = obj.constructor;
         if (typeof ctor !== 'function') {
             return false;
         }
 
-        // If has modified prototype
+        // If obj has modified prototype
         const prot = ctor.prototype;
         if (this._isObject(prot) === false) {
             return false;
         }
 
         // If constructor does not have an Object-specific method
-        if (Object.hasOwnProperty.call(prot, 'isPrototypeOf') === false) {
-            return false;
-        }
-
-        return true;
+        return Object.hasOwnProperty.call(prot, 'isPrototypeOf') !== false;
     }
 
     /**
@@ -425,9 +436,7 @@ class Wampy {
      * @private
      */
     _setWsProtocols () {
-        if (!(this._options.serializer instanceof JsonSerializer)) {
-            this._protocols.unshift('wamp.2.' + this._options.serializer.protocol);
-        }
+        this._protocols = ['wamp.2.' + this._options.serializer.protocol];
     }
 
     /**
@@ -463,6 +472,43 @@ class Wampy {
     }
 
     /**
+     * Check for specified feature in a role of connected WAMP Router
+     * @param {string} role
+     * @param {string} feature
+     * @returns {boolean}
+     * @private
+     */
+    _checkRouterFeature (role, feature) {
+        return this._cache.server_wamp_features.roles[role].features[feature] === true;
+    }
+
+    /**
+     * Check for PPT mode options correctness
+     * @param {string} role WAMP Router Role to check support
+     * @param {object} options
+     * @returns {boolean}
+     * @private
+     */
+    _checkPPTOptions (role, options) {
+        if (!this._checkRouterFeature(role, 'payload_passthru_mode')) {
+            this._cache.opStatus = WAMP_ERROR_MSG.PPT_NOT_SUPPORTED;
+            return false;
+        }
+
+        if (options.ppt_scheme.search(/^(wamp$|mqtt$|x_)/) < 0) {
+            this._cache.opStatus = WAMP_ERROR_MSG.PPT_INVALID_SCHEME;
+            return false;
+        }
+
+        if (options.ppt_scheme === 'wamp' && !E2EE_SERIALIZERS.includes(options.ppt_serializer)) {
+            this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_INVALID;
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Validate uri
      * @param {string} uri
      * @param {boolean} patternBased
@@ -490,6 +536,86 @@ class Wampy {
         } else {
             return !(!re.test(uri) || uri.indexOf('wamp.') === 0);
         }
+    }
+
+    /**
+     * Prepares payload for adding to WAMP message
+     * @param {string|number|Array|object} payload
+     * @param {Object} options
+     * @returns {Object}
+     * @private
+     */
+    _preparePayload (payload, options) {
+        let payloadItems = [], err = false, argsList, argsDict;
+
+        if (this._isArray(payload)) {
+            argsList = payload;
+        } else if (this._isPlainObject(payload)) {
+            // It's a wampy unified form of payload passing
+            if (payload.argsList || payload.argsDict) {
+                if (this._isArray(payload.argsList)) {
+                    argsList = payload.argsList;
+                } else if (typeof (payload.argsList) !== 'undefined') {
+                    argsList = [payload.argsList];
+                }
+
+                if (payload.argsDict) {
+                    argsDict = payload.argsDict;
+                }
+            } else {
+                argsDict = payload;
+            }
+        } else {    // assume it's a single value
+            argsList = [payload];
+        }
+
+        // Check and handle Payload PassThru Mode
+        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+        if (options.ppt_scheme) {
+            let binPayload, pptPayload = { args: argsList, kwargs: argsDict };
+
+            if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+                let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+
+                if (!pptSerializer) {
+                    err = true;
+                    this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_INVALID;
+                    return { err, payloadItems };
+                }
+
+                try {
+                    binPayload = pptSerializer.encode(pptPayload);
+                } catch (e) {
+                    err = true;
+                    this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_ERR;
+                    return { err, payloadItems };
+                }
+            } else {
+                binPayload = pptPayload;
+            }
+
+            // wamp scheme means Payload End-to-End Encryption
+            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
+            if (options.ppt_scheme === 'wamp') {
+
+                // TODO: implement End-to-End Encryption
+            }
+
+            payloadItems.push([binPayload]);
+
+        } else {
+            if (argsList) {
+                payloadItems.push(argsList);
+            }
+            if (argsDict) {
+                if (!argsList) {
+                    payloadItems.push([]);
+                }
+                payloadItems.push(argsDict);
+            }
+        }
+
+        return { err, payloadItems };
     }
 
     /**
@@ -523,7 +649,7 @@ class Wampy {
      * @private
      */
     _hardClose (errorUri, details) {
-        this._log('[wampy] ' + details);
+        this._log(details);
         // Cleanup outgoing message queue
         this._wsQueue = [];
         this._send([WAMP_MSG_SPEC.ABORT, { message: details }, errorUri]);
@@ -531,6 +657,7 @@ class Wampy {
         if (this._options.onError) {
             this._options.onError({ error: errorUri, details: details });
         }
+
         this._ws.close();
     }
 
@@ -605,19 +732,15 @@ class Wampy {
             options.authid = this._options.authid;
         }
 
-        this._log('[wampy] websocket connected');
+        this._log('websocket connected');
 
         if (this._options.serializer.protocol !== serverProtocol) {
             // Server have chosen not our preferred protocol
 
             // Falling back to json if possible
-            //FIXME Temp hack for React Native Environment.
-            // Due to bug (facebook/react-native#24796), it doesn't provide selected subprotocol.
-            // Remove when ^^^ bug will be fixed.
-            if (serverProtocol === 'json' ||
-                (typeof navigator != 'undefined' &&
-                    navigator.product === 'ReactNative' &&
-                    typeof this._ws.protocol === 'undefined')) {
+            // Temp hack for React Native Environment is removed as
+            // (facebook/react-native#24796) was resolved
+            if (serverProtocol === 'json') {
                 this._options.serializer = new JsonSerializer();
             } else {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_SERIALIZER_AVAILABLE;
@@ -641,7 +764,7 @@ class Wampy {
      * @private
      */
     _wsOnClose (event) {
-        this._log('[wampy] websocket disconnected. Info: ', event);
+        this._log('websocket disconnected. Info: ', event);
 
         // Automatic reconnection
         if ((this._cache.sessionId || this._cache.reconnectingAttempts) &&
@@ -669,426 +792,642 @@ class Wampy {
      * @param {object} event
      * @private
      */
-    _wsOnMessage (event) {
-        this._decode(event.data).then(data => {
+    async _wsOnMessage (event) {
+        let data;
+        try {
+            data = await this._decode(event.data);
+        } catch (e) {
+            this._hardClose('wamp.error.protocol_violation', 'Can not decode received message');
+        }
 
-            this._log('[wampy] websocket message received: ', data);
+        this._log('websocket message received: ', data);
 
-            let id, i, p, self = this;
+        let id, i, p, self = this;
 
-            switch (data[0]) {
-                case WAMP_MSG_SPEC.WELCOME:
-                    // WAMP SPEC: [WELCOME, Session|id, Details|dict]
-                    if (this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received WELCOME message after session was established');
-                    } else {
-                        this._cache.sessionId = data[1];
-                        this._cache.server_wamp_features = data[2];
+        switch (data[0]) {
+            case WAMP_MSG_SPEC.WELCOME:
+                // WAMP SPEC: [WELCOME, Session|id, Details|dict]
+                if (this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received WELCOME message after session was established');
+                } else {
+                    this._cache.sessionId = data[1];
+                    this._cache.server_wamp_features = data[2];
 
-                        if (this._cache.reconnectingAttempts) {
-                            // There was reconnection
+                    if (this._cache.reconnectingAttempts) {
+                        // There was reconnection
 
-                            this._cache.reconnectingAttempts = 0;
+                        this._cache.reconnectingAttempts = 0;
 
-                            if (this._options.onReconnectSuccess) {
-                                this._options.onReconnectSuccess(data[2]);
-                            }
-
-                            // Let's renew all previous state
-                            this._renewSubscriptions();
-                            this._renewRegistrations();
-
-                        } else {
-                            // Firing onConnect event on real connection to WAMP server
-                            if (this._options.onConnect) {
-                                this._options.onConnect(data[2]);
-                            }
+                        if (this._options.onReconnectSuccess) {
+                            this._options.onReconnectSuccess(data[2]);
                         }
 
-                        // Send local queue if there is something out there
-                        this._send();
-                    }
-                    break;
-                case WAMP_MSG_SPEC.ABORT:
-                    // WAMP SPEC: [ABORT, Details|dict, Reason|uri]
-                    if (this._options.onError) {
-                        this._options.onError({ error: data[2], details: data[1] });
-                    }
-                    this._ws.close();
-                    break;
-                case WAMP_MSG_SPEC.CHALLENGE:
-                    // WAMP SPEC: [CHALLENGE, AuthMethod|string, Extra|dict]
-                    if (this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received CHALLENGE message after session was established');
+                        // Let's renew all previous state
+                        this._renewSubscriptions();
+                        this._renewRegistrations();
+
                     } else {
-                        if (this._options.authid && typeof this._options.onChallenge === 'function') {
+                        // Firing onConnect event on real connection to WAMP server
+                        if (this._options.onConnect) {
+                            this._options.onConnect(data[2]);
+                        }
+                    }
 
-                            p = new Promise((resolve, reject) => {
-                                resolve(this._options.onChallenge(data[1], data[2]));
-                            });
+                    // Send local queue if there is something out there
+                    this._send();
+                }
+                break;
+            case WAMP_MSG_SPEC.ABORT:
+                // WAMP SPEC: [ABORT, Details|dict, Reason|uri]
+                if (this._options.onError) {
+                    this._options.onError({ error: data[2], details: data[1] });
+                }
+                this._ws.close();
+                break;
+            case WAMP_MSG_SPEC.CHALLENGE:
+                // WAMP SPEC: [CHALLENGE, AuthMethod|string, Extra|dict]
+                if (this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received CHALLENGE message after session was established');
+                } else {
+                    if (this._options.authid && typeof this._options.onChallenge === 'function') {
 
-                            p.then((key) => {
+                        p = new Promise((resolve, reject) => {
+                            resolve(this._options.onChallenge(data[1], data[2]));
+                        });
 
-                                // Sending directly 'cause it's a challenge msg and no sessionId check is needed
-                                this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
+                        p.then((key) => {
 
-                            }).catch(e => {
-                                this._ws.send(this._encode([
-                                    WAMP_MSG_SPEC.ABORT,
-                                    { message: 'Exception in onChallenge handler raised!' },
-                                    'wamp.error.cannot_authenticate'
-                                ]));
-                                if (this._options.onError) {
-                                    this._options.onError({ error: WAMP_ERROR_MSG.CRA_EXCEPTION.description });
-                                }
-                                this._ws.close();
-                                this._cache.opStatus = WAMP_ERROR_MSG.CRA_EXCEPTION;
-                            });
+                            // Sending directly 'cause it's a challenge msg and no sessionId check is needed
+                            this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
 
-                        } else {
-
+                        }).catch(e => {
                             this._ws.send(this._encode([
                                 WAMP_MSG_SPEC.ABORT,
-                                { message: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description },
+                                { message: 'Exception in onChallenge handler raised!' },
                                 'wamp.error.cannot_authenticate'
                             ]));
                             if (this._options.onError) {
-                                this._options.onError({ error: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description });
+                                this._options.onError({ error: WAMP_ERROR_MSG.CRA_EXCEPTION.description });
                             }
                             this._ws.close();
-                            this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
+                            this._cache.opStatus = WAMP_ERROR_MSG.CRA_EXCEPTION;
+                        });
 
-                        }
-                    }
-                    break;
-                case WAMP_MSG_SPEC.GOODBYE:
-                    // WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
-                    if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received GOODBYE message before session was established');
                     } else {
-                        if (!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
-                            this._cache.isSayingGoodbye = true;
-                            this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.close.goodbye_and_out']);
+
+                        this._ws.send(this._encode([
+                            WAMP_MSG_SPEC.ABORT,
+                            { message: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description },
+                            'wamp.error.cannot_authenticate'
+                        ]));
+                        if (this._options.onError) {
+                            this._options.onError({ error: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description });
                         }
-                        this._cache.sessionId = null;
                         this._ws.close();
+                        this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
+
                     }
-                    break;
-                case WAMP_MSG_SPEC.ERROR:
-                    // WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict,
-                    //             Error|uri, (Arguments|list, ArgumentsKw|dict)]
-                    if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received ERROR message before session was established');
-                    } else {
-                        switch (data[1]) {
-                            case WAMP_MSG_SPEC.SUBSCRIBE:
-                            case WAMP_MSG_SPEC.UNSUBSCRIBE:
-                            case WAMP_MSG_SPEC.PUBLISH:
-                            case WAMP_MSG_SPEC.REGISTER:
-                            case WAMP_MSG_SPEC.UNREGISTER:
-
-                                this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                                this._requests[data[2]].callbacks.onError({
-                                    error   : data[4],
-                                    details : data[3],
-                                    argsList: data[5],
-                                    argsDict: data[6]
-                                });
-                                delete this._requests[data[2]];
-
-                                break;
-                            // case WAMP_MSG_SPEC.INVOCATION:
-                            //     break;
-                            case WAMP_MSG_SPEC.CALL:
-
-                                // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
-                                //             Error|uri, Arguments|list, ArgumentsKw|dict]
-                                this._calls[data[2]] && this._calls[data[2]].onError &&
-                                this._calls[data[2]].onError({
-                                    error   : data[4],
-                                    details : data[3],
-                                    argsList: data[5],
-                                    argsDict: data[6]
-                                });
-                                delete this._calls[data[2]];
-
-                                break;
-                            default:
-                                this._hardClose('wamp.error.protocol_violation', 'Received invalid ERROR message');
-                                break;
-                        }
+                }
+                break;
+            case WAMP_MSG_SPEC.GOODBYE:
+                // WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
+                if (!this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received GOODBYE message before session was established');
+                } else {
+                    if (!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
+                        this._cache.isSayingGoodbye = true;
+                        this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.close.goodbye_and_out']);
                     }
-                    break;
-                case WAMP_MSG_SPEC.SUBSCRIBED:
-                    // WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
-                    if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received SUBSCRIBED message before session was established');
-                    } else {
-                        if (this._requests[data[1]]) {
-                            this._subscriptions[this._requests[data[1]].topic] = this._subscriptions[data[2]] = {
-                                id             : data[2],
-                                callbacks      : [this._requests[data[1]].callbacks.onEvent],
-                                advancedOptions: this._requests[data[1]].advancedOptions
-                            };
+                    this._cache.sessionId = null;
+                    this._ws.close();
+                }
+                break;
+            case WAMP_MSG_SPEC.ERROR:
+                // WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict,
+                //             Error|uri, (Arguments|list, ArgumentsKw|dict)]
+                if (!this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received ERROR message before session was established');
+                } else {
+                    switch (data[1]) {
+                        case WAMP_MSG_SPEC.SUBSCRIBE:
+                        case WAMP_MSG_SPEC.UNSUBSCRIBE:
+                        case WAMP_MSG_SPEC.PUBLISH:
+                        case WAMP_MSG_SPEC.REGISTER:
+                        case WAMP_MSG_SPEC.UNREGISTER:
 
-                            this._subsTopics.add(this._requests[data[1]].topic);
-
-                            if (this._requests[data[1]].callbacks.onSuccess) {
-                                this._requests[data[1]].callbacks.onSuccess({
-                                    topic: this._requests[data[1]].topic,
-                                    requestId: data[1],
-                                    subscriptionId: data[2]
-                                });
-                            }
-
-                            delete this._requests[data[1]];
-
-                        }
-                    }
-                    break;
-                case WAMP_MSG_SPEC.UNSUBSCRIBED:
-                    // WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
-                    if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received UNSUBSCRIBED message before session was established');
-                    } else {
-                        if (this._requests[data[1]]) {
-                            id = this._subscriptions[this._requests[data[1]].topic].id;
-                            delete this._subscriptions[this._requests[data[1]].topic];
-                            delete this._subscriptions[id];
-
-                            if (this._subsTopics.has(this._requests[data[1]].topic)) {
-                                this._subsTopics.delete(this._requests[data[1]].topic);
-                            }
-
-                            if (this._requests[data[1]].callbacks.onSuccess) {
-                                this._requests[data[1]].callbacks.onSuccess({
-                                    topic: this._requests[data[1]].topic,
-                                    requestId: data[1]
-                                });
-                            }
-
-                            delete this._requests[data[1]];
-                        }
-                    }
-                    break;
-                case WAMP_MSG_SPEC.PUBLISHED:
-                    // WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
-                    if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received PUBLISHED message before session was established');
-                    } else {
-                        if (this._requests[data[1]]) {
-                            if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-                                this._requests[data[1]].callbacks.onSuccess({
-                                    topic: this._requests[data[1]].topic,
-                                    requestId: data[1],
-                                    publicationId: data[2]
-                                });
-                            }
-
-                            delete this._requests[data[1]];
-                        }
-                    }
-                    break;
-                case WAMP_MSG_SPEC.EVENT:
-                    if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received EVENT message before session was established');
-                    } else {
-                        if (this._subscriptions[data[1]]) {
-
-                            // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
-                            //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
-
-                            i = this._subscriptions[data[1]].callbacks.length;
-                            while (i--) {
-                                this._subscriptions[data[1]].callbacks[i]({
-                                    details : data[3],
-                                    argsList: data[4],
-                                    argsDict: data[5]
-                                });
-                            }
-                        }
-                    }
-                    break;
-                case WAMP_MSG_SPEC.RESULT:
-                    if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received RESULT message before session was established');
-                    } else {
-                        if (this._calls[data[1]]) {
-
-                            // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
-                            //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
-
-                            this._calls[data[1]].onSuccess({
-                                details : data[2],
-                                argsList: data[3],
-                                argsDict: data[4]
+                            this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
+                            this._requests[data[2]].callbacks.onError({
+                                error   : data[4],
+                                details : data[3],
+                                argsList: data[5],
+                                argsDict: data[6]
                             });
-                            if (!(data[2].progress && data[2].progress === true)) {
-                                // We receive final result (progressive or not)
-                                delete this._calls[data[1]];
-                            }
-                        }
-                    }
-                    break;
-                // case WAMP_MSG_SPEC.REGISTER:
-                //     // WAMP SPEC:
-                //     break;
-                case WAMP_MSG_SPEC.REGISTERED:
-                    // WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
-                    if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received REGISTERED message before session was established');
-                    } else {
-                        if (this._requests[data[1]]) {
-                            this._rpcRegs[this._requests[data[1]].topic] = this._rpcRegs[data[2]] = {
-                                id       : data[2],
-                                callbacks: [this._requests[data[1]].callbacks.rpc]
-                            };
+                            delete this._requests[data[2]];
 
-                            this._rpcNames.add(this._requests[data[1]].topic);
+                            break;
+                        // case WAMP_MSG_SPEC.INVOCATION:
+                        //     break;
+                        case WAMP_MSG_SPEC.CALL:
 
-                            if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-                                this._requests[data[1]].callbacks.onSuccess({
-                                    topic: this._requests[data[1]].topic,
-                                    requestId: data[1],
-                                    registrationId: data[2]
-                                });
-                            }
-
-                            delete this._requests[data[1]];
-                        }
-                    }
-                    break;
-                // case WAMP_MSG_SPEC.UNREGISTER:
-                //     // WAMP SPEC:
-                //     break;
-                case WAMP_MSG_SPEC.UNREGISTERED:
-                    // WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
-                    if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received UNREGISTERED message before session was established');
-                    } else {
-                        if (this._requests[data[1]]) {
-                            id = this._rpcRegs[this._requests[data[1]].topic].id;
-                            delete this._rpcRegs[this._requests[data[1]].topic];
-                            delete this._rpcRegs[id];
-
-                            if (this._rpcNames.has(this._requests[data[1]].topic)) {
-                                this._rpcNames.delete(this._requests[data[1]].topic);
-                            }
-
-                            if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-                                this._requests[data[1]].callbacks.onSuccess({
-                                    topic: this._requests[data[1]].topic,
-                                    requestId: data[1]
-                                });
-                            }
-
-                            delete this._requests[data[1]];
-                        }
-                    }
-                    break;
-                case WAMP_MSG_SPEC.INVOCATION:
-                    if (!this._cache.sessionId) {
-                        this._hardClose('wamp.error.protocol_violation',
-                            'Received INVOCATION message before session was established');
-                    } else {
-                        if (this._rpcRegs[data[2]]) {
-
-                            // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
-                            //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
-
-                            let invoke_result_handler = results => {
-                                    // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list,
-                                    // ArgumentsKw|dict)]
-                                    let msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-
-                                    if (self._isPlainObject(results)) {
-
-                                        if (self._isPlainObject(results.options)) {
-                                            msg[2] = results.options;
-                                        }
-
-                                        if (self._isArray(results.argsList)) {
-                                            msg.push(results.argsList);
-                                        } else if (typeof (results.argsList) !== 'undefined') {
-                                            msg.push([results.argsList]);
-                                        }
-
-                                        if (self._isPlainObject(results.argsDict)) {
-                                            if (msg.length === 3) {
-                                                msg.push([]);
-                                            }
-                                            msg.push(results.argsDict);
-                                        }
-                                    } else {
-                                        msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-                                    }
-                                    self._send(msg);
-                                },
-                                invoke_error_handler = ({ details, error, argsList, argsDict }) => {
-                                    let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                                        data[1], details || {}, error || 'wamp.error.invocation_exception'];
-
-                                    if (argsList && self._isArray(argsList)) {
-                                        msg.push(argsList);
-                                    }
-
-                                    if (argsDict && self._isPlainObject(argsDict)) {
-                                        if (msg.length === 5) {
-                                            msg.push([]);
-                                        }
-                                        msg.push(argsDict);
-                                    }
-                                    self._send(msg);
-                                };
-
-                            p = new Promise((resolve, reject) => {
-                                resolve(this._rpcRegs[data[2]].callbacks[0]({
-                                    details       : data[3],
-                                    argsList      : data[4],
-                                    argsDict      : data[5],
-                                    result_handler: invoke_result_handler,
-                                    error_handler : invoke_error_handler
-                                }));
+                            // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
+                            //             Error|uri, Arguments|list, ArgumentsKw|dict]
+                            this._calls[data[2]] && this._calls[data[2]].onError &&
+                            this._calls[data[2]].onError({
+                                error   : data[4],
+                                details : data[3],
+                                argsList: data[5],
+                                argsDict: data[6]
                             });
+                            delete this._calls[data[2]];
 
-                            p.then((results) => {
-                                invoke_result_handler(results);
-                            }).catch(e => {
-                                invoke_error_handler(e);
+                            break;
+                        default:
+                            this._hardClose('wamp.error.protocol_violation', 'Received invalid ERROR message');
+                            break;
+                    }
+                }
+                break;
+            case WAMP_MSG_SPEC.SUBSCRIBED:
+                // WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
+                if (!this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received SUBSCRIBED message before session was established');
+                } else {
+                    if (this._requests[data[1]]) {
+                        this._subscriptions[this._requests[data[1]].topic] = this._subscriptions[data[2]] = {
+                            id             : data[2],
+                            callbacks      : [this._requests[data[1]].callbacks.onEvent],
+                            advancedOptions: this._requests[data[1]].advancedOptions
+                        };
+
+                        this._subsTopics.add(this._requests[data[1]].topic);
+
+                        if (this._requests[data[1]].callbacks.onSuccess) {
+                            this._requests[data[1]].callbacks.onSuccess({
+                                topic         : this._requests[data[1]].topic,
+                                requestId     : data[1],
+                                subscriptionId: data[2]
                             });
+                        }
+
+                        delete this._requests[data[1]];
+
+                    }
+                }
+                break;
+            case WAMP_MSG_SPEC.UNSUBSCRIBED:
+                // WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
+                if (!this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received UNSUBSCRIBED message before session was established');
+                } else {
+                    if (this._requests[data[1]]) {
+                        id = this._subscriptions[this._requests[data[1]].topic].id;
+                        delete this._subscriptions[this._requests[data[1]].topic];
+                        delete this._subscriptions[id];
+
+                        if (this._subsTopics.has(this._requests[data[1]].topic)) {
+                            this._subsTopics.delete(this._requests[data[1]].topic);
+                        }
+
+                        if (this._requests[data[1]].callbacks.onSuccess) {
+                            this._requests[data[1]].callbacks.onSuccess({
+                                topic    : this._requests[data[1]].topic,
+                                requestId: data[1]
+                            });
+                        }
+
+                        delete this._requests[data[1]];
+                    }
+                }
+                break;
+            case WAMP_MSG_SPEC.PUBLISHED:
+                // WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
+                if (!this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received PUBLISHED message before session was established');
+                } else {
+                    if (this._requests[data[1]]) {
+                        if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
+                            this._requests[data[1]].callbacks.onSuccess({
+                                topic        : this._requests[data[1]].topic,
+                                requestId    : data[1],
+                                publicationId: data[2]
+                            });
+                        }
+
+                        delete this._requests[data[1]];
+                    }
+                }
+                break;
+            case WAMP_MSG_SPEC.EVENT:
+                if (!this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received EVENT message before session was established');
+                } else {
+                    if (this._subscriptions[data[1]]) {
+                        let argsList, argsDict, options = data[3];
+
+                        // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
+                        //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
+
+                        // Check and handle Payload PassThru Mode
+                        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                        if (options.ppt_scheme) {
+                            let decodedPayload, pptPayload = data[4][0];
+
+                            if (!this._checkPPTOptions('broker', options)) {
+                                // Since it is async publication, and no link to
+                                // original publication - as it was already published
+                                // we can not reply with error, only log it.
+                                // Although the router should handle it
+
+                                this._log(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
+                                break;
+                            }
+
+                            // wamp scheme means Payload End-to-End Encryption
+                            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
+                            if (options.ppt_scheme === 'wamp') {
+
+                                // TODO: implement End-to-End Encryption
+
+                            }
+
+                            if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+                                let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+
+                                if (!pptSerializer) {
+                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
+                                    break;
+                                }
+
+                                try {
+                                    decodedPayload = await pptSerializer.decode(pptPayload);
+                                } catch (e) {
+                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
+                                    break;
+                                }
+                            } else {
+                                decodedPayload = pptPayload;
+                            }
+
+                            argsList = decodedPayload.args;
+                            argsDict = decodedPayload.kwargs;
 
                         } else {
-                            // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
-                            this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                                data[1], {}, 'wamp.error.no_such_procedure']);
-                            this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION;
+                            argsList = data[4];
+                            argsDict = data[5];
+                        }
+
+                        i = this._subscriptions[data[1]].callbacks.length;
+                        while (i--) {
+                            this._subscriptions[data[1]].callbacks[i]({
+                                details : options,
+                                argsList: argsList,
+                                argsDict: argsDict
+                            });
                         }
                     }
-                    break;
-                // case WAMP_MSG_SPEC.INTERRUPT:
-                //     // WAMP SPEC:
-                //     break;
-                // case WAMP_MSG_SPEC.YIELD:
-                //     // WAMP SPEC:
-                //     break;
-                default:
-                    this._hardClose('wamp.error.protocol_violation', 'Received non-compliant WAMP message');
-                    break;
-            }
-        }, err => {
-            this._hardClose('wamp.error.protocol_violation', 'Can not decode received message');
-        });
+                }
+                break;
+            case WAMP_MSG_SPEC.RESULT:
+                if (!this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received RESULT message before session was established');
+                } else {
+                    if (this._calls[data[1]]) {
+                        let argsList, argsDict, options = data[2];
+
+                        // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
+                        //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
+
+                        // Check and handle Payload PassThru Mode
+                        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                        if (options.ppt_scheme) {
+                            let decodedPayload, pptPayload = data[3][0];
+
+                            if (!this._checkPPTOptions('dealer', options)) {
+                                this._log(this._cache.opStatus.description);
+                                this._calls[data[1]].onError({
+                                    error   : this._cache.opStatus.description,
+                                    details : data[2],
+                                    argsList: data[3],
+                                    argsDict: data[4]
+                                });
+                                delete this._calls[data[1]];
+                                break;
+                            }
+
+                            // wamp scheme means Payload End-to-End Encryption
+                            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
+                            if (options.ppt_scheme === 'wamp') {
+
+                                // TODO: implement End-to-End Encryption
+
+                            }
+
+                            if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+                                let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+
+                                if (!pptSerializer) {
+                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
+                                    this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_INVALID;
+                                    this._calls[data[1]].onError({
+                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description,
+                                        details : data[2],
+                                        argsList: data[3],
+                                        argsDict: data[4]
+                                    });
+                                    delete this._calls[data[1]];
+                                    break;
+                                }
+
+                                try {
+                                    decodedPayload = await pptSerializer.decode(pptPayload);
+                                } catch (e) {
+                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
+                                    this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_ERR;
+                                    this._calls[data[1]].onError({
+                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description,
+                                        details : data[2],
+                                        argsList: data[3],
+                                        argsDict: data[4]
+                                    });
+                                    break;
+                                }
+                            } else {
+                                decodedPayload = pptPayload;
+                            }
+
+                            argsList = decodedPayload.args;
+                            argsDict = decodedPayload.kwargs;
+
+                        } else {
+                            argsList = data[3];
+                            argsDict = data[4];
+                        }
+
+                        this._calls[data[1]].onSuccess({
+                            details : options,
+                            argsList: argsList,
+                            argsDict: argsDict
+                        });
+                        if (!(options.progress && options.progress === true)) {
+                            // We receive final result (progressive or not)
+                            delete this._calls[data[1]];
+                        }
+                    }
+                }
+                break;
+            // case WAMP_MSG_SPEC.REGISTER:
+            //     // WAMP SPEC:
+            //     break;
+            case WAMP_MSG_SPEC.REGISTERED:
+                // WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
+                if (!this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received REGISTERED message before session was established');
+                } else {
+                    if (this._requests[data[1]]) {
+                        this._rpcRegs[this._requests[data[1]].topic] = this._rpcRegs[data[2]] = {
+                            id       : data[2],
+                            callbacks: [this._requests[data[1]].callbacks.rpc]
+                        };
+
+                        this._rpcNames.add(this._requests[data[1]].topic);
+
+                        if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
+                            this._requests[data[1]].callbacks.onSuccess({
+                                topic         : this._requests[data[1]].topic,
+                                requestId     : data[1],
+                                registrationId: data[2]
+                            });
+                        }
+
+                        delete this._requests[data[1]];
+                    }
+                }
+                break;
+            // case WAMP_MSG_SPEC.UNREGISTER:
+            //     // WAMP SPEC:
+            //     break;
+            case WAMP_MSG_SPEC.UNREGISTERED:
+                // WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
+                if (!this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received UNREGISTERED message before session was established');
+                } else {
+                    if (this._requests[data[1]]) {
+                        id = this._rpcRegs[this._requests[data[1]].topic].id;
+                        delete this._rpcRegs[this._requests[data[1]].topic];
+                        delete this._rpcRegs[id];
+
+                        if (this._rpcNames.has(this._requests[data[1]].topic)) {
+                            this._rpcNames.delete(this._requests[data[1]].topic);
+                        }
+
+                        if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
+                            this._requests[data[1]].callbacks.onSuccess({
+                                topic    : this._requests[data[1]].topic,
+                                requestId: data[1]
+                            });
+                        }
+
+                        delete this._requests[data[1]];
+                    }
+                }
+                break;
+            case WAMP_MSG_SPEC.INVOCATION:
+                if (!this._cache.sessionId) {
+                    this._hardClose('wamp.error.protocol_violation',
+                        'Received INVOCATION message before session was established');
+                } else {
+                    if (this._rpcRegs[data[2]]) {
+                        let argsList, argsDict, options = data[3];
+
+                        // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
+                        //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
+
+                        let invoke_error_handler = ({ details, error, argsList, argsDict }) => {
+                                let msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
+                                    data[1], details || {}, error || 'wamp.error.invocation_exception'];
+
+                                if (argsList && self._isArray(argsList)) {
+                                    msg.push(argsList);
+                                }
+
+                                if (argsDict && self._isPlainObject(argsDict)) {
+                                    if (msg.length === 5) {
+                                        msg.push([]);
+                                    }
+                                    msg.push(argsDict);
+                                }
+                                self._send(msg);
+                            },
+                            invoke_result_handler = results => {
+                                // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list,
+                                // ArgumentsKw|dict)]
+                                let msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
+
+                                if (self._isPlainObject(results)) {
+
+                                    if (self._isPlainObject(results.options)) {
+                                        let options = results.options;
+
+                                        // Check and handle Payload PassThru Mode
+                                        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                                        let pptScheme = results.options.ppt_scheme;
+
+                                        if (pptScheme) {
+                                            if (!this._checkPPTOptions('dealer', results.options)) {
+                                                if (this._cache.opStatus.code === WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.code) {
+                                                    // This case should not happen at all, but for safety
+                                                    this._hardClose('wamp.error.protocol_violation', 'Trying to send YIELD in PPT Mode, while Dealer didn\'t announce it');
+                                                } else {
+                                                    invoke_error_handler({
+                                                        details : results.options,
+                                                        error   : this._cache.opStatus.description,
+                                                        argsList: results.argsList,
+                                                        argsDict: results.argsDict
+                                                    });
+                                                }
+                                                return;
+                                            }
+
+                                            options.ppt_scheme = pptScheme;
+
+                                            if (results.options.ppt_serializer) {
+                                                options.ppt_serializer = results.options.ppt_serializer;
+                                            }
+                                            if (results.options.ppt_cipher) {
+                                                options.ppt_cipher = results.options.ppt_cipher;
+                                            }
+                                            if (results.options.ppt_keyid) {
+                                                options.ppt_keyid = results.options.ppt_keyid;
+                                            }
+                                        }
+
+                                        msg[2] = options;
+                                    }
+
+                                }
+
+                                if (results !== null && typeof (results) !== 'undefined') {
+                                    let res = this._preparePayload(results, options);
+
+                                    if (res.err) {
+                                        invoke_error_handler({
+                                            details : results.options,
+                                            error   : this._cache.opStatus.description,
+                                            argsList: results.argsList,
+                                            argsDict: results.argsDict
+                                        });
+                                        return;
+                                    }
+                                    msg = msg.concat(res.payloadItems);
+
+                                }
+
+                                self._send(msg);
+                            };
+
+                        // Check and handle Payload PassThru Mode
+                        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                        if (options.ppt_scheme) {
+                            let decodedPayload, pptPayload = data[4][0];
+
+                            if (!this._checkPPTOptions('dealer', options)) {
+                                // This case should not happen at all, but for safety
+                                this._log(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
+                                this._hardClose('wamp.error.protocol_violation', 'Received INVOCATION in PPT Mode, while Dealer didn\'t announce it');
+                                break;
+                            }
+
+                            // wamp scheme means Payload End-to-End Encryption
+                            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
+                            if (options.ppt_scheme === 'wamp') {
+
+                                // TODO: implement End-to-End Encryption
+
+                            }
+
+                            if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+                                let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+
+                                if (!pptSerializer) {
+                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
+                                    invoke_error_handler({
+                                        details : data[3],
+                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description,
+                                        argsList: data[4],
+                                        argsDict: data[5]
+                                    });
+                                    break;
+                                }
+
+                                try {
+                                    decodedPayload = await pptSerializer.decode(pptPayload);
+                                } catch (e) {
+                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
+                                    invoke_error_handler({
+                                        details : data[3],
+                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_ERR.description,
+                                        argsList: data[4],
+                                        argsDict: data[5]
+                                    });
+                                    break;
+                                }
+                            } else {
+                                decodedPayload = pptPayload;
+                            }
+
+                            argsList = decodedPayload.args;
+                            argsDict = decodedPayload.kwargs;
+
+                        } else {
+                            argsList = data[4];
+                            argsDict = data[5];
+                        }
+
+                        p = new Promise((resolve, reject) => {
+                            resolve(this._rpcRegs[data[2]].callbacks[0]({
+                                details       : options,
+                                argsList      : argsList,
+                                argsDict      : argsDict,
+                                result_handler: invoke_result_handler,
+                                error_handler : invoke_error_handler
+                            }));
+                        });
+
+                        p.then((results) => {
+                            invoke_result_handler(results);
+                        }).catch(e => {
+                            invoke_error_handler(e);
+                        });
+
+                    } else {
+                        // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
+                        this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
+                            data[1], {}, 'wamp.error.no_such_procedure']);
+                        this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION;
+                    }
+                }
+                break;
+            // case WAMP_MSG_SPEC.INTERRUPT:
+            //     // WAMP SPEC:
+            //     break;
+            // case WAMP_MSG_SPEC.YIELD:
+            //     // WAMP SPEC:
+            //     break;
+            default:
+                this._hardClose('wamp.error.protocol_violation', 'Received non-compliant WAMP message');
+                break;
+        }
     }
 
     /**
@@ -1097,7 +1436,7 @@ class Wampy {
      * @private
      */
     _wsOnError (error) {
-        this._log('[wampy] websocket error');
+        this._log('websocket error');
 
         if (this._options.onError) {
             this._options.onError({ error });
@@ -1109,7 +1448,7 @@ class Wampy {
      * @private
      */
     _wsReconnect () {
-        this._log('[wampy] websocket reconnecting...');
+        this._log('websocket reconnecting...');
 
         if (this._options.onReconnect) {
             this._options.onReconnect();
@@ -1281,7 +1620,7 @@ class Wampy {
      *                          { onSuccess: will be called when subscribe would be confirmed
      *                            onError: will be called if subscribe would be aborted
      *                            onEvent: will be called on receiving published event }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { match: string matching policy ("prefix"|"wildcard") }
      *
      * @returns {Wampy}
@@ -1430,7 +1769,7 @@ class Wampy {
      * @param {object} [callbacks] - optional hash table of callbacks:
      *                          { onSuccess: will be called when publishing would be confirmed
      *                            onError: will be called if publishing would be aborted }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
      *                                      even though they may be subscribed
      *                            exclude_authid: string|array Authentication id(s) that won't receive
@@ -1459,6 +1798,7 @@ class Wampy {
                         options[option] = [advancedOptions[option]];
                     } else {
                         err = true;
+                        this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
                     }
                 }
             };
@@ -1489,12 +1829,32 @@ class Wampy {
                     options.disclose_me = advancedOptions.disclose_me === true;
                 }
 
+                // Check and handle Payload PassThru Mode
+                // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                let pptScheme = advancedOptions.ppt_scheme;
+
+                if (pptScheme) {
+                    err = !this._checkPPTOptions('broker', advancedOptions);
+
+                    options.ppt_scheme = pptScheme;
+
+                    if (advancedOptions.ppt_serializer) {
+                        options.ppt_serializer = advancedOptions.ppt_serializer;
+                    }
+                    if (advancedOptions.ppt_cipher) {
+                        options.ppt_cipher = advancedOptions.ppt_cipher;
+                    }
+                    if (advancedOptions.ppt_keyid) {
+                        options.ppt_keyid = advancedOptions.ppt_keyid;
+                    }
+                }
+
             } else {
                 err = true;
+                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
             }
 
             if (err) {
-                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
                     callbacks.onError({ error: this._cache.opStatus.description });
@@ -1526,27 +1886,16 @@ class Wampy {
 
         if (hasPayload) {
             // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-            if (this._isArray(payload)) {
-                msg.push(payload);
-            } else if (this._isPlainObject(payload)) {
-                // It's a wampy unified form of payload passing
-                if (payload.argsList || payload.argsDict) {
-                    if (payload.argsList) {
-                        msg.push(payload.argsList);
-                    }
+            let res = this._preparePayload(payload, options);
 
-                    if (payload.argsDict) {
-                        if (msg.length === 4) {
-                            msg.push([]);
-                        }
-                        msg.push(payload.argsDict);
-                    }
-                } else {
-                    msg.push([], payload);
+            if (res.err) {
+                if (this._isPlainObject(callbacks) && callbacks.onError) {
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
-            } else {    // assume it's a single value
-                msg.push([payload]);
+
+                return this;
             }
+            msg = msg.concat(res.payloadItems);
         }
 
         this._send(msg);
@@ -1569,7 +1918,7 @@ class Wampy {
      *                          or it can be hash table of callbacks:
      *                          { onSuccess: will be called with result on successful call
      *                            onError: will be called if invocation would be aborted }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
      *                                  to endpoints of a routed call
      *                            receive_progress: bool flag for receiving progressive results. In this case
@@ -1616,12 +1965,32 @@ class Wampy {
                     }
                 }
 
+                // Check and handle Payload PassThru Mode
+                // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+                let pptScheme = advancedOptions.ppt_scheme;
+
+                if (pptScheme) {
+                    err = !this._checkPPTOptions('dealer', advancedOptions);
+
+                    options.ppt_scheme = pptScheme;
+
+                    if (advancedOptions.ppt_serializer) {
+                        options.ppt_serializer = advancedOptions.ppt_serializer;
+                    }
+                    if (advancedOptions.ppt_cipher) {
+                        options.ppt_cipher = advancedOptions.ppt_cipher;
+                    }
+                    if (advancedOptions.ppt_keyid) {
+                        options.ppt_keyid = advancedOptions.ppt_keyid;
+                    }
+                }
+
             } else {
                 err = true;
+                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
             }
 
             if (err) {
-                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
 
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
                     callbacks.onError({ error: this._cache.opStatus.description });
@@ -1641,27 +2010,16 @@ class Wampy {
         msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
 
         if (payload !== null && typeof (payload) !== 'undefined') {
-            if (this._isArray(payload)) {
-                msg.push(payload);
-            } else if (this._isPlainObject(payload)) {
-                // It's a wampy unified form of payload passing
-                if (payload.argsList || payload.argsDict) {
-                    if (payload.argsList) {
-                        msg.push(payload.argsList);
-                    }
+            let res = this._preparePayload(payload, options);
 
-                    if (payload.argsDict) {
-                        if (msg.length === 4) {
-                            msg.push([]);
-                        }
-                        msg.push(payload.argsDict);
-                    }
-                } else {
-                    msg.push([], payload);
+            if (res.err) {
+                if (this._isPlainObject(callbacks) && callbacks.onError) {
+                    callbacks.onError({ error: this._cache.opStatus.description });
                 }
-            } else {    // assume it's a single value
-                msg.push([payload]);
+
+                return this;
             }
+            msg = msg.concat(res.payloadItems);
         }
 
         this._send(msg);
@@ -1678,7 +2036,7 @@ class Wampy {
      *                          sent canceling message or it can be hash table of callbacks:
      *                          { onSuccess: will be called if successfully sent canceling message
      *                            onError: will be called if some error occurred }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { mode: string|one of the possible modes:
      *                                  "skip" | "kill" | "killnowait". Skip is default.
      *                          }
@@ -1748,7 +2106,7 @@ class Wampy {
      *                          { rpc: registered procedure
      *                            onSuccess: will be called on successful registration
      *                            onError: will be called if registration would be aborted }
-     * @param {object} advancedOptions - optional parameter. Must include any or all of the options:
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          {
      *                              match: string matching policy ("prefix"|"wildcard")
      *                              invoke: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")

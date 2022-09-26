@@ -1,8 +1,9 @@
 import { expect } from 'chai';
-import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
-import { JsonSerializer } from './../src/serializers/JsonSerializer';
-import { Wampy } from './../src/wampy';
-import { w3cwebsocket } from 'websocket';
+import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer.js';
+import { JsonSerializer } from './../src/serializers/JsonSerializer.js';
+import { Wampy } from './../src/wampy.js';
+import websocket from 'websocket';
+const w3cwebsocket = websocket.w3cwebsocket;
 
 describe('Wampy.js with Crossbar', function () {
     this.timeout(10000);

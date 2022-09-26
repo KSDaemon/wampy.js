@@ -12,11 +12,11 @@ const routerUrl = 'ws://fake.server.org/ws/',
     root = isNode ? global : window;
 
 import { expect } from 'chai';
-import { WebSocket, setProtocol as wsSetProtocol } from './fake-ws-set-protocol';
-import { Wampy } from './../src/wampy';
-import { JsonSerializer } from '../src/serializers/JsonSerializer';
-import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer';
-import { WAMP_ERROR_MSG } from './../src/constants';
+import { WebSocket, setProtocol as wsSetProtocol } from './fake-ws-set-protocol.js';
+import { Wampy } from './../src/wampy.js';
+import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
+import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer.js';
+import { WAMP_ERROR_MSG } from './../src/constants.js';
 
 describe('Wampy.js Constructor', function () {
     this.timeout(0);

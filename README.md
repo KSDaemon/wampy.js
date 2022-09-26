@@ -58,20 +58,24 @@ Wampy.js supports next WAMP roles and features:
     * subscriber blackwhite listing
     * publisher exclusion
     * publisher identification
+    * payload passthru mode
 * subscriber:
     * pattern-based subscription
     * publication trust levels
     * publisher identification
+    * payload passthru mode
 * caller:
     * caller identification
     * progressive call results
     * call canceling
     * call timeout
+    * payload passthru mode
 * callee:
     * caller identification
     * call trust levels
     * pattern-based registration
     * shared registration
+    * payload passthru mode
 
 Wampy supports next serializers:
 
@@ -245,10 +249,11 @@ This function receives welcome details as an argument.
 * **additionalHeaders**. Default value: null. User provided additional HTTP headers (for use in Node.js enviroment)
 * **wsRequestOptions**. Default value: null. User provided WS Client Config Options (for use in Node.js enviroment). See
 docs for [WebSocketClient][], [tls.connect options][]
-* **serializer**. Default value: JsonSerializer. User provided serializer class. Useful if you plan to use msgpack encoder
-instead of default json.
-In practice, [msgpack5][] tested and works well with [Wiola][], [msgpack-lite](https://github.com/kawanet/msgpack-lite)
-doesn't work as expected. Feel free to research other variants.
+* **serializer**. Default value: JsonSerializer. User provided serializer class. Useful if you plan to use other encoders
+instead of default `json`.
+* **payloadSerializers**. Default value: `{ json: jsonSerializer }`. User provided hashmap of serializer instances for
+using in Payload Passthru Mode. Allows to specify a few serializers and use them on per message/call basis.
+
 
 ```javascript
 ws.options();

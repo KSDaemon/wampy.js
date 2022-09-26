@@ -1,6 +1,6 @@
-import { isNode } from './constants';
+import { isNode } from './constants.js';
 
-function getServerUrlBrowser (url) {
+export function getServerUrlBrowser (url) {
     let scheme, port;
 
     if (/^ws(s)?:\/\//.test(url)) {   // ws scheme is specified
@@ -20,7 +20,7 @@ function getServerUrlBrowser (url) {
     }
 }
 
-function getServerUrlNode (url) {
+export function getServerUrlNode (url) {
     if (/^ws(s)?:\/\//.test(url)) {   // ws scheme is specified
         return url;
     } else {
