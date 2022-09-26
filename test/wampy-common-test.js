@@ -442,304 +442,306 @@ serializers.forEach(function (item) {
                 });
             });
 
-            it('disallows to connect to a router if no url was specified during instantiation', function () {
+            describe('Connectivity', function () {
+                it('disallows to connect to a router if no url was specified during instantiation', function () {
 
-                if (!isNode) {
-                    return;
-                }
+                    if (!isNode) {
+                        return;
+                    }
 
-                let wampy = new Wampy({ realm: 'AppRealm' }),
-                    opStatus = wampy.connect().getOpStatus();
+                    let wampy = new Wampy({ realm: 'AppRealm' }),
+                        opStatus = wampy.connect().getOpStatus();
 
-                expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
-            });
+                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
+                });
 
-            it('allows to get and set different options', function () {
-                let helloCustomDetails = {
-                        customFiled1: 25,
-                        customFiled2: 'string',
-                        customFiled3: [1, 2, 3, 4, 5]
-                    },
-                    options = wampy.options({
-                        autoReconnect     : true,
-                        reconnectInterval : 1000,
-                        maxRetries        : 5,
-                        uriValidation     : 'loose',
-                        helloCustomDetails: helloCustomDetails,
-                        onChallenge       : function () {
+                it('allows to get and set different options', function () {
+                    let helloCustomDetails = {
+                            customFiled1: 25,
+                            customFiled2: 'string',
+                            customFiled3: [1, 2, 3, 4, 5]
                         },
-                        authid            : 'userid',
-                        authmethods       : ['wampcra'],
-                    }).options();
+                        options = wampy.options({
+                            autoReconnect     : true,
+                            reconnectInterval : 1000,
+                            maxRetries        : 5,
+                            uriValidation     : 'loose',
+                            helloCustomDetails: helloCustomDetails,
+                            onChallenge       : function () {
+                            },
+                            authid            : 'userid',
+                            authmethods       : ['wampcra'],
+                        }).options();
 
-                expect(options.autoReconnect).to.be.true;
-                expect(options.reconnectInterval).to.be.equal(1000);
-                expect(options.maxRetries).to.be.equal(5);
-                expect(options.uriValidation).to.be.equal('loose');
-                expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
-                expect(options.onChallenge).to.be.a('function');
-                expect(options.authid).to.be.equal('userid');
-                expect(options.authmethods).to.be.an('array');
-                expect(options.authmethods[0]).to.be.equal('wampcra');
-                expect(options.onConnect).to.be.a('function');
-                expect(options.onClose).to.be.a('function');
-                expect(options.onError).to.be.a('function');
-                expect(options.onReconnect).to.be.a('function');
-                expect(options.onReconnectSuccess).to.be.a('function');
-            });
+                    expect(options.autoReconnect).to.be.true;
+                    expect(options.reconnectInterval).to.be.equal(1000);
+                    expect(options.maxRetries).to.be.equal(5);
+                    expect(options.uriValidation).to.be.equal('loose');
+                    expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
+                    expect(options.onChallenge).to.be.a('function');
+                    expect(options.authid).to.be.equal('userid');
+                    expect(options.authmethods).to.be.an('array');
+                    expect(options.authmethods[0]).to.be.equal('wampcra');
+                    expect(options.onConnect).to.be.a('function');
+                    expect(options.onClose).to.be.a('function');
+                    expect(options.onError).to.be.a('function');
+                    expect(options.onReconnect).to.be.a('function');
+                    expect(options.onReconnectSuccess).to.be.a('function');
+                });
 
-            it('allows to get current WAMP Session ID', function () {
-                let s = wampy.getSessionId();
-                expect(s).to.be.a('number');
-                expect(s).to.be.above(0);
-            });
+                it('allows to get current WAMP Session ID', function () {
+                    let s = wampy.getSessionId();
+                    expect(s).to.be.a('number');
+                    expect(s).to.be.above(0);
+                });
 
-            it('allows to disconnect from connected server', function (done) {
-                wampy.options({ onConnect: null, onClose: done })
-                    .disconnect();
-            });
+                it('allows to disconnect from connected server', function (done) {
+                    wampy.options({ onConnect: null, onClose: done })
+                        .disconnect();
+                });
 
-            it('disallows to connect on instantiation without specifying all of [onChallenge, authid, authmethods]', function () {
-                let opStatus;
+                it('disallows to connect on instantiation without specifying all of [onChallenge, authid, authmethods]', function () {
+                    let opStatus;
 
-                wampy.options({ authid: 'userid', authmethods: ['wampcra'], onChallenge: null }).connect();
-                opStatus = wampy.getOpStatus();
-                expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+                    wampy.options({ authid: 'userid', authmethods: ['wampcra'], onChallenge: null }).connect();
+                    opStatus = wampy.getOpStatus();
+                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-                wampy.options({ authid: null, authmethods: ['wampcra'], onChallenge: null }).connect();
-                opStatus = wampy.getOpStatus();
-                expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+                    wampy.options({ authid: null, authmethods: ['wampcra'], onChallenge: null }).connect();
+                    opStatus = wampy.getOpStatus();
+                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-                wampy.options({
-                    authid: null, onChallenge: function () {
-                    }
-                }).connect();
-                opStatus = wampy.getOpStatus();
-                expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+                    wampy.options({
+                        authid: null, onChallenge: function () {
+                        }
+                    }).connect();
+                    opStatus = wampy.getOpStatus();
+                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-                wampy.options({
-                    authid: null, authmethods: [], onChallenge: function () {
-                    }
-                }).connect();
-                opStatus = wampy.getOpStatus();
-                expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+                    wampy.options({
+                        authid: null, authmethods: [], onChallenge: function () {
+                        }
+                    }).connect();
+                    opStatus = wampy.getOpStatus();
+                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-                wampy.options({
-                    authid: 'userid', authmethods: 'string', onChallenge: function () {
-                    }
-                }).connect();
-                opStatus = wampy.getOpStatus();
-                expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+                    wampy.options({
+                        authid: 'userid', authmethods: 'string', onChallenge: function () {
+                        }
+                    }).connect();
+                    opStatus = wampy.getOpStatus();
+                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
 
-                wampy.options({ authid: null, onChallenge: null });
-            });
+                    wampy.options({ authid: null, onChallenge: null });
+                });
 
-            it('calls onError handler if authentication using CRA fails', function (done) {
-                wampy.options({
-                    authid: 'user1',
-                    authmethods: ['wampcra'],
-                    onChallenge: function (method, info) {
-                        throw new Error('Error occured in authentication');
-                    },
-                    onError: function (e) {
-                        done();
-                    },
-                    onConnect: null,
-                    onClose: null
-                })
-                    .connect();
-            });
+                it('calls onError handler if authentication using CRA fails', function (done) {
+                    wampy.options({
+                        authid: 'user1',
+                        authmethods: ['wampcra'],
+                        onChallenge: function (method, info) {
+                            throw new Error('Error occured in authentication');
+                        },
+                        onError: function (e) {
+                            done();
+                        },
+                        onConnect: null,
+                        onClose: null
+                    })
+                        .connect();
+                });
 
-            it('calls onError handler if server requests authentication, but no credentials were provided', function (done) {
-                wampy.options({
-                    onError: function (e) {
-                        done();
-                    },
-                    onConnect: null,
-                    onClose: null,
-                    authid: null,
-                    authmethods: null,
-                    onChallenge: null
-                })
-                    .connect();
-            });
+                it('calls onError handler if server requests authentication, but no credentials were provided', function (done) {
+                    wampy.options({
+                        onError: function (e) {
+                            done();
+                        },
+                        onConnect: null,
+                        onClose: null,
+                        authid: null,
+                        authmethods: null,
+                        onChallenge: null
+                    })
+                        .connect();
+                });
 
-            it('automatically sends goodbye message on server initiated disconnect', function (done) {
-                wampy.options({ onConnect: null, onClose: done })
-                    .connect();
-            });
+                it('automatically sends goodbye message on server initiated disconnect', function (done) {
+                    wampy.options({ onConnect: null, onClose: done })
+                        .connect();
+                });
 
-            it('allows to disconnect while connecting to server', function (done) {
-                wampy.options({
-                    onConnect: function () {
-                        done('Reached onConnect');
-                    },
-                    onClose: done
-                }).connect();
+                it('allows to disconnect while connecting to server', function (done) {
+                    wampy.options({
+                        onConnect: function () {
+                            done('Reached onConnect');
+                        },
+                        onClose: done
+                    }).connect();
 
-                setTimeout(function () {
-                    wampy.disconnect();
-                }, 10);
-            });
+                    setTimeout(function () {
+                        wampy.disconnect();
+                    }, 10);
+                });
 
-            it('allows to connect to same WAMP server', function (done) {
-                wampy.options({ onConnect: function () { done(); } })
-                    .connect();
-            });
+                it('allows to connect to same WAMP server', function (done) {
+                    wampy.options({ onConnect: function () { done(); } })
+                        .connect();
+                });
 
-            it('allows to connect to different WAMP server', function (done) {
-                wampy.options({
-                    onClose: function () {
-                        setTimeout(function () {
-                            wampy.connect(anotherRouterUrl);
-                        }, 1);
-                    },
-                    onConnect: function () {
-                        done();
-                    }
-                }).disconnect();
-            });
-
-            it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
-                wampy.options({
-                    onClose: function () {
-                        setTimeout(function () {
-                            wampy.options({ onClose: done })
-                                .connect(anotherRouterUrl);
-
+                it('allows to connect to different WAMP server', function (done) {
+                    wampy.options({
+                        onClose: function () {
                             setTimeout(function () {
-                                wampy.abort();
+                                wampy.connect(anotherRouterUrl);
                             }, 1);
+                        },
+                        onConnect: function () {
+                            done();
+                        }
+                    }).disconnect();
+                });
 
-                        }, 1);
-                    },
-                    onConnect: function () {
-                        done('We reach connection');
-                    }
-                }).disconnect();
-            });
+                it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
+                    wampy.options({
+                        onClose: function () {
+                            setTimeout(function () {
+                                wampy.options({ onClose: done })
+                                    .connect(anotherRouterUrl);
 
-            it('autoreconnects to WAMP server on network errors', function (done) {
-                wampy.options({
-                    onConnect: function () {
-                        wampy
-                            .subscribe('subscribe.reconnect1', {
-                                onSuccess: function () {
-                                },
-                                onError: function () {
-                                    done('Error during subscribing');
-                                },
-                                onEvent: function (e) {
+                                setTimeout(function () {
+                                    wampy.abort();
+                                }, 1);
+
+                            }, 1);
+                        },
+                        onConnect: function () {
+                            done('We reach connection');
+                        }
+                    }).disconnect();
+                });
+
+                it('autoreconnects to WAMP server on network errors', function (done) {
+                    wampy.options({
+                        onConnect: function () {
+                            wampy
+                                .subscribe('subscribe.reconnect1', {
+                                    onSuccess: function () {
+                                    },
+                                    onError: function () {
+                                        done('Error during subscribing');
+                                    },
+                                    onEvent: function (e) {
+                                    }
+                                })
+                                .subscribe('subscribe.reconnect2', {
+                                    onSuccess: function () {
+                                    },
+                                    onError: function () {
+                                        done('Error during subscribing');
+                                    },
+                                    onEvent: function (e) {
+                                    }
+                                })
+                                .register('register.reconnect1', {
+                                    rpc: function (e) {
+                                    },
+                                    onSuccess: function () {
+                                    },
+                                    onError: function () {
+                                        done('Error during RPC registration');
+                                    }
+                                })
+                                .register('register.reconnect2', {
+                                    rpc: function (e) {
+                                    },
+                                    onSuccess: function () {
+                                    },
+                                    onError: function () {
+                                        done('Error during RPC registration');
+                                    }
+                                })
+                                .register('register.reconnect3', {
+                                    rpc: function (e) {
+                                    },
+                                    onSuccess: function () {
+                                    },
+                                    onError: function () {
+                                        done('Error during RPC registration');
+                                    }
+                                });
+
+                        },
+                        onClose: function () {
+                        },
+                        onError: function () {
+                        },
+                        onReconnect: function () {
+                            let t = setInterval(function () {
+                                if (wampy._subsTopics.size === 2 && wampy._rpcNames.size === 3) {
+                                    clearInterval(t);
+                                    t = null;
+                                    wampy.options({ onReconnect: null })
+                                        .subscribe('subscribe.reconnection.check', {
+                                            onSuccess: function () {
+                                                done();
+                                            },
+                                            onError: function () {
+                                                done('Error during subscribing');
+                                            },
+                                            onEvent: function (e) {
+                                            }
+                                        });
                                 }
-                            })
-                            .subscribe('subscribe.reconnect2', {
-                                onSuccess: function () {
-                                },
-                                onError: function () {
-                                    done('Error during subscribing');
-                                },
-                                onEvent: function (e) {
-                                }
-                            })
-                            .register('register.reconnect1', {
-                                rpc: function (e) {
-                                },
-                                onSuccess: function () {
-                                },
-                                onError: function () {
-                                    done('Error during RPC registration');
-                                }
-                            })
-                            .register('register.reconnect2', {
-                                rpc: function (e) {
-                                },
-                                onSuccess: function () {
-                                },
-                                onError: function () {
-                                    done('Error during RPC registration');
-                                }
-                            })
-                            .register('register.reconnect3', {
-                                rpc: function (e) {
-                                },
-                                onSuccess: function () {
-                                },
-                                onError: function () {
-                                    done('Error during RPC registration');
-                                }
-                            });
+                            }, 1);
+                        },
+                        onReconnectSuccess: function () {
+                        }
+                    }).connect();
+                });
 
-                    },
-                    onClose: function () {
-                    },
-                    onError: function () {
-                    },
-                    onReconnect: function () {
-                        let t = setInterval(function () {
-                            if (wampy._subsTopics.size === 2 && wampy._rpcNames.size === 3) {
-                                clearInterval(t);
-                                t = null;
-                                wampy.options({ onReconnect: null })
-                                    .subscribe('subscribe.reconnection.check', {
-                                        onSuccess: function () {
-                                            done();
-                                        },
-                                        onError: function () {
-                                            done('Error during subscribing');
-                                        },
-                                        onEvent: function (e) {
-                                        }
-                                    });
-                            }
-                        }, 1);
-                    },
-                    onReconnectSuccess: function () {
-                    }
-                }).connect();
-            });
+                it('allows to call handler when autoreconnect to WAMP server succeeded', function (done) {
+                    wampy.options({
+                        autoReconnect: true,
+                        onClose: function () {
+                            setTimeout(function () {
+                                wampy.connect();
+                            }, 1);
+                        },
+                        onConnect: null,
+                        onReconnect: null,
+                        onReconnectSuccess: function () {
+                            done();
+                        },
+                        onError: null
+                    }).disconnect();
+                });
 
-            it('allows to call handler when autoreconnect to WAMP server succeeded', function (done) {
-                wampy.options({
-                    autoReconnect: true,
-                    onClose: function () {
-                        setTimeout(function () {
-                            wampy.connect();
-                        }, 1);
-                    },
-                    onConnect: null,
-                    onReconnect: null,
-                    onReconnectSuccess: function () {
-                        done();
-                    },
-                    onError: null
-                }).disconnect();
-            });
+                it('allows to call handler on websocket errors', function (done) {
+                    wampy.options({
+                        autoReconnect: false,
+                        onClose: function () {
+                            setTimeout(function () {
+                                wampy.connect();
+                            }, 1);
+                        },
+                        onConnect: function () {
+                            done('We reach connection');
+                        },
+                        onReconnect: null,
+                        onError: function () {
+                            done();
+                        }
+                    }).disconnect();
+                });
 
-            it('allows to call handler on websocket errors', function (done) {
-                wampy.options({
-                    autoReconnect: false,
-                    onClose: function () {
-                        setTimeout(function () {
-                            wampy.connect();
-                        }, 1);
-                    },
-                    onConnect: function () {
-                        done('We reach connection');
-                    },
-                    onReconnect: null,
-                    onError: function () {
-                        done();
-                    }
-                }).disconnect();
-            });
-
-            it('calls error handler if server sends abort message', function (done) {
-                wampy.options({
-                    onClose: null,
-                    onError: function (e) {
-                        done();
-                    }
-                }).connect();
+                it('calls error handler if server sends abort message', function (done) {
+                    wampy.options({
+                        onClose: null,
+                        onError: function (e) {
+                            done();
+                        }
+                    }).connect();
+                });
             });
 
             describe('PubSub module', function () {
