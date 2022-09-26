@@ -28,6 +28,7 @@ Table of Contents
   - [abort()](#abort)
   - [Ticket-based Authentication](#ticket-based-authentication)
   - [Challenge Response Authentication](#challenge-response-authentication)
+  - [Cryptosign-based Authentication](#cryptosign-based-authentication)
   - [subscribe(topicURI, callbacks[, advancedOptions])](#subscribetopicuri-callbacks-advancedoptions)
   - [unsubscribe(topicURI[, callbacks])](#unsubscribetopicuri-callbacks)
   - [publish(topicURI[, payload[, callbacks[, advancedOptions]]])](#publishtopicuri-payload-callbacks-advancedoptions)
