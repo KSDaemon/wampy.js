@@ -3476,40 +3476,46 @@ serializers.forEach(function (item) {
                 });
 
                 it('aborts connection if RPC YIELD is in ppt mode, while dealer didn\'t announce it', function (done) {
-                    wampy.options({
+                    wampy = new Wampy(routerUrl, {
+                        realm: 'AppRealm',
+                        onConnect: function () {
+                            wampy.register('register.rpc.ppt.yield.noppt', {
+                                rpc: function () {
+                                    return {
+                                        argsList: [100],
+                                        options: { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
+                                    };
+                                },
+                                onSuccess: function (e) {
+                                    wampy.call(
+                                        'register.rpc.ppt.yield.noppt',
+                                        100,
+                                        {
+                                            onSuccess: function () {
+                                                done('RPC call was successfull, while it should not be');
+                                            },
+                                            onError: function () {
+                                                done('RPC call errored, while it should not be');
+                                            }
+                                        },
+                                        { exclude_me: false }
+                                    );
+                                },
+                                onError: function (e) {
+                                    done('Error during RPC registration!');
+                                }
+                            });
+                        },
                         payloadSerializers: {
                             json: new JsonSerializer(),
                             cbor: new CborSerializer()
                         },
                         onError: function (e) {
                             done();
-                        }
-                    }).register('register.rpc.ppt.yield.noppt', {
-                        rpc: function () {
-                            return {
-                                argsList: [100],
-                                options: { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
-                            };
                         },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc.ppt.yield.noppt',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                        done('RPC call was successfull, while it should not be');
-                                    },
-                                    onError: function () {
-                                        done('RPC call errored, while it should not be');
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    }).connect();
+                        ws,
+                        serializer: new serializer()
+                    });
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
             });
