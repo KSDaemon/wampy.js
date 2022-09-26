@@ -217,12 +217,12 @@ options([opts])
 
 .options() method can be called in two forms:
 
-* without parameters it will return current options
+* without parameters, it will return current options
 * with one parameter as hash-table it will set new options. Support chaining.
 
 Options attributes description:
 
-* **autoReconnect**. Default value: true. Enable autoreconnecting. In case of connection failure, Wampy will
+* **autoReconnect**. Default value: true. Enable auto reconnecting. In case of connection failure, Wampy will
 try to reconnect to WAMP server, and if you were subscribed to any topics,
 or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.
 * **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
@@ -230,14 +230,17 @@ or had registered some procedures, Wampy will resubscribe to that topics and rer
 will be called. Set to 0 to disable limit.
 * **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
 * **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
-* **uriValidation**. Default value: strict. Can be changed to loose for less strict URI validation.
+* **uriValidation**. Default value: strict. Can be changed to `loose` for less strict URI validation.
 * **authid**. Default value: null. Authentication (user) id to use in challenge.
 * **authmethods**. Default value: []. Array of strings of supported authentication methods.
+* **authextra**. Default value: {}. Additional authentication options for Cryptosign-based authentication.
+See [Cryptosign-based Authentication](#cryptosign-based-authentication) section and [WAMP Spec CS][] for more info.
 * **onChallenge**. Default value: null. Callback function.
-Is fired when wamp server requests authentication during session establishment.
+It is fired when wamp server requests authentication during session establishment.
 This function receives two arguments: auth method and challenge details.
 Function should return computed signature, based on challenge details.
-See [Challenge Response Authentication](#challenge-response-authentication) section and [WAMP Spec CRA][] for more info.
+See [Challenge Response Authentication](#challenge-response-authentication) section, [WAMP Spec CRA][],
+[Cryptosign-based Authentication](#cryptosign-based-authentication) section and [WAMP Spec CS][] for more info.
 * **onConnect**. Default value: null. Callback function. Fired when connection to wamp server is established.
 This function receives welcome details as an argument.
 * **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
@@ -395,7 +398,7 @@ Challenge Response Authentication
 ---------------------------------
 
 Wampy.js supports challenge response authentication. To use it you need to provide authid and onChallenge callback
-as wampy instance options. Also Wampy.js supports "wampcra" authentication method with a little helper
+as wampy instance options. Also, Wampy.js supports `wampcra` authentication method with a little helper
 plugin "[wampy-cra][]". Just add "wampy-cra" package and use provided methods as shown below.
 
 ```javascript
@@ -500,6 +503,13 @@ ws = new Wampy('ws://wamp.router.url', {
     }
 });
 ```
+
+[Back to TOC](#table-of-contents)
+
+Cryptosign-based Authentication
+-------------------------------
+
+
 
 [Back to TOC](#table-of-contents)
 
@@ -1019,6 +1029,7 @@ Thanks JetBrains for support! Best IDEs for every language!
 [msgpack5]: https://github.com/mcollina/msgpack5
 [cbor]: https://github.com/hildjj/node-cbor
 [WAMP Spec CRA]: https://wamp-proto.org/wamp_latest_ietf.html#name-challenge-response-authenti
+[WAMP Spec CS]: https://wamp-proto.org/wamp_latest_ietf.html#name-cryptosign-based-authentica
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
 [tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
 [wampy-cra]: https://github.com/KSDaemon/wampy-cra
