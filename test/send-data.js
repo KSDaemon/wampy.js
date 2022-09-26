@@ -3039,6 +3039,38 @@ const WAMP_MSG_SPEC = {
             from: [2, 3, 4, 5],
             to: [2, 3, 4, 5]
         },
+        // calls error handler if RPC YIELD is sent with wrong ppt_scheme
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                32741   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                32741, // Registration ID
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                WAMP_MSG_SPEC.CALL,
+                'RequestId',
+                {},
+                'wamp.error.invocation_exception'
+            ],
+            from: [2, 3, 4, 5],
+            to: [2, 3, 4, 5]
+        },
         // allows to receive RPC Invocation in ppt mode
         {
             data: [
@@ -3227,6 +3259,13 @@ const WAMP_MSG_SPEC = {
             ],
             from: [1],
             to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
         }
     ];
 

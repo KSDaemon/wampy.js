@@ -1359,7 +1359,9 @@ serializers.forEach(function (item) {
                                 })
                                     .connect();
                             }, 1);
-                        }
+                        },
+                        onReconnect  : null,
+                        onError      : null
                     }).disconnect();
                 });
 
@@ -3347,6 +3349,42 @@ serializers.forEach(function (item) {
                     expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
                 });
 
+                it('calls error handler if RPC YIELD is sent with wrong ppt_scheme', function (done) {
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            cbor: new CborSerializer(),
+                            msgpack: new MsgpackSerializer(),
+                        }
+                    }).register('register.rpc.ppt.yield.invalid.scheme', {
+                        rpc: function () {
+                            return {
+                                argsList: [100],
+                                options: { ppt_scheme: 'invalid_scheme', ppt_serializer: 'cbor' }
+                            };
+                        },
+                        onSuccess: function (e) {
+                            wampy.call(
+                                'register.rpc.ppt.yield.invalid.scheme',
+                                100,
+                                {
+                                    onSuccess: function () {
+                                        done('RPC call was successfull, while it should not be');
+                                    },
+                                    onError: function () {
+                                        done();
+                                    }
+                                },
+                                { exclude_me: false }
+                            );
+                        },
+                        onError: function (e) {
+                            done('Error during RPC registration!');
+                        }
+                    });
+                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                });
+
                 it('allows to receive RPC Invocation in ppt mode', function (done) {
                     wampy.options({
                         payloadSerializers: {
@@ -3476,8 +3514,18 @@ serializers.forEach(function (item) {
                 });
 
                 it('aborts connection if RPC YIELD is in ppt mode, while dealer didn\'t announce it', function (done) {
-                    wampy = new Wampy(routerUrl, {
-                        realm: 'AppRealm',
+                    wampy.options({
+                        payloadSerializers: {
+                            json: new JsonSerializer(),
+                            cbor: new CborSerializer(),
+                            msgpack: new MsgpackSerializer(),
+                        },
+                        onError: function (e) {
+                            wampy.disconnect();
+                        },
+                        onClose: function () {
+                            done();
+                        },
                         onConnect: function () {
                             wampy.register('register.rpc.ppt.yield.noppt', {
                                 rpc: function () {
@@ -3505,18 +3553,8 @@ serializers.forEach(function (item) {
                                     done('Error during RPC registration!');
                                 }
                             });
-                        },
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            cbor: new CborSerializer()
-                        },
-                        onError: function (e) {
-                            done();
-                        },
-                        ws,
-                        serializer: new serializer()
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                        }
+                    }).connect();
                 });
             });
         });

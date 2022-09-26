@@ -657,7 +657,7 @@ class Wampy {
         if (this._options.onError) {
             this._options.onError({ error: errorUri, details: details });
         }
-        this._cache.sessionId = 0;
+
         this._ws.close();
     }
 
@@ -1285,7 +1285,6 @@ class Wampy {
 
                                         if (pptScheme) {
                                             if (!this._checkPPTOptions('dealer', results.options)) {
-
                                                 if (this._cache.opStatus.code === WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.code) {
                                                     // This case should not happen at all, but for safety
                                                     this._hardClose('wamp.error.protocol_violation', 'Trying to send YIELD in PPT Mode, while Dealer didn\'t announce it');
