@@ -37,7 +37,6 @@ Table of Contents
   - [unregister(topicURI[, callbacks])](#unregistertopicuri-callbacks)
 - [Using custom serializer](#using-custom-serializer)
 - [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
-- [Quick comparison to other libs](#quick-comparison-to-other-libs)
 - [Tests and code coverage](#tests-and-code-coverage)
 - [Copyright and License](#copyright-and-license)
 - [See Also](#see-also)
@@ -509,6 +508,9 @@ ws = new Wampy('ws://wamp.router.url', {
 Cryptosign-based Authentication
 -------------------------------
 
+Wampy.js supports cryptosign-based authentication. To use it you need to provide authid, onChallenge callback
+and authextra as wampy instance options. Also, Wampy.js supports `cryptosign` authentication method with a little helper
+plugin "[wampy-cryptosign][]". Just add "wampy-cryptosign" package and use provided methods as shown below.
 
 
 [Back to TOC](#table-of-contents)
@@ -803,7 +805,7 @@ const getUserName = function () {
 ws.register('get.user.name', getUserName);
 ```
 
-Also it is possible to abort rpc processing and throw error with custom application specific data.
+Also, it is possible to abort rpc processing and throw error with custom application specific data.
 This data will be passed to caller onError callback.
 
 Exception object with custom data may have next attributes:
@@ -942,25 +944,6 @@ ws = new Wampy('wss://wamp.router.url:8888/wamp-router', {
 
 [Back to TOC](#table-of-contents)
 
-Quick comparison to other libs
-==============================
-
-| Topic         | Wampy.js | AutobahnJS  |
-|-------------- | -------- | ----------- |
-| Runs on | browser | browser and NodeJS |
-| Dependencies | msgpack5.js (optional) | when.js, CryptoJS (optional) |
-| Creating connection | var connection = new Wampy('ws://127.0.0.1:9000/', { realm: 'realm1' }); | var connection = new autobahn.Connection({url: 'ws://127.0.0.1:9000/', realm: 'realm1'}); |
-| Opening a connection | connection opens on creating an instance, or can be opened by: connection.connect() | connection.open(); |
-| Connection Callbacks | Wampy supports next callbacks: onConnect, onClose, onError, onReconnect. Callbacks can be specified via options object passed to constructor, or via .options() method. | AutobahnJS provides two callbacks: connection.onopen = function (session) { } and connection.onclose = function (reason/string, details/dict) { } |
-| WAMP API methods with parameters | While using Wampy you don't have to explicitly specify the payload type (single value, array, object), just pass it to api method. <br/>For example:<br/>ws.publish('chat.message.received', 'user message');<br/>ws.publish('chat.message.received', ['user message1', 'user message2']);<br/>ws.publish('chat.message.received', { message: 'user message'});<br/>Also Wampy is clever enough to understand some specific options, for example, if you specify a success or error callback to publish method, Wampy will automatically set acknowledge flag to true.  | In AutobahnJS you need to use only arrays and objects, as it's specified in WAMP, and also choose right argument position.<br/>For example:<br/>session.publish('com.myapp.hello', ['Hello, world!']);<br/>session.publish('com.myapp.hello', [], {message: 'Hello, world!'});<br/>Also you need to explicitly provide additional options, like {acknowledge: true} |
-| Method callbacks | Most of the API methods take a **callbacks** parameter, which is hash-table of posible callbacks | AutobahnJS make use of **Deffered** object, and most of API methods return a deferred object, so you can specify callbacks using .then() method |
-| Chaining support | Wampy supports methods chaining.<br/>connection.subscribe(...).publish(...).call(...) |  |
-| Transport encoders | json, msgpack (optional) | json |
-
-Which one library to use - choice is yours!
-
-[Back to TOC](#table-of-contents)
-
 Tests and code coverage
 =======================
 
@@ -1015,6 +998,7 @@ See Also
 * [msgpack5][] - A msgpack v5 implementation for node.js and the browser,
 with extension point support
 * [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
+* [wampy-cryptosign][] - WAMP Cryptosign-based Authentication plugin for Wampy.js
 
 [Back to TOC](#table-of-contents)
 
@@ -1033,6 +1017,7 @@ Thanks JetBrains for support! Best IDEs for every language!
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
 [tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
 [wampy-cra]: https://github.com/KSDaemon/wampy-cra
+[wampy-cryptosign]: https://github.com/KSDaemon/wampy-cryptosign
 
 [npm-url]: https://www.npmjs.com/package/wampy
 [npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
