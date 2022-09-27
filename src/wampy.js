@@ -539,13 +539,13 @@ class Wampy {
     }
 
     /**
-     * Prepares payload for adding to WAMP message
+     * Prepares PPT/E2EE payload for adding to WAMP message
      * @param {string|number|Array|object} payload
      * @param {Object} options
      * @returns {Object}
      * @private
      */
-    _preparePayload (payload, options) {
+    _packPPTPayload (payload, options) {
         let payloadItems = [], err = false, argsList, argsDict;
 
         if (this._isArray(payload)) {
@@ -616,6 +616,47 @@ class Wampy {
         }
 
         return { err, payloadItems };
+    }
+
+    /**
+     * Unpack PPT/E2EE payload to common
+     * @param {string} role
+     * @param {Array} pptPayload
+     * @param {Object} options
+     * @returns {Object}
+     * @private
+     */
+    async _unpackPPTPayload (role, pptPayload, options) {
+        let err = false, decodedPayload;
+
+        if (!this._checkPPTOptions(role, options)) {
+            return { err: this._cache.opStatus };
+        }
+
+        // wamp scheme means Payload End-to-End Encryption
+        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
+        if (options.ppt_scheme === 'wamp') {
+
+            // TODO: implement End-to-End Encryption
+
+        }
+
+        if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+            let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+
+            if (!pptSerializer) {
+                return { err: WAMP_ERROR_MSG.PPT_SRLZ_INVALID };
+            }
+
+            try {
+                decodedPayload = await pptSerializer.decode(pptPayload);
+            } catch (e) {
+                return { err: WAMP_ERROR_MSG.PPT_SRLZ_ERR };
+            }
+        } else {
+            decodedPayload = pptPayload;
+        }
+        return { err, args: decodedPayload.args, kwargs: decodedPayload.kwargs };
     }
 
     /**
@@ -1040,40 +1081,15 @@ class Wampy {
                         if (options.ppt_scheme) {
                             let decodedPayload, pptPayload = data[4][0];
 
-                            if (!this._checkPPTOptions('broker', options)) {
+                            decodedPayload = await this._unpackPPTPayload('broker', pptPayload, options);
+
+                            if (decodedPayload.err) {
                                 // Since it is async publication, and no link to
                                 // original publication - as it was already published
                                 // we can not reply with error, only log it.
                                 // Although the router should handle it
-
-                                this._log(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
+                                this._log(decodedPayload.err.description);
                                 break;
-                            }
-
-                            // wamp scheme means Payload End-to-End Encryption
-                            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
-                            if (options.ppt_scheme === 'wamp') {
-
-                                // TODO: implement End-to-End Encryption
-
-                            }
-
-                            if (options.ppt_serializer && options.ppt_serializer !== 'native') {
-                                let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
-
-                                if (!pptSerializer) {
-                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
-                                    break;
-                                }
-
-                                try {
-                                    decodedPayload = await pptSerializer.decode(pptPayload);
-                                } catch (e) {
-                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
-                                    break;
-                                }
-                            } else {
-                                decodedPayload = pptPayload;
                             }
 
                             argsList = decodedPayload.args;
@@ -1111,57 +1127,19 @@ class Wampy {
                         if (options.ppt_scheme) {
                             let decodedPayload, pptPayload = data[3][0];
 
-                            if (!this._checkPPTOptions('dealer', options)) {
-                                this._log(this._cache.opStatus.description);
+                            decodedPayload = await this._unpackPPTPayload('dealer', pptPayload, options);
+
+                            if (decodedPayload.err) {
+                                this._log(decodedPayload.err.description);
+                                this._cache.opStatus = decodedPayload.err;
                                 this._calls[data[1]].onError({
-                                    error   : this._cache.opStatus.description,
+                                    error   : decodedPayload.err.description,
                                     details : data[2],
                                     argsList: data[3],
                                     argsDict: data[4]
                                 });
                                 delete this._calls[data[1]];
                                 break;
-                            }
-
-                            // wamp scheme means Payload End-to-End Encryption
-                            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
-                            if (options.ppt_scheme === 'wamp') {
-
-                                // TODO: implement End-to-End Encryption
-
-                            }
-
-                            if (options.ppt_serializer && options.ppt_serializer !== 'native') {
-                                let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
-
-                                if (!pptSerializer) {
-                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
-                                    this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_INVALID;
-                                    this._calls[data[1]].onError({
-                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description,
-                                        details : data[2],
-                                        argsList: data[3],
-                                        argsDict: data[4]
-                                    });
-                                    delete this._calls[data[1]];
-                                    break;
-                                }
-
-                                try {
-                                    decodedPayload = await pptSerializer.decode(pptPayload);
-                                } catch (e) {
-                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
-                                    this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_ERR;
-                                    this._calls[data[1]].onError({
-                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description,
-                                        details : data[2],
-                                        argsList: data[3],
-                                        argsDict: data[4]
-                                    });
-                                    break;
-                                }
-                            } else {
-                                decodedPayload = pptPayload;
                             }
 
                             argsList = decodedPayload.args;
@@ -1318,7 +1296,7 @@ class Wampy {
                                 }
 
                                 if (results !== null && typeof (results) !== 'undefined') {
-                                    let res = this._preparePayload(results, options);
+                                    let res = this._packPPTPayload(results, options);
 
                                     if (res.err) {
                                         invoke_error_handler({
@@ -1341,49 +1319,23 @@ class Wampy {
                         if (options.ppt_scheme) {
                             let decodedPayload, pptPayload = data[4][0];
 
-                            if (!this._checkPPTOptions('dealer', options)) {
-                                // This case should not happen at all, but for safety
-                                this._log(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
+                            decodedPayload = await this._unpackPPTPayload('dealer', pptPayload, options);
+
+                            // This case should not happen at all, but for safety
+                            if (decodedPayload.err && decodedPayload.err.code === WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.code) {
+                                this._log(decodedPayload.err.description);
                                 this._hardClose('wamp.error.protocol_violation', 'Received INVOCATION in PPT Mode, while Dealer didn\'t announce it');
                                 break;
-                            }
+                            } else if (decodedPayload.err) {
 
-                            // wamp scheme means Payload End-to-End Encryption
-                            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
-                            if (options.ppt_scheme === 'wamp') {
-
-                                // TODO: implement End-to-End Encryption
-
-                            }
-
-                            if (options.ppt_serializer && options.ppt_serializer !== 'native') {
-                                let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
-
-                                if (!pptSerializer) {
-                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
-                                    invoke_error_handler({
-                                        details : data[3],
-                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description,
-                                        argsList: data[4],
-                                        argsDict: data[5]
-                                    });
-                                    break;
-                                }
-
-                                try {
-                                    decodedPayload = await pptSerializer.decode(pptPayload);
-                                } catch (e) {
-                                    this._log(WAMP_ERROR_MSG.PPT_SRLZ_ERR.description);
-                                    invoke_error_handler({
-                                        details : data[3],
-                                        error   : WAMP_ERROR_MSG.PPT_SRLZ_ERR.description,
-                                        argsList: data[4],
-                                        argsDict: data[5]
-                                    });
-                                    break;
-                                }
-                            } else {
-                                decodedPayload = pptPayload;
+                                this._log(decodedPayload.err.description);
+                                invoke_error_handler({
+                                    details : data[3],
+                                    error   : decodedPayload.err.description,
+                                    argsList: data[4],
+                                    argsDict: data[5]
+                                });
+                                break;
                             }
 
                             argsList = decodedPayload.args;
@@ -1886,7 +1838,7 @@ class Wampy {
 
         if (hasPayload) {
             // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-            let res = this._preparePayload(payload, options);
+            let res = this._packPPTPayload(payload, options);
 
             if (res.err) {
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
@@ -2010,7 +1962,7 @@ class Wampy {
         msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
 
         if (payload !== null && typeof (payload) !== 'undefined') {
-            let res = this._preparePayload(payload, options);
+            let res = this._packPPTPayload(payload, options);
 
             if (res.err) {
                 if (this._isPlainObject(callbacks) && callbacks.onError) {
