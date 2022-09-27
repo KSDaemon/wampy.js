@@ -54,6 +54,7 @@ Wampy.js supports next WAMP roles and features:
 * Authentication:
     * Ticket-based Authentication
     * Challenge Response Authentication (wampcra method)
+    * Cryptosign-based Authentication (cryptosign method)
 * publisher:
     * subscriber blackwhite listing
     * publisher exclusion
@@ -235,6 +236,29 @@ will be called. Set to 0 to disable limit.
 * **authmethods**. Default value: []. Array of strings of supported authentication methods.
 * **authextra**. Default value: {}. Additional authentication options for Cryptosign-based authentication.
 See [Cryptosign-based Authentication](#cryptosign-based-authentication) section and [WAMP Spec CS][] for more info.
+* **authPlugins**. Default value: {}. Authentication helpers for processing different authmethods flows.
+It's a hash-map, where key is an authentication method and value is a function, that takes the necessary user
+secrets/keys and returns a function which accepts authmethod and challenge info and returns signed challenge answer.
+You can provide your own sign functions or use existing helpers. Functions may be asynchronous.
+
+```javascript
+const wampyCra = require('wampy-cra');
+const wampyCryptosign = require('wampy-cryptosign');
+
+wampy.options({
+    authPlugins: {
+        ticket: (userPassword) => userPassword, // No need to process challenge data, as it is empty
+        wampcra: wampyCra.sign(secret),
+        cryptosign: wampyCryptosign.sign(privateKey)
+    },
+    authMode: 'auto'
+});
+```
+
+* **authMode**. Default value: `manual`. Possible values: `manual`|`auto`. Mode of authorization flow. If it is set
+to `manual` - you also need to provide **onChallenge** callback, which will process authorization challenge. Or you
+can set it to `auto` and provide **authPlugins** (described above). In this case the necessary authorization flow
+will be chosen automatically. This allows to support few authorization methods simultaneously.
 * **onChallenge**. Default value: null. Callback function.
 It is fired when wamp server requests authentication during session establishment.
 This function receives two arguments: auth method and challenge details.
@@ -512,6 +536,15 @@ Cryptosign-based Authentication
 Wampy.js supports cryptosign-based authentication. To use it you need to provide authid, onChallenge callback
 and authextra as wampy instance options. Also, Wampy.js supports `cryptosign` authentication method with a little helper
 plugin "[wampy-cryptosign][]". Just add "wampy-cryptosign" package and use provided methods as shown below.
+
+The `authextra` option may contain the following properties for WAMP-Cryptosign:
+
+| Field           | Type   | Required | Description                                                                                                                                                                                                                                   |
+|-----------------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| pubkey          | string | yes      | The client public key (32 bytes) as a Hex encoded string, e.g. `545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122`                                                                                                             |
+| channel_binding | string | no       | If TLS channel binding is in use, the TLS channel binding type, e.g. `"tls-unique"`.                                                                                                                                                          |
+| challenge       | string | no       | A client chosen, random challenge (32 bytes) as a Hex encoded string, to be signed by the router.                                                                                                                                             |
+| trustroot       | string | no       | When the client includes a client certificate, the Ethereum address of the trustroot of the certificate chain to be used, e.g. `0x72b3486d38E9f49215b487CeAaDF27D6acf22115`, which can be a *Standalone Trustroot* or an *On-chain Trustroot* |
 
 
 [Back to TOC](#table-of-contents)

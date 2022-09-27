@@ -269,6 +269,19 @@ class Wampy {
             authextra: {},
 
             /**
+             * Authentication helpers for processing different authmethods challenge flows
+             * @type {object}
+             */
+            authPlugins: {},
+
+            /**
+             * Mode of authorization flow
+             * Possible values: manual | auto
+             * @type {string}
+             */
+            authMode: 'manual',
+
+            /**
              * onChallenge callback
              * @type {function}
              */
