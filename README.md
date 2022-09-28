@@ -224,6 +224,9 @@ options([opts])
 
 Options attributes description:
 
+* **debug**. Default value: false. Enable debug logging.
+* **logger**. Default value: null. User-provided logging function. If `debug=true` and no `logger` specified,
+`console.log` will be used.
 * **autoReconnect**. Default value: true. Enable auto reconnecting. In case of connection failure, Wampy will
 try to reconnect to WAMP server, and if you were subscribed to any topics,
 or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.

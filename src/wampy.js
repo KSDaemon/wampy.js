@@ -215,6 +215,12 @@ class Wampy {
             debug: false,
 
             /**
+             * Logger
+             * @type {function}
+             */
+            logger: null,
+
+            /**
              * Reconnecting flag
              * @type {boolean}
              */
@@ -369,7 +375,11 @@ class Wampy {
      */
     _log (...args) {
         if (this._options.debug) {
-            console.log('[wampy]', args);
+            if (this._options.logger) {
+                this._options.logger(args);
+            } else {
+                console.log('[wampy]', args);
+            }
         }
     }
 

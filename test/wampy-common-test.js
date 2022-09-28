@@ -103,6 +103,8 @@ serializers.forEach(function (item) {
                         customFiled3: [1, 2, 3, 4, 5]
                     },
                     setoptions = {
+                        debug: true,
+                        logger: function() {},
                         autoReconnect: true,
                         reconnectInterval: 10000,
                         maxRetries: 50,
