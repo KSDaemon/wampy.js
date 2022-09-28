@@ -15,7 +15,7 @@
  */
 
 import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS } from './constants.js';
-import { getWebSocket } from './utils.js';
+import { getWebSocket, getNewPromise } from './utils.js';
 import { JsonSerializer } from './serializers/JsonSerializer.js';
 
 const jsonSerializer = new JsonSerializer();

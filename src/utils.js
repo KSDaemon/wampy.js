@@ -49,3 +49,14 @@ export function getWebSocket (url, protocols, ws, headers, requestOptions) {
 
     return null;
 }
+
+export function getNewPromise () {
+    let promise = {};
+
+    promise.promise = new Promise(function (resolve, reject) {
+        promise.resolve = resolve;
+        promise.reject = reject;
+    });
+
+    return promise;
+}
