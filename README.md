@@ -611,7 +611,7 @@ For this flow you need to configure next options:
 * `authextra`. Additional authentication options
 * `authPlugins`. Authentication helpers for processing different authmethods challenge flows
 * `authMode`. Mode of authorization flow. Should be set to `auto`
-* `onChallenge`. onChallenge callback. Should be set to `null`
+* `onChallenge`. onChallenge callback. Is not used when `authMode=auto`
 
 ```javascript
 const Wampy = require('wampy').Wampy;

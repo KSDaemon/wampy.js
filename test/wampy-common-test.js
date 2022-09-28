@@ -171,6 +171,36 @@ serializers.forEach(function (item) {
                 expect(options.onReconnectSuccess).to.be.a('function');
             });
 
+            it('allows to use Ticket-based Authentication while connecting to server', function (done) {
+                let wampy = new Wampy(routerUrl, {
+                    realm: 'AppRealm',
+                    onChallenge: function () {
+                        return 'secretKey';
+                    },
+                    authid: 'user1',
+                    authmethods: ['ticket'],
+                    onConnect: function () {
+                        done();
+                    },
+                    onClose: function () {
+                        done('Reached onClose');
+                    },
+                    onError: function () {
+                        done('Reached onError');
+                    },
+                    onReconnect: function () {
+                        done('Reached onReconnect');
+                    },
+                    onReconnectSuccess: function () {
+                        done('Reached onReconnectSuccess');
+                    },
+                    ws,
+                    serializer: new serializer()
+                });
+                expect(wampy).to.be.an('object');
+            });
+
+
             it('allows to use Challenge Response Authentication while connecting to server', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
@@ -184,6 +214,50 @@ serializers.forEach(function (item) {
                     },
                     onClose: function () {
                         done('Reached onClose');
+                    },
+                    onError: function () {
+                        done('Reached onError');
+                    },
+                    onReconnect: function () {
+                        done('Reached onReconnect');
+                    },
+                    onReconnectSuccess: function () {
+                        done('Reached onReconnectSuccess');
+                    },
+                    ws,
+                    serializer: new serializer()
+                });
+                expect(wampy).to.be.an('object');
+            });
+
+            it('allows to use Automatically chosen Authentication while connecting to server', function (done) {
+                let  i = 1;
+                let wampy = new Wampy(routerUrl, {
+                    realm: 'AppRealm',
+                    authid: 'user1',
+                    authmethods: ['ticket', 'wampcra', 'cryptosign'],
+                    authextra: {    // User public key for Cryptosign-based Authentication
+                        pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
+                    },
+                    authPlugins: {
+                        ticket: () => 'ticketKey',
+                        wampcra: () => 'secretKey',
+                        cryptosign: () => 'privateKey'
+                    },
+                    authMode: 'auto',
+                    onChallenge: null,
+                    onConnect: function () {
+                        if (i === 3) {
+                            done();
+                        } else {
+                            i++;
+                            wampy.disconnect();
+                        }
+                    },
+                    onClose: function () {
+                        setTimeout(() => {
+                            wampy.connect();
+                        }, 1);
                     },
                     onError: function () {
                         done('Reached onError');

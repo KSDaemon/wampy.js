@@ -396,7 +396,6 @@ class Wampy {
                 obj[attr] = args[i][attr];
             }
         }
-
         return obj;
     }
 
@@ -786,10 +785,10 @@ class Wampy {
     _wsOnOpen () {
         const options = this._merge(this._options.helloCustomDetails, this._wamp_features),
             serverProtocol = this._ws.protocol ? this._ws.protocol.split('.')[2] : '';
-
         if (this._options.authid) {
             options.authmethods = this._options.authmethods;
             options.authid = this._options.authid;
+            options.authextra = this._options.authextra;
         }
 
         this._log('websocket connected');
@@ -910,46 +909,56 @@ class Wampy {
                 if (this._cache.sessionId) {
                     this._hardClose('wamp.error.protocol_violation',
                         'Received CHALLENGE message after session was established');
+                    break;
+                } else if (this._options.authid &&
+                    this._options.authMode === 'manual' &&
+                    typeof this._options.onChallenge === 'function') {
+
+                    p = new Promise((resolve, reject) => {
+                        resolve(this._options.onChallenge(data[1], data[2]));
+                    });
+
+                } else if (this._options.authid &&
+                    this._options.authMode === 'auto' &&
+                    typeof this._options.authPlugins[data[1]] === 'function') {
+
+                    p = new Promise((resolve, reject) => {
+                        resolve(this._options.authPlugins[data[1]](data[1], data[2]));
+                    });
+
                 } else {
-                    if (this._options.authid && typeof this._options.onChallenge === 'function') {
 
-                        p = new Promise((resolve, reject) => {
-                            resolve(this._options.onChallenge(data[1], data[2]));
-                        });
-
-                        p.then((key) => {
-
-                            // Sending directly 'cause it's a challenge msg and no sessionId check is needed
-                            this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
-
-                        }).catch(e => {
-                            this._ws.send(this._encode([
-                                WAMP_MSG_SPEC.ABORT,
-                                { message: 'Exception in onChallenge handler raised!' },
-                                'wamp.error.cannot_authenticate'
-                            ]));
-                            if (this._options.onError) {
-                                this._options.onError({ error: WAMP_ERROR_MSG.CRA_EXCEPTION.description });
-                            }
-                            this._ws.close();
-                            this._cache.opStatus = WAMP_ERROR_MSG.CRA_EXCEPTION;
-                        });
-
-                    } else {
-
-                        this._ws.send(this._encode([
-                            WAMP_MSG_SPEC.ABORT,
-                            { message: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description },
-                            'wamp.error.cannot_authenticate'
-                        ]));
-                        if (this._options.onError) {
-                            this._options.onError({ error: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description });
-                        }
-                        this._ws.close();
-                        this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
-
+                    this._ws.send(this._encode([
+                        WAMP_MSG_SPEC.ABORT,
+                        { message: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description },
+                        'wamp.error.cannot_authenticate'
+                    ]));
+                    if (this._options.onError) {
+                        this._options.onError({ error: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description });
                     }
+                    this._ws.close();
+                    this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
+                    break;
                 }
+
+                p.then((key) => {
+
+                    // Sending directly 'cause it's a challenge msg and no sessionId check is needed
+                    this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
+
+                }).catch(e => {
+                    this._ws.send(this._encode([
+                        WAMP_MSG_SPEC.ABORT,
+                        { message: 'Exception in onChallenge handler raised!' },
+                        'wamp.error.cannot_authenticate'
+                    ]));
+                    if (this._options.onError) {
+                        this._options.onError({ error: WAMP_ERROR_MSG.CHALLENGE_EXCEPTION.description });
+                    }
+                    this._ws.close();
+                    this._cache.opStatus = WAMP_ERROR_MSG.CHALLENGE_EXCEPTION;
+                });
+
                 break;
             case WAMP_MSG_SPEC.GOODBYE:
                 // WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
@@ -1523,7 +1532,8 @@ class Wampy {
 
             const authp = (this._options.authid ? 1 : 0) +
                 ((this._isArray(this._options.authmethods) && this._options.authmethods.length) ? 1 : 0) +
-                (typeof this._options.onChallenge === 'function' ? 1 : 0);
+                (typeof this._options.onChallenge === 'function' ||
+                 Object.keys(this._options.authPlugins).length ? 1 : 0);
 
             if (authp > 0 && authp < 3) {
                 this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
