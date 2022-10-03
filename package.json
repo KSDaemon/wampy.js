@@ -7,7 +7,6 @@
     "@babel/core": "^7.19.1",
     "@babel/preset-env": "^7.19.1",
     "@babel/register": "^7.18.9",
-    "babel-plugin-istanbul": "^6.1.1",
     "babelify": "^10.0.0",
     "c8": "^7.12.0",
     "chai": "^4.3.6",
@@ -38,7 +37,6 @@
   "type": "module",
   "dependencies": {
     "cbor": "^8.1.0",
-    "cbor-web": "^8.1.0",
     "msgpack5": "^6.0.2",
     "wampy-cra": "^0.1.2",
     "websocket": "^1.0.34"

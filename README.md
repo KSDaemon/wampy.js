@@ -28,6 +28,8 @@ Table of Contents
   - [abort()](#abort)
   - [Ticket-based Authentication](#ticket-based-authentication)
   - [Challenge Response Authentication](#challenge-response-authentication)
+  - [Cryptosign-based Authentication](#cryptosign-based-authentication)
+  - [Automatically chosen Authentication](#automatically-chosen-authentication)
   - [subscribe(topicURI, callbacks[, advancedOptions])](#subscribetopicuri-callbacks-advancedoptions)
   - [unsubscribe(topicURI[, callbacks])](#unsubscribetopicuri-callbacks)
   - [publish(topicURI[, payload[, callbacks[, advancedOptions]]])](#publishtopicuri-payload-callbacks-advancedoptions)
@@ -37,7 +39,6 @@ Table of Contents
   - [unregister(topicURI[, callbacks])](#unregistertopicuri-callbacks)
 - [Using custom serializer](#using-custom-serializer)
 - [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
-- [Quick comparison to other libs](#quick-comparison-to-other-libs)
 - [Tests and code coverage](#tests-and-code-coverage)
 - [Copyright and License](#copyright-and-license)
 - [See Also](#see-also)
@@ -54,6 +55,7 @@ Wampy.js supports next WAMP roles and features:
 * Authentication:
     * Ticket-based Authentication
     * Challenge Response Authentication (wampcra method)
+    * Cryptosign-based Authentication (cryptosign method)
 * publisher:
     * subscriber blackwhite listing
     * publisher exclusion
@@ -168,14 +170,14 @@ specify `ws` - websocket module. See description below.
 // in browser
 ws = new Wampy();
 ws = new Wampy('/my-socket-path');
-ws = new Wampy('ws://socket.server.com:5000/ws', { autoReconnect: false });
+ws = new Wampy('wss://socket.server.com:5000/ws', { autoReconnect: false });
 ws = new Wampy({ reconnectInterval: 1*1000 });
 
 // in node.js
 w3cws = require('websocket').w3cwebsocket;
 ws = new Wampy(null, { ws: w3cws });
 ws = new Wampy('/my-socket-path', { ws: w3cws });
-ws = new Wampy('ws://socket.server.com:5000/ws', { autoReconnect: false, ws: w3cws });
+ws = new Wampy('wss://socket.server.com:5000/ws', { autoReconnect: false, ws: w3cws });
 ws = new Wampy({ reconnectInterval: 1*1000, ws: w3cws });
 
 ```
@@ -185,7 +187,7 @@ Also, you can use your own serializer. Just be sure, it is supported on WAMP rou
 
 ```javascript
 // in browser
-ws = new Wampy('ws://socket.server.com:5000/ws', {
+ws = new Wampy('wss://socket.server.com:5000/ws', {
     serializer: new MsgpackSerializer(msgpack5)
 });
 ws = new Wampy({
@@ -199,7 +201,7 @@ import {w3cws} from 'websocket';
 
 const msgpack5 = require('msgpack5');
 
-ws = new Wampy('ws://socket.server.com:5000/ws', {
+ws = new Wampy('wss://socket.server.com:5000/ws', {
     ws: w3cws,
     serializer: new MsgpackSerializer(msgpack5())
 });
@@ -217,12 +219,15 @@ options([opts])
 
 .options() method can be called in two forms:
 
-* without parameters it will return current options
+* without parameters, it will return current options
 * with one parameter as hash-table it will set new options. Support chaining.
 
 Options attributes description:
 
-* **autoReconnect**. Default value: true. Enable autoreconnecting. In case of connection failure, Wampy will
+* **debug**. Default value: false. Enable debug logging.
+* **logger**. Default value: null. User-provided logging function. If `debug=true` and no `logger` specified,
+`console.log` will be used.
+* **autoReconnect**. Default value: true. Enable auto reconnecting. In case of connection failure, Wampy will
 try to reconnect to WAMP server, and if you were subscribed to any topics,
 or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.
 * **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
@@ -230,14 +235,40 @@ or had registered some procedures, Wampy will resubscribe to that topics and rer
 will be called. Set to 0 to disable limit.
 * **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
 * **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
-* **uriValidation**. Default value: strict. Can be changed to loose for less strict URI validation.
+* **uriValidation**. Default value: strict. Can be changed to `loose` for less strict URI validation.
 * **authid**. Default value: null. Authentication (user) id to use in challenge.
 * **authmethods**. Default value: []. Array of strings of supported authentication methods.
+* **authextra**. Default value: {}. Additional authentication options for Cryptosign-based authentication.
+See [Cryptosign-based Authentication](#cryptosign-based-authentication) section and [WAMP Spec CS][] for more info.
+* **authPlugins**. Default value: {}. Authentication helpers for processing different authmethods flows.
+It's a hash-map, where key is an authentication method and value is a function, that takes the necessary user
+secrets/keys and returns a function which accepts authmethod and challenge info and returns signed challenge answer.
+You can provide your own sign functions or use existing helpers. Functions may be asynchronous.
+
+```javascript
+const wampyCra = require('wampy-cra');
+const wampyCryptosign = require('wampy-cryptosign');
+
+wampy.options({
+    authPlugins: {
+        ticket: (function(userPassword) { return function() { return userPassword; }})(), // No need to process challenge data, as it is empty
+        wampcra: wampyCra.sign(secret),
+        cryptosign: wampyCryptosign.sign(privateKey)
+    },
+    authMode: 'auto'
+});
+```
+
+* **authMode**. Default value: `manual`. Possible values: `manual`|`auto`. Mode of authorization flow. If it is set
+to `manual` - you also need to provide **onChallenge** callback, which will process authorization challenge. Or you
+can set it to `auto` and provide **authPlugins** (described above). In this case the necessary authorization flow
+will be chosen automatically. This allows to support few authorization methods simultaneously.
 * **onChallenge**. Default value: null. Callback function.
-Is fired when wamp server requests authentication during session establishment.
+It is fired when wamp server requests authentication during session establishment.
 This function receives two arguments: auth method and challenge details.
 Function should return computed signature, based on challenge details.
-See [Challenge Response Authentication](#challenge-response-authentication) section and [WAMP Spec CRA][] for more info.
+See [Challenge Response Authentication](#challenge-response-authentication) section, [WAMP Spec CRA][],
+[Cryptosign-based Authentication](#cryptosign-based-authentication) section and [WAMP Spec CS][] for more info.
 * **onConnect**. Default value: null. Callback function. Fired when connection to wamp server is established.
 This function receives welcome details as an argument.
 * **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
@@ -357,7 +388,7 @@ let ws;
 /**
  * Ticket authentication
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'joe',
     authmethods: ['ticket'],
@@ -373,7 +404,7 @@ ws = new Wampy('ws://wamp.router.url', {
 /**
  * Promise-based ticket authentication
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'micky',
     authmethods: ['ticket'],
@@ -395,7 +426,7 @@ Challenge Response Authentication
 ---------------------------------
 
 Wampy.js supports challenge response authentication. To use it you need to provide authid and onChallenge callback
-as wampy instance options. Also Wampy.js supports "wampcra" authentication method with a little helper
+as wampy instance options. Also, Wampy.js supports `wampcra` authentication method with a little helper
 plugin "[wampy-cra][]". Just add "wampy-cra" package and use provided methods as shown below.
 
 ```javascript
@@ -409,14 +440,14 @@ let ws;
 /**
  * Manual authentication using signed message
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'joe',
     authmethods: ['wampcra'],
     onChallenge: (method, info) => {
         console.log('Requested challenge with ', method, info);
-        return wampyCra.sign('joe secret key or password', info.challenge);
+        return wampyCra.signManual('joe secret key or password', info.challenge);
     },
     onConnect: () => {
         console.log('Connected to Router!');
@@ -426,7 +457,7 @@ ws = new Wampy('ws://wamp.router.url', {
 /**
  * Promise-based manual authentication using signed message
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'micky',
@@ -435,7 +466,7 @@ ws = new Wampy('ws://wamp.router.url', {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 console.log('Requested challenge with ', method, info);
-                resolve(wampyCra.sign('micky secret key or password', info.challenge));
+                resolve(wampyCra.signManual('micky secret key or password', info.challenge));
             }, 2000);
         });
     },
@@ -447,7 +478,7 @@ ws = new Wampy('ws://wamp.router.url', {
 /**
  * Manual authentication using salted key and pbkdf2 scheme
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'peter',
@@ -458,7 +489,7 @@ ws = new Wampy('ws://wamp.router.url', {
         const salt = 'password salt for user peter';
 
         console.log('Requested challenge with ', method, info);
-        return wampyCra.sign(wampyCra.derive_key('peter secret key or password', salt, iterations, keylen), info.challenge);
+        return wampyCra.signManual(wampyCra.deriveKey('peter secret key or password', salt, iterations, keylen), info.challenge);
     },
     onConnect: () => {
         console.log('Connected to Router!');
@@ -466,35 +497,144 @@ ws = new Wampy('ws://wamp.router.url', {
 });
 
 /**
- * Automatic method detection authentication
+ * Automatic CRA authentication
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'patrik',
     authmethods: ['wampcra'],
-    onChallenge: wampyCra.auto('patrik secret key or password'),
+    onChallenge: wampyCra.sign('patrik secret key or password'),
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+```
+
+[Back to TOC](#table-of-contents)
+
+Cryptosign-based Authentication
+-------------------------------
+
+Wampy.js supports cryptosign-based authentication. To use it you need to provide authid, onChallenge callback
+and authextra as wampy instance options. Also, Wampy.js supports `cryptosign` authentication method with a little helper
+plugin "[wampy-cryptosign][]". Just add "wampy-cryptosign" package and use provided methods as shown below.
+
+The `authextra` option may contain the following properties for WAMP-Cryptosign:
+
+| Field            | Type   | Required | Description                                                                                                                                                                                                                                   |
+|------------------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| pubkey           | string | yes      | The client public key (32 bytes) as a Hex encoded string, e.g. `545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122`                                                                                                             |
+| channel_binding* | string | no       | If TLS channel binding is in use, the TLS channel binding type, e.g. `"tls-unique"`.                                                                                                                                                          |
+| challenge        | string | no       | A client chosen, random challenge (32 bytes) as a Hex encoded string, to be signed by the router.                                                                                                                                             |
+| trustroot        | string | no       | When the client includes a client certificate, the Ethereum address of the trustroot of the certificate chain to be used, e.g. `0x72b3486d38E9f49215b487CeAaDF27D6acf22115`, which can be a *Standalone Trustroot* or an *On-chain Trustroot* |
+
+*: `channel_binding` is not supported yet. And may be supported only in node.js environment.
+
+```javascript
+'use strict';
+
+const Wampy = require('wampy').Wampy;
+const wampyCS = require('wampy-cryptosign');
+const w3cws = require('websocket').w3cwebsocket;
+let ws;
+
+/**
+ * Manual authentication using signed message
+ */
+ws = new Wampy('wss://wamp.router.url', {
+    ws: w3cws,
+    realm: 'realm1',
+    authid: 'joe',
+    authmethods: ['cryptosign'],
+    authextra: {
+        pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
+    },
+    onChallenge: (method, info) => {
+        console.log('Requested challenge with ', method, info);
+        return wampyCS.sign('joe secret (private) key', info.challenge);
+    },
     onConnect: () => {
         console.log('Connected to Router!');
     }
 });
 
 /**
- * Promise-based automatic method detection authentication
+ * Promise-based manual authentication using signed message
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
-    authid: 'vanya',
-    authmethods: ['wampcra'],
+    authid: 'micky',
+    authmethods: ['cryptosign'],
+    authextra: {
+        pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
+    },
     onChallenge: (method, info) => {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 console.log('Requested challenge with ', method, info);
-                resolve(wampyCra.auto('vanya secret key or password')(method, info));
+                resolve(wampyCS.signManual('micky secret (private) key', info.challenge));
             }, 2000);
         });
     },
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+
+/**
+ * Automatic CryptoSign authentication
+ */
+ws = new Wampy('wss://wamp.router.url', {
+    ws: w3cws,
+    realm: 'realm1',
+    authid: 'patrik',
+    authmethods: ['cryptosign'],
+    authextra: {
+        pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
+    },
+    onChallenge: wampyCS.sign('patrik secret (private) key'),
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+```
+
+[Back to TOC](#table-of-contents)
+
+Automatically chosen Authentication
+-----------------------------------
+
+If you server provides multiple options for authorization, you can configure wampy.js to automatically choose
+required authorization flow based on `authmethod` requested by server.
+For this flow you need to configure next options:
+* `authid`. Authentication id to use in challenge
+* `authmethods`. Supported authentication methods
+* `authextra`. Additional authentication options
+* `authPlugins`. Authentication helpers for processing different authmethods challenge flows
+* `authMode`. Mode of authorization flow. Should be set to `auto`
+* `onChallenge`. onChallenge callback. Is not used when `authMode=auto`
+
+```javascript
+const Wampy = require('wampy').Wampy;
+const wampyCra = require('wampy-cra');
+const wampyCS = require('wampy-cryptosign');
+
+ws = new Wampy('wss://wamp.router.url', {
+    realm: 'realm1',
+    authid: 'patrik',
+    authmethods: ['ticket', 'wampcra', 'cryptosign'],
+    authextra: {    // User public key for Cryptosign-based Authentication
+        pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
+    },
+    authPlugins: {
+        ticket: (function(userPassword) { return function() { return userPassword; }})(),
+        wampcra: wampyCra.sign(userSecret),
+        cryptosign: wampyCS.sign(userPrivateKey)
+    },
+    authMode: 'auto',
+    onChallenge: null,
     onConnect: () => {
         console.log('Connected to Router!');
     }
@@ -793,7 +933,7 @@ const getUserName = function () {
 ws.register('get.user.name', getUserName);
 ```
 
-Also it is possible to abort rpc processing and throw error with custom application specific data.
+Also, it is possible to abort rpc processing and throw error with custom application specific data.
 This data will be passed to caller onError callback.
 
 Exception object with custom data may have next attributes:
@@ -932,25 +1072,6 @@ ws = new Wampy('wss://wamp.router.url:8888/wamp-router', {
 
 [Back to TOC](#table-of-contents)
 
-Quick comparison to other libs
-==============================
-
-| Topic         | Wampy.js | AutobahnJS  |
-|-------------- | -------- | ----------- |
-| Runs on | browser | browser and NodeJS |
-| Dependencies | msgpack5.js (optional) | when.js, CryptoJS (optional) |
-| Creating connection | var connection = new Wampy('ws://127.0.0.1:9000/', { realm: 'realm1' }); | var connection = new autobahn.Connection({url: 'ws://127.0.0.1:9000/', realm: 'realm1'}); |
-| Opening a connection | connection opens on creating an instance, or can be opened by: connection.connect() | connection.open(); |
-| Connection Callbacks | Wampy supports next callbacks: onConnect, onClose, onError, onReconnect. Callbacks can be specified via options object passed to constructor, or via .options() method. | AutobahnJS provides two callbacks: connection.onopen = function (session) { } and connection.onclose = function (reason/string, details/dict) { } |
-| WAMP API methods with parameters | While using Wampy you don't have to explicitly specify the payload type (single value, array, object), just pass it to api method. <br/>For example:<br/>ws.publish('chat.message.received', 'user message');<br/>ws.publish('chat.message.received', ['user message1', 'user message2']);<br/>ws.publish('chat.message.received', { message: 'user message'});<br/>Also Wampy is clever enough to understand some specific options, for example, if you specify a success or error callback to publish method, Wampy will automatically set acknowledge flag to true.  | In AutobahnJS you need to use only arrays and objects, as it's specified in WAMP, and also choose right argument position.<br/>For example:<br/>session.publish('com.myapp.hello', ['Hello, world!']);<br/>session.publish('com.myapp.hello', [], {message: 'Hello, world!'});<br/>Also you need to explicitly provide additional options, like {acknowledge: true} |
-| Method callbacks | Most of the API methods take a **callbacks** parameter, which is hash-table of posible callbacks | AutobahnJS make use of **Deffered** object, and most of API methods return a deferred object, so you can specify callbacks using .then() method |
-| Chaining support | Wampy supports methods chaining.<br/>connection.subscribe(...).publish(...).call(...) |  |
-| Transport encoders | json, msgpack (optional) | json |
-
-Which one library to use - choice is yours!
-
-[Back to TOC](#table-of-contents)
-
 Tests and code coverage
 =======================
 
@@ -1005,6 +1126,7 @@ See Also
 * [msgpack5][] - A msgpack v5 implementation for node.js and the browser,
 with extension point support
 * [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
+* [wampy-cryptosign][] - WAMP Cryptosign-based Authentication plugin for Wampy.js
 
 [Back to TOC](#table-of-contents)
 
@@ -1019,9 +1141,11 @@ Thanks JetBrains for support! Best IDEs for every language!
 [msgpack5]: https://github.com/mcollina/msgpack5
 [cbor]: https://github.com/hildjj/node-cbor
 [WAMP Spec CRA]: https://wamp-proto.org/wamp_latest_ietf.html#name-challenge-response-authenti
+[WAMP Spec CS]: https://wamp-proto.org/wamp_latest_ietf.html#name-cryptosign-based-authentica
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
 [tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
 [wampy-cra]: https://github.com/KSDaemon/wampy-cra
+[wampy-cryptosign]: https://github.com/KSDaemon/wampy-cryptosign
 
 [npm-url]: https://www.npmjs.com/package/wampy
 [npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
