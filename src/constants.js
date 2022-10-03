@@ -86,9 +86,9 @@ export const WAMP_ERROR_MSG = {
         code: 23,
         description: 'No onChallenge callback or authid was provided for authentication!'
     },
-    CRA_EXCEPTION: {
+    CHALLENGE_EXCEPTION: {
         code: 24,
-        description: 'Exception raised during CRA challenge processing'
+        description: 'Exception raised during challenge processing'
     },
     PPT_NOT_SUPPORTED: {
         code: 25,

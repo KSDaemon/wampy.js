@@ -152,6 +152,43 @@ const WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // allows to use Ticket-based Authentication while connecting to server
+        {
+            data: [
+                WAMP_MSG_SPEC.CHALLENGE,
+                'ticket',
+                { }
+            ]
+
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                6546775,
+                {
+                    agent       : 'Wampy.js test suite',
+                    authid      : 'user1',
+                    authrole    : 'user',
+                    authmethod  : 'ticket',
+                    authprovider: 'userdb',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
         // allows to use Challenge Response Authentication while connecting to server
         {
             data: [
@@ -178,6 +215,139 @@ const WAMP_MSG_SPEC = {
                     authid      : 'user1',
                     authrole    : 'user',
                     authmethod  : 'wampcra',
+                    authprovider: 'userdb',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        // allows to use Automatically chosen Authentication while connecting to server
+        {
+            data: [
+                WAMP_MSG_SPEC.CHALLENGE,
+                'ticket',
+                { }
+            ]
+
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                654564,
+                {
+                    agent       : 'Wampy.js test suite',
+                    authid      : 'user1',
+                    authrole    : 'user',
+                    authmethod  : 'ticket',
+                    authprovider: 'userdb',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                ''
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.CHALLENGE,
+                'wampcra',
+                {
+                    challenge: '{ "nonce": "LHRTC9zeOIrt_9U3", ' +
+                        '"authprovider": "userdb", ' +
+                        '"authid": "user1", ' +
+                        '"timestamp": "2014-06-22T16:36:25.448Z", ' +
+                        '"authrole": "user", ' +
+                        '"authmethod": "wampcra", ' +
+                        '"session": 123454321 }'
+                }
+            ]
+
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                32132123,
+                {
+                    agent       : 'Wampy.js test suite',
+                    authid      : 'user1',
+                    authrole    : 'user',
+                    authmethod  : 'wampcra',
+                    authprovider: 'userdb',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                ''
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.CHALLENGE,
+                'cryptosign',
+                {
+                    challenge: 'b05e6b8ad4d69abf74aa3be3c0ee40ae07d66e1895b9ab09285a2f1192d562d2'
+                }
+            ]
+
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                821924,
+                {
+                    agent       : 'Wampy.js test suite',
+                    authid      : 'user1',
+                    authrole    : 'user',
+                    authmethod  : 'cryptosign',
                     authprovider: 'userdb',
                     roles: {
                         broker: {

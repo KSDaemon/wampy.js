@@ -29,6 +29,7 @@ Table of Contents
   - [Ticket-based Authentication](#ticket-based-authentication)
   - [Challenge Response Authentication](#challenge-response-authentication)
   - [Cryptosign-based Authentication](#cryptosign-based-authentication)
+  - [Automatically chosen Authentication](#automatically-chosen-authentication)
   - [subscribe(topicURI, callbacks[, advancedOptions])](#subscribetopicuri-callbacks-advancedoptions)
   - [unsubscribe(topicURI[, callbacks])](#unsubscribetopicuri-callbacks)
   - [publish(topicURI[, payload[, callbacks[, advancedOptions]]])](#publishtopicuri-payload-callbacks-advancedoptions)
@@ -169,14 +170,14 @@ specify `ws` - websocket module. See description below.
 // in browser
 ws = new Wampy();
 ws = new Wampy('/my-socket-path');
-ws = new Wampy('ws://socket.server.com:5000/ws', { autoReconnect: false });
+ws = new Wampy('wss://socket.server.com:5000/ws', { autoReconnect: false });
 ws = new Wampy({ reconnectInterval: 1*1000 });
 
 // in node.js
 w3cws = require('websocket').w3cwebsocket;
 ws = new Wampy(null, { ws: w3cws });
 ws = new Wampy('/my-socket-path', { ws: w3cws });
-ws = new Wampy('ws://socket.server.com:5000/ws', { autoReconnect: false, ws: w3cws });
+ws = new Wampy('wss://socket.server.com:5000/ws', { autoReconnect: false, ws: w3cws });
 ws = new Wampy({ reconnectInterval: 1*1000, ws: w3cws });
 
 ```
@@ -186,7 +187,7 @@ Also, you can use your own serializer. Just be sure, it is supported on WAMP rou
 
 ```javascript
 // in browser
-ws = new Wampy('ws://socket.server.com:5000/ws', {
+ws = new Wampy('wss://socket.server.com:5000/ws', {
     serializer: new MsgpackSerializer(msgpack5)
 });
 ws = new Wampy({
@@ -200,7 +201,7 @@ import {w3cws} from 'websocket';
 
 const msgpack5 = require('msgpack5');
 
-ws = new Wampy('ws://socket.server.com:5000/ws', {
+ws = new Wampy('wss://socket.server.com:5000/ws', {
     ws: w3cws,
     serializer: new MsgpackSerializer(msgpack5())
 });
@@ -223,6 +224,9 @@ options([opts])
 
 Options attributes description:
 
+* **debug**. Default value: false. Enable debug logging.
+* **logger**. Default value: null. User-provided logging function. If `debug=true` and no `logger` specified,
+`console.log` will be used.
 * **autoReconnect**. Default value: true. Enable auto reconnecting. In case of connection failure, Wampy will
 try to reconnect to WAMP server, and if you were subscribed to any topics,
 or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.
@@ -247,7 +251,7 @@ const wampyCryptosign = require('wampy-cryptosign');
 
 wampy.options({
     authPlugins: {
-        ticket: (userPassword) => userPassword, // No need to process challenge data, as it is empty
+        ticket: (function(userPassword) { return function() { return userPassword; }})(), // No need to process challenge data, as it is empty
         wampcra: wampyCra.sign(secret),
         cryptosign: wampyCryptosign.sign(privateKey)
     },
@@ -384,7 +388,7 @@ let ws;
 /**
  * Ticket authentication
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'joe',
     authmethods: ['ticket'],
@@ -400,7 +404,7 @@ ws = new Wampy('ws://wamp.router.url', {
 /**
  * Promise-based ticket authentication
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'micky',
     authmethods: ['ticket'],
@@ -436,14 +440,14 @@ let ws;
 /**
  * Manual authentication using signed message
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'joe',
     authmethods: ['wampcra'],
     onChallenge: (method, info) => {
         console.log('Requested challenge with ', method, info);
-        return wampyCra.sign('joe secret key or password', info.challenge);
+        return wampyCra.signManual('joe secret key or password', info.challenge);
     },
     onConnect: () => {
         console.log('Connected to Router!');
@@ -453,7 +457,7 @@ ws = new Wampy('ws://wamp.router.url', {
 /**
  * Promise-based manual authentication using signed message
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'micky',
@@ -462,7 +466,7 @@ ws = new Wampy('ws://wamp.router.url', {
         return new Promise((resolve, reject) => {
             setTimeout(() => {
                 console.log('Requested challenge with ', method, info);
-                resolve(wampyCra.sign('micky secret key or password', info.challenge));
+                resolve(wampyCra.signManual('micky secret key or password', info.challenge));
             }, 2000);
         });
     },
@@ -474,7 +478,7 @@ ws = new Wampy('ws://wamp.router.url', {
 /**
  * Manual authentication using salted key and pbkdf2 scheme
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'peter',
@@ -485,7 +489,7 @@ ws = new Wampy('ws://wamp.router.url', {
         const salt = 'password salt for user peter';
 
         console.log('Requested challenge with ', method, info);
-        return wampyCra.sign(wampyCra.derive_key('peter secret key or password', salt, iterations, keylen), info.challenge);
+        return wampyCra.signManual(wampyCra.deriveKey('peter secret key or password', salt, iterations, keylen), info.challenge);
     },
     onConnect: () => {
         console.log('Connected to Router!');
@@ -493,35 +497,14 @@ ws = new Wampy('ws://wamp.router.url', {
 });
 
 /**
- * Automatic method detection authentication
+ * Automatic CRA authentication
  */
-ws = new Wampy('ws://wamp.router.url', {
+ws = new Wampy('wss://wamp.router.url', {
     ws: w3cws,
     realm: 'realm1',
     authid: 'patrik',
     authmethods: ['wampcra'],
-    onChallenge: wampyCra.auto('patrik secret key or password'),
-    onConnect: () => {
-        console.log('Connected to Router!');
-    }
-});
-
-/**
- * Promise-based automatic method detection authentication
- */
-ws = new Wampy('ws://wamp.router.url', {
-    ws: w3cws,
-    realm: 'realm1',
-    authid: 'vanya',
-    authmethods: ['wampcra'],
-    onChallenge: (method, info) => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                console.log('Requested challenge with ', method, info);
-                resolve(wampyCra.auto('vanya secret key or password')(method, info));
-            }, 2000);
-        });
-    },
+    onChallenge: wampyCra.sign('patrik secret key or password'),
     onConnect: () => {
         console.log('Connected to Router!');
     }
@@ -539,13 +522,124 @@ plugin "[wampy-cryptosign][]". Just add "wampy-cryptosign" package and use provi
 
 The `authextra` option may contain the following properties for WAMP-Cryptosign:
 
-| Field           | Type   | Required | Description                                                                                                                                                                                                                                   |
-|-----------------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| pubkey          | string | yes      | The client public key (32 bytes) as a Hex encoded string, e.g. `545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122`                                                                                                             |
-| channel_binding | string | no       | If TLS channel binding is in use, the TLS channel binding type, e.g. `"tls-unique"`.                                                                                                                                                          |
-| challenge       | string | no       | A client chosen, random challenge (32 bytes) as a Hex encoded string, to be signed by the router.                                                                                                                                             |
-| trustroot       | string | no       | When the client includes a client certificate, the Ethereum address of the trustroot of the certificate chain to be used, e.g. `0x72b3486d38E9f49215b487CeAaDF27D6acf22115`, which can be a *Standalone Trustroot* or an *On-chain Trustroot* |
+| Field            | Type   | Required | Description                                                                                                                                                                                                                                   |
+|------------------|--------|----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| pubkey           | string | yes      | The client public key (32 bytes) as a Hex encoded string, e.g. `545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122`                                                                                                             |
+| channel_binding* | string | no       | If TLS channel binding is in use, the TLS channel binding type, e.g. `"tls-unique"`.                                                                                                                                                          |
+| challenge        | string | no       | A client chosen, random challenge (32 bytes) as a Hex encoded string, to be signed by the router.                                                                                                                                             |
+| trustroot        | string | no       | When the client includes a client certificate, the Ethereum address of the trustroot of the certificate chain to be used, e.g. `0x72b3486d38E9f49215b487CeAaDF27D6acf22115`, which can be a *Standalone Trustroot* or an *On-chain Trustroot* |
 
+*: `channel_binding` is not supported yet. And may be supported only in node.js environment.
+
+```javascript
+'use strict';
+
+const Wampy = require('wampy').Wampy;
+const wampyCS = require('wampy-cryptosign');
+const w3cws = require('websocket').w3cwebsocket;
+let ws;
+
+/**
+ * Manual authentication using signed message
+ */
+ws = new Wampy('wss://wamp.router.url', {
+    ws: w3cws,
+    realm: 'realm1',
+    authid: 'joe',
+    authmethods: ['cryptosign'],
+    authextra: {
+        pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
+    },
+    onChallenge: (method, info) => {
+        console.log('Requested challenge with ', method, info);
+        return wampyCS.sign('joe secret (private) key', info.challenge);
+    },
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+
+/**
+ * Promise-based manual authentication using signed message
+ */
+ws = new Wampy('wss://wamp.router.url', {
+    ws: w3cws,
+    realm: 'realm1',
+    authid: 'micky',
+    authmethods: ['cryptosign'],
+    authextra: {
+        pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
+    },
+    onChallenge: (method, info) => {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                console.log('Requested challenge with ', method, info);
+                resolve(wampyCS.signManual('micky secret (private) key', info.challenge));
+            }, 2000);
+        });
+    },
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+
+/**
+ * Automatic CryptoSign authentication
+ */
+ws = new Wampy('wss://wamp.router.url', {
+    ws: w3cws,
+    realm: 'realm1',
+    authid: 'patrik',
+    authmethods: ['cryptosign'],
+    authextra: {
+        pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
+    },
+    onChallenge: wampyCS.sign('patrik secret (private) key'),
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+```
+
+[Back to TOC](#table-of-contents)
+
+Automatically chosen Authentication
+-----------------------------------
+
+If you server provides multiple options for authorization, you can configure wampy.js to automatically choose
+required authorization flow based on `authmethod` requested by server.
+For this flow you need to configure next options:
+* `authid`. Authentication id to use in challenge
+* `authmethods`. Supported authentication methods
+* `authextra`. Additional authentication options
+* `authPlugins`. Authentication helpers for processing different authmethods challenge flows
+* `authMode`. Mode of authorization flow. Should be set to `auto`
+* `onChallenge`. onChallenge callback. Is not used when `authMode=auto`
+
+```javascript
+const Wampy = require('wampy').Wampy;
+const wampyCra = require('wampy-cra');
+const wampyCS = require('wampy-cryptosign');
+
+ws = new Wampy('wss://wamp.router.url', {
+    realm: 'realm1',
+    authid: 'patrik',
+    authmethods: ['ticket', 'wampcra', 'cryptosign'],
+    authextra: {    // User public key for Cryptosign-based Authentication
+        pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
+    },
+    authPlugins: {
+        ticket: (function(userPassword) { return function() { return userPassword; }})(),
+        wampcra: wampyCra.sign(userSecret),
+        cryptosign: wampyCS.sign(userPrivateKey)
+    },
+    authMode: 'auto',
+    onChallenge: null,
+    onConnect: () => {
+        console.log('Connected to Router!');
+    }
+});
+```
 
 [Back to TOC](#table-of-contents)
 
