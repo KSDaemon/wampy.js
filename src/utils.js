@@ -54,8 +54,8 @@ export function getNewPromise () {
     let promise = {};
 
     promise.promise = new Promise(function (resolve, reject) {
-        promise.resolve = resolve;
-        promise.reject = reject;
+        promise.onSuccess = resolve;
+        promise.onError = reject;
     });
 
     return promise;

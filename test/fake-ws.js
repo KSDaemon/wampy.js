@@ -144,6 +144,7 @@ function startTimers () {
     WebSocket.prototype.send = function (data) {
 
         this.decode(data).then(rec_data => {
+            // console.log('Server received a message: ', rec_data);
             let send_data, enc_data, i, opts, pptSerializer;
             send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
 

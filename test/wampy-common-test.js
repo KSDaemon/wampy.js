@@ -12,10 +12,11 @@ const isNode = typeof process === 'object' &&
 import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws.js';
 import { Wampy } from '../src/wampy.js';
+import * as Errors from '../src/errors.js';
 import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
 import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
 import { CborSerializer } from '../src/serializers/CborSerializer.js';
-import { WAMP_ERROR_MSG } from '../src/constants.js';
+import { WAMP_ERROR_MSG, SUCCESS } from '../src/constants.js';
 
 if (isNode) {
     global.Blob = function (parts) {
@@ -44,9 +45,15 @@ serializers.forEach(function (item) {
 
     describe(`Wampy.js with ${name}`, function () {
         this.timeout(2000);
+        let wampy;
 
         before(function () {
             WebSocketModule.startTimers();
+            wampy = new Wampy(routerUrl, {
+                realm     : 'AppRealm',
+                ws,
+                serializer: new serializer()
+            });
         });
 
         after(function () {
@@ -54,31 +61,29 @@ serializers.forEach(function (item) {
             WebSocketModule.resetCursor();
         });
 
-        describe('Constructor', function () {
+        describe('Connectivity', function () {
 
-            it('allows to connect on instantiation if all required options specified', function (done) {
-                let wampy = new Wampy(routerUrl, {
-                    realm: 'AppRealm',
-                    onConnect: function () {
-                        done();
-                    },
-                    ws,
-                    serializer: new serializer()
-                });
-                expect(wampy).to.be.an('object');
+            it('disallows to connect if no realm is specified', async function () {
+                try {
+                    let wampy = new Wampy(routerUrl, {
+                        ws,
+                        serializer: new serializer()
+                    });
+                    await wampy.connect();
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoRealmError);
+                }
             });
 
-            it('passes welcome details to onConnect() callback', function (done) {
+            it('passes welcome details to onConnect() callback', async function () {
                 let wampy = new Wampy(routerUrl, {
-                    realm: 'AppRealm',
-                    onConnect: function (welcomeDetails) {
-                        expect(welcomeDetails).to.be.an('object');
-                        done();
-                    },
+                    realm     : 'AppRealm',
                     ws,
                     serializer: new serializer()
                 });
                 expect(wampy).to.be.an('object');
+                let welcomeDetails = await wampy.connect();
+                expect(welcomeDetails).to.be.an('object');
             });
 
             it('passes welcome details to onReconnectSuccess() callback', function (done) {
@@ -94,9 +99,10 @@ serializers.forEach(function (item) {
                     serializer: new serializer()
                 });
                 expect(wampy).to.be.an('object');
+                wampy.connect();
             });
 
-            it('allows to set different options on instantiation', function (done) {
+            it('allows to set different options on instantiation', async function () {
                 let helloCustomDetails = {
                         customFiled1: 25,
                         customFiled2: 'string',
@@ -104,7 +110,7 @@ serializers.forEach(function (item) {
                     },
                     setoptions = {
                         debug: true,
-                        logger: function() {},
+                        logger: function () {},
                         autoReconnect: true,
                         reconnectInterval: 10000,
                         maxRetries: 50,
@@ -112,24 +118,21 @@ serializers.forEach(function (item) {
                         uriValidation: 'loose',
                         helloCustomDetails: helloCustomDetails,
                         onChallenge: function () {
-                            done('Reached onChallenge');
+                            throw new Error('Reached onChallenge');
                         },
                         authid: 'userid',
                         authmethods: ['wampcra'],
-                        onConnect: function () {
-                            done();
-                        },
                         onClose: function () {
-                            done('Reached onClose');
+                            throw new Error('Reached onClose');
                         },
                         onError: function () {
-                            done('Reached onError');
+                            throw new Error('Reached onError');
                         },
                         onReconnect: function () {
-                            done('Reached onReconnect');
+                            throw new Error('Reached onReconnect');
                         },
                         onReconnectSuccess: function () {
-                            done('Reached onReconnectSuccess');
+                            throw new Error('Reached onReconnectSuccess');
                         },
                         ws,
                         serializer: new serializer()
@@ -147,13 +150,13 @@ serializers.forEach(function (item) {
                 expect(options.authid).to.be.equal('userid');
                 expect(options.authmethods).to.be.an('array');
                 expect(options.authmethods[0]).to.be.equal('wampcra');
-                expect(options.onConnect).to.be.a('function');
                 expect(options.onClose).to.be.a('function');
                 expect(options.onError).to.be.a('function');
                 expect(options.onReconnect).to.be.a('function');
                 expect(options.onReconnectSuccess).to.be.a('function');
 
                 wampy = new Wampy(routerUrl, setoptions);
+                await wampy.connect();
                 options = wampy.options();
 
                 expect(options.autoReconnect).to.be.true;
@@ -166,14 +169,13 @@ serializers.forEach(function (item) {
                 expect(options.authid).to.be.equal('userid');
                 expect(options.authmethods).to.be.an('array');
                 expect(options.authmethods[0]).to.be.equal('wampcra');
-                expect(options.onConnect).to.be.a('function');
                 expect(options.onClose).to.be.a('function');
                 expect(options.onError).to.be.a('function');
                 expect(options.onReconnect).to.be.a('function');
                 expect(options.onReconnectSuccess).to.be.a('function');
             });
 
-            it('allows to use Ticket-based Authentication while connecting to server', function (done) {
+            it('allows to use Ticket-based Authentication while connecting to server', async function () {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     onChallenge: function () {
@@ -181,29 +183,27 @@ serializers.forEach(function (item) {
                     },
                     authid: 'user1',
                     authmethods: ['ticket'],
-                    onConnect: function () {
-                        done();
-                    },
                     onClose: function () {
-                        done('Reached onClose');
+                        throw new Error('Reached onClose');
                     },
                     onError: function () {
-                        done('Reached onError');
+                        throw new Error('Reached onError');
                     },
                     onReconnect: function () {
-                        done('Reached onReconnect');
+                        throw new Error('Reached onReconnect');
                     },
                     onReconnectSuccess: function () {
-                        done('Reached onReconnectSuccess');
+                        throw new Error('Reached onReconnectSuccess');
                     },
                     ws,
                     serializer: new serializer()
                 });
                 expect(wampy).to.be.an('object');
+                return wampy.connect();
             });
 
 
-            it('allows to use Challenge Response Authentication while connecting to server', function (done) {
+            it('allows to use Challenge Response Authentication while connecting to server', async function () {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     onChallenge: function (method, info) {
@@ -211,29 +211,26 @@ serializers.forEach(function (item) {
                     },
                     authid: 'user1',
                     authmethods: ['wampcra'],
-                    onConnect: function () {
-                        done();
-                    },
                     onClose: function () {
-                        done('Reached onClose');
+                        throw new Error('Reached onClose');
                     },
                     onError: function () {
-                        done('Reached onError');
+                        throw new Error('Reached onError');
                     },
                     onReconnect: function () {
-                        done('Reached onReconnect');
+                        throw new Error('Reached onReconnect');
                     },
                     onReconnectSuccess: function () {
-                        done('Reached onReconnectSuccess');
+                        throw new Error('Reached onReconnectSuccess');
                     },
                     ws,
                     serializer: new serializer()
                 });
                 expect(wampy).to.be.an('object');
+                return wampy.connect();
             });
 
-            it('allows to use Automatically chosen Authentication while connecting to server', function (done) {
-                let  i = 1;
+            it('allows to use Automatically chosen Authentication while connecting to server', async function () {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     authid: 'user1',
@@ -248,984 +245,945 @@ serializers.forEach(function (item) {
                     },
                     authMode: 'auto',
                     onChallenge: null,
-                    onConnect: function () {
-                        if (i === 3) {
-                            done();
-                        } else {
-                            i++;
-                            wampy.disconnect();
-                        }
-                    },
-                    onClose: function () {
-                        setTimeout(() => {
-                            wampy.connect();
-                        }, 1);
-                    },
+                    onClose: null,
                     onError: function () {
-                        done('Reached onError');
+                        throw new Error('Reached onError');
                     },
                     onReconnect: function () {
-                        done('Reached onReconnect');
+                        throw new Error('Reached onReconnect');
                     },
                     onReconnectSuccess: function () {
-                        done('Reached onReconnectSuccess');
+                        throw new Error('Reached onReconnectSuccess');
                     },
                     ws,
                     serializer: new serializer()
                 });
                 expect(wampy).to.be.an('object');
+                await wampy.connect();
+                await wampy.disconnect();
+                await wampy.connect();
+                await wampy.disconnect();
+                await wampy.connect();
             });
 
             it('drops connection on receiving WELCOME message after session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received WELCOME message after session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving CHALLENGE message after session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received CHALLENGE message after session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving GOODBYE message before session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received GOODBYE message before session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving ERROR message before session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received ERROR message before session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving invalid ERROR message after session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received invalid ERROR message');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving SUBSCRIBED message before session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received SUBSCRIBED message before session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving UNSUBSCRIBED message before session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received UNSUBSCRIBED message before session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving PUBLISHED message before session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received PUBLISHED message before session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving EVENT message before session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received EVENT message before session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving RESULT message before session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received RESULT message before session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving REGISTERED message before session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received REGISTERED message before session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving UNREGISTERED message before session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received UNREGISTERED message before session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving INVOCATION message before session was established', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received INVOCATION message before session was established');
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
             it('drops connection on receiving non-compliant WAMP message', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
-                    onClose: done,
+                    onClose: null,
                     onError: function (e) {
                         expect(e).to.be.an('object');
                         expect(e.error).to.be.equal('wamp.error.protocol_violation');
                         expect(e.details).to.be.equal('Received non-compliant WAMP message');
-                    },
-                    ws,
-                    serializer: new serializer()
-                });
-            });
-
-        });
-
-        describe('Instance', function () {
-            let wampy;
-
-            before(function (done) {
-                wampy = new Wampy(routerUrl, {
-                    debug: false,
-                    autoReconnect: true,
-                    reconnectInterval: 2000,
-                    maxRetries: 7,
-                    realm: 'AppRealm',
-                    onConnect: function () {
                         done();
                     },
-                    onClose: function () {
-                        done('Reached close');
-                    },
-                    onError: function () {
-                        done('Reached error');
-                    },
-                    onReconnect: function () {
-                        done('Reached reconnection');
-                    },
-                    onReconnectSuccess: function () {
-                        done('Reached reconnection success');
+                    ws,
+                    serializer: new serializer()
+                });
+                wampy.connect();
+            });
+
+            it('calls Error handler on websocket errors', function (done) {
+                let wampy = new Wampy(routerUrl, {
+                    realm: 'AppRealm',
+                    autoReconnect: false,
+                    onClose: null,
+                    onError: function (e) {
+                        done();
                     },
                     ws,
                     serializer: new serializer()
                 });
+                wampy.connect();
             });
 
-            describe('Connectivity', function () {
-                it('disallows to connect to a router if no url was specified during instantiation', function () {
+            it('disallows to connect to a router if no url was specified during instantiation', async function () {
 
-                    if (!isNode) {
-                        return;
-                    }
+                if (!isNode) {
+                    return;
+                }
 
-                    let wampy = new Wampy({ realm: 'AppRealm' }),
-                        opStatus = wampy.connect().getOpStatus();
+                let wampy = new Wampy({ realm: 'AppRealm' });
 
-                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_WS_OR_URL);
+                try {
+                    await wampy.connect();
+                } catch (e) {
+                    expect(e).to.be.instanceof(Errors.NoWsOrUrlError);
+                }
+            });
+
+            it('allows to get and set different options', function () {
+                let helloCustomDetails = {
+                        customFiled1: 25,
+                        customFiled2: 'string',
+                        customFiled3: [1, 2, 3, 4, 5]
+                    },
+                    options = wampy.options({
+                        realm             : 'AppRealm',
+                        autoReconnect     : true,
+                        reconnectInterval : 1000,
+                        maxRetries        : 5,
+                        uriValidation     : 'loose',
+                        helloCustomDetails: helloCustomDetails,
+                        onChallenge       : function () {},
+                        onClose           : function () {},
+                        onError           : function () {},
+                        onReconnect       : function () {},
+                        onReconnectSuccess: function () {},
+                        authid            : 'userid',
+                        authmethods       : ['wampcra'],
+                    }).options();
+
+                expect(options.autoReconnect).to.be.true;
+                expect(options.reconnectInterval).to.be.equal(1000);
+                expect(options.maxRetries).to.be.equal(5);
+                expect(options.uriValidation).to.be.equal('loose');
+                expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
+                expect(options.onChallenge).to.be.a('function');
+                expect(options.authid).to.be.equal('userid');
+                expect(options.authmethods).to.be.an('array');
+                expect(options.authmethods[0]).to.be.equal('wampcra');
+                expect(options.onClose).to.be.a('function');
+                expect(options.onError).to.be.a('function');
+                expect(options.onReconnect).to.be.a('function');
+                expect(options.onReconnectSuccess).to.be.a('function');
+            });
+
+            it('allows to get current WAMP Session ID', async function () {
+                wampy = new Wampy(routerUrl, {
+                    realm     : 'AppRealm',
+                    ws,
+                    serializer: new serializer()
                 });
+                await wampy.connect(routerUrl);
+                let s = wampy.getSessionId();
+                expect(s).to.be.a('number');
+                expect(s).to.be.above(0);
+            });
 
-                it('allows to get and set different options', function () {
-                    let helloCustomDetails = {
-                            customFiled1: 25,
-                            customFiled2: 'string',
-                            customFiled3: [1, 2, 3, 4, 5]
-                        },
-                        options = wampy.options({
-                            autoReconnect     : true,
-                            reconnectInterval : 1000,
-                            maxRetries        : 5,
-                            uriValidation     : 'loose',
-                            helloCustomDetails: helloCustomDetails,
-                            onChallenge       : function () {
-                            },
-                            authid            : 'userid',
-                            authmethods       : ['wampcra'],
-                        }).options();
+            it('allows to disconnect from connected server', function (done) {
+                wampy.options({ onConnect: null, onClose: done })
+                    .disconnect();
+            });
 
-                    expect(options.autoReconnect).to.be.true;
-                    expect(options.reconnectInterval).to.be.equal(1000);
-                    expect(options.maxRetries).to.be.equal(5);
-                    expect(options.uriValidation).to.be.equal('loose');
-                    expect(options.helloCustomDetails).to.be.deep.equal(helloCustomDetails);
-                    expect(options.onChallenge).to.be.a('function');
-                    expect(options.authid).to.be.equal('userid');
-                    expect(options.authmethods).to.be.an('array');
-                    expect(options.authmethods[0]).to.be.equal('wampcra');
-                    expect(options.onConnect).to.be.a('function');
-                    expect(options.onClose).to.be.a('function');
-                    expect(options.onError).to.be.a('function');
-                    expect(options.onReconnect).to.be.a('function');
-                    expect(options.onReconnectSuccess).to.be.a('function');
-                });
-
-                it('allows to get current WAMP Session ID', function () {
-                    let s = wampy.getSessionId();
-                    expect(s).to.be.a('number');
-                    expect(s).to.be.above(0);
-                });
-
-                it('allows to disconnect from connected server', function (done) {
-                    wampy.options({ onConnect: null, onClose: done })
-                        .disconnect();
-                });
-
-                it('disallows to connect on instantiation without specifying all of [onChallenge, authid, authmethods]', function () {
-                    let opStatus;
-
+            it('disallows to connect without specifying all of [onChallenge, authid, authmethods]', async function () {
+                try {
                     wampy.options({ authid: 'userid', authmethods: ['wampcra'], onChallenge: null }).connect();
-                    opStatus = wampy.getOpStatus();
-                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
+                }
 
+                try {
                     wampy.options({ authid: null, authmethods: ['wampcra'], onChallenge: null }).connect();
-                    opStatus = wampy.getOpStatus();
-                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
+                }
 
+                try {
                     wampy.options({
                         authid: null, onChallenge: function () {
                         }
                     }).connect();
-                    opStatus = wampy.getOpStatus();
-                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
+                }
 
+                try {
                     wampy.options({
                         authid: null, authmethods: [], onChallenge: function () {
                         }
                     }).connect();
-                    opStatus = wampy.getOpStatus();
-                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
+                }
 
+                try {
                     wampy.options({
                         authid: 'userid', authmethods: 'string', onChallenge: function () {
                         }
                     }).connect();
-                    opStatus = wampy.getOpStatus();
-                    expect(opStatus).to.be.deep.equal(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
+                }
 
-                    wampy.options({ authid: null, onChallenge: null });
-                });
+                wampy.options({ authid: null, onChallenge: null });
+            });
 
-                it('calls onError handler if authentication using CRA fails', function (done) {
-                    wampy.options({
-                        authid: 'user1',
-                        authmethods: ['wampcra'],
-                        onChallenge: function (method, info) {
-                            throw new Error('Error occured in authentication');
-                        },
-                        onError: function (e) {
-                            done();
-                        },
-                        onConnect: null,
-                        onClose: null
-                    })
-                        .connect();
-                });
+            it('calls onError handler if authentication using CRA fails', function (done) {
+                wampy.options({
+                    authid: 'user1',
+                    authmethods: ['wampcra'],
+                    onChallenge: function (method, info) {
+                        throw new Error('Error occured in authentication');
+                    },
+                    onError: function (e) {
+                        done();
+                    },
+                    onConnect: null,
+                    onClose: null
+                })
+                    .connect();
+            });
 
-                it('calls onError handler if server requests authentication, but no credentials were provided', function (done) {
-                    wampy.options({
-                        onError: function (e) {
-                            done();
-                        },
-                        onConnect: null,
-                        onClose: null,
-                        authid: null,
-                        authmethods: null,
-                        onChallenge: null
-                    })
-                        .connect();
-                });
+            it('calls onError handler if server requests authentication, but no credentials were provided', function (done) {
+                wampy.options({
+                    onError: function (e) {
+                        done();
+                    },
+                    onConnect: null,
+                    onClose: null,
+                    authid: null,
+                    authmethods: null,
+                    onChallenge: null
+                })
+                    .connect();
+            });
 
-                it('automatically sends goodbye message on server initiated disconnect', function (done) {
-                    wampy.options({ onConnect: null, onClose: done })
-                        .connect();
-                });
+            it('automatically sends goodbye message on server initiated disconnect', function (done) {
+                wampy.options({ onConnect: null, onClose: done })
+                    .connect();
+            });
 
-                it('allows to disconnect while connecting to server', function (done) {
-                    wampy.options({
-                        onConnect: function () {
-                            done('Reached onConnect');
-                        },
-                        onClose: done
-                    }).connect();
+            it('allows to disconnect while connecting to server', function (done) {
+                wampy.options({
+                    onClose: function () {
+                        wampy.options({ onClose: null });
+                        done();
+                    }
+                }).connect();
 
-                    setTimeout(function () {
-                        wampy.disconnect();
-                    }, 10);
-                });
+                setTimeout(function () {
+                    wampy.disconnect();
+                }, 10);
+            });
 
-                it('allows to connect to same WAMP server', function (done) {
-                    wampy.options({ onConnect: function () { done(); } })
-                        .connect();
-                });
+            it('allows to connect to same WAMP server', async function () {
+                return wampy.connect();
+            });
 
-                it('allows to connect to different WAMP server', function (done) {
-                    wampy.options({
-                        onClose: function () {
+            it('allows to connect to different WAMP server', async function () {
+                await wampy.disconnect();
+                return wampy.connect(anotherRouterUrl);
+            });
+
+            it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
+                wampy.options({
+                    onClose: function () {
+                        setTimeout(function () {
+                            wampy.options({ onClose: done })
+                                .connect(anotherRouterUrl);
+
                             setTimeout(function () {
-                                wampy.connect(anotherRouterUrl);
+                                wampy.abort();
                             }, 1);
-                        },
-                        onConnect: function () {
+
+                        }, 1);
+                    },
+                }).disconnect();
+            });
+
+            it('auto-reconnects to WAMP server on network errors', function (done) {
+                let onReconnect = false;
+
+                wampy.options({
+                    autoReconnect     : true,
+                    reconnectInterval : 10,
+                    onClose           : null,
+                    onError           : null,
+                    onReconnect       : function () {
+                        onReconnect = true;
+                        wampy.options({ onReconnect: null });
+                    },
+                    onReconnectSuccess: null
+                }).connect().then(async () => {
+                    try {
+                        await wampy.subscribe('subscribe.reconnect1', () => {
+                            expect(onReconnect).to.be.true;
                             done();
-                        }
-                    }).disconnect();
-                });
-
-                it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
-                    wampy.options({
-                        onClose: function () {
-                            setTimeout(function () {
-                                wampy.options({ onClose: done })
-                                    .connect(anotherRouterUrl);
-
-                                setTimeout(function () {
-                                    wampy.abort();
-                                }, 1);
-
-                            }, 1);
-                        },
-                        onConnect: function () {
-                            done('We reach connection');
-                        }
-                    }).disconnect();
-                });
-
-                it('autoreconnects to WAMP server on network errors', function (done) {
-                    wampy.options({
-                        onConnect: function () {
-                            wampy
-                                .subscribe('subscribe.reconnect1', {
-                                    onSuccess: function () {
-                                    },
-                                    onError: function () {
-                                        done('Error during subscribing');
-                                    },
-                                    onEvent: function (e) {
-                                    }
-                                })
-                                .subscribe('subscribe.reconnect2', {
-                                    onSuccess: function () {
-                                    },
-                                    onError: function () {
-                                        done('Error during subscribing');
-                                    },
-                                    onEvent: function (e) {
-                                    }
-                                })
-                                .register('register.reconnect1', {
-                                    rpc: function (e) {
-                                    },
-                                    onSuccess: function () {
-                                    },
-                                    onError: function () {
-                                        done('Error during RPC registration');
-                                    }
-                                })
-                                .register('register.reconnect2', {
-                                    rpc: function (e) {
-                                    },
-                                    onSuccess: function () {
-                                    },
-                                    onError: function () {
-                                        done('Error during RPC registration');
-                                    }
-                                })
-                                .register('register.reconnect3', {
-                                    rpc: function (e) {
-                                    },
-                                    onSuccess: function () {
-                                    },
-                                    onError: function () {
-                                        done('Error during RPC registration');
-                                    }
-                                });
-
-                        },
-                        onClose: function () {
-                        },
-                        onError: function () {
-                        },
-                        onReconnect: function () {
-                            let t = setInterval(function () {
-                                if (wampy._subsTopics.size === 2 && wampy._rpcNames.size === 3) {
-                                    clearInterval(t);
-                                    t = null;
-                                    wampy.options({ onReconnect: null })
-                                        .subscribe('subscribe.reconnection.check', {
-                                            onSuccess: function () {
-                                                done();
-                                            },
-                                            onError: function () {
-                                                done('Error during subscribing');
-                                            },
-                                            onEvent: function (e) {
-                                            }
-                                        });
-                                }
-                            }, 1);
-                        },
-                        onReconnectSuccess: function () {
-                        }
-                    }).connect();
-                });
-
-                it('allows to call handler when autoreconnect to WAMP server succeeded', function (done) {
-                    wampy.options({
-                        autoReconnect: true,
-                        onClose: function () {
-                            setTimeout(function () {
-                                wampy.connect();
-                            }, 1);
-                        },
-                        onConnect: null,
-                        onReconnect: null,
-                        onReconnectSuccess: function () {
-                            done();
-                        },
-                        onError: null
-                    }).disconnect();
-                });
-
-                it('allows to call handler on websocket errors', function (done) {
-                    wampy.options({
-                        autoReconnect: false,
-                        onClose: function () {
-                            setTimeout(function () {
-                                wampy.connect();
-                            }, 1);
-                        },
-                        onConnect: function () {
-                            done('We reach connection');
-                        },
-                        onReconnect: null,
-                        onError: function () {
-                            done();
-                        }
-                    }).disconnect();
-                });
-
-                it('calls error handler if server sends abort message', function (done) {
-                    wampy.options({
-                        onClose: null,
-                        onError: function (e) {
-                            done();
-                        }
-                    }).connect();
+                        });
+                    } catch (e) {
+                        done('Expect subscribe to work');
+                    }
+                    try {
+                        await wampy.subscribe('subscribe.reconnect2', () => {});
+                    } catch (e) {
+                        done('Expect subscribe to work');
+                    }
+                    try {
+                        await wampy.register('register.reconnect1', () => {});
+                    } catch (e) {
+                        done('Expect register to work');
+                    }
+                    try {
+                        await wampy.register('register.reconnect2', () => {});
+                    } catch (e) {
+                        done('Expect register to work');
+                    }
+                    try {
+                        await wampy.register('register.reconnect3', () => {});
+                    } catch (e) {
+                        done('Expect register to work');
+                    }
                 });
             });
 
-            describe('PubSub module', function () {
-
-                before(function (done) {
-                    wampy.options({
-                        uriValidation: 'strict',
-                        onConnect    : function () {
+            it('allows to call handler when auto-reconnection to WAMP server succeeded', function (done) {
+                wampy = new Wampy(routerUrl, {
+                    autoReconnect: true,
+                    reconnectInterval: 10,
+                    maxRetries: 7,
+                    realm: 'AppRealm',
+                    onClose: null,
+                    onError: null,
+                    onReconnect: null,
+                    onReconnectSuccess: function () {
+                        setTimeout(function () {
                             done();
-                        },
-                        onClose      : null,
-                        onReconnect  : null,
-                        onError      : null
-                    })
-                        .connect();
+                        }, 10);
+                    },
+                    ws,
+                    serializer: new serializer()
                 });
+                wampy.connect();
+            });
 
-                it('disallows to subscribe to topic if server does not provide BROKER role', function () {
-                    wampy.subscribe('qwe.asd.zxc', function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_BROKER);
-
-                    wampy.subscribe('qwe.asd.zxc',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
-                            }
-                        }
-                    );
-                });
-
-                it('disallows to unsubscribe from topic if server does not provide BROKER role', function () {
-                    wampy.unsubscribe('qwe.asd.zxc');
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_BROKER);
-
-                    wampy.unsubscribe('qwe.asd.zxc',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
-                            }
-                        }
-                    );
-                });
-
-                it('disallows to publish to topic if server does not provide BROKER role', function () {
-                    wampy.publish('qwe.asd.zxc', 'payload');
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_BROKER);
-
-                    wampy.publish('qwe.asd.zxc', 'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_BROKER.description);
-                            }
-                        }
-                    );
-                });
-
-                it('disallows to subscribe to topic with invalid URI', function (done) {
-                    wampy.options({
-                        onClose: function () {
-                            setTimeout(function () {
-                                wampy.options({
-                                    onConnect: function () {
-
-                                        wampy.subscribe('qwe.asd.zxc.', function (e) {
-                                        });
-                                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                                        wampy.subscribe('qwe.asd..zxc', function (e) {
-                                        });
-                                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                                        wampy.subscribe('qq,ww,ee', function (e) {
-                                        });
-                                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                                        wampy.subscribe('qq:www:ee', function (e) {
-                                        });
-                                        expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                                        wampy.subscribe('qwe.asd.zxc.',
-                                            {
-                                                onSuccess: function (e) {
-                                                },
-                                                onError: function (e) {
-                                                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
-                                                }
-                                            }
-                                        );
-
-                                        done();
-                                    }
-                                }).connect();
-                            }, 1);
-                        }
-                    }).disconnect();
-                });
-
-                it('disallows to subscribe to topic without specifying callback', function () {
-                    wampy.subscribe('qqq.www.eee');
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
-
-                    wampy.subscribe('qqq.www.eee', {});
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
-
-                    wampy.subscribe('qqq.www.eee', {
-                        onError: function (e) {
-                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
-                        }
-                    });
-                });
-
-                it('allows to subscribe to topic with notification on subscribing', function (done) {
-                    wampy.subscribe('subscribe.topic2', {
-                        onSuccess: function () {
-                            done();
-                        },
-                        onError: function () {
-                            done('Error during subscribing');
-                        },
-                        onEvent: function (e) {
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to setup multiple handlers to same topic', function () {
-                    wampy.subscribe('subscribe.topic2', function (e) {
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                    wampy.subscribe('subscribe.topic2', function (e) {
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                    wampy.subscribe('subscribe.topic2', {
-                        onEvent: function (e) {
-                        },
-                        onSuccess: function (e) {
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to subscribe to prefix-based topic', function (done) {
-                    let i = 1;
-                    wampy.subscribe('subscribe.prefix', function (e) {
-                        expect(e).to.be.an('object');
-
-                        if (i === 2) {
-                            expect(e.details).to.have.property('topic', 'subscribe.prefix.two.three');
-                            done();
-                        } else {
-                            expect(e.details).to.have.property('topic', 'subscribe.prefix.one');
-                            i++;
-                        }
-                    }, { match: 'prefix' })
-                        .publish('subscribe.prefix.one', null, { exclude_me: false })
-                        .publish('subscribe.prefix.two.three', null, { exclude_me: false });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to subscribe to wildcard-based topic', function (done) {
-                    let i = 1;
-                    wampy.subscribe('subscribe..wildcard', function (e) {
-                        expect(e).to.be.an('object');
-
-                        if (i === 2) {
-                            expect(e.details).to.have.property('topic', 'subscribe.two.wildcard');
-                            done();
-                        } else {
-                            expect(e.details).to.have.property('topic', 'subscribe.one.wildcard');
-                            i++;
-                        }
-                    }, { match: 'wildcard' })
-                        .publish('subscribe.one.wildcard', null, { exclude_me: false })
-                        .publish('subscribe.two.wildcard', null, { exclude_me: false });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event without payload', function (done) {
-                    let i = 1;
-                    wampy.subscribe('subscribe.topic3', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.undefined;
-                        expect(e.argsDict).to.be.undefined;
-
-                        if (i === 2) {
-                            done();
-                        } else {
-                            i++;
-                        }
-                    })
-                        .publish('subscribe.topic3')
-                        .publish('subscribe.topic3', null, { exclude_me: false, disclose_me: true });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with int payload', function (done) {
-                    let i = 1;
-                    wampy.subscribe('subscribe.topic4', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(25);
-
-                        if (i === 2) {
-                            done();
-                        } else {
-                            i++;
-                        }
-                    })
-                        .publish('subscribe.topic4', 25)
-                        .publish('subscribe.topic4', 25, null, { exclude_me: false, disclose_me: true });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with string payload', function (done) {
-                    let i = 1;
-                    wampy.subscribe('subscribe.topic5', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal('payload');
-
-                        if (i === 2) {
-                            done();
-                        } else {
-                            i++;
-                        }
-                    })
-                        .publish('subscribe.topic5', 'payload')
-                        .publish('subscribe.topic5', 'payload', null, { exclude_me: false, disclose_me: true });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with array payload', function (done) {
-                    let i = 1;
-                    wampy.subscribe('subscribe.topic6', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-
-                        if (i === 2) {
-                            done();
-                        } else {
-                            i++;
-                        }
-                    })
-                        .publish('subscribe.topic6', [1, 2, 3, 4, 5])
-                        .publish('subscribe.topic6', [1, 2, 3, 4, 5], null, { exclude_me: false, disclose_me: true });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with hash-table payload', function (done) {
-                    let i = 1, payload = { key1: 100, key2: 'string-key' };
-
-                    wampy.subscribe('subscribe.topic7', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList).to.have.lengthOf(0);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(payload);
-
-                        if (i === 3) {
-                            done();
-                        } else {
-                            i++;
-                        }
-                    })
-                        .publish('subscribe.topic7', payload)
-                        .publish('subscribe.topic7', payload, null, { exclude_me: false, disclose_me: true })
-                        .publish('subscribe.topic7', { argsDict: payload }, null, { exclude_me: false, disclose_me: true });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with both array and hash-table payload', function (done) {
-                    let i = 1, dictpayload = { key1: 100, key2: 'string-key' },
-                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
-
-                    wampy.subscribe('subscribe.topic77', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(dictpayload);
-
-                        if (i === 2) {
-                            done();
-                        } else {
-                            i++;
-                        }
-                    })
-                        .publish('subscribe.topic77', payload)
-                        .publish('subscribe.topic77', payload, null, { exclude_me: false, disclose_me: true });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with different advanced options', function (done) {
-                    wampy.subscribe('subscribe.topic8', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal('payload');
+            it('calls error handler if server sends abort message', function (done) {
+                wampy.options({
+                    onClose: null,
+                    onError: function (e) {
                         done();
-                    })
-                        .publish('subscribe.topic8', 'payload',
-                            {
-                                onSuccess: function () {
-                                },
-                                onError: function () {
-                                }
-                            },
-                            {
-                                exclude: [1234567],
-                                exclude_authid: ['iuhfiruhfhr'],
-                                exclude_authrole: ['user-role'],
-                                eligible: [wampy.getSessionId(), 7654321],
-                                eligible_authid: ['dsvsdvsfgdfg'],
-                                eligible_authrole: ['admin-role'],
-                                exclude_me: false,
-                                disclose_me: true
-                            }
-                        );
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+                    }
+                }).disconnect().then(() => {
+                    wampy.connect();
                 });
+            });
+        });
 
-                it('disallows to publish event to topic with invalid URI', function () {
-                    wampy.publish('qwe.asd.zxc.', 'payload');
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+        describe('PubSub module', function () {
 
-                    wampy.publish('qwe.asd..zxc', 'payload');
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+            before(async function () {
+                await wampy.options({
+                    uriValidation: 'strict',
+                    onClose      : null,
+                    onReconnect  : null,
+                    onError      : null
+                }).connect();
+            });
 
-                    wampy.publish('qq,ww,ee', 'payload');
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+            it('disallows to subscribe to topic if server does not provide BROKER role', async function () {
+                try {
+                    await wampy.subscribe('qwe.asd.zxc', (e) => {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoBrokerError);
+                }
+            });
 
-                    wampy.publish('qq:www:ee', 'payload');
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+            it('disallows to unsubscribe from topic if server does not provide BROKER role', async function () {
+                try {
+                    await wampy.unsubscribe('qwe.asd.zxc', (e) => {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoBrokerError);
+                }
+            });
 
-                    wampy.publish('qq:www:ee', 'payload',
+            it('disallows to publish to topic if server does not provide BROKER role', async function () {
+                try {
+                    await wampy.publish('qwe.asd.zxc', 'payload', (e) => {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoBrokerError);
+                }
+            });
+
+            it('disallows to subscribe to topic with invalid URI', function (done) {
+                wampy.options({
+                    onClose: function () {
+                        wampy.options({ onClose: null });
+                        setTimeout(async function () {
+                            await wampy.connect();
+
+                            try {
+                                await wampy.subscribe('qwe.asd.zxc.', function (e) {});
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.UriError);
+                            }
+
+                            try {
+                                await wampy.subscribe('qwe.asd..zxc', function (e) {});
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.UriError);
+                            }
+
+                            try {
+                                await wampy.subscribe('qq,ww,ee', function (e) {});
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.UriError);
+                            }
+
+                            try {
+                                await wampy.subscribe('qq:www:ee', function (e) {});
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.UriError);
+                            }
+
+                            try {
+                                await wampy.subscribe('qq,ww,ee', function (e) {});
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.UriError);
+                            }
+
+                            done();
+
+                        }, 1);
+                    }
+                }).disconnect();
+            });
+
+            it('checks for valid advanced options during subscribing to topic', async function () {
+                try {
+                    await wampy.subscribe('qqq.www.eee', function () {}, 'string instead of object');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                try {
+                    await wampy.subscribe('qqq.www.eee', function () {}, 123);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                try {
+                    await wampy.subscribe('qqq.www.eee', function () {}, function () {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                try {
+                    await wampy.subscribe('qqq.www.eee', function () {}, { 'match': 'invalid' });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+            });
+
+            it('disallows to subscribe to topic without specifying callback', async function () {
+                try {
+                    await wampy.subscribe('qqq.www.eee');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoCallbackError);
+                }
+
+                try {
+                    await wampy.subscribe('qqq.www.eee', {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoCallbackError);
+                }
+            });
+
+            it('allows to subscribe to topic with notification on subscribing', async function () {
+                return wampy.subscribe('subscribe.topic2', function (e) { });
+            });
+
+            it('allows to setup multiple handlers to same topic', async function () {
+                await wampy.subscribe('subscribe.topic2', function (e) {});
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+
+                await wampy.subscribe('subscribe.topic2', function (e) {});
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+
+                await wampy.subscribe('subscribe.topic2', function (e) {});
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to subscribe to prefix-based topic', function (done) {
+                let i = 1;
+                wampy.subscribe('subscribe.prefix', function (e) {
+                    expect(e).to.be.an('object');
+
+                    if (i === 2) {
+                        expect(e.details).to.have.property('topic', 'subscribe.prefix.two.three');
+                        done();
+                    } else {
+                        expect(e.details).to.have.property('topic', 'subscribe.prefix.one');
+                        i++;
+                    }
+                }, { match: 'prefix' }).then(() => {
+                    wampy.publish('subscribe.prefix.one', null, { exclude_me: false }).then(() => {
+                        wampy.publish('subscribe.prefix.two.three', null, { exclude_me: false });
+                    });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to subscribe to wildcard-based topic', function (done) {
+                let i = 1;
+                wampy.subscribe('subscribe..wildcard', function (e) {
+                    expect(e).to.be.an('object');
+
+                    if (i === 2) {
+                        expect(e.details).to.have.property('topic', 'subscribe.two.wildcard');
+                        done();
+                    } else {
+                        expect(e.details).to.have.property('topic', 'subscribe.one.wildcard');
+                        i++;
+                    }
+                }, { match: 'wildcard' }).then(() => {
+                    wampy.publish('subscribe.one.wildcard', null, { exclude_me: false }).then(() => {
+                        wampy.publish('subscribe.two.wildcard', null, { exclude_me: false });
+                    });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event without payload', function (done) {
+                let i = 1;
+                wampy.subscribe('subscribe.topic3', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.undefined;
+                    expect(e.argsDict).to.be.undefined;
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
+                }).then(() => {
+                    wampy.publish('subscribe.topic3').then(() => {
+                        wampy.publish('subscribe.topic3', null, { exclude_me: false, disclose_me: true });
+                    });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with int payload', function (done) {
+                let i = 1;
+                wampy.subscribe('subscribe.topic4', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(25);
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
+                }).then(() => {
+                    wampy.publish('subscribe.topic4', 25).then(() => {
+                        wampy.publish('subscribe.topic4', 25, { exclude_me: false, disclose_me: true });
+                    });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with string payload', function (done) {
+                let i = 1;
+                wampy.subscribe('subscribe.topic5', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal('payload');
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
+                }).then(() => {
+                    wampy.publish('subscribe.topic5', 'payload').then(() => {
+                        wampy.publish('subscribe.topic5', 'payload', { exclude_me: false, disclose_me: true });
+                    });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with array payload', function (done) {
+                let i = 1;
+                wampy.subscribe('subscribe.topic6', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
+                }).then(() => {
+                    wampy.publish('subscribe.topic6', [1, 2, 3, 4, 5]).then(() => {
+                        wampy.publish('subscribe.topic6', [1, 2, 3, 4, 5], { exclude_me: false, disclose_me: true });
+                    });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with hash-table payload', function (done) {
+                let i = 1, payload = { key1: 100, key2: 'string-key' };
+
+                wampy.subscribe('subscribe.topic7', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList).to.have.lengthOf(0);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(payload);
+
+                    if (i === 3) {
+                        done();
+                    } else {
+                        i++;
+                    }
+                }).then(() => {
+                    wampy.publish('subscribe.topic7', payload).then(() => {
+                        wampy.publish('subscribe.topic7', payload, { exclude_me: false, disclose_me: true }).then(() => {
+                            wampy.publish('subscribe.topic7', { argsDict: payload }, { exclude_me: false, disclose_me: true });
+                        });
+                    });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with both array and hash-table payload', function (done) {
+                let i = 1, dictpayload = { key1: 100, key2: 'string-key' },
+                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                wampy.subscribe('subscribe.topic77', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(dictpayload);
+
+                    if (i === 2) {
+                        done();
+                    } else {
+                        i++;
+                    }
+                }).then(() => {
+                    wampy.publish('subscribe.topic77', payload).then(() => {
+                        wampy.publish('subscribe.topic77', payload, { exclude_me: false, disclose_me: true });
+                    });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with different advanced options', function (done) {
+                wampy.subscribe('subscribe.topic8', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal('payload');
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic8', 'payload',
                         {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
-                            }
-                        }
-                    );
+                            exclude: [1234567],
+                            exclude_authid: ['iuhfiruhfhr'],
+                            exclude_authrole: ['user-role'],
+                            eligible: [wampy.getSessionId(), 7654321],
+                            eligible_authid: ['dsvsdvsfgdfg'],
+                            eligible_authrole: ['admin-role'],
+                            exclude_me: false,
+                            disclose_me: true
+                        });
                 });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
 
-                it('checks for valid advanced options during publishing to topic', function () {
+            it('disallows to publish event to topic with invalid URI', function () {
+                try {
+                    wampy.publish('qwe.asd.zxc.', 'payload');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                try {
+                    wampy.publish('qwe.asd..zxc', 'payload');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                try {
+                    wampy.publish('qq,ww,ee', 'payload');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
+
+                try {
+                    wampy.publish('qq:www:ee', 'payload');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
+            });
+
+            it('checks for valid advanced options during publishing to topic', function () {
+                try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         'string instead of object'
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
+                try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         123
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
+                try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         function () {
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
+                try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         {
                             exclude: 'string instead of number or array',
                             eligible: 1234567,
@@ -1235,17 +1193,15 @@ serializers.forEach(function (item) {
                             eligible_authrole: 1234567
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
+                try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         {
                             exclude: {},
                             eligible: 1234567,
@@ -1255,17 +1211,15 @@ serializers.forEach(function (item) {
                             eligible_authrole: true
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
+                try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         {
                             exclude: 1234567,
                             eligible: 'string instead of number or array',
@@ -1275,17 +1229,15 @@ serializers.forEach(function (item) {
                             eligible_authrole: []
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
+                try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         {
                             exclude: 1234567,
                             eligible: [],
@@ -1295,18 +1247,15 @@ serializers.forEach(function (item) {
                             eligible_authrole: 'role-two'
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
+                try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
-                            }
-                        },
                         {
                             exclude: {},
                             eligible: {},
@@ -1316,2321 +1265,1724 @@ serializers.forEach(function (item) {
                             eligible_authrole: ['role-two', 'role-four']
                         }
                     );
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
 
+                try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM.description);
-                            }
-                        },
                         {
                             exclude: 'invalid string',
                             eligible: 'invalid string'
                         }
                     );
-                });
-
-                it('allows to unsubscribe from topic only specified handler', function (done) {
-
-                    let handler3 = function (e) {
-                            done('Called removed handler');
-                        },
-                        handler2 = function (e) {
-                            done();
-                        },
-                        handler1 = function (e) {
-                            done('Called removed handler');
-                        };
-
-                    wampy.subscribe('subscribe.topic9', {
-                        onSuccess: function () {
-                            wampy.subscribe('subscribe.topic9', handler2)
-                                .subscribe('subscribe.topic9', handler3)
-                                .unsubscribe('subscribe.topic9', handler1)
-                                .unsubscribe('subscribe.topic9', { onEvent: handler3 })
-                                .publish('subscribe.topic9', 'payload', null, { exclude_me: false });
-                        },
-                        onError: function () {
-                        },
-                        onEvent: handler1
-                    });
-                });
-
-                it('allows to unsubscribe all handlers from topic', function () {
-                    wampy.unsubscribe('subscribe.topic9');
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to unsubscribe from topic with notification on unsubscribing', function (done) {
-                    wampy.unsubscribe('subscribe.topic2', {
-                        onSuccess: function (e) {
-                            done();
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('receives error when trying to unsubscribe from non existent subscription', function () {
-                    wampy.unsubscribe('subscribe.topic2');
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE.code);
-
-                    wampy.unsubscribe('subscribe.topic2', {
-                        onSuccess: function (e) {
-                        },
-                        onError: function (e) {
-                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE.description);
-                        }
-                    });
-                });
-
-                it('fires error callback if error occurred during subscribing', function (done) {
-                    wampy.subscribe('subscribe.topic10', {
-                        onSuccess: function () {
-                        },
-                        onError: function (e) {
-                            done();
-                        },
-                        onEvent: function (e) {
-                        }
-                    });
-                });
-
-                it('fires error callback if error occurred during unsubscribing', function (done) {
-                    wampy.unsubscribe('subscribe.topic3', {
-                        onSuccess: function () {
-                        },
-                        onError: function (e) {
-                            done();
-                        }
-                    });
-
-                });
-
-                it('fires error callback if error occurred during publishing', function (done) {
-                    wampy.publish('subscribe.topic4', null, {
-                        onSuccess: function () {
-                        },
-                        onError: function (e) {
-                            done();
-                        }
-                    });
-                });
-
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
             });
 
-            describe('RPC module', function () {
+            it('allows to unsubscribe from topic only specified handler', function (done) {
 
-                before(function (done) {
-                    wampy.options({
-                        onClose: function () {
-                            setTimeout(function () {
-                                wampy.options({
-                                    onConnect: function () {
-                                        done();
-                                    }
-                                })
-                                    .connect();
-                            }, 1);
-                        },
-                        onReconnect  : null,
-                        onError      : null
-                    }).disconnect();
+                let handler3 = function (e) {
+                        done('Called removed handler');
+                    },
+                    handler2 = function (e) {
+                        done();
+                    },
+                    handler1 = function (e) {
+                        done('Called removed handler');
+                    };
+
+                wampy.subscribe('subscribe.topic9', handler1).then(() => {
+                    return wampy.subscribe('subscribe.topic9', handler2);
+                }).then(() => {
+                    return wampy.subscribe('subscribe.topic9', handler3);
+                }).then(() => {
+                    return wampy.unsubscribe('subscribe.topic9', handler1);
+                }).then(() => {
+                    return wampy.unsubscribe('subscribe.topic9', handler3);
+                }).then(() => {
+                    return wampy.publish('subscribe.topic9', 'payload', { exclude_me: false });
                 });
+            });
 
-                it('disallows to call rpc if server does not provide DEALER role', function () {
-                    wampy.call('call.rpc1', 'payload', function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
+            it('allows to unsubscribe all handlers from topic', async function () {
+                await wampy.unsubscribe('subscribe.topic9');
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
 
-                    wampy.call('call.rpc1', 'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+            it('receives error when trying to unsubscribe from non existent subscription', async function () {
+                try {
+                    await wampy.unsubscribe('subscribe.topic.non-exists');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NonExistUnsubscribeError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE);
+            });
+
+            it('fires error callback if error occurred during subscribing', async function () {
+                try {
+                    await wampy.subscribe('subscribe.topic10', function (e) { });
+                } catch (e) {
+                    expect(e.error).to.be.equal('wamp.subscribe.error');
+                }
+            });
+
+            it('fires error callback if error occurred during unsubscribing', async function () {
+                try {
+                    await wampy.unsubscribe('subscribe.topic3');
+                } catch (e) {
+                    expect(e.error).to.be.equal('wamp.unsubscribe.error');
+                }
+            });
+
+            it('fires error callback if error occurred during publishing', async function () {
+                try {
+                    await wampy.publish('subscribe.topic4');
+                } catch(e) {
+                    expect(e.error).to.be.equal('wamp.publish.error');
+                }
+            });
+
+        });
+
+        describe('RPC module', function () {
+
+            before(async function () {
+                await wampy.options({
+                    onReconnect  : null,
+                    onError      : null
+                }).disconnect();
+                await wampy.connect();
+            });
+
+            it('disallows to call rpc if server does not provide DEALER role', async function () {
+                try {
+                    await wampy.call('call.rpc1', 'payload', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoDealerError);
+                }
+            });
+
+            it('disallows to cancel rpc if server does not provide DEALER role', async function () {
+                try {
+                    await wampy.cancel(1234567);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoDealerError);
+                }
+            });
+
+            it('disallows to register rpc if server does not provide DEALER role', async function () {
+                try {
+                    await wampy.register('call.rpc2', function (e) { });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoDealerError);
+                }
+            });
+
+            it('disallows to unregister rpc if server does not provide DEALER role', async function () {
+                try {
+                    await wampy.unregister('call.rpc3', function (e) { });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoDealerError);
+                }
+            });
+
+            it('disallows to register RPC with invalid URI', function (done) {
+                wampy.options({
+                    onClose: function () {
+                        setTimeout(async function () {
+                            await wampy.connect();
+
+                            try {
+                                await wampy.register('qwe.asd.zxc.', function (e) {});
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.UriError);
                             }
-                        }
-                    );
 
-                });
-
-                it('disallows to cancel rpc if server does not provide DEALER role', function () {
-                    wampy.cancel(1234567, function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
-
-                    wampy.cancel(1234567,
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                            try {
+                                await wampy.register('qwe.asd..zxc', function (e) {});
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.UriError);
                             }
-                        }
-                    );
-                });
 
-                it('disallows to register rpc if server does not provide DEALER role', function () {
-                    wampy.register('call.rpc2', function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
-
-                    wampy.register('call.rpc2',
-                        {
-                            rpc: function (e) {
-                            },
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                            try {
+                                await wampy.register('qq,ww,ee', function (e) {});
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.UriError);
                             }
-                        }
-                    );
-                });
 
-                it('disallows to unregister rpc if server does not provide DEALER role', function () {
-                    wampy.unregister('call.rpc3', function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_DEALER);
-
-                    wampy.unregister('call.rpc3',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_DEALER.description);
+                            try {
+                                await wampy.register('qq:www:ee', function (e) {});
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.UriError);
                             }
-                        }
-                    );
-                });
-
-                it('disallows to register RPC with invalid URI', function (done) {
-                    wampy.options({
-                        onClose: function () {
-                            setTimeout(function () {
-                                wampy.connect();
-                            }, 1);
-                        },
-                        onConnect: function () {
-
-                            wampy.register('qwe.asd.zxc.', function (e) {
-                            });
-                            expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                            wampy.register('qwe.asd..zxc', function (e) {
-                            });
-                            expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                            wampy.register('qq,ww,ee', function (e) {
-                            });
-                            expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                            wampy.register('qq:www:ee', function (e) {
-                            });
-                            expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                            wampy.register('qq:www:ee',
-                                {
-                                    rpc: function (e) {
-                                    },
-                                    onSuccess: function (e) {
-                                    },
-                                    onError: function (e) {
-                                        expect(e.error).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
-                                    }
-                                }
-                            );
 
                             done();
 
-                        }
-                    }).disconnect();
-                });
+                        }, 1);
+                    }
+                }).disconnect();
+            });
 
-                it('checks for valid advanced options during RPC registration', function () {
+            it('checks for valid advanced options during RPC registration', function () {
+                try {
                     wampy.register(
                         'qqq.www.eee',
-                        {
-                            rpc: function (e) { },
-                            onSuccess: function (e) { },
-                            onError: function (e) {
-                                expect(e).to.have.property('error', WAMP_ERROR_MSG.INVALID_PARAM.description);
-                            }
-                        },
+                        function (e) {},
                         {
                             match: 'invalidoption',
+                            invoke: 'single'
+                        }
+                    );
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                try {
+                    wampy.register(
+                        'qqq.www.eee',
+                        function (e) {},
+                        {
+                            match: 'prefix',
                             invoke: 'invalidoption'
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                try {
                     wampy.register(
                         'qqq.www.eee',
-                        {
-                            rpc: function (e) { },
-                            onSuccess: function (e) { },
-                            onError: function (e) {
-                                expect(e).to.have.property('error', WAMP_ERROR_MSG.INVALID_PARAM.description);
-                            }
-                        },
+                        function (e) {},
                         'string instead of object'
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
-                });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+            });
 
-                it('allows to register RPC', function (done) {
-                    wampy.register('register.rpc1', function (e) {
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                    setTimeout(function () {
-                        done();
-                    }, 10);
-                });
+            it('allows to register RPC', async function () {
+                return wampy.register('register.rpc1', function (e) {});
+            });
 
-                it('allows to register RPC with notification on registration', function (done) {
-                    wampy.register('register.rpc2', {
-                        rpc: function (e) {
-                        },
-                        onSuccess: function () {
-                            done();
-                        },
-                        onError: function () {
-                            done('Error during RPC registration');
-                        }
-                    });
-                });
+            it('allows to register prefix-based RPC', async function () {
+                return wampy.register('register.prefix', function (e) {}, { match: 'prefix' });
+            });
 
-                it('allows to register prefix-based RPC', function (done) {
-                    wampy.register('register.prefix', {
-                        rpc: function (e) {
-                        },
-                        onSuccess: function () {
-                            done();
-                        },
-                        onError: function () {
-                            done('Error during RPC registration');
-                        }
-                    }, { match: 'prefix' });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
+            it('allows to register wildcard-based RPC', async function () {
+                return wampy.register('register..wildcard', function (e) {}, { match: 'wildcard' });
+            });
 
-                it('allows to register wildcard-based RPC', function (done) {
-                    wampy.register('register..wildcard', {
-                        rpc: function (e) {
-                        },
-                        onSuccess: function () {
-                            done();
-                        },
-                        onError: function () {
-                            done('Error during RPC registration');
-                        }
-                    }, { match: 'wildcard' });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
+            it('allows to specify invocation policy during RPC registration', async function () {
+                return wampy.register('register.invocation.policy', function (e) {}, { invoke: 'roundrobin' });
+            });
 
-                it('allows to specify invocation policy during RPC registration', function (done) {
-                    wampy.register('register.invocation.policy', {
-                        rpc: function (e) {
-                        },
-                        onSuccess: function () {
-                            done();
-                        },
-                        onError: function () {
-                            done('Error during RPC registration');
-                        }
-                    }, { invoke: 'roundrobin' });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
+            it('disallows to register RPC with same name', async function () {
+                try {
+                    await wampy.register('register.rpc1', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.RPCAlreadyRegisteredError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED);
+            });
 
-                it('disallows to register RPC with same name', function () {
-                    wampy.register('register.rpc2', function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED);
-                });
+            it('disallows to call RPC with invalid URI', async function () {
+                try {
+                    await wampy.call('qwe.asd.zxc.', 'payload', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
 
-                it('disallows to call RPC with invalid URI', function () {
-                    wampy.call('qwe.asd.zxc.', 'payload', function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+                try {
+                    await wampy.call('qwe.asd..zxc', 'payload', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
 
-                    wampy.call('qwe.asd..zxc', 'payload', function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+                try {
+                    await wampy.call('qq,ww,ee', 'payload', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
 
-                    wampy.call('qq,ww,ee', 'payload', function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
+                try {
+                    await wampy.call('qq:www:ee', 'payload', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+            });
 
-                    wampy.call('qq:www:ee', 'payload', function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.URI_ERROR);
-
-                    wampy.call('qq:www:ee', 'payload', {
-                        onSuccess: function (e) {
-                        },
-                        onError: function (e) {
-                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
-                        }
-                    });
-                });
-
-                it('disallows to call RPC without specifying result handler', function () {
-                    wampy.call('qqq.www.eee', 'payload');
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC);
-
-                    wampy.call('qqq.www.eee', 'payload', {
-                        onError: function (e) {
-                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
-                        }
-                    });
-                });
-
-                it('checks for valid advanced options on calling RPC', function () {
-                    wampy.call(
+            it('checks for valid advanced options on calling RPC', async function () {
+                try {
+                    await wampy.call(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         'string instead of object'
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
 
-                    wampy.call(
+                try {
+                    await wampy.call(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         123
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
 
-                    wampy.call(
+                try {
+                    await wampy.call(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         function () {
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
 
-                    wampy.call(
+                try {
+                    await wampy.call(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         {
                             timeout: 'string instead of number'
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
 
-                    wampy.call(
+                try {
+                    await wampy.call(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         {
                             timeout: {}
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
 
-                    wampy.call(
+                try {
+                    await wampy.call(
                         'qqq.www.eee',
                         'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                            }
-                        },
                         {
                             timeout: true
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.INVALID_PARAM);
-                });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
 
-                it('disallows to unregister rpc if there is no such registration', function () {
-                    wampy.unregister('call.rpc4', function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG);
-                });
-
-                it('allows to call RPC without payload', function (done) {
-                    wampy.call('call.rpc1', null, function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.undefined;
-                        expect(e.argsDict).to.be.undefined;
-                        done();
-                    });
-                });
-
-                it('allows to call RPC with int payload', function (done) {
-                    wampy.call('call.rpc2', 25, function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(25);
-                        done();
-                    });
-                });
-
-                it('allows to call RPC with string payload', function (done) {
-                    wampy.call('call.rpc3', 'payload', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal('payload');
-                        done();
-                    });
-                });
-
-                it('allows to call RPC with array payload', function (done) {
-                    wampy.call('call.rpc4', [1, 2, 3, 4, 5], function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        done();
-                    });
-                });
-
-                it('allows to call RPC with hash-table payload', function (done) {
-                    let i = 1, payload = { key1: 100, key2: 'string-key' },
-                        cb = function (e) {
-                            expect(e).to.be.an('object');
-                            expect(e.argsList).to.be.an('array');
-                            expect(e.argsList).to.have.lengthOf(0);
-                            expect(e.argsDict).to.be.an('object');
-                            expect(e.argsDict).to.be.deep.equal(payload);
-
-                            if (i === 2) {
-                                done();
-                            } else {
-                                i++;
-                            }
-                        };
-
-                    wampy.call('call.rpc5', payload, cb)
-                        .call('call.rpc5', { argsDict: payload }, cb);
-                });
-
-                it('allows to call RPC with both array and hash-table payload', function (done) {
-                    let dictpayload = { key1: 100, key2: 'string-key' },
-                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
-
-                    wampy.call('call.rpc5', payload, function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(dictpayload);
-                        done();
-                    });
-                });
-
-                it('allows to call RPC with different advanced options', function (done) {
-                    wampy.call(
-                        'call.rpc6',
+                try {
+                    await wampy.call(
+                        'qqq.www.eee',
                         'payload',
-                        function (e) {
+                        {
+                            progress_callback: true
+                        }
+                    );
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+
+                try {
+                    await wampy.call(
+                        'qqq.www.eee',
+                        'payload',
+                        {
+                            progress_callback: 'not a function'
+                        }
+                    );
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+            });
+
+            it('disallows to unregister rpc if there is no such registration', async function () {
+                try {
+                    await wampy.unregister('call.rpc4', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NonExistRPCUnregistrationError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG);
+            });
+
+            it('allows to call RPC without payload', async function () {
+                let res = await wampy.call('call.rpc1');
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.undefined;
+                expect(res.argsDict).to.be.undefined;
+            });
+
+            it('allows to call RPC with int payload', async function () {
+                let res = await wampy.call('call.rpc2', 25);
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(25);
+            });
+
+            it('allows to call RPC with string payload', async function () {
+                let res = await wampy.call('call.rpc3', 'payload');
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal('payload');
+            });
+
+            it('allows to call RPC with array payload', async function () {
+                let res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5]);
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(1);
+                expect(res.argsList[4]).to.be.equal(5);
+            });
+
+            it('allows to call RPC with hash-table payload', async function () {
+                let payload = { key1: 100, key2: 'string-key' }, res;
+
+                res = await wampy.call('call.rpc5', payload);
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList).to.have.lengthOf(0);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(payload);
+
+                res = await wampy.call('call.rpc5', { argsDict: payload });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList).to.have.lengthOf(0);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(payload);
+            });
+
+            it('allows to call RPC with both array and hash-table payload', async function () {
+                let dictpayload = { key1: 100, key2: 'string-key' },
+                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                let res = await wampy.call('call.rpc5', payload);
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList[0]).to.be.equal(1);
+                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(dictpayload);
+            });
+
+            it('allows to call RPC with different advanced options', async function () {
+                let res = await wampy.call('call.rpc6', 'payload', {
+                    disclose_me: true,
+                    receive_progress: false,
+                    timeout: 5000
+                });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal('payload');
+            });
+
+            it('allows to call RPC with progressive result receiving', async function () {
+                let progress = false;
+                let res = await wampy.call(
+                    'call.rpc7',
+                    'payload',
+                    {
+                        progress_callback: function (e) {
                             expect(e).to.be.an('object');
                             expect(e.argsList).to.be.an('array');
                             expect(e.argsDict).to.be.undefined;
-                            expect(e.argsList[0]).to.be.equal('payload');
-                            done();
-                        },
-                        {
-                            disclose_me: true,
-                            receive_progress: false,
-                            timeout: 5000
+                            progress = true;
                         }
-                    );
-                });
+                    }
+                );
+                expect(res.argsList[0]).to.be.equal(100);
+                expect(progress).to.be.true;
+            });
 
-                it('allows to call RPC with progressive result receiving', function (done) {
-                    wampy.call(
-                        'call.rpc7',
-                        'payload',
-                        function (e) {
-                            expect(e).to.be.an('object');
-                            expect(e.argsList).to.be.an('array');
-                            expect(e.argsDict).to.be.undefined;
-                            if (e.argsList[0] == 100) {
-                                done();
+            it('checks options during canceling RPC invocation', function (done) {
+                let reqId;
+
+                wampy.call(
+                    'call.rpc8',
+                    'payload',
+                    {
+                        progress_callback: function (res) {
+                            expect(res).to.be.an('object');
+                            expect(res.argsList).to.be.an('array');
+
+                            try {
+                                wampy.cancel(reqId, { mode: 'falseoption' });
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.InvalidParamError);
                             }
-                        },
-                        {
-                            receive_progress: true
-                        }
-                    );
-                });
 
-                it('checks options during canceling RPC invocation', function (done) {
-                    let reqId;
-
-                    wampy.call(
-                        'call.rpc8',
-                        'payload',
-                        {
-                            onSuccess: function (e) {
-                                expect(e).to.be.an('object');
-                                expect(e.argsList).to.be.an('array');
-
-                                wampy.cancel(reqId,
-                                    {
-                                        onSuccess: function () {
-                                        },
-                                        onError: function (e) {
-                                            expect(e).to.be.an('object');
-                                            expect(e).to.have.property('error', WAMP_ERROR_MSG.INVALID_PARAM.description);
-                                        }
-                                    },
-                                    {
-                                        mode: 'falseoption'
-                                    }
-                                );
-                                wampy.cancel(reqId,
-                                    {
-                                        onSuccess: function () {
-                                        },
-                                        onError: function (e) {
-                                            expect(e).to.be.an('object');
-                                            expect(e).to.have.property('error', WAMP_ERROR_MSG.INVALID_PARAM.description);
-                                        }
-                                    },
-                                    'string_instead_of_object'
-                                );
-                                done();
-                            },
-                            onError: function (e) {
-                                done();
+                            try {
+                                wampy.cancel(reqId, 'string_instead_of_object');
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.InvalidParamError);
                             }
-                        },
-                        {
-                            receive_progress: true
-                        }
-                    );
 
-                    reqId = wampy.getOpStatus().reqId;
-                });
-
-                it('allows to cancel RPC invocation', function (done) {
-                    let reqId;
-
-                    wampy.call(
-                        'call.rpc8',
-                        'payload',
-                        {
-                            onSuccess: function (e) {
-                                expect(e).to.be.an('object');
-                                expect(e.argsList).to.be.an('array');
-
-                                wampy.cancel(
-                                    reqId,
-                                    {
-                                        onSuccess: function () {
-                                        },
-                                        onError: function () {
-                                            done('Error occured during call canceling');
-                                        }
-                                    },
-                                    {
-                                        mode: 'kill'
-                                    }
-                                );
-                            },
-                            onError: function (e) {
-                                done();
-                            }
-                        },
-                        {
-                            receive_progress: true
-                        }
-                    );
-
-                    reqId = wampy.getOpStatus().reqId;
-                });
-
-                it('allows to unregister RPC', function (done) {
-                    wampy.unregister('register.rpc1', function (e) {
-                        expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                        done();
-                    });
-                });
-
-                it('allows to unregister RPC with notification on unregistering', function (done) {
-                    wampy.unregister(
-                        'register.rpc2',
-                        {
-                            onSuccess: function (e) {
-                                expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                                done();
-                            },
-                            onError: function (e) {
-                                done('Error during RPC unregistration!');
-                            }
-                        }
-                    );
-                });
-
-                it('allows to invoke asynchronous RPC without value', function (done) {
-                    wampy.register('register.rpc3', {
-                        rpc: function (e) {
-                            return new Promise(function (resolve, reject) {
-                                setTimeout(function () {
-                                    resolve();
-                                }, 1);
-                            });
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc3',
-                                null,
-                                function (e) {
-                                    expect(e).to.be.an('object');
-                                    expect(e.argsList).to.be.undefined;
-                                    expect(e.argsDict).to.be.undefined;
-                                    done();
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to invoke asynchronous RPC without value but with extra options', function (done) {
-                    wampy.register('register.rpc33', {
-                        rpc: function (e) {
-                            return new Promise(function (resolve, reject) {
-                                setTimeout(function () {
-                                    resolve({ options: { extra: true } });
-                                }, 1);
-                            });
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc33',
-                                null,
-                                function (e) {
-                                    expect(e).to.be.an('object');
-                                    expect(e.details).to.be.an('object');
-                                    expect(e.details.extra).to.be.true;
-                                    expect(e.argsList).to.be.undefined;
-                                    expect(e.argsDict).to.be.undefined;
-                                    done();
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to invoke pattern-based RPC providing original uri in options', function (done) {
-                    wampy.register('register.prefixbased', {
-                        rpc: function (e) {
-
-                            return new Promise(function (resolve, reject) {
-                                setTimeout(function () {
-                                    expect(e.details).to.have.property('topic', 'register.prefixbased.maiden');
-                                    resolve();
-                                }, 1);
-                            });
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.prefixbased.maiden',
-                                null,
-                                function (e) {
-                                    expect(e).to.be.an('object');
-                                    expect(e.details).to.be.an('object');
-                                    expect(e.argsList).to.be.undefined;
-                                    expect(e.argsDict).to.be.undefined;
-                                    done();
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    }, { match: 'prefix' });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to invoke asynchronous RPC with single value', function (done) {
-                    wampy.register('register.rpc4', {
-                        rpc: function (e) {
-                            return new Promise(function (resolve, reject) {
-                                setTimeout(function () {
-                                    resolve({ options: {}, argsList: 100 });
-                                }, 1);
-                            });
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc4',
-                                100,
-                                function (e) {
-                                    expect(e).to.be.an('object');
-                                    expect(e.argsList).to.be.an('array');
-                                    expect(e.argsDict).to.be.undefined;
-                                    expect(e.argsList[0]).to.be.equal(100);
-                                    done();
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to invoke asynchronous RPC with array value', function (done) {
-                    wampy.register('register.rpc5', {
-                        rpc: function (e) {
-                            return new Promise(function (resolve, reject) {
-                                setTimeout(function () {
-                                    resolve({ options: {}, argsList: [1, 2, 3, 4, 5] });
-                                }, 1);
-                            });
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc5',
-                                [1, 2, 3, 4, 5],
-                                function (e) {
-                                    expect(e).to.be.an('object');
-                                    expect(e.argsList).to.be.an('array');
-                                    expect(e.argsDict).to.be.undefined;
-                                    expect(e.argsList[0]).to.be.equal(1);
-                                    expect(e.argsList[4]).to.be.equal(5);
-                                    done();
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to invoke asynchronous RPC with hash-table value', function (done) {
-                    let payload = { key1: 100, key2: 'string-key' };
-                    wampy.register('register.rpc6', {
-                        rpc: function (e) {
-                            return new Promise(function (resolve, reject) {
-                                setTimeout(function () {
-                                    resolve({ options: {}, argsDict: payload });
-                                }, 1);
-                            });
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc6',
-                                payload,
-                                function (e) {
-                                    expect(e).to.be.an('object');
-                                    expect(e.argsList).to.be.an('array');
-                                    expect(e.argsList).to.have.lengthOf(0);
-                                    expect(e.argsDict).to.be.an('object');
-                                    expect(e.argsDict).to.be.deep.equal(payload);
-                                    done();
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to return progressive results from asynchronous RPC', function (done) {
-                    let payload = 1;
-                    wampy.register('register.rpc61', {
-                        rpc: function (e) {
-
-                            return new Promise(function (resolve, reject) {
-                                for (let i = 1; i <= 5; i++) {
-                                    (function (j, p) {
-                                        setTimeout(function () {
-                                            e.result_handler({ options: { progress: p }, argsList: j });
-                                        }, 10 * j);
-                                    }(i, i < 5));
-                                }
-
-                                setTimeout(function () {
-                                    resolve({ options: { progress: true }, argsList: 0 });
-                                }, 1);
-                            });
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc61',
-                                payload,
-                                function (e) {
-                                    expect(e).to.be.an('object');
-                                    expect(e.argsList).to.be.an('array');
-                                    expect(e.argsList).to.have.lengthOf(1);
-                                    //expect(e.argsDict).to.be.undefined;
-
-                                    if (e.argsList[0] < 5) {
-                                        expect(e.details.progress).to.be.true;
-                                    } else {
-                                        expect(e.details.progress).to.be.false;
-                                        done();
-                                    }
-
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('calls error handler if asynchronous RPC was rejected', function (done) {
-                    wampy.register('register.rpc7', {
-                        rpc: function (e) {
-                            return new Promise(function (resolve, reject) {
-                                setTimeout(function () {
-                                    reject('Rejecting promise rpc');
-                                }, 1);
-                            });
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc7',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                    },
-                                    onError: function () {
-                                        done();
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('calls error handler if asynchronous RPC raised exception', function (done) {
-                    wampy.register('register.rpc77', {
-                        rpc: function (e) {
-                            throw new Error('Raised exception in RPC');
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc77',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                    },
-                                    onError: function () {
-                                        done();
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('calls error handler with custom data if asynchronous RPC raised exception', function (done) {
-                    let definedUri = 'app.error.custom_invocation_exception',
-                        definedDetails = { key1: 'key1', key2: true, key3: 25 },
-                        definedArgsList = [1, 2, 3, 4, 5],
-                        definedArgsDict = { key1: 'key1', key2: true, key3: 25 };
-
-                    wampy.register('register.rpc88', {
-                        rpc: function (e) {
-                            let UserException = function () {
-                                this.error = definedUri;
-                                this.details = definedDetails;
-                                this.argsList = definedArgsList;
-                                this.argsDict = definedArgsDict;
-                            };
-
-                            throw new UserException();
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc88',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                    },
-                                    onError: function (e) {
-                                        expect(e.error).to.be.equal(definedUri);
-                                        expect(e.details).to.be.deep.equal(definedDetails);
-                                        expect(e.argsList).to.be.an('array');
-                                        expect(e.argsList[0]).to.be.equal(1);
-                                        expect(e.argsDict).to.be.deep.equal(definedArgsDict);
-
-                                        wampy.register('register.rpc99', {
-                                            rpc: function (e) {
-                                                let UserException = function () {
-                                                    this.error = definedUri;
-                                                    // no details
-                                                    // no args list, only args dict
-                                                    this.argsDict = definedArgsDict;
-                                                };
-
-                                                throw new UserException();
-                                            },
-                                            onSuccess: function (e) {
-                                                wampy.call(
-                                                    'register.rpc99',
-                                                    100,
-                                                    {
-                                                        onSuccess: function () {
-                                                        },
-                                                        onError: function (e) {
-                                                            expect(e.error).to.be.equal(definedUri);
-                                                            expect(e.details).to.be.deep.equal({});
-                                                            expect(e.argsList).to.be.an('array');
-                                                            expect(e.argsList).to.have.lengthOf(0);
-                                                            expect(e.argsDict).to.be.deep.equal(definedArgsDict);
-                                                            done();
-                                                        }
-                                                    },
-                                                    { exclude_me: false }
-                                                );
-                                            },
-                                            onError: function (e) {
-                                                done('Error during RPC registration!');
-                                            }
-                                        });
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('calls error handler on trying to call nonexistent RPC', function (done) {
-                    wampy.call(
-                        'nonexistent.rpc',
-                        100,
-                        {
-                            onSuccess: function () {
-                            },
-                            onError: function () {
-                                done();
-                            }
-                        }
-                    );
-                });
-
-                it('calls error handler on trying to unregister non existent RPC', function () {
-                    wampy.unregister(
-                        'register.nonexistent',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG.description);
-                            }
-                        }
-                    );
-                });
-
-                it('disallows to unregister RPC with invalid URI', function () {
-                    wampy.unregister(
-                        'q:w:e',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.URI_ERROR.description);
-                            }
-                        }
-                    );
-                });
-
-                it('disallows to register RPC without providing rpc itself', function () {
-                    wampy.register(
-                        'register.rpc8',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.NO_CALLBACK_SPEC.description);
-                            }
-                        }
-                    );
-                });
-
-                it('disallows to register RPC with the same name', function (done) {
-                    wampy.register('register.rpc9', {
-                        rpc: function (e) {
-                        },
-                        onSuccess: function (e) {
-                            wampy.register('register.rpc9', {
-                                rpc: function (e) {
-                                },
-                                onSuccess: function (e) {
-                                },
-                                onError: function (e) {
-                                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED.description);
-                                    done();
-                                }
-                            });
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('disallows to cancel non existent rpc invocation', function () {
-                    wampy.cancel(1234567, function (e) {
-                    });
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID);
-
-                    wampy.cancel(1234567,
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID.description);
-                            }
-                        }
-                    );
-                });
-
-                it('fires error callback if error occurred during registering', function (done) {
-                    wampy.register('call.rpc10', {
-                        rpc: function () {
-                        },
-                        onSuccess: function () {
-                        },
-                        onError: function (e) {
                             done();
                         }
-                    });
-                });
-
-                it('fires error callback if error occurred during unregistering', function (done) {
-                    wampy.unregister('register.rpc9', {
-                        onSuccess: function () {
-                        },
-                        onError: function (e) {
-                            done();
-                        }
-                    });
-
-                });
-
-                it('fires error handler if error occurred during RPC call', function (done) {
-                    let i = 0;
-                    wampy.call('call.rpc1', null, {
-                        onSuccess: function (e) {
-                            done('Reached success. Check Server side');
-                        },
-                        onError: function (e) {
-                            expect(e.error).to.be.equal('call.error');
-
-                            i++;
-                            if (i === 3) {
-                                done();
-                            }
-                        }
-                    });
-
-                    wampy.call(
-                        'call.rpc1',
-                        [1, 2, 3, 4, 5],
-                        {
-                            onSuccess: function (e) {
-                                done('Reached success. Check Server side');
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal('call.error');
-                                expect(e.argsList).to.be.an('array');
-                                expect(e.argsList[0]).to.be.equal(1);
-                                expect(e.argsList[4]).to.be.equal(5);
-                                expect(e.argsList).to.have.lengthOf(5);
-                                expect(e.argsDict).to.be.undefined;
-
-                                i++;
-                                if (i === 3) {
-                                    done();
-                                }
-                            }
-                        }
-                    );
-
-                    wampy.call(
-                        'call.rpc1',
-                        { k1: 1, k2: 2 },
-                        {
-                            onSuccess: function (e) {
-                                done('Reached success. Check Server side');
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal('call.error');
-                                expect(e.argsList).to.be.an('array');
-                                expect(e.argsList).to.have.lengthOf(0);
-                                expect(e.argsDict).to.be.deep.equal({ k1: 1, k2: 2 });
-
-                                i++;
-                                if (i === 3) {
-                                    done();
-                                }
-                            }
-                        }
-                    );
-                });
+                    }
+                );
+                reqId = wampy.getOpStatus().reqId;
 
             });
 
-            describe('Payload PassThru Mode', function () {
+            it('allows to cancel RPC invocation', function (done) {
+                let reqId;
 
-                if (name === 'JSON Serializer' || name === 'MsgPack Serializer w/ Blob') {
-                    return;
-                }
-
-                before(function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            msgpack: new MsgpackSerializer(),
-                            cbor: new CborSerializer()
-                        },
-                        onError: null,
-                        onClose: function () {
-                            setTimeout(function () {
-                                wampy.options({
-                                    onConnect: function () {
-                                        done();
-                                    }
-                                })
-                                    .connect();
-                            }, 1);
+                wampy.call(
+                    'call.rpc8',
+                    'payload',
+                    {
+                        progress_callback: function () {
+                            wampy.cancel(reqId, { mode: 'kill' });
                         }
-                    }).disconnect();
+                    }
+                ).catch((e) => {
+                    done();
+                });
+                reqId = wampy.getOpStatus().reqId;
+            });
+
+            it('allows to unregister RPC', async function () {
+                return wampy.unregister('register.rpc1');
+            });
+
+            it('allows to invoke asynchronous RPC without value', async function () {
+                await wampy.register('register.rpc3', function (e) {
+                    return new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            resolve();
+                        }, 1);
+                    });
+                });
+                let res = await wampy.call(
+                    'register.rpc3',
+                    null,
+                    { exclude_me: false }
+                );
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.undefined;
+                expect(res.argsDict).to.be.undefined;
+            });
+
+            it('allows to invoke asynchronous RPC without value but with extra options', async function () {
+                await wampy.register('register.rpc33', function (e) {
+                    return new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            resolve({ options: { extra: true } });
+                        }, 1);
+                    });
+                });
+                let res = await wampy.call(
+                    'register.rpc33',
+                    null,
+                    { disclose_me: false }
+                );
+                expect(res).to.be.an('object');
+                expect(res.details).to.be.an('object');
+                expect(res.details.extra).to.be.true;
+                expect(res.argsList).to.be.undefined;
+                expect(res.argsDict).to.be.undefined;
+            });
+
+            it('allows to invoke pattern-based RPC providing original uri in options', async function () {
+                await wampy.register('register.prefixbased', function (e) {
+                    return new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            expect(e.details).to.have.property('topic', 'register.prefixbased.maiden');
+                            resolve();
+                        }, 1);
+                    });
+                }, { match: 'prefix' });
+                let res = await wampy.call('register.prefixbased.maiden');
+                expect(res).to.be.an('object');
+                expect(res.details).to.be.an('object');
+                expect(res.argsList).to.be.undefined;
+                expect(res.argsDict).to.be.undefined;
+            });
+
+            it('allows to invoke asynchronous RPC with single value', async function () {
+                await wampy.register('register.rpc4', function (e) {
+                    return new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            resolve({ options: {}, argsList: 100 });
+                        }, 1);
+                    });
+                });
+                let res = await wampy.call(
+                    'register.rpc4',
+                    100
+                );
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(100);
+            });
+
+            it('allows to invoke asynchronous RPC with array value', async function () {
+                await wampy.register('register.rpc5', function (e) {
+                    return new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            resolve({ options: {}, argsList: [1, 2, 3, 4, 5] });
+                        }, 1);
+                    });
+                });
+                let res = await wampy.call(
+                    'register.rpc5',
+                    [1, 2, 3, 4, 5]
+                );
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(1);
+                expect(res.argsList[4]).to.be.equal(5);
+            });
+
+            it('allows to invoke asynchronous RPC with hash-table value', async function () {
+                let payload = { key1: 100, key2: 'string-key' };
+                await wampy.register('register.rpc6', function (e) {
+                    return new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            resolve({ options: {}, argsDict: payload });
+                        }, 1);
+                    });
+                });
+                let res = await wampy.call(
+                    'register.rpc6',
+                    payload
+                );
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList).to.have.lengthOf(0);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(payload);
+            });
+
+            it('allows to return progressive results from asynchronous RPC', async function () {
+                let payload = 1;
+                let progress = false;
+                await wampy.register('register.rpc61', function (e) {
+
+                    return new Promise(function (resolve, reject) {
+                        for (let i = 1; i <= 5; i++) {
+                            (function (j, p) {
+                                setTimeout(function () {
+                                    e.result_handler({ options: { progress: p }, argsList: j });
+                                }, 10 * j);
+                            }(i, i < 5));
+                        }
+
+                        setTimeout(function () {
+                            resolve({ options: { progress: true }, argsList: 0 });
+                        }, 1);
+                    });
+                });
+                let res = await wampy.call(
+                    'register.rpc61',
+                    payload,
+                    {
+                        progress_callback: function () {
+                            progress = true;
+                        }
+                    }
+                );
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList).to.have.lengthOf(1);
+                expect(res.argsList[0]).to.be.equal(5);
+                expect(progress).to.be.true;
+                expect(res.details.progress).to.be.false;
+            });
+
+            it('calls error handler if asynchronous RPC was rejected', async function () {
+                await wampy.register('register.rpc7', function (e) {
+                    return new Promise(function (resolve, reject) {
+                        setTimeout(function () {
+                            reject('Rejecting promise rpc');
+                        }, 1);
+                    });
                 });
 
-                it('disallows to publish event if server does not support PPT Mode', function () {
-                    wampy.publish('qwe.asd.zxc',
+                try {
+                    await wampy.call('register.rpc7', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal('wamp.error.invocation_exception');
+                }
+            });
+
+            it('calls error handler if asynchronous RPC raised exception', async function () {
+                await wampy.register('register.rpc77', function (e) {
+                    throw new Error('Raised exception in RPC');
+                });
+
+                try {
+                    await wampy.call('register.rpc77', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal('wamp.error.invocation_exception');
+                }
+            });
+
+            it('calls error handler with custom data if asynchronous RPC raised exception', async function () {
+                let definedUri = 'app.error.custom_invocation_exception',
+                    definedDetails = { key1: 'key1', key2: true, key3: 25 },
+                    definedArgsList = [1, 2, 3, 4, 5],
+                    definedArgsDict = { key1: 'key1', key2: true, key3: 25 };
+
+                await wampy.register('register.rpc88', function (e) {
+                    let UserException = function () {
+                        this.error = definedUri;
+                        this.details = definedDetails;
+                        this.argsList = definedArgsList;
+                        this.argsDict = definedArgsDict;
+                    };
+
+                    throw new UserException();
+                });
+
+                try {
+                    await wampy.call('register.rpc88', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal(definedUri);
+                    expect(e.details).to.be.deep.equal(definedDetails);
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsDict).to.be.deep.equal(definedArgsDict);
+                }
+
+                await wampy.register('register.rpc99', function (e) {
+                    let UserException = function () {
+                        this.error = definedUri;
+                        // no details
+                        // no args list, only args dict
+                        this.argsDict = definedArgsDict;
+                    };
+
+                    throw new UserException();
+                });
+
+                try {
+                    await wampy.call('register.rpc99', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal(definedUri);
+                    expect(e.details).to.be.deep.equal({});
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList).to.have.lengthOf(0);
+                    expect(e.argsDict).to.be.deep.equal(definedArgsDict);
+                }
+            });
+
+            it('calls error handler on trying to call nonexistent RPC', async function () {
+                try {
+                    await wampy.call('nonexistent.rpc', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal('wamp.error.invocation_exception');
+                }
+            });
+
+            it('calls error handler on trying to unregister non existent RPC', function () {
+                try {
+                    wampy.unregister('register.nonexistent');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NonExistRPCUnregistrationError);
+                }
+            });
+
+            it('disallows to unregister RPC with invalid URI', function () {
+                try {
+                    wampy.unregister('q:w:e');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+            });
+
+            it('disallows to register RPC without providing rpc itself', function () {
+                try {
+                    wampy.register('register.rpc8');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoCallbackError);
+                }
+            });
+
+            it('disallows to register RPC with the same name', async function () {
+                await wampy.register('register.rpc9', function (e) {});
+
+                try {
+                    await wampy.register('register.rpc9', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.RPCAlreadyRegisteredError);
+                }
+            });
+
+            it('disallows to cancel non existent rpc invocation', function () {
+                try {
+                    wampy.cancel(1234567);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NonExistRPCReqIdError);
+                }
+            });
+
+            it('fires error callback if error occurred during registering', async function () {
+                try {
+                    await wampy.register('call.rpc10', function (e) {});
+                } catch (e) {
+                    expect(e.error).to.be.equal('wamp.register.error');
+                }
+            });
+
+            it('fires error callback if error occurred during unregistering', async function () {
+                try {
+                    await wampy.unregister('register.rpc9');
+                } catch (e) {
+                    expect(e.error).to.be.equal('wamp.unregister.error');
+                }
+            });
+
+            it('fires error handler if error occurred during RPC call', async function () {
+                try {
+                    await wampy.call('call.rpc1');
+                } catch (e) {
+                    expect(e.error).to.be.equal('call.error');
+                }
+
+                try {
+                    await wampy.call('call.rpc1', [1, 2, 3, 4, 5]);
+                } catch (e) {
+                    expect(e.error).to.be.equal('call.error');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsList).to.have.lengthOf(5);
+                    expect(e.argsDict).to.be.undefined;
+                }
+
+                try {
+                    await wampy.call('call.rpc1', { k1: 1, k2: 2 });
+                } catch (e) {
+                    expect(e.error).to.be.equal('call.error');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList).to.have.lengthOf(0);
+                    expect(e.argsDict).to.be.deep.equal({ k1: 1, k2: 2 });
+                }
+            });
+
+        });
+
+        describe('Payload PassThru Mode', function () {
+
+            if (name === 'JSON Serializer' || name === 'MsgPack Serializer w/ Blob') {
+                return;
+            }
+
+            before(async function () {
+                await wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        msgpack: new MsgpackSerializer(),
+                        cbor: new CborSerializer()
+                    },
+                    onError: null,
+                    onReconnect: null,
+                    onClose: null
+                }).disconnect();
+                await wampy.connect();
+            });
+
+            it('disallows to publish event if server does not support PPT Mode', async function () {
+                try {
+                    await wampy.publish('qwe.asd.zxc',
                         25,
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
-                            }
-                        },
                         {
                             exclude_me: false,
                             ppt_scheme: 'x_custom_scheme'
                         }
                     );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED);
-                });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.PPTNotSupportedError);
+                }
+            });
 
-                it('disallows to call rpc if server does not support PPT Mode', function (done) {
-                    wampy.call('call.rpc1', 'payload',
-                        {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.description);
-                            }
-                        },
-                        { ppt_scheme: 'x_custom_scheme' }
-                    );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED);
+            it('disallows to call rpc if server does not support PPT Mode', async function () {
+                try {
+                    await wampy.call('call.rpc1', 'payload', { ppt_scheme: 'x_custom_scheme' });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.PPTNotSupportedError);
+                }
 
-                    // To enable ppt mode on server for future tests
-                    wampy.options({
-                        onClose: function () {
-                            setTimeout(function () {
-                                wampy.options({
-                                    onConnect: function () {
-                                        done();
-                                    }
-                                })
-                                    .connect();
-                            }, 1);
-                        }
-                    }).disconnect();
+                // To enable ppt mode on server for future tests
+                await wampy.disconnect();
+                await wampy.connect();
+            });
 
-                });
+            it('disallows to call RPC with invalid ppt serializer', async function () {
+                try {
+                    await wampy.call('rpc.call', 25, { ppt_scheme: 'x_custom', ppt_serializer: 'invalid_serializer' });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.PPTSerializerInvalidError);
+                }
+            });
 
-                it('disallows to call RPC with invalid ppt serializer', function (done) {
-                    wampy.call('rpc.call', 25, {
-                        onSuccess: function () {
-                            done('RPC should not be called');
-                        },
-                        onError: function (e) {
-                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
-                            done();
-                        }
-                    }, { ppt_scheme: 'x_custom', ppt_serializer: 'invalid_serializer' });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.code);
-                });
+            it('disallows to publish with invalid ppt serializer', async function () {
+                try {
+                    await wampy.publish('qwe.asd.zxc', 25, { ppt_scheme: 'x_custom', ppt_serializer: 'invalid_serializer' });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.PPTSerializerInvalidError);
+                }
+            });
 
-                it('disallows to publish with invalid ppt serializer', function (done) {
-                    wampy.publish('qwe.asd.zxc', 25, {
-                        onSuccess: function () {
-                            done('Event should not be published');
-                        },
-                        onError: function (e) {
-                            expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.description);
-                            done();
-                        }
-                    }, { ppt_scheme: 'x_custom', ppt_serializer: 'invalid_serializer' });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID.code);
-                });
+            it('disallows to publish event if PPT Scheme is incorrect', async function () {
+                try {
+                    await wampy.publish('qwe.asd.zxc', 25, {
+                        exclude_me: false, ppt_scheme: 'invalid_scheme'
+                    });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.PPTInvalidSchemeError);
+                }
+            });
 
-                it('disallows to publish event if PPT Scheme is incorrect', function () {
-                    wampy.publish('qwe.asd.zxc',
+            it('disallows to call rpc if PPT Scheme is incorrect', async function () {
+                try {
+                    await wampy.call('call.rpc1', 'payload', { ppt_scheme: 'invalid_scheme' });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.PPTInvalidSchemeError);
+                }
+            });
+
+            it('allows to publish event with int payload in ppt mode (custom scheme, native serializer)', function (done) {
+                wampy.subscribe('subscribe.topic4', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(25);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic4',
                         25,
                         {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME.description);
-                            }
-                        },
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with string payload in ppt mode (custom scheme, native serializer)', function (done) {
+                wampy.subscribe('subscribe.topic5', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal('payload');
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic5',
+                        'payload',
                         {
                             exclude_me: false,
-                            ppt_scheme: 'invalid_scheme'
-                        }
-                    );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME);
+                            ppt_scheme: 'x_custom_scheme',
+                        });
                 });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
 
-                it('disallows to call rpc if PPT Scheme is incorrect', function () {
-                    wampy.call('call.rpc1', 'payload',
+            it('allows to publish event with array payload in ppt mode (custom scheme, native serializer)', function (done) {
+                wampy.subscribe('subscribe.topic6', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic6',
+                        [1, 2, 3, 4, 5],
                         {
-                            onSuccess: function (e) {
-                            },
-                            onError: function (e) {
-                                expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME.description);
-                            }
-                        },
-                        { ppt_scheme: 'invalid_scheme' }
-                    );
-                    expect(wampy.getOpStatus()).to.be.deep.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME);
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
+                let payload = { key1: 100, key2: 'string-key' };
+
+                wampy.subscribe('subscribe.topic7', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList).to.have.lengthOf(0);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(payload);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic7',
+                        { argsDict: payload },
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
+                let dictpayload = { key1: 100, key2: 'string-key' },
+                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                wampy.subscribe('subscribe.topic77', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(dictpayload);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic77',
+                        payload,
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to call RPC with int payload in ppt mode (custom scheme, native serializer)', async function () {
+                let res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(25);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+            });
+
+            it('allows to call RPC with string payload in ppt mode (custom scheme, native serializer)', async function () {
+                let res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal('payload');
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+            });
+
+            it('allows to call RPC with array payload in ppt mode (custom scheme, native serializer)', async function () {
+                let res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(1);
+                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+            });
+
+            it('allows to call RPC with hash-table payload in ppt mode (custom scheme, native serializer)', async function () {
+                let payload = { key1: 100, key2: 'string-key' }, res;
+
+                res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList).to.have.lengthOf(0);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+
+                res = await wampy.call('call.rpc5', { argsDict: payload }, { ppt_scheme: 'x_custom_scheme' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList).to.have.lengthOf(0);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+            });
+
+            it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, native serializer)', async function () {
+                let dictpayload = { key1: 100, key2: 'string-key' },
+                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                let res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList[0]).to.be.equal(1);
+                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(dictpayload);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+            });
+
+            it('allows to publish event with int payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                wampy.subscribe('subscribe.topic4.cbor', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(25);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                    expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic4.cbor',
+                        25,
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme',
+                            ppt_serializer: 'cbor'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with string payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                wampy.subscribe('subscribe.topic5.cbor', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal('payload');
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                    expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic5.cbor',
+                        'payload',
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme',
+                            ppt_serializer: 'cbor'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with array payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                wampy.subscribe('subscribe.topic6.cbor', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                    expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic6.cbor',
+                        [1, 2, 3, 4, 5],
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme',
+                            ppt_serializer: 'cbor'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                let payload = { key1: 100, key2: 'string-key' };
+
+                wampy.subscribe('subscribe.topic7.cbor', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList).to.have.lengthOf(0);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(payload);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                    expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic7.cbor',
+                        { argsDict: payload },
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme',
+                            ppt_serializer: 'cbor'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
+                let dictpayload = { key1: 100, key2: 'string-key' },
+                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                wampy.subscribe('subscribe.topic8.cbor', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(dictpayload);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                    expect(e.details.ppt_serializer).to.be.equal('cbor');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic8.cbor',
+                        payload,
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme',
+                            ppt_serializer: 'cbor'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to call RPC with int payload in ppt mode (custom scheme, cbor serializer)', async function () {
+                let res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(25);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('cbor');
+            });
+
+            it('allows to call RPC with string payload in ppt mode (custom scheme, cbor serializer)', async function () {
+                let res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal('payload');
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('cbor');
+            });
+
+            it('allows to call RPC with array payload in ppt mode (custom scheme, cbor serializer)', async function () {
+                let res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(1);
+                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('cbor');
+            });
+
+            it('allows to call RPC with hash-table payload in ppt mode (custom scheme, cbor serializer)', async function () {
+                let payload = { key1: 100, key2: 'string-key' }, res;
+
+                res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList).to.have.lengthOf(0);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('cbor');
+
+                res = await wampy.call('call.rpc5', { argsDict: payload }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList).to.have.lengthOf(0);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('cbor');
+            });
+
+            it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, cbor serializer)', async function () {
+                let dictpayload = { key1: 100, key2: 'string-key' },
+                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                let res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList[0]).to.be.equal(1);
+                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(dictpayload);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('cbor');
+            });
+
+            it('allows to publish event with int payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                wampy.subscribe('subscribe.topic4.msgpack', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(25);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                    expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic4.msgpack',
+                        25,
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme',
+                            ppt_serializer: 'msgpack'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with string payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                wampy.subscribe('subscribe.topic5.msgpack', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal('payload');
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                    expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic5.msgpack',
+                        'payload',
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme',
+                            ppt_serializer: 'msgpack'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with array payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                wampy.subscribe('subscribe.topic6.msgpack', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                    expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic6.msgpack',
+                        [1, 2, 3, 4, 5],
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme',
+                            ppt_serializer: 'msgpack'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                let payload = { key1: 100, key2: 'string-key' };
+
+                wampy.subscribe('subscribe.topic7.msgpack', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList).to.have.lengthOf(0);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(payload);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                    expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic7.msgpack',
+                        { argsDict: payload },
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme',
+                            ppt_serializer: 'msgpack'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
+                let dictpayload = { key1: 100, key2: 'string-key' },
+                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                wampy.subscribe('subscribe.topic8.msgpack', function (e) {
+                    expect(e).to.be.an('object');
+                    expect(e.argsList).to.be.an('array');
+                    expect(e.argsList[0]).to.be.equal(1);
+                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsDict).to.be.an('object');
+                    expect(e.argsDict).to.be.deep.equal(dictpayload);
+                    expect(e.details).to.be.an('object');
+                    expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                    expect(e.details.ppt_serializer).to.be.equal('msgpack');
+
+                    done();
+                }).then(() => {
+                    wampy.publish('subscribe.topic8.msgpack',
+                        payload,
+                        {
+                            exclude_me: false,
+                            ppt_scheme: 'x_custom_scheme',
+                            ppt_serializer: 'msgpack'
+                        });
+                });
+                expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to call RPC with int payload in ppt mode (custom scheme, msgpack serializer)', async function () {
+                let res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(25);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('msgpack');
+            });
+
+            it('allows to call RPC with string payload in ppt mode (custom scheme, msgpack serializer)', async function () {
+                let res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal('payload');
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('msgpack');
+            });
+
+            it('allows to call RPC with array payload in ppt mode (custom scheme, msgpack serializer)', async function () {
+                let res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(1);
+                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('msgpack');
+            });
+
+            it('allows to call RPC with hash-table payload in ppt mode (custom scheme, msgpack serializer)', async function () {
+                let payload = { key1: 100, key2: 'string-key' }, res;
+
+                res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList).to.have.lengthOf(0);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('msgpack');
+
+                res = await wampy.call('call.rpc5', { argsDict: payload }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList).to.have.lengthOf(0);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('msgpack');
+            });
+
+            it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, msgpack serializer)', async function () {
+                let dictpayload = { key1: 100, key2: 'string-key' },
+                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+
+                let res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList[0]).to.be.equal(1);
+                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.argsDict).to.be.an('object');
+                expect(res.argsDict).to.be.deep.equal(dictpayload);
+                expect(res.details).to.be.an('object');
+                expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                expect(res.details.ppt_serializer).to.be.equal('msgpack');
+            });
+
+            it('doesn\'t fail if event in ppt mode was received, while ppt serializer is not supported', function (done) {
+                wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                    }
+                }).subscribe('subscribe.topic.ppt.no.srzlr', function () {
+                    // Bad event is omitted and the next one is received
+                    done();
+                });
+            });
+
+            it('doesn\'t fail if event in ppt mode was received, while payload decode fails', function (done) {
+                wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        cbor: new CborSerializer()
+                    }
+                }).subscribe('subscribe.topic.ppt.srzlr.fails', function () {
+                    // Bad event is omitted and the next one is received
+                    done();
+                });
+            });
+
+            it('calls error handler if RPC Result is in ppt mode, while ppt serializer is not supported', async function () {
+                await wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer()
+                    }
+                }).register('register.rpc.ppt.no.srlzr', function () {});
+
+                try {
+                    await wampy.call('register.rpc.ppt.no.srlzr', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
+                }
+            });
+
+            it('calls error handler if RPC Result is in ppt mode, while ppt decoding fails', async function () {
+                await wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        cbor: new CborSerializer()
+                    }
+                }).register('register.rpc.ppt.srlzr.fail', function () {});
+
+                try {
+                    await wampy.call('register.rpc.ppt.srlzr.fail', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
+                }
+            });
+
+            it('calls error handler if RPC Invocation is in ppt mode, while ppt serializer is not supported', async function () {
+                await wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer()
+                    }
+                }).register('register.rpc.ppt.invoke.no.srlzr', function () {});
+
+                try {
+                    await wampy.call('register.rpc.ppt.invoke.no.srlzr', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
+                }
+            });
+
+            it('calls error handler if RPC Invocation is in ppt mode, while ppt decoding fails', async function () {
+                await wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        cbor: new CborSerializer()
+                    }
+                }).register('register.rpc.ppt.invoke.srlzr.fail', function () {});
+
+                try {
+                    await wampy.call('register.rpc.ppt.invoke.srlzr.fail', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
+                }
+            });
+
+            it('calls error handler if RPC YIELD is sent with wrong ppt_scheme', async function () {
+                await wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        cbor: new CborSerializer(),
+                        msgpack: new MsgpackSerializer(),
+                    }
+                }).register('register.rpc.ppt.yield.invalid.scheme', function () {
+                    return {
+                        argsList: [100],
+                        options : { ppt_scheme: 'invalid_scheme', ppt_serializer: 'cbor' }
+                    };
                 });
 
-                it('allows to publish event with int payload in ppt mode (custom scheme, native serializer)', function (done) {
-                    wampy.subscribe('subscribe.topic4', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(25);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                try {
+                    await wampy.call('register.rpc.ppt.yield.invalid.scheme', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME);
+                }
+            });
 
-                        done();
-                    })
-                        .publish('subscribe.topic4',
-                            25,
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            it('calls error handler if RPC YIELD results PPT packing fails', async function () {
+                await wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        cbor: new CborSerializer(),
+                        msgpack: new MsgpackSerializer(),
+                    }
+                }).register('register.rpc.ppt.yield.srzl.fails', function () {
+                    let a = {}, b = {};
+                    a.b = b;
+                    b.a = a;
+
+                    return {
+                        argsList: [100],
+                        argsDict: { a, b },
+                        options : { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'json' }
+                    };
                 });
 
-                it('allows to publish event with string payload in ppt mode (custom scheme, native serializer)', function (done) {
-                    wampy.subscribe('subscribe.topic5', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal('payload');
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                try {
+                    await wampy.call('register.rpc.ppt.yield.srzl.fails', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
+                }
+            });
 
-                        done();
-                    })
-                        .publish('subscribe.topic5',
-                            'payload',
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            it('calls error handler if RPC YIELD results PPT serializer is not supported', async function () {
+                await wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        cbor: new CborSerializer()
+                    }
+                }).register('register.rpc.ppt.yield.srzl.not.supported', function () {
+                    return {
+                        argsList: [100],
+                        options : { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
+                    };
                 });
 
-                it('allows to publish event with array payload in ppt mode (custom scheme, native serializer)', function (done) {
-                    wampy.subscribe('subscribe.topic6', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
+                try {
+                    await wampy.call('register.rpc.ppt.yield.srzl.not.supported', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
+                }
+            });
 
-                        done();
-                    })
-                        .publish('subscribe.topic6',
-                            [1, 2, 3, 4, 5],
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
+            it('allows to receive RPC Invocation in ppt mode', async function () {
+                await wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        msgpack: new MsgpackSerializer(),
+                        cbor: new CborSerializer()
+                    }
+                }).register('register.rpc.ppt.invoke', function () {
+                    return {
+                        argsList: [100],
+                        options : { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
+                    };
                 });
 
-                it('allows to publish event with hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
-                    let payload = { key1: 100, key2: 'string-key' };
+                return wampy.call('register.rpc.ppt.invoke', 100);
+            });
 
-                    wampy.subscribe('subscribe.topic7', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList).to.have.lengthOf(0);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(payload);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-
-                        done();
-                    })
-                        .publish('subscribe.topic7',
-                            { argsDict: payload },
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
-                    let dictpayload = { key1: 100, key2: 'string-key' },
-                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
-
-                    wampy.subscribe('subscribe.topic77', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(dictpayload);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-
-                        done();
-                    })
-                        .publish('subscribe.topic77',
-                            payload,
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to call RPC with int payload in ppt mode (custom scheme, native serializer)', function (done) {
-                    wampy.call('call.rpc2', 25, function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(25);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme' });
-                });
-
-                it('allows to call RPC with string payload in ppt mode (custom scheme, native serializer)', function (done) {
-                    wampy.call('call.rpc3', 'payload', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal('payload');
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme' });
-                });
-
-                it('allows to call RPC with array payload in ppt mode (custom scheme, native serializer)', function (done) {
-                    wampy.call('call.rpc4', [1, 2, 3, 4, 5], function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme' });
-                });
-
-                it('allows to call RPC with hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
-                    let i = 1, payload = { key1: 100, key2: 'string-key' },
-                        cb = function (e) {
-                            expect(e).to.be.an('object');
-                            expect(e.argsList).to.be.an('array');
-                            expect(e.argsList).to.have.lengthOf(0);
-                            expect(e.argsDict).to.be.an('object');
-                            expect(e.argsDict).to.be.deep.equal(payload);
-                            expect(e.details).to.be.an('object');
-                            expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-
-                            if (i === 2) {
+            it('doesn\'t fail if event in ppt mode was received, while broker didn\'t announce it', function (done) {
+                wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        msgpack: new MsgpackSerializer(),
+                        cbor: new CborSerializer()
+                    },
+                    onClose: function () {
+                        setTimeout(async function () {
+                            await wampy.connect();
+                            await wampy.subscribe('subscribe.topic.noppt', function () {
+                                // Bad event is omitted and the next one is received
                                 done();
-                            } else {
-                                i++;
-                            }
+                            });
+                        }, 1);
+                    }
+                }).disconnect();
+            });
+
+            it('calls error handler if RPC Result in ppt mode was received, while dealer didn\'t announce it', async function () {
+                await wampy.options({
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        msgpack: new MsgpackSerializer(),
+                        cbor: new CborSerializer()
+                    }
+                }).register('register.rpc.no.ppt', function () {});
+
+                try {
+                    await wampy.call('register.rpc.no.ppt', 100);
+                } catch (e) {
+                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED);
+                }
+            });
+
+            it('aborts connection when receiving invocation in ppt mode, while dealer didn\'t announce it', function (done) {
+                // This case should not happen at all, but for safety
+                wampy.options({
+                    autoReconnect: false,
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        msgpack: new MsgpackSerializer(),
+                        cbor: new CborSerializer()
+                    },
+                    onError: function () {
+                        done();
+                    },
+                    onClose: null
+                }).register('register.rpc.ppt.no.dealer.fail', function () {}).then(() => {
+                    wampy.call('register.rpc.ppt.no.dealer.fail', 100);
+                });
+            });
+
+            it('aborts connection if RPC YIELD is in ppt mode, while dealer didn\'t announce it', function (done) {
+                wampy.options({
+                    autoReconnect: false,
+                    payloadSerializers: {
+                        json: new JsonSerializer(),
+                        cbor: new CborSerializer(),
+                        msgpack: new MsgpackSerializer(),
+                    },
+                    onError: function () {
+                        done();
+                    },
+                    onClose: null
+                }).connect().then(() => {
+                    wampy.register('register.rpc.ppt.yield.noppt', function () {
+                        return {
+                            argsList: [100],
+                            options : { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
                         };
-
-                    wampy.call('call.rpc5', payload, cb, { ppt_scheme: 'x_custom_scheme' })
-                        .call('call.rpc5', { argsDict: payload }, cb, { ppt_scheme: 'x_custom_scheme' });
-                });
-
-                it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
-                    let dictpayload = { key1: 100, key2: 'string-key' },
-                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
-
-                    wampy.call('call.rpc5', payload, function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(dictpayload);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme' });
-                });
-
-                it('allows to publish event with int payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                    wampy.subscribe('subscribe.topic4.cbor', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(25);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('cbor');
-
-                        done();
-                    })
-                        .publish('subscribe.topic4.cbor',
-                            25,
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                                ppt_serializer: 'cbor'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with string payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                    wampy.subscribe('subscribe.topic5.cbor', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal('payload');
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('cbor');
-
-                        done();
-                    })
-                        .publish('subscribe.topic5.cbor',
-                            'payload',
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                                ppt_serializer: 'cbor'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with array payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                    wampy.subscribe('subscribe.topic6.cbor', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('cbor');
-
-                        done();
-                    })
-                        .publish('subscribe.topic6.cbor',
-                            [1, 2, 3, 4, 5],
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                                ppt_serializer: 'cbor'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                    let payload = { key1: 100, key2: 'string-key' };
-
-                    wampy.subscribe('subscribe.topic7.cbor', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList).to.have.lengthOf(0);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(payload);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('cbor');
-
-                        done();
-                    })
-                        .publish('subscribe.topic7.cbor',
-                            { argsDict: payload },
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                                ppt_serializer: 'cbor'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                    let dictpayload = { key1: 100, key2: 'string-key' },
-                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
-
-                    wampy.subscribe('subscribe.topic8.cbor', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(dictpayload);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('cbor');
-
-                        done();
-                    })
-                        .publish('subscribe.topic8.cbor',
-                            payload,
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                                ppt_serializer: 'cbor'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to call RPC with int payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                    wampy.call('call.rpc2', 25, function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(25);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('cbor');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
-                });
-
-                it('allows to call RPC with string payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                    wampy.call('call.rpc3', 'payload', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal('payload');
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('cbor');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
-                });
-
-                it('allows to call RPC with array payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                    wampy.call('call.rpc4', [1, 2, 3, 4, 5], function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('cbor');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
-                });
-
-                it('allows to call RPC with hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                    let i = 1, payload = { key1: 100, key2: 'string-key' },
-                        cb = function (e) {
-                            expect(e).to.be.an('object');
-                            expect(e.argsList).to.be.an('array');
-                            expect(e.argsList).to.have.lengthOf(0);
-                            expect(e.argsDict).to.be.an('object');
-                            expect(e.argsDict).to.be.deep.equal(payload);
-                            expect(e.details).to.be.an('object');
-                            expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                            expect(e.details.ppt_serializer).to.be.equal('cbor');
-
-                            if (i === 2) {
-                                done();
-                            } else {
-                                i++;
-                            }
-                        };
-
-                    wampy.call('call.rpc5', payload, cb, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' })
-                        .call('call.rpc5', { argsDict: payload }, cb, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
-                });
-
-                it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                    let dictpayload = { key1: 100, key2: 'string-key' },
-                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
-
-                    wampy.call('call.rpc5', payload, function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(dictpayload);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('cbor');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
-                });
-
-                it('allows to publish event with int payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                    wampy.subscribe('subscribe.topic4.msgpack', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(25);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
-
-                        done();
-                    })
-                        .publish('subscribe.topic4.msgpack',
-                            25,
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                                ppt_serializer: 'msgpack'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with string payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                    wampy.subscribe('subscribe.topic5.msgpack', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal('payload');
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
-
-                        done();
-                    })
-                        .publish('subscribe.topic5.msgpack',
-                            'payload',
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                                ppt_serializer: 'msgpack'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with array payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                    wampy.subscribe('subscribe.topic6.msgpack', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
-
-                        done();
-                    })
-                        .publish('subscribe.topic6.msgpack',
-                            [1, 2, 3, 4, 5],
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                                ppt_serializer: 'msgpack'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                    let payload = { key1: 100, key2: 'string-key' };
-
-                    wampy.subscribe('subscribe.topic7.msgpack', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList).to.have.lengthOf(0);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(payload);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
-
-                        done();
-                    })
-                        .publish('subscribe.topic7.msgpack',
-                            { argsDict: payload },
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                                ppt_serializer: 'msgpack'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                    let dictpayload = { key1: 100, key2: 'string-key' },
-                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
-
-                    wampy.subscribe('subscribe.topic8.msgpack', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(dictpayload);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
-
-                        done();
-                    })
-                        .publish('subscribe.topic8.msgpack',
-                            payload,
-                            null,
-                            {
-                                exclude_me: false,
-                                ppt_scheme: 'x_custom_scheme',
-                                ppt_serializer: 'msgpack'
-                            });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to call RPC with int payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                    wampy.call('call.rpc2', 25, function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(25);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
-                });
-
-                it('allows to call RPC with string payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                    wampy.call('call.rpc3', 'payload', function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal('payload');
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
-                });
-
-                it('allows to call RPC with array payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                    wampy.call('call.rpc4', [1, 2, 3, 4, 5], function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsDict).to.be.undefined;
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
-                });
-
-                it('allows to call RPC with hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                    let i = 1, payload = { key1: 100, key2: 'string-key' },
-                        cb = function (e) {
-                            expect(e).to.be.an('object');
-                            expect(e.argsList).to.be.an('array');
-                            expect(e.argsList).to.have.lengthOf(0);
-                            expect(e.argsDict).to.be.an('object');
-                            expect(e.argsDict).to.be.deep.equal(payload);
-                            expect(e.details).to.be.an('object');
-                            expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                            expect(e.details.ppt_serializer).to.be.equal('msgpack');
-
-                            if (i === 2) {
-                                done();
-                            } else {
-                                i++;
-                            }
-                        };
-
-                    wampy.call('call.rpc5', payload, cb, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' })
-                        .call('call.rpc5', { argsDict: payload }, cb, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
-                });
-
-                it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                    let dictpayload = { key1: 100, key2: 'string-key' },
-                        payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
-
-                    wampy.call('call.rpc5', payload, function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.argsList).to.be.an('array');
-                        expect(e.argsList[0]).to.be.equal(1);
-                        expect(e.argsList[4]).to.be.equal(5);
-                        expect(e.argsDict).to.be.an('object');
-                        expect(e.argsDict).to.be.deep.equal(dictpayload);
-                        expect(e.details).to.be.an('object');
-                        expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
-                        expect(e.details.ppt_serializer).to.be.equal('msgpack');
-                        done();
-                    }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
-                });
-
-                it('doesn\'t fail if event in ppt mode was received, while ppt serializer is not supported', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                        }
-                    }).subscribe('subscribe.topic.ppt.no.srzlr', function () {
-                        // Bad event is omitted and the next one is received
-                        done();
+                    }).then(() => {
+                        wampy.call('register.rpc.ppt.yield.noppt', 100);
                     });
-                });
-
-                it('doesn\'t fail if event in ppt mode was received, while payload decode fails', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            cbor: new CborSerializer()
-                        }
-                    }).subscribe('subscribe.topic.ppt.srzlr.fails', function () {
-                        // Bad event is omitted and the next one is received
-                        done();
-                    });
-                });
-
-                it('calls error handler if RPC Result is in ppt mode, while ppt serializer is not supported', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer()
-                        }
-                    }).register('register.rpc.ppt.no.srlzr', {
-                        rpc: function () {
-
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc.ppt.no.srlzr',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                        done('RPC call was successfull, while it should not be');
-                                    },
-                                    onError: function () {
-                                        done();
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('calls error handler if RPC Result is in ppt mode, while ppt decoding fails', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            cbor: new CborSerializer()
-                        }
-                    }).register('register.rpc.ppt.srlzr.fail', {
-                        rpc: function () {
-
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc.ppt.srlzr.fail',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                        done('RPC call was successfull, while it should not be');
-                                    },
-                                    onError: function () {
-                                        done();
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('calls error handler if RPC Invocation is in ppt mode, while ppt serializer is not supported', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer()
-                        }
-                    }).register('register.rpc.ppt.invoke.no.srlzr', {
-                        rpc: function () {
-
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc.ppt.invoke.no.srlzr',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                        done('RPC call was successfull, while it should not be');
-                                    },
-                                    onError: function () {
-                                        done();
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('calls error handler if RPC Invocation is in ppt mode, while ppt decoding fails', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            cbor: new CborSerializer()
-                        }
-                    }).register('register.rpc.ppt.invoke.srlzr.fail', {
-                        rpc: function () {
-
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc.ppt.invoke.srlzr.fail',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                        done('RPC call was successfull, while it should not be');
-                                    },
-                                    onError: function () {
-                                        done();
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('calls error handler if RPC YIELD is sent with wrong ppt_scheme', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            cbor: new CborSerializer(),
-                            msgpack: new MsgpackSerializer(),
-                        }
-                    }).register('register.rpc.ppt.yield.invalid.scheme', {
-                        rpc: function () {
-                            return {
-                                argsList: [100],
-                                options: { ppt_scheme: 'invalid_scheme', ppt_serializer: 'cbor' }
-                            };
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc.ppt.yield.invalid.scheme',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                        done('RPC call was successfull, while it should not be');
-                                    },
-                                    onError: function () {
-                                        done();
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('allows to receive RPC Invocation in ppt mode', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            msgpack: new MsgpackSerializer(),
-                            cbor: new CborSerializer()
-                        }
-                    }).register('register.rpc.ppt.invoke', {
-                        rpc: function () {
-                            return {
-                                argsList: [100],
-                                options: { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
-                            };
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc.ppt.invoke',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                        done();
-                                    },
-                                    onError: function (e) {
-                                        done('Error during RPC Call');
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('doesn\'t fail if event in ppt mode was received, while broker didn\'t announce it', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            msgpack: new MsgpackSerializer(),
-                            cbor: new CborSerializer()
-                        },
-                        onClose: function () {
-                            setTimeout(function () {
-                                wampy.options({
-                                    onConnect: function () {
-                                        wampy.subscribe('subscribe.topic.noppt', function () {
-                                            // Bad event is omitted and the next one is received
-                                            done();
-                                        });
-                                    }
-                                })
-                                    .connect();
-                            }, 1);
-                        }
-                    }).disconnect();
-                });
-
-                it('calls error handler if RPC Result in ppt mode was received, while dealer didn\'t announce it', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            msgpack: new MsgpackSerializer(),
-                            cbor: new CborSerializer()
-                        }
-                    }).register('register.rpc.no.ppt', {
-                        rpc: function () {
-
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc.no.ppt',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                    },
-                                    onError: function () {
-                                        done();
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('aborts connection when receiving invocation in ppt mode, while dealer didn\'t announce it', function (done) {
-                    // This case should not happen at all, but for safety
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            msgpack: new MsgpackSerializer(),
-                            cbor: new CborSerializer()
-                        },
-                        onError: function (e) {
-                            done();
-                        }
-                    }).register('register.rpc.ppt.no.dealer.fail', {
-                        rpc: function () {
-
-                        },
-                        onSuccess: function (e) {
-                            wampy.call(
-                                'register.rpc.ppt.no.dealer.fail',
-                                100,
-                                {
-                                    onSuccess: function () {
-                                        done('RPC call was successfull, while it should not be');
-                                    },
-                                    onError: function () {
-                                        done('Error during RPC call');
-                                    }
-                                },
-                                { exclude_me: false }
-                            );
-                        },
-                        onError: function (e) {
-                            done('Error during RPC registration!');
-                        }
-                    });
-                    expect(wampy.getOpStatus().code).to.be.equal(WAMP_ERROR_MSG.SUCCESS.code);
-                });
-
-                it('aborts connection if RPC YIELD is in ppt mode, while dealer didn\'t announce it', function (done) {
-                    wampy.options({
-                        payloadSerializers: {
-                            json: new JsonSerializer(),
-                            cbor: new CborSerializer(),
-                            msgpack: new MsgpackSerializer(),
-                        },
-                        onError: function (e) {
-                            wampy.disconnect();
-                        },
-                        onClose: function () {
-                            done();
-                        },
-                        onConnect: function () {
-                            wampy.register('register.rpc.ppt.yield.noppt', {
-                                rpc: function () {
-                                    return {
-                                        argsList: [100],
-                                        options: { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
-                                    };
-                                },
-                                onSuccess: function (e) {
-                                    wampy.call(
-                                        'register.rpc.ppt.yield.noppt',
-                                        100,
-                                        {
-                                            onSuccess: function () {
-                                                done('RPC call was successfull, while it should not be');
-                                            },
-                                            onError: function () {
-                                                done('RPC call errored, while it should not be');
-                                            }
-                                        },
-                                        { exclude_me: false }
-                                    );
-                                },
-                                onError: function (e) {
-                                    done('Error during RPC registration!');
-                                }
-                            });
-                        }
-                    }).connect();
                 });
             });
         });
