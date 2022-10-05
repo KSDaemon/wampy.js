@@ -30,13 +30,13 @@ Table of Contents
   - [Challenge Response Authentication](#challenge-response-authentication)
   - [Cryptosign-based Authentication](#cryptosign-based-authentication)
   - [Automatically chosen Authentication](#automatically-chosen-authentication)
-  - [subscribe(topicURI, callbacks[, advancedOptions])](#subscribetopicuri-callbacks-advancedoptions)
-  - [unsubscribe(topicURI[, callbacks])](#unsubscribetopicuri-callbacks)
-  - [publish(topicURI[, payload[, callbacks[, advancedOptions]]])](#publishtopicuri-payload-callbacks-advancedoptions)
-  - [call(topicURI[, payload[, callbacks[, advancedOptions]]])](#calltopicuri-payload-callbacks-advancedoptions)
-  - [cancel(reqId[, callbacks[, advancedOptions]])](#cancelreqid-callbacks-advancedoptions)
-  - [register(topicURI, callbacks[, advancedOptions])](#registertopicuri-callbacks-advancedoptions)
-  - [unregister(topicURI[, callbacks])](#unregistertopicuri-callbacks)
+  - [subscribe(topicURI, onEvent[, advancedOptions])](#subscribetopicuri-onevent-advancedoptions)
+  - [unsubscribe(topicURI[, onEvent])](#unsubscribetopicuri-onevent)
+  - [publish(topicURI[, payload[, advancedOptions]])](#publishtopicuri-payload-advancedoptions)
+  - [call(topicURI[, payload[, advancedOptions]])](#calltopicuri-payload-advancedoptions)
+  - [cancel(reqId[, advancedOptions])](#cancelreqid-advancedoptions)
+  - [register(topicURI, rpc[, advancedOptions])](#registertopicuri-rpc-advancedoptions)
+  - [unregister(topicURI)](#unregistertopicuri)
 - [Using custom serializer](#using-custom-serializer)
 - [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
 - [Tests and code coverage](#tests-and-code-coverage)
@@ -697,8 +697,8 @@ let defer = ws.unsubscribe('chat.message.received');
 
 [Back to TOC](#table-of-contents)
 
-publish(topicURI[, payload[, advancedOptions]]])
-------------------------------------------------
+publish(topicURI[, payload[, advancedOptions]])
+-----------------------------------------------
 
 Publish a new event to topic.
 
@@ -753,7 +753,7 @@ try {
 
 [Back to TOC](#table-of-contents)
 
-call(topicURI[, payload[, advancedOptions]]])
+call(topicURI[, payload[, advancedOptions]])
 ---------------------------------------------
 
 Make an RPC call to topicURI.
