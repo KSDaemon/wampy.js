@@ -1017,16 +1017,19 @@ stored in `opStatus.error`. This allows, for example, convenient handling of dif
 types of errors:
 
 ```javascript
+import {Wampy, Errors} from 'wampy';
+const wampy = new Wampy('/ws/', { realm: 'AppRealm' });
+
 try {
-    await ws.call('start.migration');
+    await wampy.call('start.migration');
     console.log('RPC successfully called');
 } catch (e) {
     console.log('Error happened!');
-    if (e instanceof UriError) {
+    if (e instanceof Errors.UriError) {
         // statements to handle UriError exceptions
-    } else if (e instanceof InvalidParamError) {
+    } else if (e instanceof Errors.InvalidParamError) {
         // statements to handle InvalidParamError exceptions
-    } else if (e instanceof NoSerializerAvailableError) {
+    } else if (e instanceof Errors.NoSerializerAvailableError) {
         // statements to handle NoSerializerAvailableError exceptions
     } else {
         // statements to handle any unspecified exceptions
