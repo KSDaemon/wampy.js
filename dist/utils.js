@@ -3,9 +3,12 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.getNewPromise = getNewPromise;
+exports.getServerUrlBrowser = getServerUrlBrowser;
+exports.getServerUrlNode = getServerUrlNode;
 exports.getWebSocket = getWebSocket;
 
-var _constants = require("./constants");
+var _constants = require("./constants.js");
 
 function getServerUrlBrowser(url) {
   var scheme, port;
@@ -61,5 +64,14 @@ function getWebSocket(url, protocols, ws, headers, requestOptions) {
   }
 
   return null;
+}
+
+function getNewPromise() {
+  var promise = {};
+  promise.promise = new Promise(function (resolve, reject) {
+    promise.onSuccess = resolve;
+    promise.onError = reject;
+  });
+  return promise;
 }
 //# sourceMappingURL=utils.js.map
