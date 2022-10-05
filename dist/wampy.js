@@ -58,7 +58,7 @@ var Wampy = /*#__PURE__*/function () {
      * @type {string}
      * @private
      */
-    this.version = 'v7.0.0';
+    this.version = 'v7.0.0-rc1';
     /**
      * WS Url
      * @type {string}
