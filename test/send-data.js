@@ -27,11 +27,16 @@ const WAMP_MSG_SPEC = {
     },
 
     sendData = [
-        // allows to connect on instantiation if all required options specified
+        // rejects connection on websocket error
+        {
+            data: null,
+            abort: true
+        },
+        // aborts connection if it can not decode incoming message
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
-                1,
+                2,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {
@@ -50,7 +55,8 @@ const WAMP_MSG_SPEC = {
                         }
                     }
                 }
-            ]
+            ],
+            ruinMessage: true
         },
         // passes welcome details to onConnect() callback
         {
@@ -196,12 +202,12 @@ const WAMP_MSG_SPEC = {
                 'wampcra',
                 {
                     challenge: '{ "nonce": "LHRTC9zeOIrt_9U3", ' +
-                                '"authprovider": "userdb", ' +
-                                '"authid": "user1", ' +
-                                '"timestamp": "2014-06-22T16:36:25.448Z", ' +
-                                '"authrole": "user", ' +
-                                '"authmethod": "wampcra", ' +
-                                '"session": 123454321 }'
+                        '"authprovider": "userdb", ' +
+                        '"authid": "user1", ' +
+                        '"timestamp": "2014-06-22T16:36:25.448Z", ' +
+                        '"authrole": "user", ' +
+                        '"authmethod": "wampcra", ' +
+                        '"session": 123454321 }'
                 }
             ]
 
@@ -566,11 +572,41 @@ const WAMP_MSG_SPEC = {
                 ''
             ]
         },
-        // Instance before hook
+        // calls Error handler on websocket errors
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
-                3,
+                2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            next: true
+        },
+        {
+            data: null,
+            abort: true
+        },
+        // allows to get current WAMP Session ID
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                2,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {
@@ -748,11 +784,7 @@ const WAMP_MSG_SPEC = {
                 'wamp.error.goodbye_and_out'
             ]
         },
-        //{
-        //    data: null,
-        //    silent: true
-        //},
-        // autoreconnects to WAMP server on network errors
+        // auto-reconnects to WAMP server on network errors
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
@@ -890,32 +922,26 @@ const WAMP_MSG_SPEC = {
                 40   // Registration ID
             ],
             from: [1],
-            to: [1]
+            to: [1],
+            next: true
+        },
+        {
+            data: null,
+            next: true
         },
         {
             data: [
-                WAMP_MSG_SPEC.SUBSCRIBED,
-                'RequestId',
-                311
-            ],
-            from: [1],
-            to: [1]
-        },
-
-
-
-        // allows to call handler when autoreconnect to WAMP server succeeded
-        {
-            data: [
-                WAMP_MSG_SPEC.GOODBYE,
-                {},
-                'wamp.error.goodbye_and_out'
+                WAMP_MSG_SPEC.EVENT,
+                36,
+                56451227,
+                {}
             ]
         },
+        // allows to call handler when auto-reconnect to WAMP server succeeded
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
-                28423,
+                654274,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {
@@ -940,7 +966,7 @@ const WAMP_MSG_SPEC = {
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
-                4558,
+                357445,
                 {
                     agent: 'Wampy.js test suite',
                     roles: {
@@ -961,7 +987,7 @@ const WAMP_MSG_SPEC = {
                 }
             ]
         },
-        // allows to call handler on websocket errors
+        // calls error handler if server sends abort message
         {
             data: [
                 WAMP_MSG_SPEC.GOODBYE,
@@ -969,11 +995,6 @@ const WAMP_MSG_SPEC = {
                 'wamp.error.goodbye_and_out'
             ]
         },
-        {
-            data: null,
-            abort: true
-        },
-        // calls error handler if server sends abort message
         {
             data: [
                 WAMP_MSG_SPEC.ABORT,
@@ -1497,10 +1518,6 @@ const WAMP_MSG_SPEC = {
         },
         // allows to unsubscribe all handlers from topic
         {
-            data: null
-        },
-        // allows to unsubscribe from topic with notification on unsubscribing
-        {
             data: [
                 WAMP_MSG_SPEC.UNSUBSCRIBED,
                 'RequestId'
@@ -1608,16 +1625,6 @@ const WAMP_MSG_SPEC = {
                 WAMP_MSG_SPEC.REGISTERED,
                 'RequestId',
                 19   // Registration ID
-            ],
-            from: [1],
-            to: [1]
-        },
-        // allows to register RPC with notification on registration
-        {
-            data: [
-                WAMP_MSG_SPEC.REGISTERED,
-                'RequestId',
-                20   // Registration ID
             ],
             from: [1],
             to: [1]
@@ -1830,15 +1837,6 @@ const WAMP_MSG_SPEC = {
             to: [2]
         },
         // allows to unregister RPC
-        {
-            data: [
-                WAMP_MSG_SPEC.UNREGISTERED,
-                'RequestId'
-            ],
-            from: [1],
-            to: [1]
-        },
-        // allows to unregister RPC with notification on unregistering
         {
             data: [
                 WAMP_MSG_SPEC.UNREGISTERED,
@@ -2357,6 +2355,8 @@ const WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // disallows to call rpc if server does not support PPT Mode
+        // To enable ppt mode on server for future tests
         {
             data: [
                 WAMP_MSG_SPEC.GOODBYE,
@@ -3241,6 +3241,70 @@ const WAMP_MSG_SPEC = {
             from: [2, 3, 4, 5],
             to: [2, 3, 4, 5]
         },
+        // calls error handler if RPC YIELD results PPT packing fails
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                654574   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                654574, // Registration ID
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [100] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                WAMP_MSG_SPEC.CALL,
+                'RequestId',
+                {},
+                'wamp.error.invocation_exception'
+            ],
+            from: [2, 3, 4],
+            to: [2, 3, 4]
+        },
+        // calls error handler if RPC YIELD results PPT serializer is not supported
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                98754   // Registration ID
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.INVOCATION,
+                'RequestId',
+                98754, // Registration ID
+                { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' },
+                [{ args: [100] }]
+            ],
+            from: [1],
+            to: [1]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.ERROR,
+                WAMP_MSG_SPEC.CALL,
+                'RequestId',
+                {},
+                'wamp.error.invocation_exception'
+            ],
+            from: [2, 3, 4],
+            to: [2, 3, 4]
+        },
         // allows to receive RPC Invocation in ppt mode
         {
             data: [
@@ -3385,6 +3449,10 @@ const WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
+        {
+            data: null,
+            silent: true
+        },
         // aborts connection if RPC YIELD is in ppt mode, while dealer didn't announce it
         {
             data: [
@@ -3431,11 +3499,8 @@ const WAMP_MSG_SPEC = {
             to: [1]
         },
         {
-            data: [
-                WAMP_MSG_SPEC.GOODBYE,
-                {},
-                'wamp.error.goodbye_and_out'
-            ]
+            data: null,
+            silent: true
         }
     ];
 

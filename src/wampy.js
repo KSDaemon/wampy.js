@@ -14,10 +14,10 @@
  *
  */
 
-import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS } from './constants.js';
-import { getWebSocket } from './utils.js';
+import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS, SUCCESS } from './constants.js';
+import * as Errors from './errors.js';
+import { getWebSocket, getNewPromise } from './utils.js';
 import { JsonSerializer } from './serializers/JsonSerializer.js';
-
 const jsonSerializer = new JsonSerializer();
 
 /**
@@ -37,7 +37,7 @@ class Wampy {
          * @type {string}
          * @private
          */
-        this.version = 'v6.5.0';
+        this.version = 'v7.0.0';
 
         /**
          * WS Url
@@ -131,11 +131,30 @@ class Wampy {
             /**
              * Status of last operation
              */
-            opStatus: { code: 0, description: 'Success!', reqId: 0 },
+            opStatus: {
+
+                /**
+                 * Int code of last operation
+                 * @type {int}
+                 */
+                code: 0,
+
+                /**
+                 * Error of last operation (if not was successful)
+                 * @type {Error}
+                 */
+                error: null,
+
+                /**
+                 * Request ID of last successfully sent operation
+                 * @type {int}
+                 */
+                reqId: 0
+            },
 
             /**
              * Timer for reconnection
-             * @type {null}
+             * @type {int|null}
              */
             timer: null,
 
@@ -143,12 +162,22 @@ class Wampy {
              * Reconnection attempts
              * @type {number}
              */
-            reconnectingAttempts: 0
+            reconnectingAttempts: 0,
+
+            /**
+             * Promise for onConnect
+             */
+            connectPromise: null,
+
+            /**
+             * Promise for onClose
+             */
+            closePromise: null
         };
 
         /**
          * WebSocket object
-         * @type {Object}
+         * @type {WebSocket}
          * @private
          */
         this._ws = null;
@@ -294,12 +323,6 @@ class Wampy {
             onChallenge: null,
 
             /**
-             * onConnect callback
-             * @type {function}
-             */
-            onConnect: null,
-
-            /**
              * onClose callback
              * @type {function}
              */
@@ -360,10 +383,6 @@ class Wampy {
             this._options = this._merge(this._options, options);
         } else if (this._isPlainObject(url)) {
             this._options = this._merge(this._options, url);
-        }
-
-        if (this._url) {
-            this.connect();
         }
 
     }
@@ -460,7 +479,7 @@ class Wampy {
     }
 
     /**
-     * Fix websocket protocols based on options
+     * Set websocket protocol based on options
      * @private
      */
     _setWsProtocols () {
@@ -468,35 +487,47 @@ class Wampy {
     }
 
     /**
+     * Fill instance operation status
+     * @param {Error} err
+     * @private
+     */
+    _fillOpStatusByError (err) {
+        this._cache.opStatus = {
+            code: err.code,
+            error: err,
+            reqId: 0
+        };
+    }
+
+    /**
      * Prerequisite checks for any wampy api call
      * @param {object} topicType { topic: URI, patternBased: true|false, allowWAMP: true|false }
      * @param {string} role
-     * @param {object} callbacks
      * @returns {boolean}
      * @private
      */
-    _preReqChecks (topicType, role, callbacks) {
-        let flag = true;
+    _preReqChecks (topicType, role) {
+        let err;
 
         if (this._cache.sessionId && !this._cache.server_wamp_features.roles[role]) {
-            this._cache.opStatus = WAMP_ERROR_MSG['NO_' + role.toUpperCase()];
-            flag = false;
+            switch (role) {
+                case 'dealer':
+                    err = new Errors.NoDealerError();
+                    break;
+                case 'broker':
+                    err = new Errors.NoBrokerError();
+                    break;
+            }
+            this._fillOpStatusByError(err);
+            return false;
         }
 
         if (topicType && !this._validateURI(topicType.topic, topicType.patternBased, topicType.allowWAMP)) {
-            this._cache.opStatus = WAMP_ERROR_MSG.URI_ERROR;
-            flag = false;
+            this._fillOpStatusByError(new Errors.UriError());
+            return false;
         }
 
-        if (flag) {
-            return true;
-        }
-
-        if (this._isPlainObject(callbacks) && callbacks.onError) {
-            callbacks.onError({ error: this._cache.opStatus.description });
-        }
-
-        return false;
+        return true;
     }
 
     /**
@@ -519,17 +550,17 @@ class Wampy {
      */
     _checkPPTOptions (role, options) {
         if (!this._checkRouterFeature(role, 'payload_passthru_mode')) {
-            this._cache.opStatus = WAMP_ERROR_MSG.PPT_NOT_SUPPORTED;
+            this._fillOpStatusByError(new Errors.PPTNotSupportedError());
             return false;
         }
 
         if (options.ppt_scheme.search(/^(wamp$|mqtt$|x_)/) < 0) {
-            this._cache.opStatus = WAMP_ERROR_MSG.PPT_INVALID_SCHEME;
+            this._fillOpStatusByError(new Errors.PPTInvalidSchemeError());
             return false;
         }
 
         if (options.ppt_scheme === 'wamp' && !E2EE_SERIALIZERS.includes(options.ppt_serializer)) {
-            this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_INVALID;
+            this._fillOpStatusByError(new Errors.PPTSerializerInvalidError());
             return false;
         }
 
@@ -607,7 +638,7 @@ class Wampy {
 
                 if (!pptSerializer) {
                     err = true;
-                    this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_INVALID;
+                    this._fillOpStatusByError(new Errors.PPTSerializerInvalidError());
                     return { err, payloadItems };
                 }
 
@@ -615,7 +646,7 @@ class Wampy {
                     binPayload = pptSerializer.encode(pptPayload);
                 } catch (e) {
                     err = true;
-                    this._cache.opStatus = WAMP_ERROR_MSG.PPT_SRLZ_ERR;
+                    this._fillOpStatusByError(new Errors.PPTSerializationError());
                     return { err, payloadItems };
                 }
             } else {
@@ -658,7 +689,7 @@ class Wampy {
         let err = false, decodedPayload;
 
         if (!this._checkPPTOptions(role, options)) {
-            return { err: this._cache.opStatus };
+            return { err: this._cache.opStatus.error };
         }
 
         // wamp scheme means Payload End-to-End Encryption
@@ -673,13 +704,13 @@ class Wampy {
             let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
 
             if (!pptSerializer) {
-                return { err: WAMP_ERROR_MSG.PPT_SRLZ_INVALID };
+                return { err: new Errors.PPTSerializerInvalidError() };
             }
 
             try {
                 decodedPayload = await pptSerializer.decode(pptPayload);
             } catch (e) {
-                return { err: WAMP_ERROR_MSG.PPT_SRLZ_ERR };
+                return { err: new Errors.PPTSerializationError() };
             }
         } else {
             decodedPayload = pptPayload;
@@ -723,6 +754,12 @@ class Wampy {
         this._wsQueue = [];
         this._send([WAMP_MSG_SPEC.ABORT, { message: details }, errorUri]);
 
+        // In case we were just making first connection
+        if (this._cache.connectPromise) {
+            this._cache.connectPromise.onError(errorUri);
+            this._cache.connectPromise = null;
+        }
+
         if (this._options.onError) {
             this._options.onError({ error: errorUri, details: details });
         }
@@ -732,7 +769,7 @@ class Wampy {
 
     /**
      * Send encoded message to server
-     * @param {Array|undefined} msg
+     * @param {Array} [msg]
      * @private
      */
     _send (msg) {
@@ -763,7 +800,10 @@ class Wampy {
         // Just keep attrs that are have to be present
         this._cache = {
             reqId               : 0,
-            reconnectingAttempts: 0
+            reconnectingAttempts: 0,
+            opStatus            : SUCCESS,
+            closePromise        : null,
+            connectPromise      : null,
         };
     }
 
@@ -812,7 +852,7 @@ class Wampy {
             if (serverProtocol === 'json') {
                 this._options.serializer = new JsonSerializer();
             } else {
-                this._cache.opStatus = WAMP_ERROR_MSG.NO_SERIALIZER_AVAILABLE;
+                this._fillOpStatusByError(new Errors.NoSerializerAvailableError());
                 return this;
             }
 
@@ -849,8 +889,10 @@ class Wampy {
             // No reconnection needed or reached max retries count
             if (this._options.onClose) {
                 this._options.onClose();
+            } else if (this._cache.closePromise) {
+                this._cache.closePromise.onSuccess();
+                this._cache.closePromise = null;
             }
-
             this._resetState();
             this._ws = null;
         }
@@ -898,9 +940,8 @@ class Wampy {
 
                     } else {
                         // Firing onConnect event on real connection to WAMP server
-                        if (this._options.onConnect) {
-                            this._options.onConnect(data[2]);
-                        }
+                        this._cache.connectPromise.onSuccess(data[2]);
+                        this._cache.connectPromise = null;
                     }
 
                     // Send local queue if there is something out there
@@ -937,17 +978,18 @@ class Wampy {
                     });
 
                 } else {
+                    let error = new Errors.NoCRACallbackOrIdError();
 
                     this._ws.send(this._encode([
                         WAMP_MSG_SPEC.ABORT,
-                        { message: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description },
+                        { message: error.message },
                         'wamp.error.cannot_authenticate'
                     ]));
                     if (this._options.onError) {
-                        this._options.onError({ error: WAMP_ERROR_MSG.NO_CRA_CB_OR_ID.description });
+                        this._options.onError({ error });
                     }
                     this._ws.close();
-                    this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
+                    this._fillOpStatusByError(error);
                     break;
                 }
 
@@ -957,16 +999,18 @@ class Wampy {
                     this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
 
                 }).catch(e => {
+                    let error = new Errors.ChallengeExceptionError();
+
                     this._ws.send(this._encode([
                         WAMP_MSG_SPEC.ABORT,
-                        { message: 'Exception in onChallenge handler raised!' },
+                        { message: error.message },
                         'wamp.error.cannot_authenticate'
                     ]));
                     if (this._options.onError) {
-                        this._options.onError({ error: WAMP_ERROR_MSG.CHALLENGE_EXCEPTION.description });
+                        this._options.onError({ error });
                     }
                     this._ws.close();
-                    this._cache.opStatus = WAMP_ERROR_MSG.CHALLENGE_EXCEPTION;
+                    this._fillOpStatusByError(error);
                 });
 
                 break;
@@ -1126,7 +1170,7 @@ class Wampy {
                                 // original publication - as it was already published
                                 // we can not reply with error, only log it.
                                 // Although the router should handle it
-                                this._log(decodedPayload.err.description);
+                                this._log(decodedPayload.err.message);
                                 break;
                             }
 
@@ -1168,10 +1212,10 @@ class Wampy {
                             decodedPayload = await this._unpackPPTPayload('dealer', pptPayload, options);
 
                             if (decodedPayload.err) {
-                                this._log(decodedPayload.err.description);
+                                this._log(decodedPayload.err.message);
                                 this._cache.opStatus = decodedPayload.err;
                                 this._calls[data[1]].onError({
-                                    error   : decodedPayload.err.description,
+                                    error   : decodedPayload.err.message,
                                     details : data[2],
                                     argsList: data[3],
                                     argsDict: data[4]
@@ -1188,13 +1232,19 @@ class Wampy {
                             argsDict = data[4];
                         }
 
-                        this._calls[data[1]].onSuccess({
-                            details : options,
-                            argsList: argsList,
-                            argsDict: argsDict
-                        });
-                        if (!(options.progress && options.progress === true)) {
-                            // We receive final result (progressive or not)
+                        if (options.progress === true) {
+                            this._calls[data[1]].onProgress({
+                                details : options,
+                                argsList: argsList,
+                                argsDict: argsDict
+                            });
+                        } else {
+                            // We received final result (progressive or not)
+                            this._calls[data[1]].onSuccess({
+                                details : options,
+                                argsList: argsList,
+                                argsDict: argsDict
+                            });
                             delete this._calls[data[1]];
                         }
                     }
@@ -1301,13 +1351,13 @@ class Wampy {
 
                                         if (pptScheme) {
                                             if (!this._checkPPTOptions('dealer', results.options)) {
-                                                if (this._cache.opStatus.code === WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.code) {
+                                                if (this._cache.opStatus.error && this._cache.opStatus.error instanceof Errors.PPTNotSupportedError) {
                                                     // This case should not happen at all, but for safety
                                                     this._hardClose('wamp.error.protocol_violation', 'Trying to send YIELD in PPT Mode, while Dealer didn\'t announce it');
                                                 } else {
                                                     invoke_error_handler({
                                                         details : results.options,
-                                                        error   : this._cache.opStatus.description,
+                                                        error   : this._cache.opStatus.error.message,
                                                         argsList: results.argsList,
                                                         argsDict: results.argsDict
                                                     });
@@ -1334,19 +1384,23 @@ class Wampy {
                                 }
 
                                 if (results !== null && typeof (results) !== 'undefined') {
-                                    let res = this._packPPTPayload(results, options);
+                                    let res = this._packPPTPayload(results, results.options);
 
                                     if (res.err) {
+                                        let argsList, argsDict;
+                                        if (!(this._cache.opStatus.error instanceof Errors.PPTSerializationError)) {
+                                            argsList = results.argsList;
+                                            argsDict = results.argsDict;
+                                        }
                                         invoke_error_handler({
                                             details : results.options,
-                                            error   : this._cache.opStatus.description,
-                                            argsList: results.argsList,
-                                            argsDict: results.argsDict
+                                            error   : this._cache.opStatus.error.message,
+                                            argsList,
+                                            argsDict
                                         });
                                         return;
                                     }
                                     msg = msg.concat(res.payloadItems);
-
                                 }
 
                                 self._send(msg);
@@ -1360,16 +1414,16 @@ class Wampy {
                             decodedPayload = await this._unpackPPTPayload('dealer', pptPayload, options);
 
                             // This case should not happen at all, but for safety
-                            if (decodedPayload.err && decodedPayload.err.code === WAMP_ERROR_MSG.PPT_NOT_SUPPORTED.code) {
-                                this._log(decodedPayload.err.description);
+                            if (decodedPayload.err && decodedPayload.err instanceof Errors.PPTNotSupportedError) {
+                                this._log(decodedPayload.err.message);
                                 this._hardClose('wamp.error.protocol_violation', 'Received INVOCATION in PPT Mode, while Dealer didn\'t announce it');
                                 break;
                             } else if (decodedPayload.err) {
 
-                                this._log(decodedPayload.err.description);
+                                this._log(decodedPayload.err.message);
                                 invoke_error_handler({
                                     details : data[3],
-                                    error   : decodedPayload.err.description,
+                                    error   : decodedPayload.err.message,
                                     argsList: data[4],
                                     argsDict: data[5]
                                 });
@@ -1404,7 +1458,7 @@ class Wampy {
                         // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
                         this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
                             data[1], {}, 'wamp.error.no_such_procedure']);
-                        this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION;
+                        this._log(WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION);
                     }
                 }
                 break;
@@ -1427,6 +1481,11 @@ class Wampy {
      */
     _wsOnError (error) {
         this._log('websocket error');
+
+        if (this._cache.connectPromise) {
+            this._cache.connectPromise.onError(error);
+            this._cache.connectPromise = null;
+        }
 
         if (this._options.onError) {
             this._options.onError({ error });
@@ -1482,11 +1541,13 @@ class Wampy {
         this._rpcNames = new Set();
 
         for (let rpcName of rn) {
-            this.register(rpcName, { rpc: rpcs[rpcName].callbacks[0] });
+            this.register(rpcName, rpcs[rpcName].callbacks[0]);
         }
     }
 
-    /* Wampy public API */
+    /*************************************************************************
+     * Wampy public API
+     *************************************************************************/
 
     /**
      * Get or set Wampy options
@@ -1509,11 +1570,11 @@ class Wampy {
     /**
      * Get the status of last operation
      *
-     * @returns {object} with 2 fields: code, description
+     * @returns {object} with 3 fields: code, error, reqId
      *      code: 0 - if operation was successful
      *      code > 0 - if error occurred
-     *      description contains details about error
-     *      reqId: last send request ID
+     *      error: error instance containing details
+     *      reqId: last successfully sent request ID
      */
     getOpStatus () {
         return this._cache.opStatus;
@@ -1531,57 +1592,69 @@ class Wampy {
     /**
      * Connect to server
      * @param {string} [url] New url (optional)
-     * @returns {Wampy}
+     * @returns {Promise}
      */
-    connect (url) {
+    async connect (url) {
+        let error;
+
         if (url) {
             this._url = url;
         }
 
         if (this._options.realm) {
 
-            const authp = (this._options.authid ? 1 : 0) +
+            const authOpts = (this._options.authid ? 1 : 0) +
                 ((this._isArray(this._options.authmethods) && this._options.authmethods.length) ? 1 : 0) +
                 (typeof this._options.onChallenge === 'function' ||
                  Object.keys(this._options.authPlugins).length ? 1 : 0);
 
-            if (authp > 0 && authp < 3) {
-                this._cache.opStatus = WAMP_ERROR_MSG.NO_CRA_CB_OR_ID;
-                return this;
+            if (authOpts > 0 && authOpts < 3) {
+                error = new Errors.NoCRACallbackOrIdError();
+                this._fillOpStatusByError(error);
+                throw error;
             }
 
             this._setWsProtocols();
             this._ws = getWebSocket(this._url, this._protocols, this._options.ws,
                 this._options.additionalHeaders, this._options.wsRequestOptions);
             if (!this._ws) {
-                this._cache.opStatus = WAMP_ERROR_MSG.NO_WS_OR_URL;
-                return this;
+                error = new Errors.NoWsOrUrlError();
+                this._fillOpStatusByError(error);
+                throw error;
             }
             this._initWsCallbacks();
 
         } else {
-            this._cache.opStatus = WAMP_ERROR_MSG.NO_REALM;
+            error = new Errors.NoRealmError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
-        return this;
+        let defer = getNewPromise();
+        this._cache.connectPromise = defer;
+        return defer.promise;
     }
 
     /**
      * Disconnect from server
-     * @returns {Wampy}
+     * @returns {Promise}
      */
-    disconnect () {
+    async disconnect () {
         if (this._cache.sessionId) {
+            let defer = getNewPromise();
+            this._cache.opStatus = SUCCESS;
+            this._cache.closePromise = defer;
             // need to send goodbye message to server
             this._cache.isSayingGoodbye = true;
             this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.close.system_shutdown']);
+
+            return defer.promise;
+
         } else if (this._ws) {
             this._ws.close();
         }
 
-        this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
-
-        return this;
+        return true;
     }
 
     /**
@@ -1597,7 +1670,7 @@ class Wampy {
         }
 
         this._ws.close();
-        this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+        this._cache.opStatus = SUCCESS;
 
         return this;
     }
@@ -1606,46 +1679,45 @@ class Wampy {
      * Subscribe to a topic on a broker
      *
      * @param {string} topicURI
-     * @param {function|object} callbacks - if it is a function - it will be treated as published event callback
-     *                          or it can be hash table of callbacks:
-     *                          { onSuccess: will be called when subscribe would be confirmed
-     *                            onError: will be called if subscribe would be aborted
-     *                            onEvent: will be called on receiving published event }
+     * @param {function} onEvent - received event callback
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { match: string matching policy ("prefix"|"wildcard") }
      *
-     * @returns {Wampy}
+     * @returns {Promise}
      */
-    subscribe (topicURI, callbacks, advancedOptions) {
+    async subscribe (topicURI, onEvent, advancedOptions) {
         let reqId, patternBased = false;
-        const options = {};
+        const options = {}, callbacks = getNewPromise();
 
-        if ((typeof (advancedOptions) !== 'undefined') &&
-            this._isPlainObject(advancedOptions) &&
-            Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
-
-            if (/prefix|wildcard/.test(advancedOptions.match)) {
-                options.match = advancedOptions.match;
-                patternBased = true;
+        if (this._isPlainObject(advancedOptions)) {
+            if (Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
+                if (/prefix|wildcard/.test(advancedOptions.match)) {
+                    options.match = advancedOptions.match;
+                    patternBased = true;
+                } else {
+                    let error = new Errors.InvalidParamError();
+                    this._fillOpStatusByError(error);
+                    throw error;
+                }
             }
+        } else if (typeof (advancedOptions) !== 'undefined') {
+            let error = new Errors.InvalidParamError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
+        // Need to be placed here as patternBased flag is determined above
         if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: true },
-            'broker',
-            callbacks)) {
-            return this;
+            'broker')) {
+            throw this._cache.opStatus.error;
         }
 
-        if (typeof callbacks === 'function') {
-            callbacks = { onEvent: callbacks };
-        } else if (!this._isPlainObject(callbacks) || typeof (callbacks.onEvent) === 'undefined') {
-            this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
-
-            if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError({ error: this._cache.opStatus.description });
-            }
-
-            return this;
+        if (typeof onEvent === 'function') {
+            callbacks.onEvent = onEvent;
+        } else {
+            let error = new Errors.NoCallbackError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
         if (!this._subscriptions[topicURI] || !this._subscriptions[topicURI].callbacks.length) {
@@ -1668,60 +1740,49 @@ class Wampy {
                 this._subscriptions[topicURI].callbacks.push(callbacks.onEvent);
             }
 
-            if (callbacks.onSuccess) {
-                callbacks.onSuccess({
-                    topic: topicURI,
-                    subscriptionId: this._subscriptions[topicURI].id
-                });
-            }
+            return {
+                topic: topicURI,
+                subscriptionId: this._subscriptions[topicURI].id
+            };
         }
 
-        this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+        this._cache.opStatus = SUCCESS;
         this._cache.opStatus.reqId = reqId;
-        return this;
+        return callbacks.promise;
     }
 
     /**
      * Unsubscribe from topic
      * @param {string} topicURI
-     * @param {function|object} callbacks - if it is a function - it will be treated as
-     *                          published event callback to remove or it can be hash table of callbacks:
-     *                          { onSuccess: will be called when unsubscribe would be confirmed
-     *                            onError: will be called if unsubscribe would be aborted
-     *                            onEvent: published event callback to remove }
-     * @returns {Wampy}
+     * @param {function} [onEvent] - received event callback to remove (optional). If not provided -
+     *                               all callbacks will be removed and unsubscribed on the server
+     * @returns {Promise}
      */
-    unsubscribe (topicURI, callbacks) {
-        let reqId, i = -1;
+    async unsubscribe (topicURI, onEvent) {
+        let reqId;
+        const callbacks = getNewPromise();
 
-        if (!this._preReqChecks(null, 'broker', callbacks)) {
-            return this;
+        if (!this._preReqChecks(null, 'broker')) {
+            throw this._cache.opStatus.error;
         }
 
         if (this._subscriptions[topicURI]) {
 
             reqId = this._getReqId();
 
-            if (typeof (callbacks) === 'undefined') {
-                this._subscriptions[topicURI].callbacks = [];
-                callbacks = {};
-            } else if (typeof callbacks === 'function') {
-                i = this._subscriptions[topicURI].callbacks.indexOf(callbacks);
-                callbacks = {};
-            } else if (callbacks.onEvent && typeof callbacks.onEvent === 'function') {
-                i = this._subscriptions[topicURI].callbacks.indexOf(callbacks.onEvent);
+            if (typeof onEvent === 'function') {
+                let i = this._subscriptions[topicURI].callbacks.indexOf(onEvent);
+                if (i >= 0) {
+                    this._subscriptions[topicURI].callbacks.splice(i, 1);
+                }
             } else {
                 this._subscriptions[topicURI].callbacks = [];
             }
 
-            if (i >= 0) {
-                this._subscriptions[topicURI].callbacks.splice(i, 1);
-            }
-
             if (this._subscriptions[topicURI].callbacks.length) {
                 // There are another callbacks for this topic
-                this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
-                return this;
+                this._cache.opStatus = SUCCESS;
+                return true;
             }
 
             this._requests[reqId] = {
@@ -1733,33 +1794,26 @@ class Wampy {
             this._send([WAMP_MSG_SPEC.UNSUBSCRIBE, reqId, this._subscriptions[topicURI].id]);
 
         } else {
-            this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE;
-
-            if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError({ error: this._cache.opStatus.description });
-            }
-
-            return this;
+            let error = new Errors.NonExistUnsubscribeError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
-        this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+        this._cache.opStatus = SUCCESS;
         this._cache.opStatus.reqId = reqId;
-        return this;
+        return callbacks.promise;
     }
 
     /**
-     * Publish a event to topic
+     * Publish an event to the topic
      * @param {string} topicURI
-     * @param {string|number|Array|object} payload - can be either a value of any type or null.  Also it
-     *                          is possible to pass array and object-like data simultaneously.
+     * @param {string|number|Array|object} [payload] - can be either a value of any type or null or even omitted.
+     *                          Also, it is possible to pass array and object-like data simultaneously.
      *                          In this case pass a hash-table with next attributes:
      *                          {
      *                             argsList: array payload (may be omitted)
      *                             argsDict: object payload (may be omitted)
      *                          }
-     * @param {object} [callbacks] - optional hash table of callbacks:
-     *                          { onSuccess: will be called when publishing would be confirmed
-     *                            onError: will be called if publishing would be aborted }
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { exclude: integer|array WAMP session id(s) that won't receive a published event,
      *                                      even though they may be subscribed
@@ -1776,11 +1830,11 @@ class Wampy {
      *                            exclude_me: bool flag of receiving publishing event by initiator
      *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
      *                                      to receivers of a published event }
-     * @returns {Wampy}
+     * @returns {Promise}
      */
-    publish (topicURI, payload, callbacks, advancedOptions) {
-        let reqId, msg, err = false, hasPayload = false;
-        const options = {},
+    async publish (topicURI, payload, advancedOptions) {
+        let reqId, msg;
+        const options = { acknowledge: true }, callbacks = getNewPromise(),
             _optionsConvertHelper = (option, sourceType) => {
                 if (advancedOptions[option]) {
                     if (this._isArray(advancedOptions[option]) && advancedOptions[option].length) {
@@ -1788,207 +1842,169 @@ class Wampy {
                     } else if (typeof advancedOptions[option] === sourceType) {
                         options[option] = [advancedOptions[option]];
                     } else {
-                        err = true;
-                        this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
+                        return false;
                     }
                 }
+
+                return true;
             };
 
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'broker', callbacks)) {
-            return this;
+        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'broker')) {
+            throw this._cache.opStatus.error;
         }
 
-        if (this._isPlainObject(callbacks)) {
-            options.acknowledge = true;
-        }
+        if (this._isPlainObject(advancedOptions)) {
+            if (!_optionsConvertHelper('exclude', 'number') ||
+                !_optionsConvertHelper('exclude_authid', 'string') ||
+                !_optionsConvertHelper('exclude_authrole', 'string') ||
+                !_optionsConvertHelper('eligible', 'number') ||
+                !_optionsConvertHelper('eligible_authid', 'string') ||
+                !_optionsConvertHelper('eligible_authrole', 'string')) {
 
-        if (typeof (advancedOptions) !== 'undefined') {
-
-            if (this._isPlainObject(advancedOptions)) {
-                _optionsConvertHelper('exclude', 'number');
-                _optionsConvertHelper('exclude_authid', 'string');
-                _optionsConvertHelper('exclude_authrole', 'string');
-                _optionsConvertHelper('eligible', 'number');
-                _optionsConvertHelper('eligible_authid', 'string');
-                _optionsConvertHelper('eligible_authrole', 'string');
-
-                if (Object.hasOwnProperty.call(advancedOptions, 'exclude_me')) {
-                    options.exclude_me = advancedOptions.exclude_me !== false;
-                }
-
-                if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
-                    options.disclose_me = advancedOptions.disclose_me === true;
-                }
-
-                // Check and handle Payload PassThru Mode
-                // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-                let pptScheme = advancedOptions.ppt_scheme;
-
-                if (pptScheme) {
-                    err = !this._checkPPTOptions('broker', advancedOptions);
-
-                    options.ppt_scheme = pptScheme;
-
-                    if (advancedOptions.ppt_serializer) {
-                        options.ppt_serializer = advancedOptions.ppt_serializer;
-                    }
-                    if (advancedOptions.ppt_cipher) {
-                        options.ppt_cipher = advancedOptions.ppt_cipher;
-                    }
-                    if (advancedOptions.ppt_keyid) {
-                        options.ppt_keyid = advancedOptions.ppt_keyid;
-                    }
-                }
-
-            } else {
-                err = true;
-                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
+                let error = new Errors.InvalidParamError();
+                this._fillOpStatusByError(error);
+                throw error;
             }
 
-            if (err) {
+            if (Object.hasOwnProperty.call(advancedOptions, 'exclude_me')) {
+                options.exclude_me = advancedOptions.exclude_me !== false;
+            }
 
-                if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError({ error: this._cache.opStatus.description });
+            if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
+                options.disclose_me = advancedOptions.disclose_me === true;
+            }
+
+            // Check and handle Payload PassThru Mode
+            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+            let pptScheme = advancedOptions.ppt_scheme;
+
+            if (pptScheme) {
+                if (!this._checkPPTOptions('broker', advancedOptions)) {
+                    throw this._cache.opStatus.error;
                 }
 
-                return this;
+                options.ppt_scheme = pptScheme;
+
+                if (advancedOptions.ppt_serializer) {
+                    options.ppt_serializer = advancedOptions.ppt_serializer;
+                }
+                if (advancedOptions.ppt_cipher) {
+                    options.ppt_cipher = advancedOptions.ppt_cipher;
+                }
+                if (advancedOptions.ppt_keyid) {
+                    options.ppt_keyid = advancedOptions.ppt_keyid;
+                }
             }
+
+        } else if (typeof (advancedOptions) !== 'undefined') {
+            let error = new Errors.InvalidParamError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
         reqId = this._getReqId();
 
-        switch (arguments.length) {
-            case 1:
-                break;
-            case 2:
-                hasPayload = true;
-                break;
-            default:
-                this._requests[reqId] = {
-                    topic: topicURI,
-                    callbacks
-                };
-                hasPayload = true;
-                break;
-        }
+        this._requests[reqId] = {
+            topic: topicURI,
+            callbacks
+        };
 
         // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
         msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI];
 
-        if (hasPayload) {
+        if (arguments.length > 1) {
             // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
             let res = this._packPPTPayload(payload, options);
 
             if (res.err) {
-                if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError({ error: this._cache.opStatus.description });
-                }
-
-                return this;
+                throw this._cache.opStatus.error;
             }
             msg = msg.concat(res.payloadItems);
         }
 
         this._send(msg);
-        this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+        this._cache.opStatus = SUCCESS;
         this._cache.opStatus.reqId = reqId;
-        return this;
+        return callbacks.promise;
     }
 
     /**
      * Remote Procedure Call
      * @param {string} topicURI
-     * @param {string|number|Array|object} payload - can be either a value of any type or null.  Also it
+     * @param {string|number|Array|object} [payload] - can be either a value of any type or null. Also, it
      *                          is possible to pass array and object-like data simultaneously.
      *                          In this case pass a hash-table with next attributes:
      *                          {
      *                             argsList: array payload (may be omitted)
      *                             argsDict: object payload (may be omitted)
      *                          }
-     * @param {function|object} callbacks - if it is a function - it will be treated as result callback function
-     *                          or it can be hash table of callbacks:
-     *                          { onSuccess: will be called with result on successful call
-     *                            onError: will be called if invocation would be aborted }
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
-     *                          { disclose_me: bool flag of disclosure of Caller identity (WAMP session ID)
-     *                                  to endpoints of a routed call
-     *                            receive_progress: bool flag for receiving progressive results. In this case
-     *                                  onSuccess function will be called every time on receiving result
-     *                            timeout: integer timeout (in ms) for the call to finish }
-     * @returns {Wampy}
+     *                          { disclose_me:      bool flag of disclosure of Caller identity (WAMP session ID)
+     *                                              to endpoints of a routed call
+     *                            progress_callback: function for handling progressive call results
+     *                            timeout:          integer timeout (in ms) for the call to finish
+     *                          }
+     * @returns {Promise}
      */
-    call (topicURI, payload, callbacks, advancedOptions) {
-        let reqId, msg, err = false;
-        const options = {};
+    async call (topicURI, payload, advancedOptions) {
+        let reqId, msg;
+        const options = {}, callbacks = getNewPromise();
 
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: true }, 'dealer', callbacks)) {
-            return this;
+        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: true }, 'dealer')) {
+            throw this._cache.opStatus.error;
         }
 
-        if (typeof callbacks === 'function') {
-            callbacks = { onSuccess: callbacks };
-        } else if (!this._isPlainObject(callbacks) || typeof (callbacks.onSuccess) === 'undefined') {
-            this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
-
-            if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError({ error: this._cache.opStatus.description });
+        if (this._isPlainObject(advancedOptions)) {
+            if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
+                options.disclose_me = advancedOptions.disclose_me === true;
             }
 
-            return this;
-        }
-
-        if (typeof (advancedOptions) !== 'undefined') {
-
-            if (this._isPlainObject(advancedOptions)) {
-                if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
-                    options.disclose_me = advancedOptions.disclose_me === true;
+            if (Object.hasOwnProperty.call(advancedOptions, 'progress_callback')) {
+                if (typeof advancedOptions.progress_callback === 'function') {
+                    options.receive_progress = true;
+                    callbacks.onProgress = advancedOptions.progress_callback;
+                } else {
+                    let error = new Errors.InvalidParamError();
+                    this._fillOpStatusByError(error);
+                    throw error;
                 }
-
-                if (Object.hasOwnProperty.call(advancedOptions, 'receive_progress')) {
-                    options.receive_progress = advancedOptions.receive_progress === true;
-                }
-
-                if (Object.hasOwnProperty.call(advancedOptions, 'timeout')) {
-                    if (typeof advancedOptions.timeout === 'number') {
-                        options.timeout = advancedOptions.timeout;
-                    } else {
-                        err = true;
-                    }
-                }
-
-                // Check and handle Payload PassThru Mode
-                // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-                let pptScheme = advancedOptions.ppt_scheme;
-
-                if (pptScheme) {
-                    err = !this._checkPPTOptions('dealer', advancedOptions);
-
-                    options.ppt_scheme = pptScheme;
-
-                    if (advancedOptions.ppt_serializer) {
-                        options.ppt_serializer = advancedOptions.ppt_serializer;
-                    }
-                    if (advancedOptions.ppt_cipher) {
-                        options.ppt_cipher = advancedOptions.ppt_cipher;
-                    }
-                    if (advancedOptions.ppt_keyid) {
-                        options.ppt_keyid = advancedOptions.ppt_keyid;
-                    }
-                }
-
-            } else {
-                err = true;
-                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
             }
 
-            if (err) {
+            if (Object.hasOwnProperty.call(advancedOptions, 'timeout')) {
+                if (typeof advancedOptions.timeout === 'number') {
+                    options.timeout = advancedOptions.timeout;
+                } else {
+                    let error = new Errors.InvalidParamError();
+                    this._fillOpStatusByError(error);
+                    throw error;
+                }
+            }
 
-                if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError({ error: this._cache.opStatus.description });
+            // Check and handle Payload PassThru Mode
+            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+            let pptScheme = advancedOptions.ppt_scheme;
+
+            if (pptScheme) {
+                if (!this._checkPPTOptions('dealer', advancedOptions)) {
+                    throw this._cache.opStatus.error;
                 }
 
-                return this;
+                options.ppt_scheme = pptScheme;
+
+                if (advancedOptions.ppt_serializer) {
+                    options.ppt_serializer = advancedOptions.ppt_serializer;
+                }
+                if (advancedOptions.ppt_cipher) {
+                    options.ppt_cipher = advancedOptions.ppt_cipher;
+                }
+                if (advancedOptions.ppt_keyid) {
+                    options.ppt_keyid = advancedOptions.ppt_keyid;
+                }
             }
+        } else if (typeof (advancedOptions) !== 'undefined') {
+            let error = new Errors.InvalidParamError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
         do {
@@ -2004,162 +2020,120 @@ class Wampy {
             let res = this._packPPTPayload(payload, options);
 
             if (res.err) {
-                if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError({ error: this._cache.opStatus.description });
-                }
-
-                return this;
+                throw this._cache.opStatus.error;
             }
             msg = msg.concat(res.payloadItems);
         }
 
         this._send(msg);
-        this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+        this._cache.opStatus = SUCCESS;
         this._cache.opStatus.reqId = reqId;
-        return this;
+        return callbacks.promise;
     }
 
     /**
      * RPC invocation cancelling
      *
      * @param {int} reqId RPC call request ID
-     * @param {function|object} callbacks - if it is a function - it will be called if successfully
-     *                          sent canceling message or it can be hash table of callbacks:
-     *                          { onSuccess: will be called if successfully sent canceling message
-     *                            onError: will be called if some error occurred }
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { mode: string|one of the possible modes:
      *                                  "skip" | "kill" | "killnowait". Skip is default.
      *                          }
      *
-     * @returns {Wampy}
+     * @returns {Boolean}
      */
-    cancel (reqId, callbacks, advancedOptions) {
-        let err = false;
+    cancel (reqId, advancedOptions) {
         const options = {};
 
-        if (!this._preReqChecks(null, 'dealer', callbacks)) {
-            return this;
+        if (!this._preReqChecks(null, 'dealer')) {
+            throw this._cache.opStatus.error;
         }
 
         if (!reqId || !this._calls[reqId]) {
-            this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_REQ_ID;
-
-            if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError({ error: this._cache.opStatus.description });
-            }
-
-            return this;
+            let error = new Errors.NonExistRPCReqIdError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
-        if (typeof (advancedOptions) !== 'undefined') {
-
-            if (this._isPlainObject(advancedOptions)) {
-
-                if (Object.hasOwnProperty.call(advancedOptions, 'mode')) {
-                    if (/skip|kill|killnowait/.test(advancedOptions.mode)) {
-                        options.mode = advancedOptions.mode;
-                    } else {
-                        err = true;
-                    }
-
+        if (this._isPlainObject(advancedOptions)) {
+            if (Object.hasOwnProperty.call(advancedOptions, 'mode')) {
+                if (/skip|kill|killnowait/.test(advancedOptions.mode)) {
+                    options.mode = advancedOptions.mode;
+                } else {
+                    let error = new Errors.InvalidParamError();
+                    this._fillOpStatusByError(error);
+                    throw error;
                 }
-            } else {
-                err = true;
             }
-
-            if (err) {
-                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
-
-                if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError({ error: this._cache.opStatus.description });
-                }
-
-                return this;
-            }
+        } else if (typeof (advancedOptions) !== 'undefined') {
+            let error = new Errors.InvalidParamError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
         // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
         this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
-        this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+        this._cache.opStatus = SUCCESS;
         this._cache.opStatus.reqId = reqId;
 
-        callbacks.onSuccess && callbacks.onSuccess();
-
-        return this;
+        return true;
     }
 
     /**
      * RPC registration for invocation
      * @param {string} topicURI
-     * @param {function|object} callbacks - if it is a function - it will be treated as rpc itself
-     *                          or it can be hash table of callbacks:
-     *                          { rpc: registered procedure
-     *                            onSuccess: will be called on successful registration
-     *                            onError: will be called if registration would be aborted }
+     * @param {function} rpc - rpc that will receive invocations
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          {
      *                              match: string matching policy ("prefix"|"wildcard")
      *                              invoke: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
      *                          }
-     * @returns {Wampy}
+     * @returns {Promise}
      */
-    register (topicURI, callbacks, advancedOptions) {
-        let reqId, patternBased = false, err = false;
-        const options = {};
+    async register (topicURI, rpc, advancedOptions) {
+        let reqId, patternBased = false;
+        const options = {}, callbacks = getNewPromise();
 
-        if (typeof (advancedOptions) !== 'undefined') {
-
-            if (this._isPlainObject(advancedOptions)) {
-
-                if (Object.hasOwnProperty.call(advancedOptions, 'match')) {
-                    if (/prefix|wildcard/.test(advancedOptions.match)) {
-                        options.match = advancedOptions.match;
-                        patternBased = true;
-                    } else {
-                        err = true;
-                    }
+        if (this._isPlainObject(advancedOptions)) {
+            if (Object.hasOwnProperty.call(advancedOptions, 'match')) {
+                if (/prefix|wildcard/.test(advancedOptions.match)) {
+                    options.match = advancedOptions.match;
+                    patternBased = true;
+                } else {
+                    let error = new Errors.InvalidParamError();
+                    this._fillOpStatusByError(error);
+                    throw error;
                 }
-
-                if (Object.hasOwnProperty.call(advancedOptions, 'invoke')) {
-                    if (/single|roundrobin|random|first|last/.test(advancedOptions.invoke)) {
-                        options.invoke = advancedOptions.invoke;
-                    } else {
-                        err = true;
-                    }
-                }
-
-            } else {
-                err = true;
             }
 
-            if (err) {
-                this._cache.opStatus = WAMP_ERROR_MSG.INVALID_PARAM;
-
-                if (this._isPlainObject(callbacks) && callbacks.onError) {
-                    callbacks.onError({ error: this._cache.opStatus.description });
+            if (Object.hasOwnProperty.call(advancedOptions, 'invoke')) {
+                if (/single|roundrobin|random|first|last/.test(advancedOptions.invoke)) {
+                    options.invoke = advancedOptions.invoke;
+                } else {
+                    let error = new Errors.InvalidParamError();
+                    this._fillOpStatusByError(error);
+                    throw error;
                 }
-
-                return this;
             }
+
+        } else if (typeof (advancedOptions) !== 'undefined') {
+            let error = new Errors.InvalidParamError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
+        // Need to be placed here as patternBased flag is determined above
         if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: false },
-            'dealer',
-            callbacks)) {
-            return this;
+            'dealer')) {
+            throw this._cache.opStatus.error;
         }
 
-        if (typeof callbacks === 'function') {
-            callbacks = { rpc: callbacks };
-        } else if (!this._isPlainObject(callbacks) || typeof (callbacks.rpc) === 'undefined') {
-            this._cache.opStatus = WAMP_ERROR_MSG.NO_CALLBACK_SPEC;
-
-            if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError({ error: this._cache.opStatus.description });
-            }
-
-            return this;
+        if (typeof rpc === 'function') {
+            callbacks.rpc = rpc;
+        } else {
+            let error = new Errors.NoCallbackError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
         if (!this._rpcRegs[topicURI] || !this._rpcRegs[topicURI].callbacks.length) {
@@ -2174,40 +2148,28 @@ class Wampy {
 
             // WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
             this._send([WAMP_MSG_SPEC.REGISTER, reqId, options, topicURI]);
-            this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+            this._cache.opStatus = SUCCESS;
             this._cache.opStatus.reqId = reqId;
         } else {    // already have registration with such topicURI
-            this._cache.opStatus = WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED;
-
-            if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError({ error: this._cache.opStatus.description });
-            }
-
+            let error = new Errors.RPCAlreadyRegisteredError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
-        return this;
-
+        return callbacks.promise;
     }
 
     /**
      * RPC unregistration for invocation
      * @param {string} topicURI
-     * @param {function|object} callbacks - if it is a function, it will be called on successful unregistration
-     *                          or it can be hash table of callbacks:
-     *                          { onSuccess: will be called on successful unregistration
-     *                            onError: will be called if unregistration would be aborted }
-     * @returns {Wampy}
+     * @returns {Promise}
      */
-    unregister (topicURI, callbacks) {
+    async unregister (topicURI) {
         let reqId;
+        const callbacks = getNewPromise();
 
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'dealer', callbacks)) {
-            return this;
-        }
-
-        if (typeof callbacks === 'function') {
-            callbacks = { onSuccess: callbacks };
-        }
+        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'dealer')) {
+            throw this._cache.opStatus.error;        }
 
         if (this._rpcRegs[topicURI]) {   // there is such registration
 
@@ -2220,20 +2182,17 @@ class Wampy {
 
             // WAMP SPEC: [UNREGISTER, Request|id, REGISTERED.Registration|id]
             this._send([WAMP_MSG_SPEC.UNREGISTER, reqId, this._rpcRegs[topicURI].id]);
-            this._cache.opStatus = WAMP_ERROR_MSG.SUCCESS;
+            this._cache.opStatus = SUCCESS;
             this._cache.opStatus.reqId = reqId;
         } else {    // there is no registration with such topicURI
-            this._cache.opStatus = WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG;
-
-            if (this._isPlainObject(callbacks) && callbacks.onError) {
-                callbacks.onError({ error: this._cache.opStatus.description });
-            }
-
+            let error = new Errors.NonExistRPCUnregistrationError();
+            this._fillOpStatusByError(error);
+            throw error;
         }
 
-        return this;
+        return callbacks.promise;
     }
 }
 
 export default Wampy;
-export { Wampy };
+export { Wampy, Errors };

@@ -144,6 +144,7 @@ function startTimers () {
     WebSocket.prototype.send = function (data) {
 
         this.decode(data).then(rec_data => {
+            // console.log('Server received a message: ', rec_data);
             let send_data, enc_data, i, opts, pptSerializer;
             send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
 
@@ -218,7 +219,9 @@ function startTimers () {
                     }
                 }
 
-                enc_data = { data: this.encode(send_data.data) };
+                enc_data = {
+                    data: send_data.ruinMessage ? this.encode(send_data.data) + '123' : this.encode(send_data.data)
+                };
             }
 
             clientMessageQueue.push(() => {
