@@ -1,6 +1,298 @@
 Migrating from previous versions
 ================================
 
+Migrating from 6.x to 7.x versions
+==================================
+
+v7 is a huge rewrite of the whole project.
+Maybe 7+ years age method chaining was okay, but for now await/async sugar is everywhere,
+and it is pretty neat to use it.
+
+So most of the public methods were rewritten to async/await style and now return promises.
+
+1. Wampy constructor now doesn't automatically connect to server. so you need to call
+`.connect()` explicitly after Wampy instantiation.
+2. Serializers were refactored a bit, so no need to pass additional objects.
+
+    ```javascript
+    // Before
+    wampy = new Wampy({
+        serializer: new MsgpackSerializer(msgpack5)
+    });
+
+    // Now
+    wampy = new Wampy({
+        serializer: new MsgpackSerializer()
+    });
+    ```
+
+3. `getOpStatus()` answer changed.
+
+    ```javascript
+    //Before
+    console.log(ws.getOpStatus());
+    // may return { code: 1, description: "Topic URI doesn't meet requirements!" }
+    // or { code: 2, description: "Server doesn't provide broker role!" }
+    // or { code: 0, description: "Success!", reqId: 1565723572 }
+
+    // Now
+    console.log(ws.getOpStatus());
+    // may return
+    //    { code: 1, error: UriError instance }
+    // or { code: 2, error: NoBrokerError }
+    // or { code: 0, error: null }
+    ```
+
+4. `onConnect` callback option was removed. Rely on the promise resolve result
+
+    ```javascript
+    //Before
+    ws = new Wampy('wss://wamp.router.url', {
+       realm: 'realm1',
+       onConnect: (details) => {
+           console.log('Connected to Router!');
+       }
+    });
+
+    // Now
+    let details = await wampy.connect();
+    ```
+
+5. `disconnect()` was promisified.
+
+    ```javascript
+    //Before
+    wampy.disconnect();
+
+    // Now
+    await wampy.disconnect();
+    ```
+
+6. `subscribe(topicURI, onEvent[, advancedOptions])` was promisified. `onSucess`, `onError` callbacks
+options were removed. Rely on the promise resolution.
+
+    ```javascript
+    //Before
+    ws.subscribe('chat.message.received', function (eventData) { console.log('Received new chat message!', eventData); });
+
+    ws.subscribe('some.another.topic', {
+        onSuccess: function (details) { console.log('Successfully subscribed to topic: ' + details.topic); },
+        onError: function (errData) { console.log('Subscription error:' + err.error); },
+        onEvent: function (eventData) { console.log('Received topic event', eventData); }
+    });
+
+    // Now
+    await ws.subscribe('chat.message.received', function (eventData) { console.log('Received new chat message!', eventData); });
+
+    try {
+        let res = await ws.subscribe('some.another.topic',
+            function (eventData) { console.log('Received topic event', eventData); }
+        );
+        console.log('Successfully subscribed to topic: ' + res.topic);
+
+    } catch (e) {
+        console.log('Subscription error:' + e.error);
+    }
+    ```
+
+7. `unsubscribe(topicURI[, onEvent])` was promisified. `onSucess`, `onError` callbacks
+   options were removed. Rely on the promise resolution.
+
+    ```javascript
+    //Before
+    const f1 = function (data) { };
+    ws.unsubscribe('subscribed.topic', f1);
+
+    ws.unsubscribe('subscribed.topic', {
+        onSuccess: function (details) { console.log('Successfully unsubscribed from topic: ' + details.topic); },
+        onError: function (errData) { console.log('Unsubscription error:' + err.error); },
+        onEvent: f1
+    });
+
+    // Now
+    await ws.unsubscribe('subscribed.topic', f1);
+    try {
+        let res = await ws.unsubscribe('some.another.topic', f1);
+        console.log('Successfully unsubscribed to topic: ' + details.topic);
+
+    } catch (e) {
+        console.log('Unsubscription error:' + e.error);
+    }
+    ```
+
+8. `publish(topicURI[, payload[, advancedOptions]]])` was promisified. `onSucess`, `onError` callbacks
+   options were removed. Rely on the promise resolution.
+
+    ```javascript
+    //Before
+    ws.publish('user.logged.in');
+    ws.publish('chat.message.received', 'user message');
+    ws.publish('chat.message.received', ['user message1', 'user message2']);
+    ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
+    ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
+        onSuccess: function () { console.log('User successfully modified'); }
+    });
+    ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
+        onSuccess: function () { console.log('User successfully modified'); },
+        onError: function (errData) { console.log('User modification failed', errData.error, errData.details); }
+    });
+    ws.publish('chat.message.received', ['Private message'], null, { eligible: 123456789 });
+
+    // Now
+    await ws.publish('user.logged.in');
+    await ws.publish('chat.message.received', 'user message');
+    await ws.publish('chat.message.received', ['user message1', 'user message2']);
+    await ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
+    await ws.publish('chat.message.received', ['Private message'], { eligible: 123456789 });
+
+    try {
+        await ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
+        console.log('User successfully modified');
+    } catch (e) {
+        console.log('User modification failed', e.error, e.details);
+    }
+    ```
+
+9. `call(topicURI[, payload[, advancedOptions]]])` was promisified. `onSucess`, `onError` callbacks
+   options were removed. Rely on the promise resolution.
+
+    ```javascript
+    //Before
+    ws.call('server.time', null,
+        function (result) {
+            console.log('Server time is ' + result.argsList[0]);
+        }
+    );
+
+    ws.call('start.migration', null, {
+        onSuccess: function (result) {
+            console.log('RPC successfully called');
+        },
+        onError: function (err) {
+            console.log('RPC call failed!', err.error);
+        }
+    });
+
+    ws.call('restore.backup', { backupFile: 'backup.zip' }, {
+        onSuccess: function (result) {
+            console.log('Backup successfully restored');
+        },
+        onError: function (err) {
+            console.log('Restore failed!', err.error, err.details);
+        }
+    });
+
+    // Now
+    let result = await ws.call('server.time');
+    console.log('Server time is ' + result.argsList[0]);
+
+    try {
+        await ws.call('start.migration');
+        console.log('RPC successfully called');
+    } catch (e) {
+        console.log('RPC call failed!', e.error);
+    }
+
+    try {
+        await ws.call('restore.backup', { backupFile: 'backup.zip' });
+        console.log('Backup successfully restored');
+    } catch (e) {
+        console.log('Restore failed!', e.error, e.details);
+    }
+    ```
+
+10. `cancel(reqId[, advancedOptions]])` was promisified. `onSucess`, `onError` callbacks
+    options were removed. Rely on the promise resolution. Refer to the docs about returned objects.
+
+    ```javascript
+    //Before
+    ws.call('start.migration', null, {
+        onSuccess: function (result) {
+
+            console.log('RPC successfully called');
+        },
+        onError: function (err) {
+            console.log('RPC call failed!', err.error);
+        }
+    });
+
+    status = ws.getOpStatus();
+
+    ws.cancel(status.reqId);
+    // Now
+    let defer = ws.call('start.migration');
+    defer
+        .then((result) => {
+            console.log('RPC successfully called');
+        })
+        .catch((err) => {
+            console.log('RPC call failed!', err);
+        });
+
+    status = ws.getOpStatus();
+
+    ws.cancel(status.reqId);
+    ```
+
+11. `register(topicURI, rpc[, advancedOptions])` was promisified. `onSucess`, `onError` callbacks
+    options were removed. Rely on the promise resolution. Refer to the docs about returned objects.
+
+    ```javascript
+    //Before
+    const sqrt_f = function (data) { return { argsList: data.argsList[0]*data.argsList[0] } };
+
+    ws.register('sqrt.value', sqrt_f);
+
+    ws.register('sqrt.value', {
+        rpc: sqrt_f,
+        onSuccess: function (data) {
+            console.log('RPC successfully registered');
+        },
+        onError: function (err) {
+            console.log('RPC registration failed!', err.error);
+        }
+    });
+
+    // Now
+    const sqrt_f = function (data) { return { argsList: data.argsList[0]*data.argsList[0] } };
+
+    await ws.register('sqrt.value', sqrt_f);
+
+    try {
+        await ws.register('sqrt.value', sqrt_f);
+        console.log('RPC successfully registered');
+    } catch (e) {
+        console.log('RPC registration failed!', e);
+    }
+    ```
+
+12. `unregister(topicURI)` was promisified. `onSucess`, `onError` callbacks
+    options were removed. Rely on the promise resolution. Refer to the docs about returned objects.
+
+    ```javascript
+    //Before
+    ws.unregister('sqrt.value');
+
+    ws.unregister('sqrt.value', {
+        onSuccess: function (data) {
+            console.log('RPC successfully unregistered');
+        },
+        onError: function (err) {
+            console.log('RPC unregistration failed!', err.error);
+        }
+    });
+
+    // Now
+    await ws.unregister('sqrt.value');
+
+    try {
+        ws.unregister('sqrt.value');
+        console.log('RPC successfully unregistered');
+    } catch (e) {
+        console.log('RPC unregistration failed!', e);
+    }
+    ```
+
 Migrating from 5.x to 6.x versions
 ==================================
 
@@ -35,7 +327,7 @@ Subscribe event callback method signature change:
 ws.subscribe('some.topic', {
    onSuccess: function () { console.log('Successfully subscribed to topic'); },
    onError: function (err, details) { console.log('Subscription error:' + err); },
-   onEvent: function (arrayPayload, objectPayload) { 
+   onEvent: function (arrayPayload, objectPayload) {
        console.log('Received topic event');
        console.log('Event array payload', arrayPayload);
        console.log('Event object payload', objectPayload);
@@ -46,7 +338,7 @@ ws.subscribe('some.topic', {
 ws.subscribe('some.topic', {
    onSuccess: function () { console.log('Successfully subscribed to topic'); },
    onError: function (err) { console.log('Subscription error:' + err.error); },
-   onEvent: function (result) { 
+   onEvent: function (result) {
        console.log('Received topic event');
        console.log('Event array payload', result.argsList);
        console.log('Event object payload', result.argsDict);
@@ -132,12 +424,12 @@ Migrating from 4.x to 5.x versions
 
 5.0.0 version was extended and updated, so there are some backward incompatible changes.
 
-Starting with 5.0.0 version, browser precompiled version is no longer included to dist folder. Most people use 
-bundlers, like webpack/rollup or others, so they do not need standalone browser version. You can always download 
+Starting with 5.0.0 version, browser precompiled version is no longer included to dist folder. Most people use
+bundlers, like webpack/rollup or others, so they do not need standalone browser version. You can always download
 it from [releases page](../../releases/latest).
 
 First of all, because of rewriting Wampy to ES6 modules, module import slightly changed:
- 
+
 ```javascript
 // WAS:
 const Wampy = require('wampy');
@@ -150,7 +442,7 @@ import { Wampy } from 'wampy';
 
 If you use Wampy with msgpack, then you need to update you code for proper serializer initialization.
 `msgpackCoder` and `transportEncoding` options was removed. Instead, `serializer` option was added for providing
-custom serializer. Just pass a Serializer instance there. Wampy already comes with 2 serializers: 
+custom serializer. Just pass a Serializer instance there. Wampy already comes with 2 serializers:
 JsonSerializer (default) and MsgpackSerializer (optional).
 
 ```javascript
@@ -180,8 +472,8 @@ const wampy = new Wampy(routerUrl, {
 });
 ```
 
-Now registered PRC during invocation will receive three arguments (instead of 2, previously): 
-array payload (may be undefined), object payload (may be undefined) and options object. 
+Now registered PRC during invocation will receive three arguments (instead of 2, previously):
+array payload (may be undefined), object payload (may be undefined) and options object.
 Also now RPC can return no result (undefined), or it must return an array with 1, 2 or 3 elements:
 
 * \[0\] element must contain options object or {} if not needed. Possible attribute of options is "progress": true, which
@@ -197,7 +489,7 @@ Migrating from 3.x to 4.x versions
 
 * Error callbacks now receive more than 1 parameter. In most cases it now is called with (Error|uri|string, Details|object).
 In some cases, like CALL, callback is called with (Error|uri|string, Details|object, Arguments|array, ArgumentsKw|object).
-* Event callback for subscibed topic now receives 2 parameters: (Arguments|array, ArgumentsKw|object). It allows to receive 
+* Event callback for subscibed topic now receives 2 parameters: (Arguments|array, ArgumentsKw|object). It allows to receive
 array-like and hash-table payload at the same time. So, if your app is expecting to receive object-like payload in first argument,
 now you should add second one, and use it.
 * Same rule as above applies to RPC result callback.

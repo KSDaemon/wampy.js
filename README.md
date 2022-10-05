@@ -698,7 +698,7 @@ let defer = ws.unsubscribe('chat.message.received');
 [Back to TOC](#table-of-contents)
 
 publish(topicURI[, payload[, advancedOptions]]])
-------------------------------------------------------------
+------------------------------------------------
 
 Publish a new event to topic.
 
@@ -844,7 +844,7 @@ ws.cancel(status.reqId);
 [Back to TOC](#table-of-contents)
 
 register(topicURI, rpc[, advancedOptions])
-------------------------------------------------
+------------------------------------------
 
 RPC registration for invocation.
 
