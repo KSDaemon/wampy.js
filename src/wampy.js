@@ -2195,4 +2195,4 @@ class Wampy {
 }
 
 export default Wampy;
-export { Wampy };
+export { Wampy, Errors };
