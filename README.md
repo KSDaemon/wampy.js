@@ -37,6 +37,7 @@ Table of Contents
   - [cancel(reqId[, advancedOptions])](#cancelreqid-advancedoptions)
   - [register(topicURI, rpc[, advancedOptions])](#registertopicuri-rpc-advancedoptions)
   - [unregister(topicURI)](#unregistertopicuri)
+  - [errors handling](#errors-handling)
 - [Using custom serializer](#using-custom-serializer)
 - [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
 - [Tests and code coverage](#tests-and-code-coverage)
@@ -1003,6 +1004,42 @@ try {
 } catch (e) {
     console.log('RPC unregistration failed!', e);
 }
+```
+
+errors handling
+---------------
+
+During wampy instance lifetime there can be many cases when error happens: some
+made by developer mistake, some are bound to WAMP protocol violation, some came
+from other peers.
+Errors that can be caught by wampy instance itself are mostly formalized and are
+stored in `opStatus.error`. This allows, for example, convenient handling of different
+types of errors:
+
+```javascript
+try {
+    await ws.call('start.migration');
+    console.log('RPC successfully called');
+} catch (e) {
+    console.log('Error happened!');
+    if (e instanceof UriError) {
+        // statements to handle UriError exceptions
+    } else if (e instanceof InvalidParamError) {
+        // statements to handle InvalidParamError exceptions
+    } else if (e instanceof NoSerializerAvailableError) {
+        // statements to handle NoSerializerAvailableError exceptions
+    } else {
+        // statements to handle any unspecified exceptions
+    }
+}
+```
+
+Wampy package exposes these errors as `Errors`. For a complete list of errors look at
+[src/errors.js](./src/errors.js) file.
+
+```javascript
+export default Wampy;
+export { Wampy, Errors };
 ```
 
 [Back to TOC](#table-of-contents)
