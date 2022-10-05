@@ -754,6 +754,12 @@ class Wampy {
         this._wsQueue = [];
         this._send([WAMP_MSG_SPEC.ABORT, { message: details }, errorUri]);
 
+        // In case we were just making first connection
+        if (this._cache.connectPromise) {
+            this._cache.connectPromise.onError(errorUri);
+            this._cache.connectPromise = null;
+        }
+
         if (this._options.onError) {
             this._options.onError({ error: errorUri, details: details });
         }
@@ -885,6 +891,7 @@ class Wampy {
                 this._options.onClose();
             } else if (this._cache.closePromise) {
                 this._cache.closePromise.onSuccess();
+                this._cache.closePromise = null;
             }
             this._resetState();
             this._ws = null;
@@ -934,6 +941,7 @@ class Wampy {
                     } else {
                         // Firing onConnect event on real connection to WAMP server
                         this._cache.connectPromise.onSuccess(data[2]);
+                        this._cache.connectPromise = null;
                     }
 
                     // Send local queue if there is something out there
@@ -1474,6 +1482,11 @@ class Wampy {
     _wsOnError (error) {
         this._log('websocket error');
 
+        if (this._cache.connectPromise) {
+            this._cache.connectPromise.onError(error);
+            this._cache.connectPromise = null;
+        }
+
         if (this._options.onError) {
             this._options.onError({ error });
         }
@@ -1627,9 +1640,6 @@ class Wampy {
      * @returns {Promise}
      */
     async disconnect () {
-
-
-
         if (this._cache.sessionId) {
             let defer = getNewPromise();
             this._cache.opStatus = SUCCESS;
