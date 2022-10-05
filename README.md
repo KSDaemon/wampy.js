@@ -769,8 +769,7 @@ is possible to pass array and object-like data simultaneously. In this case pass
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
     * **disclose_me**: bool flag of disclosure of Caller identity (WAMP session ID)
                         to endpoints of a routed call
-    * **receive_progress**: bool flag for receiving progressive results. In this case onSuccess function
-                        will be called every time on receiving result
+    * **progress_callback**: function for handling intermediate progressive call results
     * **timeout**: integer timeout (in ms) for the call to finish
 
 Returns `promise`:
@@ -788,6 +787,13 @@ Returns `promise`:
   by the _Callee_ to the _Dealer_
   * **argsDict**: optional hash-table containing the original error
   payload dictionary as returned by the _Callee_ to the _Dealer_
+
+**Important note on progressive call results**:
+
+For getting a progressive call results you need to specify `progress_callback` in `advancedOptions`.
+This callback will be fired on every intermediate result. **But** the last one result or error
+will be processed on promise returned from the `.call()`. That means that final call result
+will be received by call promise `resolve` handler.
 
 ```javascript
 let result = await ws.call('server.time');

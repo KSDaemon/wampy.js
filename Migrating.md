@@ -201,7 +201,40 @@ options were removed. Rely on the promise resolution.
     }
     ```
 
-10. `cancel(reqId[, advancedOptions]])` was promisified. `onSucess`, `onError` callbacks
+10. Progressive call results flow changed. As `call()` was promisified, so for getting a
+progressive call results you need to specify `progress_callback` in `advancedOptions`.
+This callback will be fired on every intermediate result. **But** the last one result or error
+will be processed on promise returned from the `.call()`. That means that final call result
+will be received by call promise `resolve` handler.
+
+    ```javascript
+    //Before
+    ws.call('start.migration', null, {
+            onSuccess: function (result) {
+                // this function will be called every time with results
+                // intermediate and final one
+                console.log('RPC successfully called');
+            },
+            onError: function (err) {
+                console.log('RPC call failed!', err.error);
+            }
+        },
+        {
+            receive_progress: true
+        }
+    );
+
+    // Now
+    let finalResult = await ws.call('start.migration', null, {
+        progress_callback: function (result) {
+            // this function will be called every ONLY
+            // with intermediate results
+            console.log('RPC intermediate result received');
+        }
+    });
+    ```
+
+11. `cancel(reqId[, advancedOptions]])` was promisified. `onSucess`, `onError` callbacks
     options were removed. Rely on the promise resolution. Refer to the docs about returned objects.
 
     ```javascript
@@ -234,7 +267,7 @@ options were removed. Rely on the promise resolution.
     ws.cancel(status.reqId);
     ```
 
-11. `register(topicURI, rpc[, advancedOptions])` was promisified. `onSucess`, `onError` callbacks
+12. `register(topicURI, rpc[, advancedOptions])` was promisified. `onSucess`, `onError` callbacks
     options were removed. Rely on the promise resolution. Refer to the docs about returned objects.
 
     ```javascript
@@ -266,7 +299,7 @@ options were removed. Rely on the promise resolution.
     }
     ```
 
-12. `unregister(topicURI)` was promisified. `onSucess`, `onError` callbacks
+13. `unregister(topicURI)` was promisified. `onSucess`, `onError` callbacks
     options were removed. Rely on the promise resolution. Refer to the docs about returned objects.
 
     ```javascript
