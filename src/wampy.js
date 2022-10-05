@@ -18,7 +18,6 @@ import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS, SUCCESS } from './cons
 import * as Errors from './errors.js';
 import { getWebSocket, getNewPromise } from './utils.js';
 import { JsonSerializer } from './serializers/JsonSerializer.js';
-import { PPTNotSupportedError, PPTSerializationError } from './errors.js';
 const jsonSerializer = new JsonSerializer();
 
 /**

@@ -7,7 +7,7 @@ module.exports = function (config) {
         frameworks: ['mocha', 'browserify'],
         exclude: [],
         files: [{
-            pattern: 'test/!(wampy-crossbar)-test.js',
+            pattern: 'test/wampy-common-test.js',
             watched: false
         }],
         preprocessors: {
