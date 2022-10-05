@@ -219,7 +219,9 @@ function startTimers () {
                     }
                 }
 
-                enc_data = { data: this.encode(send_data.data) };
+                enc_data = {
+                    data: send_data.ruinMessage ? this.encode(send_data.data) + '123' : this.encode(send_data.data)
+                };
             }
 
             clientMessageQueue.push(() => {

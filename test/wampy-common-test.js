@@ -75,6 +75,28 @@ serializers.forEach(function (item) {
                 }
             });
 
+            it('rejects connection on websocket error', function (done) {
+                let wampy = new Wampy(routerUrl, {
+                    realm     : 'AppRealm',
+                    ws,
+                    serializer: new serializer()
+                });
+                wampy.connect().catch((e) => {
+                    done();
+                });
+            });
+
+            it('aborts connection if it can not decode incoming message', function (done) {
+                let wampy = new Wampy(routerUrl, {
+                    realm     : 'AppRealm',
+                    ws,
+                    serializer: new serializer()
+                });
+                wampy.connect().catch((e) => {
+                    done();
+                });
+            });
+
             it('passes welcome details to onConnect() callback', async function () {
                 let wampy = new Wampy(routerUrl, {
                     realm     : 'AppRealm',

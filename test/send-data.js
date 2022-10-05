@@ -27,6 +27,37 @@ const WAMP_MSG_SPEC = {
     },
 
     sendData = [
+        // rejects connection on websocket error
+        {
+            data: null,
+            abort: true
+        },
+        // aborts connection if it can not decode incoming message
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ],
+            ruinMessage: true
+        },
         // passes welcome details to onConnect() callback
         {
             data: [
