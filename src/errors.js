@@ -25,10 +25,11 @@ export class NoCallbackError extends Error {
 }
 
 export class InvalidParamError extends Error {
-    constructor () {
+    constructor (parameter) {
         super(WAMP_ERROR_MSG.INVALID_PARAM);
         this.name = 'InvalidParamError';
         this.code = 4;
+        this.parameter = parameter;
     }
 }
 

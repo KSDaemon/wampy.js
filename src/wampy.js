@@ -1695,13 +1695,13 @@ class Wampy {
                     options.match = advancedOptions.match;
                     patternBased = true;
                 } else {
-                    let error = new Errors.InvalidParamError();
+                    let error = new Errors.InvalidParamError('match');
                     this._fillOpStatusByError(error);
                     throw error;
                 }
             }
         } else if (typeof (advancedOptions) !== 'undefined') {
-            let error = new Errors.InvalidParamError();
+            let error = new Errors.InvalidParamError('advancedOptions');
             this._fillOpStatusByError(error);
             throw error;
         }
@@ -1861,7 +1861,7 @@ class Wampy {
                 !_optionsConvertHelper('eligible_authid', 'string') ||
                 !_optionsConvertHelper('eligible_authrole', 'string')) {
 
-                let error = new Errors.InvalidParamError();
+                let error = new Errors.InvalidParamError('advancedOptions');
                 this._fillOpStatusByError(error);
                 throw error;
             }
@@ -1897,7 +1897,7 @@ class Wampy {
             }
 
         } else if (typeof (advancedOptions) !== 'undefined') {
-            let error = new Errors.InvalidParamError();
+            let error = new Errors.InvalidParamError('advancedOptions');
             this._fillOpStatusByError(error);
             throw error;
         }
@@ -1964,7 +1964,7 @@ class Wampy {
                     options.receive_progress = true;
                     callbacks.onProgress = advancedOptions.progress_callback;
                 } else {
-                    let error = new Errors.InvalidParamError();
+                    let error = new Errors.InvalidParamError('progress_callback');
                     this._fillOpStatusByError(error);
                     throw error;
                 }
@@ -1974,7 +1974,7 @@ class Wampy {
                 if (typeof advancedOptions.timeout === 'number') {
                     options.timeout = advancedOptions.timeout;
                 } else {
-                    let error = new Errors.InvalidParamError();
+                    let error = new Errors.InvalidParamError('timeout');
                     this._fillOpStatusByError(error);
                     throw error;
                 }
@@ -2002,7 +2002,7 @@ class Wampy {
                 }
             }
         } else if (typeof (advancedOptions) !== 'undefined') {
-            let error = new Errors.InvalidParamError();
+            let error = new Errors.InvalidParamError('advancedOptions');
             this._fillOpStatusByError(error);
             throw error;
         }
@@ -2060,13 +2060,13 @@ class Wampy {
                 if (/skip|kill|killnowait/.test(advancedOptions.mode)) {
                     options.mode = advancedOptions.mode;
                 } else {
-                    let error = new Errors.InvalidParamError();
+                    let error = new Errors.InvalidParamError('mode');
                     this._fillOpStatusByError(error);
                     throw error;
                 }
             }
         } else if (typeof (advancedOptions) !== 'undefined') {
-            let error = new Errors.InvalidParamError();
+            let error = new Errors.InvalidParamError('advancedOptions');
             this._fillOpStatusByError(error);
             throw error;
         }
@@ -2100,7 +2100,7 @@ class Wampy {
                     options.match = advancedOptions.match;
                     patternBased = true;
                 } else {
-                    let error = new Errors.InvalidParamError();
+                    let error = new Errors.InvalidParamError('match');
                     this._fillOpStatusByError(error);
                     throw error;
                 }
@@ -2110,14 +2110,14 @@ class Wampy {
                 if (/single|roundrobin|random|first|last/.test(advancedOptions.invoke)) {
                     options.invoke = advancedOptions.invoke;
                 } else {
-                    let error = new Errors.InvalidParamError();
+                    let error = new Errors.InvalidParamError('invoke');
                     this._fillOpStatusByError(error);
                     throw error;
                 }
             }
 
         } else if (typeof (advancedOptions) !== 'undefined') {
-            let error = new Errors.InvalidParamError();
+            let error = new Errors.InvalidParamError('advancedOptions');
             this._fillOpStatusByError(error);
             throw error;
         }
