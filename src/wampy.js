@@ -854,10 +854,18 @@ class Wampy {
             if (serverProtocol === 'json') {
                 this._options.serializer = new JsonSerializer();
             } else {
-                this._fillOpStatusByError(new Errors.NoSerializerAvailableError());
-                return this;
-            }
+                let err = new Errors.NoSerializerAvailableError();
+                this._fillOpStatusByError(err);
 
+                if (this._cache.connectPromise) {
+                    this._cache.connectPromise.onError(err);
+                    this._cache.connectPromise = null;
+                }
+
+                if (this._options.onError) {
+                    this._options.onError(err);
+                }
+            }
         }
 
         if (this._options.serializer.isBinary) {
