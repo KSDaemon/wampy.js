@@ -1871,7 +1871,13 @@ class Wampy {
      *                                      to receive a published event
      *                            exclude_me: bool flag of receiving publishing event by initiator
      *                            disclose_me: bool flag of disclosure of publisher identity (its WAMP session ID)
-     *                                      to receivers of a published event }
+     *                                      to receivers of a published event
+     *                            ppt_scheme: string Identifies the Payload Schema
+     *                            ppt_serializer: string Specifies what serializer was used to encode the payload
+     *                            ppt_cipher: string Specifies the cryptographic algorithm that was used to encrypt
+     *                                      the payload
+     *                            ppt_keyid: string Contains the encryption key id that was used to encrypt the payload
+     *                          }
      * @returns {Promise}
      */
     async publish (topicURI, payload, advancedOptions) {
@@ -1985,6 +1991,11 @@ class Wampy {
      *                                              to endpoints of a routed call
      *                            progress_callback: function for handling progressive call results
      *                            timeout:          integer timeout (in ms) for the call to finish
+     *                            ppt_scheme: string Identifies the Payload Schema
+     *                            ppt_serializer: string Specifies what serializer was used to encode the payload
+     *                            ppt_cipher: string Specifies the cryptographic algorithm that was used to encrypt
+     *                                the payload
+     *                            ppt_keyid: string Contains the encryption key id that was used to encrypt the payload
      *                          }
      * @returns {Promise}
      */

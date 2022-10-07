@@ -640,7 +640,7 @@ parameter with following attributes:
   * **argsDict**: object payload (maybe omitted)
   * **details**: some publication options object.
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-    * **match**: string matching policy ("prefix"|"wildcard")
+  * **match**: string matching policy ("prefix"|"wildcard")
 
 Returns `promise`:
 
@@ -705,23 +705,27 @@ Parameters:
 Must meet a WAMP Spec URI requirements.
 * **payload**. Publishing event data. Optional. Maybe any single value or array or hash-table object or null. Also, it
 is possible to pass array and object-like data simultaneously. In this case pass a hash-table with next attributes:
-    * **argsList**: array payload (maybe omitted)
-    * **argsDict**: object payload (maybe omitted)
+  * **argsList**: array payload (maybe omitted)
+  * **argsDict**: object payload (maybe omitted)
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-    * **exclude**: integer|array WAMP session id(s) that won't receive a published event,
-                 even though they may be subscribed
-    * **exclude_authid**: string|array Authentication id(s) that won't receive
+  * **exclude**: integer|array WAMP session id(s) that won't receive a published event,
+               even though they may be subscribed
+  * **exclude_authid**: string|array Authentication id(s) that won't receive
+                      a published event, even though they may be subscribed
+  * **exclude_authrole**: string|array Authentication role(s) that won't receive
                         a published event, even though they may be subscribed
-    * **exclude_authrole**: string|array Authentication role(s) that won't receive
-                          a published event, even though they may be subscribed
-    * **eligible**: integer|array WAMP session id(s) that are allowed to receive a published event
-    * **eligible_authid**: string|array Authentication id(s) that are allowed to receive a published event
-    * **eligible_authrole**: string|array Authentication role(s) that are allowed
-                           to receive a published event
-    * **exclude_me**: bool flag of receiving publishing event by initiator
-                         (if it is subscribed to this topic)
-    * **disclose_me**: bool flag of disclosure of publisher identity (its WAMP session ID)
-                         to receivers of a published event
+  * **eligible**: integer|array WAMP session id(s) that are allowed to receive a published event
+  * **eligible_authid**: string|array Authentication id(s) that are allowed to receive a published event
+  * **eligible_authrole**: string|array Authentication role(s) that are allowed
+                         to receive a published event
+  * **exclude_me**: bool flag of receiving publishing event by initiator
+                       (if it is subscribed to this topic)
+  * **disclose_me**: bool flag of disclosure of publisher identity (its WAMP session ID)
+                       to receivers of a published event
+  * **ppt_scheme**: string Identifies the Payload Schema for Payload Passthru Mode
+  * **ppt_serializer**: string Specifies what serializer was used to encode the payload
+  * **ppt_cipher**: string Specifies the cryptographic algorithm that was used to encrypt the payload
+  * **ppt_keyid**: string Contains the encryption key id that was used to encrypt the payload
 
 Returns `promise`:
 
@@ -759,13 +763,17 @@ Parameters:
 Must meet a WAMP Spec URI requirements.
 * **payload**. RPC data. Optional. Maybe any single value or array or hash-table object or null. Also, it
 is possible to pass array and object-like data simultaneously. In this case pass a hash-table with next attributes:
-    * **argsList**: array payload (maybe omitted)
-    * **argsDict**: object payload (maybe omitted)
+  * **argsList**: array payload (maybe omitted)
+  * **argsDict**: object payload (maybe omitted)
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-    * **disclose_me**: bool flag of disclosure of Caller identity (WAMP session ID)
-                        to endpoints of a routed call
-    * **progress_callback**: function for handling intermediate progressive call results
-    * **timeout**: integer timeout (in ms) for the call to finish
+  * **disclose_me**: bool flag of disclosure of Caller identity (WAMP session ID)
+                      to endpoints of a routed call
+  * **progress_callback**: function for handling intermediate progressive call results
+  * **timeout**: integer timeout (in ms) for the call to finish
+  * **ppt_scheme**: string Identifies the Payload Schema for Payload Passthru Mode
+  * **ppt_serializer**: string Specifies what serializer was used to encode the payload
+  * **ppt_cipher**: string Specifies the cryptographic algorithm that was used to encrypt the payload
+  * **ppt_keyid**: string Contains the encryption key id that was used to encrypt the payload
 
 Returns `promise`:
 
@@ -814,7 +822,7 @@ Parameters:
 
 * **reqId**. Required. Request ID of RPC call that need to be canceled.
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-    * **mode**: string|one of the possible modes: "skip" | "kill" | "killnowait". Skip is default.
+  * **mode**: string|one of the possible modes: "skip" | "kill" | "killnowait". Skip is default.
 
 Returns `boolean` or throws `Error`:
 
@@ -849,8 +857,8 @@ Parameters:
 Must meet a WAMP Spec URI requirements.
 * **rpc**. Required. registered procedure.
 * **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-    * **match**: string matching policy ("prefix"|"wildcard")
-    * **invoke**: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
+  * **match**: string matching policy ("prefix"|"wildcard")
+  * **invoke**: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
 
 Returns `promise`:
 
