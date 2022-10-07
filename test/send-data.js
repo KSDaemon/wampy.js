@@ -3270,8 +3270,8 @@ const WAMP_MSG_SPEC = {
                 {},
                 'wamp.error.invocation_exception'
             ],
-            from: [2, 3, 4],
-            to: [2, 3, 4]
+            from: [2, 3, 4, 5],
+            to: [2, 3, 4, 5]
         },
         // calls error handler if RPC YIELD results PPT serializer is not supported
         {
@@ -3302,8 +3302,8 @@ const WAMP_MSG_SPEC = {
                 {},
                 'wamp.error.invocation_exception'
             ],
-            from: [2, 3, 4],
-            to: [2, 3, 4]
+            from: [2, 3, 4, 5],
+            to: [2, 3, 4, 5]
         },
         // allows to receive RPC Invocation in ppt mode
         {

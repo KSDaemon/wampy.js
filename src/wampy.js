@@ -754,14 +754,16 @@ class Wampy {
         this._wsQueue = [];
         this._send([WAMP_MSG_SPEC.ABORT, { message: details }, errorUri]);
 
+        let err = new Errors.ProtocolViolationError(errorUri, details);
+
         // In case we were just making first connection
         if (this._cache.connectPromise) {
-            this._cache.connectPromise.onError(errorUri);
+            this._cache.connectPromise.onError(err);
             this._cache.connectPromise = null;
         }
 
         if (this._options.onError) {
-            this._options.onError({ error: errorUri, details: details });
+            this._options.onError(err);
         }
 
         this._ws.close();
@@ -951,7 +953,7 @@ class Wampy {
             case WAMP_MSG_SPEC.ABORT:
                 // WAMP SPEC: [ABORT, Details|dict, Reason|uri]
                 if (this._options.onError) {
-                    this._options.onError({ error: data[2], details: data[1] });
+                    this._options.onError(new Errors.AbortError({ error: data[2], details: data[1] }));
                 }
                 this._ws.close();
                 break;
@@ -980,16 +982,16 @@ class Wampy {
                 } else {
                     let error = new Errors.NoCRACallbackOrIdError();
 
+                    this._fillOpStatusByError(error);
                     this._ws.send(this._encode([
                         WAMP_MSG_SPEC.ABORT,
                         { message: error.message },
                         'wamp.error.cannot_authenticate'
                     ]));
                     if (this._options.onError) {
-                        this._options.onError({ error });
+                        this._options.onError(error);
                     }
                     this._ws.close();
-                    this._fillOpStatusByError(error);
                     break;
                 }
 
@@ -1001,16 +1003,16 @@ class Wampy {
                 }).catch(e => {
                     let error = new Errors.ChallengeExceptionError();
 
+                    this._fillOpStatusByError(error);
                     this._ws.send(this._encode([
                         WAMP_MSG_SPEC.ABORT,
                         { message: error.message },
                         'wamp.error.cannot_authenticate'
                     ]));
                     if (this._options.onError) {
-                        this._options.onError({ error });
+                        this._options.onError(error);
                     }
                     this._ws.close();
-                    this._fillOpStatusByError(error);
                 });
 
                 break;
@@ -1037,18 +1039,62 @@ class Wampy {
                 } else {
                     switch (data[1]) {
                         case WAMP_MSG_SPEC.SUBSCRIBE:
-                        case WAMP_MSG_SPEC.UNSUBSCRIBE:
-                        case WAMP_MSG_SPEC.PUBLISH:
-                        case WAMP_MSG_SPEC.REGISTER:
-                        case WAMP_MSG_SPEC.UNREGISTER:
 
                             this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                            this._requests[data[2]].callbacks.onError({
+                            this._requests[data[2]].callbacks.onError(new Errors.SubscribeError({
                                 error   : data[4],
                                 details : data[3],
                                 argsList: data[5],
                                 argsDict: data[6]
-                            });
+                            }));
+                            delete this._requests[data[2]];
+
+                            break;
+                        case WAMP_MSG_SPEC.UNSUBSCRIBE:
+
+                            this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
+                            this._requests[data[2]].callbacks.onError(new Errors.UnsubscribeError({
+                                error   : data[4],
+                                details : data[3],
+                                argsList: data[5],
+                                argsDict: data[6]
+                            }));
+                            delete this._requests[data[2]];
+
+                            break;
+                        case WAMP_MSG_SPEC.PUBLISH:
+
+                            this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
+                            this._requests[data[2]].callbacks.onError(new Errors.PublishError({
+                                error   : data[4],
+                                details : data[3],
+                                argsList: data[5],
+                                argsDict: data[6]
+                            }));
+                            delete this._requests[data[2]];
+
+                            break;
+                        case WAMP_MSG_SPEC.REGISTER:
+
+                            this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
+                            this._requests[data[2]].callbacks.onError(new Errors.RegisterError({
+                                error   : data[4],
+                                details : data[3],
+                                argsList: data[5],
+                                argsDict: data[6]
+                            }));
+                            delete this._requests[data[2]];
+
+                            break;
+                        case WAMP_MSG_SPEC.UNREGISTER:
+
+                            this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
+                            this._requests[data[2]].callbacks.onError(new Errors.UnregisterError({
+                                error   : data[4],
+                                details : data[3],
+                                argsList: data[5],
+                                argsDict: data[6]
+                            }));
                             delete this._requests[data[2]];
 
                             break;
@@ -1059,12 +1105,12 @@ class Wampy {
                             // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
                             //             Error|uri, Arguments|list, ArgumentsKw|dict]
                             this._calls[data[2]] && this._calls[data[2]].onError &&
-                            this._calls[data[2]].onError({
+                            this._calls[data[2]].onError(new Errors.CallError({
                                 error   : data[4],
                                 details : data[3],
                                 argsList: data[5],
                                 argsDict: data[6]
-                            });
+                            }));
                             delete this._calls[data[2]];
 
                             break;
@@ -1214,12 +1260,12 @@ class Wampy {
                             if (decodedPayload.err) {
                                 this._log(decodedPayload.err.message);
                                 this._cache.opStatus = decodedPayload.err;
-                                this._calls[data[1]].onError({
-                                    error   : decodedPayload.err.message,
-                                    details : data[2],
-                                    argsList: data[3],
-                                    argsDict: data[4]
-                                });
+                                this._calls[data[1]].onError(new Errors.CallError({
+                                    error     : 'wamp.error.invocation_exception',
+                                    details   : data[2],
+                                    argsList  : [decodedPayload.err.message],
+                                    argsDict  : null
+                                }));
                                 delete this._calls[data[1]];
                                 break;
                             }
@@ -1357,9 +1403,9 @@ class Wampy {
                                                 } else {
                                                     invoke_error_handler({
                                                         details : results.options,
-                                                        error   : this._cache.opStatus.error.message,
-                                                        argsList: results.argsList,
-                                                        argsDict: results.argsDict
+                                                        error   : 'wamp.error.invalid_option',
+                                                        argsList: [this._cache.opStatus.error.message],
+                                                        argsDict: null
                                                     });
                                                 }
                                                 return;
@@ -1387,16 +1433,11 @@ class Wampy {
                                     let res = this._packPPTPayload(results, results.options);
 
                                     if (res.err) {
-                                        let argsList, argsDict;
-                                        if (!(this._cache.opStatus.error instanceof Errors.PPTSerializationError)) {
-                                            argsList = results.argsList;
-                                            argsDict = results.argsDict;
-                                        }
                                         invoke_error_handler({
                                             details : results.options,
-                                            error   : this._cache.opStatus.error.message,
-                                            argsList,
-                                            argsDict
+                                            error   : null, // will be default'ed to invocation_exception
+                                            argsList: [this._cache.opStatus.error.message],
+                                            argsDict: null
                                         });
                                         return;
                                     }
@@ -1423,9 +1464,9 @@ class Wampy {
                                 this._log(decodedPayload.err.message);
                                 invoke_error_handler({
                                     details : data[3],
-                                    error   : decodedPayload.err.message,
-                                    argsList: data[4],
-                                    argsDict: data[5]
+                                    error   : null, // will be default'ed to invocation_exception,
+                                    argsList: [decodedPayload.err.message],
+                                    argsDict: null
                                 });
                                 break;
                             }
@@ -1481,14 +1522,15 @@ class Wampy {
      */
     _wsOnError (error) {
         this._log('websocket error');
+        let err = new Errors.WebsocketError(error);
 
         if (this._cache.connectPromise) {
-            this._cache.connectPromise.onError(error);
+            this._cache.connectPromise.onError(err);
             this._cache.connectPromise = null;
         }
 
         if (this._options.onError) {
-            this._options.onError({ error });
+            this._options.onError(err);
         }
     }
 
