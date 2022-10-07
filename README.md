@@ -348,7 +348,7 @@ Connects to wamp server. **url** parameter is the same as specified in [Construc
 Returns `promise`:
 
 * Resolved with connection details provided by server (roles, features, authentication details)
-* Rejected with error happened
+* Rejected with [error](#errors-handling) happened
 
 ```javascript
 try {
@@ -370,7 +370,7 @@ disconnect()
 Disconnects from wamp server. Clears all queues, subscription, calls. Returns `promise`:
 
 * Resolved when wampy disconnects from WAMP server and closes websocket connection
-* Rejected with error happened (probably never)
+* Rejected with [error](#errors-handling) happened (probably never)
 
 
 ```javascript
@@ -648,7 +648,7 @@ Returns `promise`:
   * **topic**
   * **requestId**
   * **subscriptionId**
-* Rejected with one of the Errors instances
+* Rejected with one of the [Errors instances](#errors-handling)
 
 ```javascript
 await ws.subscribe('chat.message.received', function (eventData) { console.log('Received new chat message!', eventData); });
@@ -683,7 +683,7 @@ Returns `promise`:
 * Resolved with one hash-table parameter with following attributes:
   * **topic**
   * **requestId**
-* Rejected with one of the Errors instances
+* Rejected with one of the [Errors instances](#errors-handling)
 
 ```javascript
 const f1 = function (data) { console.log('this was event handler for topic') };
@@ -729,7 +729,7 @@ Returns `promise`:
   * **topic**
   * **requestId**
   * **publicationId**
-* Rejected with one of the Errors instances
+* Rejected with one of the [Errors instances](#errors-handling)
 
 ```javascript
 await ws.publish('user.logged.in');
@@ -775,7 +775,7 @@ Returns `promise`:
   elements as returned by the _Callee_
   * **argsDict**: optional hash-table containing the original dictionary of keyword result
   elements as returned by the _Callee_
-* Rejected with one of the Errors instances
+* Rejected with one of the [Errors instances](#errors-handling)
 
 **Important note on progressive call results**:
 
@@ -858,7 +858,7 @@ Returns `promise`:
   * **topic**
   * **requestId**
   * **registrationId**
-* Rejected with one of the Errors instances
+* Rejected with one of the [Errors instances](#errors-handling)
 
 Registered PRC during invocation will receive one hash-table argument with following attributes:
 
@@ -977,7 +977,7 @@ Returns `promise`:
 * Resolved with one hash-table parameter with following attributes:
   * **topic**
   * **requestId**
-* Rejected with one of the Errors instances
+* Rejected with one of the [Errors instances](#errors-handling)
 
 ```javascript
 await ws.unregister('sqrt.value');
