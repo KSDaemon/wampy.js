@@ -294,9 +294,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received WELCOME message after session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -311,9 +309,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received CHALLENGE message after session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -328,9 +324,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received GOODBYE message before session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -345,9 +339,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received ERROR message before session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -362,9 +354,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received invalid ERROR message');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -379,9 +369,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received SUBSCRIBED message before session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -396,9 +384,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received UNSUBSCRIBED message before session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -413,9 +399,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received PUBLISHED message before session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -430,9 +414,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received EVENT message before session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -447,9 +429,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received RESULT message before session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -464,9 +444,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received REGISTERED message before session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -481,9 +459,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received UNREGISTERED message before session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -498,9 +474,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received INVOCATION message before session was established');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -515,9 +489,7 @@ serializers.forEach(function (item) {
                     autoReconnect: false,
                     onClose: null,
                     onError: function (e) {
-                        expect(e).to.be.an('object');
-                        expect(e.error).to.be.equal('wamp.error.protocol_violation');
-                        expect(e.details).to.be.equal('Received non-compliant WAMP message');
+                        expect(e).to.be.instanceOf(Errors.ProtocolViolationError);
                         done();
                     },
                     ws,
@@ -1348,7 +1320,7 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.subscribe('subscribe.topic10', function (e) { });
                 } catch (e) {
-                    expect(e.error).to.be.equal('wamp.subscribe.error');
+                    expect(e).to.be.instanceOf(Errors.SubscribeError);
                 }
             });
 
@@ -1356,15 +1328,15 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.unsubscribe('subscribe.topic3');
                 } catch (e) {
-                    expect(e.error).to.be.equal('wamp.unsubscribe.error');
+                    expect(e).to.be.instanceOf(Errors.UnsubscribeError);
                 }
             });
 
             it('fires error callback if error occurred during publishing', async function () {
                 try {
                     await wampy.publish('subscribe.topic4');
-                } catch(e) {
-                    expect(e.error).to.be.equal('wamp.publish.error');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.PublishError);
                 }
             });
 
@@ -1947,7 +1919,7 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc7', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal('wamp.error.invocation_exception');
+                    expect(e).to.be.instanceOf(Errors.CallError);
                 }
             });
 
@@ -1959,7 +1931,7 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc77', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal('wamp.error.invocation_exception');
+                    expect(e).to.be.instanceOf(Errors.CallError);
                 }
             });
 
@@ -1983,7 +1955,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc88', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal(definedUri);
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.errorUri).to.be.equal(definedUri);
                     expect(e.details).to.be.deep.equal(definedDetails);
                     expect(e.argsList).to.be.an('array');
                     expect(e.argsList[0]).to.be.equal(1);
@@ -2004,7 +1977,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc99', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal(definedUri);
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.errorUri).to.be.equal(definedUri);
                     expect(e.details).to.be.deep.equal({});
                     expect(e.argsList).to.be.an('array');
                     expect(e.argsList).to.have.lengthOf(0);
@@ -2016,7 +1990,7 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('nonexistent.rpc', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal('wamp.error.invocation_exception');
+                    expect(e).to.be.instanceOf(Errors.CallError);
                 }
             });
 
@@ -2066,7 +2040,7 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.register('call.rpc10', function (e) {});
                 } catch (e) {
-                    expect(e.error).to.be.equal('wamp.register.error');
+                    expect(e).to.be.instanceOf(Errors.RegisterError);
                 }
             });
 
@@ -2074,7 +2048,7 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.unregister('register.rpc9');
                 } catch (e) {
-                    expect(e.error).to.be.equal('wamp.unregister.error');
+                    expect(e).to.be.instanceOf(Errors.UnregisterError);
                 }
             });
 
@@ -2082,13 +2056,14 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('call.rpc1');
                 } catch (e) {
-                    expect(e.error).to.be.equal('call.error');
+                    expect(e).to.be.instanceOf(Errors.CallError);
                 }
 
                 try {
                     await wampy.call('call.rpc1', [1, 2, 3, 4, 5]);
                 } catch (e) {
-                    expect(e.error).to.be.equal('call.error');
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.errorUri).to.be.equal('call.error');
                     expect(e.argsList).to.be.an('array');
                     expect(e.argsList[0]).to.be.equal(1);
                     expect(e.argsList[4]).to.be.equal(5);
@@ -2099,7 +2074,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('call.rpc1', { k1: 1, k2: 2 });
                 } catch (e) {
-                    expect(e.error).to.be.equal('call.error');
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.errorUri).to.be.equal('call.error');
                     expect(e.argsList).to.be.an('array');
                     expect(e.argsList).to.have.lengthOf(0);
                     expect(e.argsDict).to.be.deep.equal({ k1: 1, k2: 2 });
@@ -2799,7 +2775,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc.ppt.no.srlzr', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
                 }
             });
 
@@ -2814,7 +2791,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc.ppt.srlzr.fail', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
                 }
             });
 
@@ -2828,7 +2806,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc.ppt.invoke.no.srlzr', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
                 }
             });
 
@@ -2843,7 +2822,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc.ppt.invoke.srlzr.fail', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
                 }
             });
 
@@ -2864,7 +2844,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc.ppt.yield.invalid.scheme', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME);
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME);
                 }
             });
 
@@ -2890,7 +2871,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc.ppt.yield.srzl.fails', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
                 }
             });
 
@@ -2910,7 +2892,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc.ppt.yield.srzl.not.supported', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
                 }
             });
 
@@ -2962,7 +2945,8 @@ serializers.forEach(function (item) {
                 try {
                     await wampy.call('register.rpc.no.ppt', 100);
                 } catch (e) {
-                    expect(e.error).to.be.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED);
+                    expect(e).to.be.instanceOf(Errors.CallError);
+                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED);
                 }
             });
 

@@ -25,10 +25,11 @@ export class NoCallbackError extends Error {
 }
 
 export class InvalidParamError extends Error {
-    constructor () {
+    constructor (parameter) {
         super(WAMP_ERROR_MSG.INVALID_PARAM);
         this.name = 'InvalidParamError';
         this.code = 4;
+        this.parameter = parameter;
     }
 }
 
@@ -109,6 +110,7 @@ export class NoCRACallbackOrIdError extends Error {
         super(WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
         this.name = 'NoCRACallbackOrIdError';
         this.code = 23;
+        this.errorUri = 'wamp.error.cannot_authenticate';
     }
 }
 
@@ -117,6 +119,7 @@ export class ChallengeExceptionError extends Error {
         super(WAMP_ERROR_MSG.CHALLENGE_EXCEPTION);
         this.name = 'ChallengeExceptionError';
         this.code = 24;
+        this.errorUri = 'wamp.error.cannot_authenticate';
     }
 }
 
@@ -149,5 +152,93 @@ export class PPTSerializationError extends Error {
         super(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
         this.name = 'PPTSerializationError';
         this.code = 28;
+    }
+}
+
+export class ProtocolViolationError extends Error {
+    constructor (errorUri, details) {
+        super(details || WAMP_ERROR_MSG.PROTOCOL_VIOLATION);
+        this.name = 'ProtocolViolationError';
+        this.code = 29;
+        this.errorUri = errorUri;
+    }
+}
+
+export class AbortError extends Error {
+    constructor ({ error, details }) {
+        super(WAMP_ERROR_MSG.WAMP_ABORT);
+        this.name = 'AbortedError';
+        this.code = 30;
+        this.errorUri = error;
+        this.details = details;
+    }
+}
+
+export class WampError extends Error {
+    constructor ({ error, details, argsList, argsDict }) {
+        super(WAMP_ERROR_MSG.WAMP_GENERAL_ERROR);
+        this.name = 'WampError';
+        this.code = 31;
+        this.errorUri = error;
+        this.details = details;
+        this.argsList = argsList;
+        this.argsDict = argsDict;
+    }
+}
+
+export class SubscribeError extends WampError {
+    constructor ({ error, details, argsList, argsDict }) {
+        super({ error, details, argsList, argsDict });
+        this.name = 'SubscribeError';
+        this.code = 32;
+    }
+}
+
+export class UnsubscribeError extends WampError {
+    constructor ({ error, details, argsList, argsDict }) {
+        super({ error, details, argsList, argsDict });
+        this.name = 'UnsubscribeError';
+        this.code = 33;
+    }
+}
+
+export class PublishError extends WampError {
+    constructor ({ error, details, argsList, argsDict }) {
+        super({ error, details, argsList, argsDict });
+        this.name = 'PublishError';
+        this.code = 34;
+    }
+}
+
+export class RegisterError extends WampError {
+    constructor ({ error, details, argsList, argsDict }) {
+        super({ error, details, argsList, argsDict });
+        this.name = 'RegisterError';
+        this.code = 35;
+    }
+}
+
+export class UnregisterError extends WampError {
+    constructor ({ error, details, argsList, argsDict }) {
+        super({ error, details, argsList, argsDict });
+        this.name = 'UnregisterError';
+        this.code = 36;
+    }
+}
+
+export class CallError extends WampError {
+    constructor ({ error, details, argsList, argsDict }) {
+        super({ error, details, argsList, argsDict });
+        this.name = 'CallError';
+        this.code = 37;
+    }
+}
+
+export class WebsocketError extends Error {
+    constructor (error) {
+        super(WAMP_ERROR_MSG.WEBSOCKET_ERROR);
+        this.name = 'WebsocketError';
+        this.code = 38;
+        this.error = error;
     }
 }

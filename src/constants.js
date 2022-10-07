@@ -50,7 +50,11 @@ export const WAMP_ERROR_MSG = {
     PPT_NOT_SUPPORTED: 'Payload Passthru Mode is not supported by the router',
     PPT_INVALID_SCHEME: 'Provided PPT scheme is invalid',
     PPT_SRLZ_INVALID: 'Provided PPT serializer is invalid or not supported',
-    PPT_SRLZ_ERR: 'Can not serialize/deserialize payload'
+    PPT_SRLZ_ERR: 'Can not serialize/deserialize payload',
+    PROTOCOL_VIOLATION: 'Protocol violation',
+    WAMP_ABORT: 'Router aborted connection',
+    WAMP_GENERAL_ERROR: 'Wamp error',
+    WEBSOCKET_ERROR: 'Websocket error'
 };
 
 export const E2EE_SERIALIZERS = ['cbor'];

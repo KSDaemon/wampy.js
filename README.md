@@ -324,7 +324,7 @@ let defer = ws.publish('system.monitor.update');
 console.log(ws.getOpStatus());
 // may return
 //    { code: 1, error: UriError instance }
-// or { code: 2, error: NoBrokerError }
+// or { code: 2, error: NoBrokerError instance }
 // or { code: 0, error: null }
 ```
 
@@ -648,9 +648,7 @@ Returns `promise`:
   * **topic**
   * **requestId**
   * **subscriptionId**
-* Rejected with one hash-table parameter with following attributes:
-  * **error**: string error description
-  * **details**: hash-table with some error details
+* Rejected with one of the Errors instances
 
 ```javascript
 await ws.subscribe('chat.message.received', function (eventData) { console.log('Received new chat message!', eventData); });
@@ -685,9 +683,7 @@ Returns `promise`:
 * Resolved with one hash-table parameter with following attributes:
   * **topic**
   * **requestId**
-* Rejected with one hash-table parameter with following attributes:
-  * **error**: string error description
-  * **details**: hash-table with some error details
+* Rejected with one of the Errors instances
 
 ```javascript
 const f1 = function (data) { console.log('this was event handler for topic') };
@@ -733,9 +729,7 @@ Returns `promise`:
   * **topic**
   * **requestId**
   * **publicationId**
-* Rejected with one hash-table parameter with following attributes:
-  * **error**: string error description
-  * **details**: hash-table with some error details
+* Rejected with one of the Errors instances
 
 ```javascript
 await ws.publish('user.logged.in');
@@ -781,13 +775,7 @@ Returns `promise`:
   elements as returned by the _Callee_
   * **argsDict**: optional hash-table containing the original dictionary of keyword result
   elements as returned by the _Callee_
-* Rejected with one hash-table parameter with following attributes:
-  * **error**: string error description
-  * **details**: hash-table with some error details
-  * **argsList**: optional array containing the original error payload list as returned
-  by the _Callee_ to the _Dealer_
-  * **argsDict**: optional hash-table containing the original error
-  payload dictionary as returned by the _Callee_ to the _Dealer_
+* Rejected with one of the Errors instances
 
 **Important note on progressive call results**:
 
@@ -870,9 +858,7 @@ Returns `promise`:
   * **topic**
   * **requestId**
   * **registrationId**
-* Rejected with one hash-table parameter with following attributes:
-  * **error**: string error description
-  * **details**: hash-table with some error details
+* Rejected with one of the Errors instances
 
 Registered PRC during invocation will receive one hash-table argument with following attributes:
 
@@ -991,9 +977,7 @@ Returns `promise`:
 * Resolved with one hash-table parameter with following attributes:
   * **topic**
   * **requestId**
-* Rejected with one hash-table parameter with following attributes:
-  * **error**: string error description
-  * **details**: hash-table with some error details
+* Rejected with one of the Errors instances
 
 ```javascript
 await ws.unregister('sqrt.value');
@@ -1011,10 +995,10 @@ errors handling
 
 During wampy instance lifetime there can be many cases when error happens: some
 made by developer mistake, some are bound to WAMP protocol violation, some came
-from other peers.
-Errors that can be caught by wampy instance itself are mostly formalized and are
-stored in `opStatus.error`. This allows, for example, convenient handling of different
-types of errors:
+from other peers. Errors that can be caught by wampy instance itself are stored
+in `opStatus.error`, while others are just thrown.
+
+This allows, for example, convenient handling of different types of errors:
 
 ```javascript
 import {Wampy, Errors} from 'wampy';
@@ -1037,13 +1021,39 @@ try {
 }
 ```
 
-Wampy package exposes these errors as `Errors`. For a complete list of errors look at
-[src/errors.js](./src/errors.js) file.
+Wampy package exposes next `Errors` classes:
 
-```javascript
-export default Wampy;
-export { Wampy, Errors };
-```
+* UriError
+* NoBrokerError
+* NoCallbackError
+* InvalidParamError
+* NoSerializerAvailableError
+* NonExistUnsubscribeError
+* NoDealerError
+* RPCAlreadyRegisteredError
+* NonExistRPCUnregistrationError
+* NonExistRPCInvocationError
+* NonExistRPCReqIdError
+* NoRealmError
+* NoWsOrUrlError
+* NoCRACallbackOrIdError
+* ChallengeExceptionError
+* PPTNotSupportedError
+* PPTInvalidSchemeError
+* PPTSerializerInvalidError
+* PPTSerializationError
+* ProtocolViolationError
+* AbortError
+* WampError
+* SubscribeError
+* UnsubscribeError
+* PublishError
+* RegisterError
+* UnregisterError
+* CallError
+* WebsocketError
+
+For errors attributes look at [src/errors.js](./src/errors.js) file.
 
 [Back to TOC](#table-of-contents)
 
