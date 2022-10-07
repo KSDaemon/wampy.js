@@ -1037,64 +1037,46 @@ class Wampy {
                     this._hardClose('wamp.error.protocol_violation',
                         'Received ERROR message before session was established');
                 } else {
+                    let errData = {
+                        error   : data[4],
+                        details : data[3],
+                        argsList: data[5],
+                        argsDict: data[6]
+                    };
+
                     switch (data[1]) {
                         case WAMP_MSG_SPEC.SUBSCRIBE:
 
                             this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                            this._requests[data[2]].callbacks.onError(new Errors.SubscribeError({
-                                error   : data[4],
-                                details : data[3],
-                                argsList: data[5],
-                                argsDict: data[6]
-                            }));
+                            this._requests[data[2]].callbacks.onError(new Errors.SubscribeError(errData));
                             delete this._requests[data[2]];
 
                             break;
                         case WAMP_MSG_SPEC.UNSUBSCRIBE:
 
                             this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                            this._requests[data[2]].callbacks.onError(new Errors.UnsubscribeError({
-                                error   : data[4],
-                                details : data[3],
-                                argsList: data[5],
-                                argsDict: data[6]
-                            }));
+                            this._requests[data[2]].callbacks.onError(new Errors.UnsubscribeError(errData));
                             delete this._requests[data[2]];
 
                             break;
                         case WAMP_MSG_SPEC.PUBLISH:
 
                             this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                            this._requests[data[2]].callbacks.onError(new Errors.PublishError({
-                                error   : data[4],
-                                details : data[3],
-                                argsList: data[5],
-                                argsDict: data[6]
-                            }));
+                            this._requests[data[2]].callbacks.onError(new Errors.PublishError(errData));
                             delete this._requests[data[2]];
 
                             break;
                         case WAMP_MSG_SPEC.REGISTER:
 
                             this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                            this._requests[data[2]].callbacks.onError(new Errors.RegisterError({
-                                error   : data[4],
-                                details : data[3],
-                                argsList: data[5],
-                                argsDict: data[6]
-                            }));
+                            this._requests[data[2]].callbacks.onError(new Errors.RegisterError(errData));
                             delete this._requests[data[2]];
 
                             break;
                         case WAMP_MSG_SPEC.UNREGISTER:
 
                             this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                            this._requests[data[2]].callbacks.onError(new Errors.UnregisterError({
-                                error   : data[4],
-                                details : data[3],
-                                argsList: data[5],
-                                argsDict: data[6]
-                            }));
+                            this._requests[data[2]].callbacks.onError(new Errors.UnregisterError(errData));
                             delete this._requests[data[2]];
 
                             break;
@@ -1105,12 +1087,7 @@ class Wampy {
                             // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
                             //             Error|uri, Arguments|list, ArgumentsKw|dict]
                             this._calls[data[2]] && this._calls[data[2]].onError &&
-                            this._calls[data[2]].onError(new Errors.CallError({
-                                error   : data[4],
-                                details : data[3],
-                                argsList: data[5],
-                                argsDict: data[6]
-                            }));
+                            this._calls[data[2]].onError(new Errors.CallError(errData));
                             delete this._calls[data[2]];
 
                             break;
