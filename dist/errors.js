@@ -5,7 +5,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" =
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.UriError = exports.RPCAlreadyRegisteredError = exports.PPTSerializerInvalidError = exports.PPTSerializationError = exports.PPTNotSupportedError = exports.PPTInvalidSchemeError = exports.NonExistUnsubscribeError = exports.NonExistRPCUnregistrationError = exports.NonExistRPCReqIdError = exports.NonExistRPCInvocationError = exports.NoWsOrUrlError = exports.NoSerializerAvailableError = exports.NoRealmError = exports.NoDealerError = exports.NoCallbackError = exports.NoCRACallbackOrIdError = exports.NoBrokerError = exports.InvalidParamError = exports.ChallengeExceptionError = void 0;
+exports.WebsocketError = exports.WampError = exports.UriError = exports.UnsubscribeError = exports.UnregisterError = exports.SubscribeError = exports.RegisterError = exports.RPCAlreadyRegisteredError = exports.PublishError = exports.ProtocolViolationError = exports.PPTSerializerInvalidError = exports.PPTSerializationError = exports.PPTNotSupportedError = exports.PPTInvalidSchemeError = exports.NonExistUnsubscribeError = exports.NonExistRPCUnregistrationError = exports.NonExistRPCReqIdError = exports.NonExistRPCInvocationError = exports.NoWsOrUrlError = exports.NoSerializerAvailableError = exports.NoRealmError = exports.NoDealerError = exports.NoCallbackError = exports.NoCRACallbackOrIdError = exports.NoBrokerError = exports.InvalidParamError = exports.ChallengeExceptionError = exports.CallError = exports.AbortError = void 0;
 
 var _constants = require("./constants.js");
 
@@ -103,7 +103,7 @@ var InvalidParamError = /*#__PURE__*/function (_Error4) {
 
   var _super4 = _createSuper(InvalidParamError);
 
-  function InvalidParamError() {
+  function InvalidParamError(parameter) {
     var _this4;
 
     _classCallCheck(this, InvalidParamError);
@@ -111,6 +111,7 @@ var InvalidParamError = /*#__PURE__*/function (_Error4) {
     _this4 = _super4.call(this, _constants.WAMP_ERROR_MSG.INVALID_PARAM);
     _this4.name = 'InvalidParamError';
     _this4.code = 4;
+    _this4.parameter = parameter;
     return _this4;
   }
 
@@ -321,6 +322,7 @@ var NoCRACallbackOrIdError = /*#__PURE__*/function (_Error14) {
     _this14 = _super14.call(this, _constants.WAMP_ERROR_MSG.NO_CRA_CB_OR_ID);
     _this14.name = 'NoCRACallbackOrIdError';
     _this14.code = 23;
+    _this14.errorUri = 'wamp.error.cannot_authenticate';
     return _this14;
   }
 
@@ -342,6 +344,7 @@ var ChallengeExceptionError = /*#__PURE__*/function (_Error15) {
     _this15 = _super15.call(this, _constants.WAMP_ERROR_MSG.CHALLENGE_EXCEPTION);
     _this15.name = 'ChallengeExceptionError';
     _this15.code = 24;
+    _this15.errorUri = 'wamp.error.cannot_authenticate';
     return _this15;
   }
 
@@ -433,4 +436,290 @@ var PPTSerializationError = /*#__PURE__*/function (_Error19) {
 }( /*#__PURE__*/_wrapNativeSuper(Error));
 
 exports.PPTSerializationError = PPTSerializationError;
+
+var ProtocolViolationError = /*#__PURE__*/function (_Error20) {
+  _inherits(ProtocolViolationError, _Error20);
+
+  var _super20 = _createSuper(ProtocolViolationError);
+
+  function ProtocolViolationError(errorUri, details) {
+    var _this20;
+
+    _classCallCheck(this, ProtocolViolationError);
+
+    _this20 = _super20.call(this, details || _constants.WAMP_ERROR_MSG.PROTOCOL_VIOLATION);
+    _this20.name = 'ProtocolViolationError';
+    _this20.code = 29;
+    _this20.errorUri = errorUri;
+    return _this20;
+  }
+
+  return _createClass(ProtocolViolationError);
+}( /*#__PURE__*/_wrapNativeSuper(Error));
+
+exports.ProtocolViolationError = ProtocolViolationError;
+
+var AbortError = /*#__PURE__*/function (_Error21) {
+  _inherits(AbortError, _Error21);
+
+  var _super21 = _createSuper(AbortError);
+
+  function AbortError(_ref) {
+    var _this21;
+
+    var error = _ref.error,
+        details = _ref.details;
+
+    _classCallCheck(this, AbortError);
+
+    _this21 = _super21.call(this, _constants.WAMP_ERROR_MSG.WAMP_ABORT);
+    _this21.name = 'AbortedError';
+    _this21.code = 30;
+    _this21.errorUri = error;
+    _this21.details = details;
+    return _this21;
+  }
+
+  return _createClass(AbortError);
+}( /*#__PURE__*/_wrapNativeSuper(Error));
+
+exports.AbortError = AbortError;
+
+var WampError = /*#__PURE__*/function (_Error22) {
+  _inherits(WampError, _Error22);
+
+  var _super22 = _createSuper(WampError);
+
+  function WampError(_ref2) {
+    var _this22;
+
+    var error = _ref2.error,
+        details = _ref2.details,
+        argsList = _ref2.argsList,
+        argsDict = _ref2.argsDict;
+
+    _classCallCheck(this, WampError);
+
+    _this22 = _super22.call(this, _constants.WAMP_ERROR_MSG.WAMP_GENERAL_ERROR);
+    _this22.name = 'WampError';
+    _this22.code = 31;
+    _this22.errorUri = error;
+    _this22.details = details;
+    _this22.argsList = argsList;
+    _this22.argsDict = argsDict;
+    return _this22;
+  }
+
+  return _createClass(WampError);
+}( /*#__PURE__*/_wrapNativeSuper(Error));
+
+exports.WampError = WampError;
+
+var SubscribeError = /*#__PURE__*/function (_WampError) {
+  _inherits(SubscribeError, _WampError);
+
+  var _super23 = _createSuper(SubscribeError);
+
+  function SubscribeError(_ref3) {
+    var _this23;
+
+    var error = _ref3.error,
+        details = _ref3.details,
+        argsList = _ref3.argsList,
+        argsDict = _ref3.argsDict;
+
+    _classCallCheck(this, SubscribeError);
+
+    _this23 = _super23.call(this, {
+      error: error,
+      details: details,
+      argsList: argsList,
+      argsDict: argsDict
+    });
+    _this23.name = 'SubscribeError';
+    _this23.code = 32;
+    return _this23;
+  }
+
+  return _createClass(SubscribeError);
+}(WampError);
+
+exports.SubscribeError = SubscribeError;
+
+var UnsubscribeError = /*#__PURE__*/function (_WampError2) {
+  _inherits(UnsubscribeError, _WampError2);
+
+  var _super24 = _createSuper(UnsubscribeError);
+
+  function UnsubscribeError(_ref4) {
+    var _this24;
+
+    var error = _ref4.error,
+        details = _ref4.details,
+        argsList = _ref4.argsList,
+        argsDict = _ref4.argsDict;
+
+    _classCallCheck(this, UnsubscribeError);
+
+    _this24 = _super24.call(this, {
+      error: error,
+      details: details,
+      argsList: argsList,
+      argsDict: argsDict
+    });
+    _this24.name = 'UnsubscribeError';
+    _this24.code = 33;
+    return _this24;
+  }
+
+  return _createClass(UnsubscribeError);
+}(WampError);
+
+exports.UnsubscribeError = UnsubscribeError;
+
+var PublishError = /*#__PURE__*/function (_WampError3) {
+  _inherits(PublishError, _WampError3);
+
+  var _super25 = _createSuper(PublishError);
+
+  function PublishError(_ref5) {
+    var _this25;
+
+    var error = _ref5.error,
+        details = _ref5.details,
+        argsList = _ref5.argsList,
+        argsDict = _ref5.argsDict;
+
+    _classCallCheck(this, PublishError);
+
+    _this25 = _super25.call(this, {
+      error: error,
+      details: details,
+      argsList: argsList,
+      argsDict: argsDict
+    });
+    _this25.name = 'PublishError';
+    _this25.code = 34;
+    return _this25;
+  }
+
+  return _createClass(PublishError);
+}(WampError);
+
+exports.PublishError = PublishError;
+
+var RegisterError = /*#__PURE__*/function (_WampError4) {
+  _inherits(RegisterError, _WampError4);
+
+  var _super26 = _createSuper(RegisterError);
+
+  function RegisterError(_ref6) {
+    var _this26;
+
+    var error = _ref6.error,
+        details = _ref6.details,
+        argsList = _ref6.argsList,
+        argsDict = _ref6.argsDict;
+
+    _classCallCheck(this, RegisterError);
+
+    _this26 = _super26.call(this, {
+      error: error,
+      details: details,
+      argsList: argsList,
+      argsDict: argsDict
+    });
+    _this26.name = 'RegisterError';
+    _this26.code = 35;
+    return _this26;
+  }
+
+  return _createClass(RegisterError);
+}(WampError);
+
+exports.RegisterError = RegisterError;
+
+var UnregisterError = /*#__PURE__*/function (_WampError5) {
+  _inherits(UnregisterError, _WampError5);
+
+  var _super27 = _createSuper(UnregisterError);
+
+  function UnregisterError(_ref7) {
+    var _this27;
+
+    var error = _ref7.error,
+        details = _ref7.details,
+        argsList = _ref7.argsList,
+        argsDict = _ref7.argsDict;
+
+    _classCallCheck(this, UnregisterError);
+
+    _this27 = _super27.call(this, {
+      error: error,
+      details: details,
+      argsList: argsList,
+      argsDict: argsDict
+    });
+    _this27.name = 'UnregisterError';
+    _this27.code = 36;
+    return _this27;
+  }
+
+  return _createClass(UnregisterError);
+}(WampError);
+
+exports.UnregisterError = UnregisterError;
+
+var CallError = /*#__PURE__*/function (_WampError6) {
+  _inherits(CallError, _WampError6);
+
+  var _super28 = _createSuper(CallError);
+
+  function CallError(_ref8) {
+    var _this28;
+
+    var error = _ref8.error,
+        details = _ref8.details,
+        argsList = _ref8.argsList,
+        argsDict = _ref8.argsDict;
+
+    _classCallCheck(this, CallError);
+
+    _this28 = _super28.call(this, {
+      error: error,
+      details: details,
+      argsList: argsList,
+      argsDict: argsDict
+    });
+    _this28.name = 'CallError';
+    _this28.code = 37;
+    return _this28;
+  }
+
+  return _createClass(CallError);
+}(WampError);
+
+exports.CallError = CallError;
+
+var WebsocketError = /*#__PURE__*/function (_Error23) {
+  _inherits(WebsocketError, _Error23);
+
+  var _super29 = _createSuper(WebsocketError);
+
+  function WebsocketError(error) {
+    var _this29;
+
+    _classCallCheck(this, WebsocketError);
+
+    _this29 = _super29.call(this, _constants.WAMP_ERROR_MSG.WEBSOCKET_ERROR);
+    _this29.name = 'WebsocketError';
+    _this29.code = 38;
+    _this29.error = error;
+    return _this29;
+  }
+
+  return _createClass(WebsocketError);
+}( /*#__PURE__*/_wrapNativeSuper(Error));
+
+exports.WebsocketError = WebsocketError;
 //# sourceMappingURL=errors.js.map
