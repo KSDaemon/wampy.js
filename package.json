@@ -63,6 +63,7 @@
     "test": "npm run test:node && npm run test:browser",
     "test:node": "NODE_ENV=test c8 ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec",
     "test:node-no-crossbar": "NODE_ENV=test c8 ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec 'test/!(wampy-crossbar)-test.js'",
+    "test:crossbar": "NODE_ENV=test c8 ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec 'test/wampy-crossbar-test.js'",
     "test:browser": "node ./node_modules/karma/bin/karma start karma.conf.cjs",
     "cover": "c8 report"
   }

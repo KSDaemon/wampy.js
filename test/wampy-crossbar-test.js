@@ -17,10 +17,8 @@ describe('Wampy.js with Crossbar', function () {
         });
 
         wampy.connect().then(() => {
-            wampy.register('sayhello', {
-                rpc: () => {
-                    return { argsList: 'hello' };
-                }
+            wampy.register('sayhello.test', () => {
+                return { argsList: 'hello' };
             }).then(() => {
                 const client = new Wampy('ws://localhost:8888/test', {
                     realm: 'realm1',
@@ -28,12 +26,16 @@ describe('Wampy.js with Crossbar', function () {
                     ws: w3cwebsocket
                 });
                 client.connect().then(() => {
-                    client.call('sayhello', []).then((result) => {
+                    client.call('sayhello.test', []).then((result) => {
                         expect(result.argsList.shift()).to.equal('hello');
                         done();
+                    }).catch((e) => {
+                        done('Error happened');
                     });
 
                 });
+            }).catch((e) => {
+                done('Error happened');
             });
         });
 
@@ -48,10 +50,8 @@ describe('Wampy.js with Crossbar', function () {
         });
 
         wampy.connect().then(() => {
-            wampy.register('sayhello2', {
-                rpc: () => {
-                    return { argsList: 'hello' };
-                }
+            wampy.register('sayhello2', () => {
+                return { argsList: 'hello' };
             }).then(() => {
                 const client = new Wampy('ws://localhost:8888/test', {
                     realm: 'realm1',
@@ -63,8 +63,11 @@ describe('Wampy.js with Crossbar', function () {
                         expect(result.argsList.shift()).to.equal('hello');
                         done();
                     });
-
+                }).catch((e) => {
+                    done('Error happened');
                 });
+            }).catch((e) => {
+                done('Error happened');
             });
         });
 

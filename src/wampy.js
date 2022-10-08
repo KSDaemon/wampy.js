@@ -1415,7 +1415,7 @@ class Wampy {
                                 }
 
                                 if (results !== null && typeof (results) !== 'undefined') {
-                                    let res = this._packPPTPayload(results, results.options);
+                                    let res = this._packPPTPayload(results, results.options || {});
 
                                     if (res.err) {
                                         invoke_error_handler({
