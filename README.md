@@ -83,8 +83,8 @@ Wampy.js supports next WAMP roles and features:
 Wampy supports next serializers:
 
 * JSON (default, native)
-* MsgPack (See [msgpack5][] for more info)
-* CBOR (See [cbor][] for more info)
+* MsgPack (See [MessagePack][] Site for more info)
+* CBOR (See [CBOR][] Site for more info)
 * Any new serializer can be added easily
 
 [Back to TOC](#table-of-contents)
@@ -1178,6 +1178,7 @@ See Also
 * [Loowy][] - LUA WAMP client
 * [msgpack5][] - A msgpack v5 implementation for node.js and the browser,
 with extension point support
+* [node-cbor][] - Javascript CBOR encoder/decoder for node/web/cli.
 * [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
 * [wampy-cryptosign][] - WAMP Cryptosign-based Authentication plugin for Wampy.js
 
@@ -1191,8 +1192,10 @@ Thanks JetBrains for support! Best IDEs for every language!
 [WAMP specification]: http://wamp-proto.org/
 [Wiola]: http://ksdaemon.github.io/wiola/
 [Loowy]: https://github.com/KSDaemon/Loowy
+[MessagePack]: https://msgpack.org/
+[CBOR]: https://cbor.io/
 [msgpack5]: https://github.com/mcollina/msgpack5
-[cbor]: https://github.com/hildjj/node-cbor
+[node-cbor]: https://github.com/hildjj/node-cbor
 [WAMP Spec CRA]: https://wamp-proto.org/wamp_latest_ietf.html#name-challenge-response-authenti
 [WAMP Spec CS]: https://wamp-proto.org/wamp_latest_ietf.html#name-cryptosign-based-authentica
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
