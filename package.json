@@ -1,6 +1,6 @@
 {
   "name": "wampy",
-  "version": "7.0.0-rc2",
+  "version": "7.0.0-rc3",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation",
   "author": "Konstantin Burkalev <KSDaemon@ya.ru> (https://ksdaemon.ru)",
   "devDependencies": {
@@ -34,6 +34,10 @@
     "puppeteer": "^17.1.3"
   },
   "main": "dist/wampy.js",
+  "exports": {
+    "import": "./src/wampy.js",
+    "require": "./dist/wampy.js"
+  },
   "type": "module",
   "dependencies": {
     "cbor": "^8.1.0",
