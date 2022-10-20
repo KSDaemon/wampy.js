@@ -483,7 +483,9 @@ class Wampy {
      * @private
      */
     _setWsProtocols () {
-        this._protocols = ['wamp.2.' + this._options.serializer.protocol];
+        if (!(this._options.serializer instanceof JsonSerializer)) {
+            this._protocols.unshift('wamp.2.' + this._options.serializer.protocol);
+        }
     }
 
     /**
