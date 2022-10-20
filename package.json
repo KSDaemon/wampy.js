@@ -1,6 +1,6 @@
 {
   "name": "wampy",
-  "version": "7.0.0-rc3",
+  "version": "7.0.0-rc4",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation",
   "author": "Konstantin Burkalev <KSDaemon@ya.ru> (https://ksdaemon.ru)",
   "devDependencies": {
@@ -35,8 +35,22 @@
   },
   "main": "dist/wampy.js",
   "exports": {
-    "import": "./src/wampy.js",
-    "require": "./dist/wampy.js"
+    ".": {
+      "import": "./src/wampy.js",
+      "require": "./dist/wampy.js"
+    },
+    "./JsonSerializer.js": {
+      "import": "./src/serializers/JsonSerializer.js",
+      "require": "./dist/serializers/JsonSerializer.js"
+    },
+    "./CborSerializer.js": {
+      "import": "./src/serializers/CborSerializer.js",
+      "require": "./dist/serializers/CborSerializer.js"
+    },
+    "./MsgpackSerializer.js": {
+      "import": "./src/serializers/MsgpackSerializer.js",
+      "require": "./dist/serializers/MsgpackSerializer.js"
+    }
   },
   "type": "module",
   "dependencies": {
