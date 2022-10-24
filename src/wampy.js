@@ -1466,18 +1466,14 @@ class Wampy {
                             argsDict = data[5];
                         }
 
-                        p = new Promise((resolve, reject) => {
-                            resolve(this._rpcRegs[data[2]].callbacks[0]({
+                        try {
+                            let results = await this._rpcRegs[data[2]].callbacks[0]({
                                 details       : options,
                                 argsList      : argsList,
                                 argsDict      : argsDict,
                                 result_handler: invoke_result_handler,
                                 error_handler : invoke_error_handler
-                            }));
-                        });
-
-                        try {
-                            let results = await p;
+                            });
                             invoke_result_handler(results);
                         } catch (e) {
                             invoke_error_handler(e);
