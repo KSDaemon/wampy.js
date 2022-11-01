@@ -87,6 +87,11 @@ Wampy supports next serializers:
 * CBOR (See [CBOR][] Site for more info)
 * Any new serializer can be added easily
 
+In node.js environment Wampy is compatible with next websocket clients:
+
+* [WebSocket-Node][]. A WebSocket Implementation for Node.JS (Draft -08 through the final RFC 6455)
+* [ws][]. Simple to use, blazing fast and thoroughly tested WebSocket client and server for Node.js
+
 [Back to TOC](#table-of-contents)
 
 Usage example
@@ -191,6 +196,13 @@ wampy = new Wampy(null, { ws: w3cws });
 wampy = new Wampy('/my-socket-path', { ws: w3cws });
 wampy = new Wampy('wss://socket.server.com:5000/ws', { autoReconnect: false, ws: w3cws });
 wampy = new Wampy({ reconnectInterval: 1*1000, ws: w3cws });
+
+// or using ws example
+import WebSocket from 'ws';
+wampy = new Wampy(null, { ws: WebSocket });
+wampy = new Wampy('/my-socket-path', { ws: WebSocket });
+wampy = new Wampy('wss://socket.server.com:5000/ws', { autoReconnect: false, ws: WebSocket });
+wampy = new Wampy({ reconnectInterval: 1*1000, ws: WebSocket });
 ```
 
 Json serializer will be used by default. If you want to use msgpack or other serializer, pass it through options.
@@ -208,10 +220,10 @@ wampy = new Wampy({
 // in node.js
 import {Wampy} from 'wampy';
 import {MsgpackSerializer} from 'wampy/dist/serializers/MsgpackSerializer';
-import {w3cws} from 'websocket';
+import WebSocket from 'ws';
 
 wampy = new Wampy('wss://socket.server.com:5000/ws', {
-    ws: w3cws,
+    ws: WebSocket,
     serializer: new MsgpackSerializer()
 });
 wampy = new Wampy({
@@ -1222,3 +1234,6 @@ Thanks JetBrains for support! Best IDEs for every language!
 
 [jetbrains logo]: jetbrains.svg
 [jetbrains url]: (https://www.jetbrains.com)
+
+[WebSocket-Node]: https://github.com/theturtle32/WebSocket-Node
+[ws]: https://github.com/websockets/ws
