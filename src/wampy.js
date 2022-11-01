@@ -353,13 +353,13 @@ class Wampy {
             ws: null,
 
             /**
-             * User provided additional HTTP headers (for use in Node.js enviroment)
+             * User provided additional HTTP headers (for use in Node.js environment)
              * @type {object}
              */
             additionalHeaders: null,
 
             /**
-             * User provided WS Client Config Options (for use in Node.js enviroment)
+             * User provided WS Client Config Options (for use in Node.js environment)
              * @type {object}
              */
             wsRequestOptions: null,
@@ -687,7 +687,7 @@ class Wampy {
      * @returns {Object}
      * @private
      */
-    async _unpackPPTPayload (role, pptPayload, options) {
+    _unpackPPTPayload (role, pptPayload, options) {
         let err = false, decodedPayload;
 
         if (!this._checkPPTOptions(role, options)) {
@@ -710,7 +710,7 @@ class Wampy {
             }
 
             try {
-                decodedPayload = await pptSerializer.decode(pptPayload);
+                decodedPayload = pptSerializer.decode(pptPayload);
             } catch (e) {
                 return { err: new Errors.PPTSerializationError() };
             }
@@ -918,7 +918,7 @@ class Wampy {
     async _wsOnMessage (event) {
         let data;
         try {
-            data = await this._decode(event.data);
+            data = this._decode(event.data);
         } catch (e) {
             this._hardClose('wamp.error.protocol_violation', 'Can not decode received message');
         }
@@ -1196,7 +1196,7 @@ class Wampy {
                         if (options.ppt_scheme) {
                             let decodedPayload, pptPayload = data[4][0];
 
-                            decodedPayload = await this._unpackPPTPayload('broker', pptPayload, options);
+                            decodedPayload = this._unpackPPTPayload('broker', pptPayload, options);
 
                             if (decodedPayload.err) {
                                 // Since it is async publication, and no link to
@@ -1242,7 +1242,7 @@ class Wampy {
                         if (options.ppt_scheme) {
                             let decodedPayload, pptPayload = data[3][0];
 
-                            decodedPayload = await this._unpackPPTPayload('dealer', pptPayload, options);
+                            decodedPayload = this._unpackPPTPayload('dealer', pptPayload, options);
 
                             if (decodedPayload.err) {
                                 this._log(decodedPayload.err.message);
@@ -1439,7 +1439,7 @@ class Wampy {
                         if (options.ppt_scheme) {
                             let decodedPayload, pptPayload = data[4][0];
 
-                            decodedPayload = await this._unpackPPTPayload('dealer', pptPayload, options);
+                            decodedPayload = this._unpackPPTPayload('dealer', pptPayload, options);
 
                             // This case should not happen at all, but for safety
                             if (decodedPayload.err && decodedPayload.err instanceof Errors.PPTNotSupportedError) {

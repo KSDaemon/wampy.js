@@ -205,7 +205,7 @@ wampy = new Wampy('wss://socket.server.com:5000/ws', { autoReconnect: false, ws:
 wampy = new Wampy({ reconnectInterval: 1*1000, ws: WebSocket });
 ```
 
-Json serializer will be used by default. If you want to use msgpack or other serializer, pass it through options.
+Json serializer will be used by default. If you want to use msgpack or cbor serializer, pass it through options.
 Also, you can use your own serializer. Just be sure, it is supported on WAMP router side!
 
 ```javascript
@@ -214,12 +214,13 @@ wampy = new Wampy('wss://socket.server.com:5000/ws', {
     serializer: new MsgpackSerializer()
 });
 wampy = new Wampy({
-    serializer: new MsgpackSerializer()
+    serializer: new CborSerializer()
 });
 
 // in node.js
 import {Wampy} from 'wampy';
-import {MsgpackSerializer} from 'wampy/dist/serializers/MsgpackSerializer';
+import {MsgpackSerializer} from 'wampy/MsgpackSerializer';
+import {CborSerializer} from 'wampy/CborSerializer';
 import WebSocket from 'ws';
 
 wampy = new Wampy('wss://socket.server.com:5000/ws', {
@@ -228,7 +229,7 @@ wampy = new Wampy('wss://socket.server.com:5000/ws', {
 });
 wampy = new Wampy({
     ws: w3cws,
-    serializer: new MsgpackSerializer()
+    serializer: new CborSerializer()
 });
 
 ```
@@ -299,8 +300,8 @@ This function receives welcome details as an argument.
 This function receives welcome details as an argument.
 * **ws**. Default value: null. User provided WebSocket class. Useful in node environment.
 * **additionalHeaders**. Default value: null. User provided additional HTTP headers (for use in Node.js environment)
-* **wsRequestOptions**. Default value: null. User provided WS Client Config Options (for use in Node.js environment). See
-docs for [WebSocketClient][], [tls.connect options][]
+* **wsRequestOptions**. Default value: null. User provided WS Client Config Options (for use in Node.js environment).
+See docs for [WebSocketClient][], [tls.connect options][].
 * **serializer**. Default value: JsonSerializer. User provided serializer class. Useful if you plan to use other encoders
 instead of default `json`.
 * **payloadSerializers**. Default value: `{ json: jsonSerializer }`. User provided hashmap of serializer instances for
@@ -1099,8 +1100,8 @@ Connecting through TLS in node environment
 ==========================================
 
 Starting from v6.2.0 version you can pass additional HTTP Headers and TLS parameters to underlying socket connection
-in node.js environment. See example below. For `wsRequestOptions` you can pass any option, described in
-[tls.connect options][] documentation.
+in node.js environment (thnx `websocket` library). See example below. For `wsRequestOptions` you can pass any option,
+described in [tls.connect options][] documentation.
 
 ```javascript
 const Wampy = require('wampy').Wampy;
@@ -1186,13 +1187,12 @@ See Also
 ========
 
 * [WAMP specification][]
-* [Wiola][] - WAMP Router in Lua on top of nginx/openresty
-* [Loowy][] - LUA WAMP client
-* [msgpack5][] - A msgpack v5 implementation for node.js and the browser,
-with extension point support
-* [node-cbor][] - Javascript CBOR encoder/decoder for node/web/cli.
 * [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
 * [wampy-cryptosign][] - WAMP Cryptosign-based Authentication plugin for Wampy.js
+* [Wiola][] - WAMP Router in Lua on top of nginx/openresty
+* [Loowy][] - LUA WAMP client
+* [msgpackr][] - Ultra-fast MessagePack implementation with extension for record and structural cloning.
+* [cbor-x][] - Ultra-fast CBOR encoder/decoder with extensions for records and structural cloning.
 
 [Back to TOC](#table-of-contents)
 
@@ -1206,12 +1206,13 @@ Thanks JetBrains for support! Best IDEs for every language!
 [Loowy]: https://github.com/KSDaemon/Loowy
 [MessagePack]: https://msgpack.org/
 [CBOR]: https://cbor.io/
-[msgpack5]: https://github.com/mcollina/msgpack5
-[node-cbor]: https://github.com/hildjj/node-cbor
+[msgpackr]: https://github.com/kriszyp/msgpackr#readme
+[cbor-x]: https://github.com/kriszyp/cbor-x#readme
 [WAMP Spec CRA]: https://wamp-proto.org/wamp_latest_ietf.html#name-challenge-response-authenti
 [WAMP Spec CS]: https://wamp-proto.org/wamp_latest_ietf.html#name-cryptosign-based-authentica
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
 [tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
+[WS Client Options]: https://github.com/websockets/ws/blob/master/doc/ws.md#new-websocketaddress-protocols-options
 [wampy-cra]: https://github.com/KSDaemon/wampy-cra
 [wampy-cryptosign]: https://github.com/KSDaemon/wampy-cryptosign
 

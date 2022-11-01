@@ -18,24 +18,9 @@ import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
 import { CborSerializer } from '../src/serializers/CborSerializer.js';
 import { WAMP_ERROR_MSG, SUCCESS } from '../src/constants.js';
 
-if (isNode) {
-    global.Blob = function (parts) {
-        this.buffer = parts[0].buffer;
-    };
-
-    global.FileReader = function () {
-    };
-
-    global.FileReader.prototype.readAsArrayBuffer = function (blob) {
-        this.result = blob.buffer;
-        this.onload();
-    };
-}
-
 const serializers = [
     { serializer: JsonSerializer, ws: WebSocketModule.WebSocket, name: 'JSON Serializer' },
-    { serializer: MsgpackSerializer, ws: WebSocketModule.WebSocket, name: 'MsgPack Serializer w/ ArrayBuffer' },
-    { serializer: MsgpackSerializer, ws: WebSocketModule.WebSocketBlob, name: 'MsgPack Serializer w/ Blob' },
+    { serializer: MsgpackSerializer, ws: WebSocketModule.WebSocket, name: 'MsgPack Serializer' },
     { serializer: CborSerializer, ws: WebSocketModule.WebSocket, name: 'CBOR Serializer' }
 ];
 

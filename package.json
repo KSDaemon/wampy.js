@@ -54,10 +54,12 @@
   },
   "type": "module",
   "dependencies": {
-    "cbor": "^8.1.0",
-    "msgpack5": "^6.0.2",
+    "cbor-x": "^1.4.1",
+    "msgpackr": "^1.7.2",
     "wampy-cra": "^0.1.2",
-    "websocket": "^1.0.34"
+    "wampy-cryptosign": "^0.1.0",
+    "websocket": "^1.0.34",
+    "ws": "^8.10.0"
   },
   "repository": {
     "type": "git",

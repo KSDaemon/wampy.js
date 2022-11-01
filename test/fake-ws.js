@@ -52,45 +52,6 @@ let sendDataCursor = 0,
             this.protocol = 'wamp.2.' + this.transportEncoding;
             this.onopen();
         }, TIMEOUT);
-    },
-    WebSocketBlob = function (url, protocols) {
-        this.url = url;
-        this.protocols = protocols;
-        this.transportEncoding = this.protocols[0].split('.')[2];
-
-        switch (this.transportEncoding) {
-            case 'msgpack':
-                this.binaryType = 'arraybuffer';
-                this.encoder = new MsgpackSerializer();
-                this.encode = function (data) {
-                    return new Blob([new Uint8Array(this.encoder.encode(data))]);
-                };
-                break;
-            case 'cbor':
-                this.binaryType = 'arraybuffer';
-                this.encoder = new CborSerializer();
-                this.encode = this.encoder.encode;
-                break;
-            default:
-                this.encoder = new JsonSerializer();
-                this.encode = this.encoder.encode;
-        }
-
-        this.decode = this.encoder.decode;
-
-        this.onclose = null;
-        this.onerror = null;
-        this.onmessage = null;
-        this.onopen = null;
-
-        this.protocol = '';
-
-        this.readyState = 1;    // Closed
-
-        openTimer = setTimeout(() => {
-            this.protocol = 'wamp.2.' + this.transportEncoding;
-            this.onopen();
-        }, TIMEOUT);
     };
 
 function clearTimers () {
@@ -122,134 +83,132 @@ function startTimers () {
     sendTimer = setInterval(processQueue, TIMEOUT);
 }
 
-[WebSocketBlob, WebSocket].forEach(function (WebSocket) {
-    WebSocket.prototype.close = function (code, reason) {
-        if (openTimer) {
-            clearTimeout(openTimer);
-            openTimer = null;
+WebSocket.prototype.close = function (code, reason) {
+    if (openTimer) {
+        clearTimeout(openTimer);
+        openTimer = null;
+    }
+    this.readyState = 3;    // Closed
+    this.onclose();
+};
+
+WebSocket.prototype.abort = function () {
+    if (openTimer) {
+        clearTimeout(openTimer);
+        openTimer = null;
+    }
+    this.readyState = 3;    // Closed
+    this.onerror();
+};
+
+WebSocket.prototype.send = function (data) {
+
+    let rec_data = this.decode(data);
+
+    // console.log('Server received a message: ', rec_data);
+    let send_data, enc_data, i, opts, pptSerializer;
+    send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
+
+    if ((rec_data[0] === WAMP_MSG_SPEC.CALL ||
+        rec_data[0] === WAMP_MSG_SPEC.PUBLISH ||
+        rec_data[0] === WAMP_MSG_SPEC.YIELD) &&
+        send_data.data &&
+        (send_data.data[0] === WAMP_MSG_SPEC.EVENT ||
+        send_data.data[0] === WAMP_MSG_SPEC.RESULT ||
+        send_data.data[0] === WAMP_MSG_SPEC.INVOCATION)) {
+
+        if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
+            opts = send_data.data[3];
+        } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
+            opts = send_data.data[2];
+        } else if (send_data.data[0] === WAMP_MSG_SPEC.INVOCATION) {
+            opts = send_data.data[3];
         }
-        this.readyState = 3;    // Closed
-        this.onclose();
-    };
 
-    WebSocket.prototype.abort = function () {
-        if (openTimer) {
-            clearTimeout(openTimer);
-            openTimer = null;
+        // Check for PPT mode and encode payload with appreciate serializer
+        if (opts.ppt_scheme &&
+            opts.ppt_serializer &&
+            opts.ppt_serializer !== 'native') {
+            switch (opts.ppt_serializer) {
+                case 'cbor':
+                    pptSerializer = new CborSerializer();
+                    break;
+                case 'msgpack':
+                    pptSerializer = new MsgpackSerializer();
+                    break;
+                case 'json':
+                    pptSerializer = new JsonSerializer();
+                    break;
+            }
+
+            if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
+                send_data.data[4] = [
+                    send_data.ruinPayload ?
+                        pptSerializer.encode(send_data.data[4][0]) + '123' :
+                        pptSerializer.encode(send_data.data[4][0])
+                ];
+            } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
+                send_data.data[3] = [
+                    send_data.ruinPayload ?
+                        pptSerializer.encode(send_data.data[3][0]) + '123' :
+                        pptSerializer.encode(send_data.data[3][0])
+                ];
+            } else if (send_data.data[0] === WAMP_MSG_SPEC.INVOCATION) {
+                send_data.data[4] = [
+                    send_data.ruinPayload ?
+                        pptSerializer.encode(send_data.data[4][0]) + '123' :
+                        pptSerializer.encode(send_data.data[4][0])
+                ];
+            }
         }
-        this.readyState = 3;    // Closed
-        this.onerror();
-    };
+    }
 
-    WebSocket.prototype.send = function (data) {
+    // console.log('Data received by server:', rec_data);
+    // console.log('Is silent answer? ', send_data.silent ? 'yes' : 'no');
+    if (send_data.silent) {
+        return;
+    }
 
-        this.decode(data).then(rec_data => {
-            // console.log('Server received a message: ', rec_data);
-            let send_data, enc_data, i, opts, pptSerializer;
-            send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
+    // console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor);
 
-            if ((rec_data[0] === WAMP_MSG_SPEC.CALL ||
-                rec_data[0] === WAMP_MSG_SPEC.PUBLISH ||
-                rec_data[0] === WAMP_MSG_SPEC.YIELD) &&
-                send_data.data &&
-                (send_data.data[0] === WAMP_MSG_SPEC.EVENT ||
-                send_data.data[0] === WAMP_MSG_SPEC.RESULT ||
-                send_data.data[0] === WAMP_MSG_SPEC.INVOCATION)) {
-
-                if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
-                    opts = send_data.data[3];
-                } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
-                    opts = send_data.data[2];
-                } else if (send_data.data[0] === WAMP_MSG_SPEC.INVOCATION) {
-                    opts = send_data.data[3];
-                }
-
-                // Check for PPT mode and encode payload with appreciate serializer
-                if (opts.ppt_scheme &&
-                    opts.ppt_serializer &&
-                    opts.ppt_serializer !== 'native') {
-                    switch (opts.ppt_serializer) {
-                        case 'cbor':
-                            pptSerializer = new CborSerializer();
-                            break;
-                        case 'msgpack':
-                            pptSerializer = new MsgpackSerializer();
-                            break;
-                        case 'json':
-                            pptSerializer = new JsonSerializer();
-                            break;
-                    }
-
-                    if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
-                        send_data.data[4] = [
-                            send_data.ruinPayload ?
-                                pptSerializer.encode(send_data.data[4][0]) + '123' :
-                                pptSerializer.encode(send_data.data[4][0])
-                        ];
-                    } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
-                        send_data.data[3] = [
-                            send_data.ruinPayload ?
-                                pptSerializer.encode(send_data.data[3][0]) + '123' :
-                                pptSerializer.encode(send_data.data[3][0])
-                        ];
-                    } else if (send_data.data[0] === WAMP_MSG_SPEC.INVOCATION) {
-                        send_data.data[4] = [
-                            send_data.ruinPayload ?
-                                pptSerializer.encode(send_data.data[4][0]) + '123' :
-                                pptSerializer.encode(send_data.data[4][0])
-                        ];
-                    }
-                }
+    if (send_data.data) {
+        // Prepare answer (copy request id from request to answer, etc)
+        if (send_data.from) {
+            i = send_data.from.length;
+            while (i--) {
+                send_data.data[send_data.to[i]] = rec_data[send_data.from[i]];
             }
+        }
 
-            // console.log('Data received by server:', rec_data);
-            // console.log('Is silent answer? ', send_data.silent ? 'yes' : 'no');
-            if (send_data.silent) {
-                return;
-            }
+        enc_data = {
+            data: send_data.ruinMessage ? this.encode(send_data.data) + '123' : this.encode(send_data.data)
+        };
+    }
 
-            // console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor);
+    clientMessageQueue.push(() => {
+        if (send_data.data) {
+            this.onmessage(enc_data);
+        }
 
-            if (send_data.data) {
-                // Prepare answer (copy request id from request to answer, etc)
-                if (send_data.from) {
-                    i = send_data.from.length;
-                    while (i--) {
-                        send_data.data[send_data.to[i]] = rec_data[send_data.from[i]];
-                    }
-                }
+        // console.log('Processing message: data? ', send_data.data ? 'yes' : 'no',
+        //     ' next? ', send_data.next ? 'yes' : 'no',
+        //     ' abort? ', send_data.abort ? 'yes' : 'no',
+        //     ' close? ', send_data.close ? 'yes' : 'no')
+        if (send_data.next) {           // Send to client next message
+            setTimeout(() => {
+                this.send(data);
+            }, TIMEOUT);
+        } else if (send_data.abort) {   // Abort ws connection
+            setTimeout(() => {
+                this.abort();
+            }, TIMEOUT);
+        } else if (send_data.close) {   // Close ws connection
+            setTimeout(() => {
+                this.close();
+            }, TIMEOUT);
+        }
+    });
+};
 
-                enc_data = {
-                    data: send_data.ruinMessage ? this.encode(send_data.data) + '123' : this.encode(send_data.data)
-                };
-            }
-
-            clientMessageQueue.push(() => {
-                if (send_data.data) {
-                    this.onmessage(enc_data);
-                }
-
-                // console.log('Processing message: data? ', send_data.data ? 'yes' : 'no',
-                //     ' next? ', send_data.next ? 'yes' : 'no',
-                //     ' abort? ', send_data.abort ? 'yes' : 'no',
-                //     ' close? ', send_data.close ? 'yes' : 'no')
-                if (send_data.next) {           // Send to client next message
-                    setTimeout(() => {
-                        this.send(data);
-                    }, TIMEOUT);
-                } else if (send_data.abort) {   // Abort ws connection
-                    setTimeout(() => {
-                        this.abort();
-                    }, TIMEOUT);
-                } else if (send_data.close) {   // Close ws connection
-                    setTimeout(() => {
-                        this.close();
-                    }, TIMEOUT);
-                }
-            });
-        });
-    };
-});
-
-export { WebSocket, WebSocketBlob, startTimers, clearTimers, resetCursor };
+export { WebSocket, startTimers, clearTimers, resetCursor };
 

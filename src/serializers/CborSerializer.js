@@ -1,4 +1,4 @@
-import cbor from 'cbor';
+import { decode, encode } from 'cbor-x';
 
 export class CborSerializer {
     constructor () {
@@ -7,12 +7,10 @@ export class CborSerializer {
     }
 
     encode (data) {
-        return cbor.encode(data);
+        return encode(data);
     }
 
     decode (data) {
-        return new Promise(resolve => {
-            resolve(cbor.decode(data));
-        });
+        return decode(new Uint8Array(data));
     }
 }
