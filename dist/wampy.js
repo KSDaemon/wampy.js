@@ -58,7 +58,7 @@ var Wampy = /*#__PURE__*/function () {
      * @type {string}
      * @private
      */
-    this.version = 'v7.0.0-rc5';
+    this.version = 'v7.0.0-rc6';
     /**
      * WS Url
      * @type {string}
@@ -374,13 +374,13 @@ var Wampy = /*#__PURE__*/function () {
       ws: null,
 
       /**
-       * User provided additional HTTP headers (for use in Node.js enviroment)
+       * User provided additional HTTP headers (for use in Node.js environment)
        * @type {object}
        */
       additionalHeaders: null,
 
       /**
-       * User provided WS Client Config Options (for use in Node.js enviroment)
+       * User provided WS Client Config Options (for use in Node.js environment)
        * @type {object}
        */
       wsRequestOptions: null,
@@ -774,91 +774,47 @@ var Wampy = /*#__PURE__*/function () {
 
   }, {
     key: "_unpackPPTPayload",
-    value: function () {
-      var _unpackPPTPayload2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(role, pptPayload, options) {
-        var err, decodedPayload, pptSerializer;
-        return _regeneratorRuntime().wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                err = false;
+    value: function _unpackPPTPayload(role, pptPayload, options) {
+      var err = false,
+          decodedPayload;
 
-                if (this._checkPPTOptions(role, options)) {
-                  _context.next = 3;
-                  break;
-                }
+      if (!this._checkPPTOptions(role, options)) {
+        return {
+          err: this._cache.opStatus.error
+        };
+      } // wamp scheme means Payload End-to-End Encryption
+      // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
 
-                return _context.abrupt("return", {
-                  err: this._cache.opStatus.error
-                });
 
-              case 3:
-                // wamp scheme means Payload End-to-End Encryption
-                // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
-                if (options.ppt_scheme === 'wamp') {// TODO: implement End-to-End Encryption
-                }
-
-                if (!(options.ppt_serializer && options.ppt_serializer !== 'native')) {
-                  _context.next = 19;
-                  break;
-                }
-
-                pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
-
-                if (pptSerializer) {
-                  _context.next = 8;
-                  break;
-                }
-
-                return _context.abrupt("return", {
-                  err: new Errors.PPTSerializerInvalidError()
-                });
-
-              case 8:
-                _context.prev = 8;
-                _context.next = 11;
-                return pptSerializer.decode(pptPayload);
-
-              case 11:
-                decodedPayload = _context.sent;
-                _context.next = 17;
-                break;
-
-              case 14:
-                _context.prev = 14;
-                _context.t0 = _context["catch"](8);
-                return _context.abrupt("return", {
-                  err: new Errors.PPTSerializationError()
-                });
-
-              case 17:
-                _context.next = 20;
-                break;
-
-              case 19:
-                decodedPayload = pptPayload;
-
-              case 20:
-                return _context.abrupt("return", {
-                  err: err,
-                  args: decodedPayload.args,
-                  kwargs: decodedPayload.kwargs
-                });
-
-              case 21:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this, [[8, 14]]);
-      }));
-
-      function _unpackPPTPayload(_x, _x2, _x3) {
-        return _unpackPPTPayload2.apply(this, arguments);
+      if (options.ppt_scheme === 'wamp') {// TODO: implement End-to-End Encryption
       }
 
-      return _unpackPPTPayload;
-    }()
+      if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+        var pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+
+        if (!pptSerializer) {
+          return {
+            err: new Errors.PPTSerializerInvalidError()
+          };
+        }
+
+        try {
+          decodedPayload = pptSerializer.decode(pptPayload);
+        } catch (e) {
+          return {
+            err: new Errors.PPTSerializationError()
+          };
+        }
+      } else {
+        decodedPayload = pptPayload;
+      }
+
+      return {
+        err: err,
+        args: decodedPayload.args,
+        kwargs: decodedPayload.kwargs
+      };
+    }
     /**
      * Encode WAMP message
      * @param {Array} msg
@@ -1085,55 +1041,45 @@ var Wampy = /*#__PURE__*/function () {
   }, {
     key: "_wsOnMessage",
     value: function () {
-      var _wsOnMessage2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(event) {
+      var _wsOnMessage2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee(event) {
         var _this3 = this;
 
         var data, id, i, p, self, error, key, _error, errData, argsList, argsDict, options, decodedPayload, pptPayload, _argsList, _argsDict, _options, _decodedPayload, _pptPayload, _argsList2, _argsDict2, _options2, invoke_error_handler, invoke_result_handler, _decodedPayload2, _pptPayload2, results;
 
-        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
+        return _regeneratorRuntime().wrap(function _callee$(_context) {
           while (1) {
-            switch (_context2.prev = _context2.next) {
+            switch (_context.prev = _context.next) {
               case 0:
-                _context2.prev = 0;
-                _context2.next = 3;
-                return this._decode(event.data);
+                try {
+                  data = this._decode(event.data);
+                } catch (e) {
+                  this._hardClose('wamp.error.protocol_violation', 'Can not decode received message');
+                }
 
-              case 3:
-                data = _context2.sent;
-                _context2.next = 9;
-                break;
-
-              case 6:
-                _context2.prev = 6;
-                _context2.t0 = _context2["catch"](0);
-
-                this._hardClose('wamp.error.protocol_violation', 'Can not decode received message');
-
-              case 9:
                 this._log('websocket message received: ', data);
 
                 self = this;
-                _context2.t1 = data[0];
-                _context2.next = _context2.t1 === _constants.WAMP_MSG_SPEC.WELCOME ? 14 : _context2.t1 === _constants.WAMP_MSG_SPEC.ABORT ? 33 : _context2.t1 === _constants.WAMP_MSG_SPEC.CHALLENGE ? 38 : _context2.t1 === _constants.WAMP_MSG_SPEC.GOODBYE ? 76 : _context2.t1 === _constants.WAMP_MSG_SPEC.ERROR ? 78 : _context2.t1 === _constants.WAMP_MSG_SPEC.SUBSCRIBED ? 125 : _context2.t1 === _constants.WAMP_MSG_SPEC.UNSUBSCRIBED ? 137 : _context2.t1 === _constants.WAMP_MSG_SPEC.PUBLISHED ? 151 : _context2.t1 === _constants.WAMP_MSG_SPEC.EVENT ? 161 : _context2.t1 === _constants.WAMP_MSG_SPEC.RESULT ? 188 : _context2.t1 === _constants.WAMP_MSG_SPEC.REGISTERED ? 221 : _context2.t1 === _constants.WAMP_MSG_SPEC.UNREGISTERED ? 233 : _context2.t1 === _constants.WAMP_MSG_SPEC.INVOCATION ? 247 : 291;
+                _context.t0 = data[0];
+                _context.next = _context.t0 === _constants.WAMP_MSG_SPEC.WELCOME ? 6 : _context.t0 === _constants.WAMP_MSG_SPEC.ABORT ? 25 : _context.t0 === _constants.WAMP_MSG_SPEC.CHALLENGE ? 30 : _context.t0 === _constants.WAMP_MSG_SPEC.GOODBYE ? 68 : _context.t0 === _constants.WAMP_MSG_SPEC.ERROR ? 70 : _context.t0 === _constants.WAMP_MSG_SPEC.SUBSCRIBED ? 117 : _context.t0 === _constants.WAMP_MSG_SPEC.UNSUBSCRIBED ? 129 : _context.t0 === _constants.WAMP_MSG_SPEC.PUBLISHED ? 143 : _context.t0 === _constants.WAMP_MSG_SPEC.EVENT ? 153 : _context.t0 === _constants.WAMP_MSG_SPEC.RESULT ? 178 : _context.t0 === _constants.WAMP_MSG_SPEC.REGISTERED ? 209 : _context.t0 === _constants.WAMP_MSG_SPEC.UNREGISTERED ? 221 : _context.t0 === _constants.WAMP_MSG_SPEC.INVOCATION ? 235 : 276;
                 break;
 
-              case 14:
+              case 6:
                 if (!this._cache.sessionId) {
-                  _context2.next = 18;
+                  _context.next = 10;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received WELCOME message after session was established');
 
-                _context2.next = 32;
+                _context.next = 24;
                 break;
 
-              case 18:
+              case 10:
                 this._cache.sessionId = data[1];
                 this._cache.server_wamp_features = data[2];
 
                 if (!this._cache.reconnectingAttempts) {
-                  _context2.next = 29;
+                  _context.next = 21;
                   break;
                 }
 
@@ -1141,87 +1087,87 @@ var Wampy = /*#__PURE__*/function () {
                 this._cache.reconnectingAttempts = 0;
 
                 if (!this._options.onReconnectSuccess) {
-                  _context2.next = 25;
+                  _context.next = 17;
                   break;
                 }
 
-                _context2.next = 25;
+                _context.next = 17;
                 return this._options.onReconnectSuccess(data[2]);
 
-              case 25:
+              case 17:
                 // Let's renew all previous state
                 this._renewSubscriptions();
 
                 this._renewRegistrations();
 
-                _context2.next = 31;
+                _context.next = 23;
                 break;
 
-              case 29:
+              case 21:
                 // Firing onConnect event on real connection to WAMP server
                 this._cache.connectPromise.onSuccess(data[2]);
 
                 this._cache.connectPromise = null;
 
-              case 31:
+              case 23:
                 // Send local queue if there is something out there
                 this._send();
 
-              case 32:
-                return _context2.abrupt("break", 293);
+              case 24:
+                return _context.abrupt("break", 278);
 
-              case 33:
+              case 25:
                 if (!this._options.onError) {
-                  _context2.next = 36;
+                  _context.next = 28;
                   break;
                 }
 
-                _context2.next = 36;
+                _context.next = 28;
                 return this._options.onError(new Errors.AbortError({
                   error: data[2],
                   details: data[1]
                 }));
 
-              case 36:
+              case 28:
                 this._ws.close();
 
-                return _context2.abrupt("break", 293);
+                return _context.abrupt("break", 278);
 
-              case 38:
+              case 30:
                 if (!this._cache.sessionId) {
-                  _context2.next = 43;
+                  _context.next = 35;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received CHALLENGE message after session was established');
 
-                return _context2.abrupt("break", 293);
+                return _context.abrupt("break", 278);
 
-              case 43:
+              case 35:
                 if (!(this._options.authid && this._options.authMode === 'manual' && typeof this._options.onChallenge === 'function')) {
-                  _context2.next = 47;
+                  _context.next = 39;
                   break;
                 }
 
                 p = new Promise(function (resolve, reject) {
                   resolve(_this3._options.onChallenge(data[1], data[2]));
                 });
-                _context2.next = 59;
+                _context.next = 51;
                 break;
 
-              case 47:
+              case 39:
                 if (!(this._options.authid && this._options.authMode === 'auto' && typeof this._options.authPlugins[data[1]] === 'function')) {
-                  _context2.next = 51;
+                  _context.next = 43;
                   break;
                 }
 
                 p = new Promise(function (resolve, reject) {
                   resolve(_this3._options.authPlugins[data[1]](data[1], data[2]));
                 });
-                _context2.next = 59;
+                _context.next = 51;
                 break;
 
-              case 51:
+              case 43:
                 error = new Errors.NoCRACallbackOrIdError();
 
                 this._fillOpStatusByError(error);
@@ -1231,35 +1177,35 @@ var Wampy = /*#__PURE__*/function () {
                 }, 'wamp.error.cannot_authenticate']));
 
                 if (!this._options.onError) {
-                  _context2.next = 57;
+                  _context.next = 49;
                   break;
                 }
 
-                _context2.next = 57;
+                _context.next = 49;
                 return this._options.onError(error);
 
-              case 57:
+              case 49:
                 this._ws.close();
 
-                return _context2.abrupt("break", 293);
+                return _context.abrupt("break", 278);
 
-              case 59:
-                _context2.prev = 59;
-                _context2.next = 62;
+              case 51:
+                _context.prev = 51;
+                _context.next = 54;
                 return p;
 
-              case 62:
-                key = _context2.sent;
+              case 54:
+                key = _context.sent;
 
                 // Sending directly 'cause it's a challenge msg and no sessionId check is needed
                 this._ws.send(this._encode([_constants.WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
 
-                _context2.next = 75;
+                _context.next = 67;
                 break;
 
-              case 66:
-                _context2.prev = 66;
-                _context2.t2 = _context2["catch"](59);
+              case 58:
+                _context.prev = 58;
+                _context.t1 = _context["catch"](51);
                 _error = new Errors.ChallengeExceptionError();
 
                 this._fillOpStatusByError(_error);
@@ -1269,20 +1215,20 @@ var Wampy = /*#__PURE__*/function () {
                 }, 'wamp.error.cannot_authenticate']));
 
                 if (!this._options.onError) {
-                  _context2.next = 74;
+                  _context.next = 66;
                   break;
                 }
 
-                _context2.next = 74;
+                _context.next = 66;
                 return this._options.onError(_error);
 
-              case 74:
+              case 66:
                 this._ws.close();
 
-              case 75:
-                return _context2.abrupt("break", 293);
+              case 67:
+                return _context.abrupt("break", 278);
 
-              case 76:
+              case 68:
                 // WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
                 if (!this._cache.sessionId) {
                   this._hardClose('wamp.error.protocol_violation', 'Received GOODBYE message before session was established');
@@ -1299,142 +1245,142 @@ var Wampy = /*#__PURE__*/function () {
                   this._ws.close();
                 }
 
-                return _context2.abrupt("break", 293);
+                return _context.abrupt("break", 278);
 
-              case 78:
+              case 70:
                 if (this._cache.sessionId) {
-                  _context2.next = 82;
+                  _context.next = 74;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received ERROR message before session was established');
 
-                _context2.next = 124;
+                _context.next = 116;
                 break;
 
-              case 82:
+              case 74:
                 errData = {
                   error: data[4],
                   details: data[3],
                   argsList: data[5],
                   argsDict: data[6]
                 };
-                _context2.t3 = data[1];
-                _context2.next = _context2.t3 === _constants.WAMP_MSG_SPEC.SUBSCRIBE ? 86 : _context2.t3 === _constants.WAMP_MSG_SPEC.UNSUBSCRIBE ? 92 : _context2.t3 === _constants.WAMP_MSG_SPEC.PUBLISH ? 98 : _context2.t3 === _constants.WAMP_MSG_SPEC.REGISTER ? 104 : _context2.t3 === _constants.WAMP_MSG_SPEC.UNREGISTER ? 110 : _context2.t3 === _constants.WAMP_MSG_SPEC.CALL ? 116 : 122;
+                _context.t2 = data[1];
+                _context.next = _context.t2 === _constants.WAMP_MSG_SPEC.SUBSCRIBE ? 78 : _context.t2 === _constants.WAMP_MSG_SPEC.UNSUBSCRIBE ? 84 : _context.t2 === _constants.WAMP_MSG_SPEC.PUBLISH ? 90 : _context.t2 === _constants.WAMP_MSG_SPEC.REGISTER ? 96 : _context.t2 === _constants.WAMP_MSG_SPEC.UNREGISTER ? 102 : _context.t2 === _constants.WAMP_MSG_SPEC.CALL ? 108 : 114;
                 break;
 
-              case 86:
-                _context2.t4 = this._requests[data[2]] && this._requests[data[2]].callbacks.onError;
+              case 78:
+                _context.t3 = this._requests[data[2]] && this._requests[data[2]].callbacks.onError;
 
-                if (!_context2.t4) {
-                  _context2.next = 90;
+                if (!_context.t3) {
+                  _context.next = 82;
                   break;
                 }
 
-                _context2.next = 90;
+                _context.next = 82;
                 return this._requests[data[2]].callbacks.onError(new Errors.SubscribeError(errData));
 
-              case 90:
+              case 82:
                 delete this._requests[data[2]];
-                return _context2.abrupt("break", 124);
+                return _context.abrupt("break", 116);
 
-              case 92:
-                _context2.t5 = this._requests[data[2]] && this._requests[data[2]].callbacks.onError;
+              case 84:
+                _context.t4 = this._requests[data[2]] && this._requests[data[2]].callbacks.onError;
 
-                if (!_context2.t5) {
-                  _context2.next = 96;
+                if (!_context.t4) {
+                  _context.next = 88;
                   break;
                 }
 
-                _context2.next = 96;
+                _context.next = 88;
                 return this._requests[data[2]].callbacks.onError(new Errors.UnsubscribeError(errData));
 
-              case 96:
+              case 88:
                 delete this._requests[data[2]];
-                return _context2.abrupt("break", 124);
+                return _context.abrupt("break", 116);
 
-              case 98:
-                _context2.t6 = this._requests[data[2]] && this._requests[data[2]].callbacks.onError;
+              case 90:
+                _context.t5 = this._requests[data[2]] && this._requests[data[2]].callbacks.onError;
 
-                if (!_context2.t6) {
-                  _context2.next = 102;
+                if (!_context.t5) {
+                  _context.next = 94;
                   break;
                 }
 
-                _context2.next = 102;
+                _context.next = 94;
                 return this._requests[data[2]].callbacks.onError(new Errors.PublishError(errData));
 
-              case 102:
+              case 94:
                 delete this._requests[data[2]];
-                return _context2.abrupt("break", 124);
+                return _context.abrupt("break", 116);
 
-              case 104:
-                _context2.t7 = this._requests[data[2]] && this._requests[data[2]].callbacks.onError;
+              case 96:
+                _context.t6 = this._requests[data[2]] && this._requests[data[2]].callbacks.onError;
 
-                if (!_context2.t7) {
-                  _context2.next = 108;
+                if (!_context.t6) {
+                  _context.next = 100;
                   break;
                 }
 
-                _context2.next = 108;
+                _context.next = 100;
                 return this._requests[data[2]].callbacks.onError(new Errors.RegisterError(errData));
 
-              case 108:
+              case 100:
                 delete this._requests[data[2]];
-                return _context2.abrupt("break", 124);
+                return _context.abrupt("break", 116);
 
-              case 110:
-                _context2.t8 = this._requests[data[2]] && this._requests[data[2]].callbacks.onError;
+              case 102:
+                _context.t7 = this._requests[data[2]] && this._requests[data[2]].callbacks.onError;
 
-                if (!_context2.t8) {
-                  _context2.next = 114;
+                if (!_context.t7) {
+                  _context.next = 106;
                   break;
                 }
 
-                _context2.next = 114;
+                _context.next = 106;
                 return this._requests[data[2]].callbacks.onError(new Errors.UnregisterError(errData));
 
-              case 114:
+              case 106:
                 delete this._requests[data[2]];
-                return _context2.abrupt("break", 124);
+                return _context.abrupt("break", 116);
 
-              case 116:
-                _context2.t9 = this._calls[data[2]] && this._calls[data[2]].onError;
+              case 108:
+                _context.t8 = this._calls[data[2]] && this._calls[data[2]].onError;
 
-                if (!_context2.t9) {
-                  _context2.next = 120;
+                if (!_context.t8) {
+                  _context.next = 112;
                   break;
                 }
 
-                _context2.next = 120;
+                _context.next = 112;
                 return this._calls[data[2]].onError(new Errors.CallError(errData));
 
-              case 120:
+              case 112:
                 delete this._calls[data[2]];
-                return _context2.abrupt("break", 124);
+                return _context.abrupt("break", 116);
 
-              case 122:
+              case 114:
                 this._hardClose('wamp.error.protocol_violation', 'Received invalid ERROR message');
 
-                return _context2.abrupt("break", 124);
+                return _context.abrupt("break", 116);
 
-              case 124:
-                return _context2.abrupt("break", 293);
+              case 116:
+                return _context.abrupt("break", 278);
 
-              case 125:
+              case 117:
                 if (this._cache.sessionId) {
-                  _context2.next = 129;
+                  _context.next = 121;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received SUBSCRIBED message before session was established');
 
-                _context2.next = 136;
+                _context.next = 128;
                 break;
 
-              case 129:
+              case 121:
                 if (!this._requests[data[1]]) {
-                  _context2.next = 136;
+                  _context.next = 128;
                   break;
                 }
 
@@ -1447,37 +1393,37 @@ var Wampy = /*#__PURE__*/function () {
                 this._subsTopics.add(this._requests[data[1]].topic);
 
                 if (!this._requests[data[1]].callbacks.onSuccess) {
-                  _context2.next = 135;
+                  _context.next = 127;
                   break;
                 }
 
-                _context2.next = 135;
+                _context.next = 127;
                 return this._requests[data[1]].callbacks.onSuccess({
                   topic: this._requests[data[1]].topic,
                   requestId: data[1],
                   subscriptionId: data[2]
                 });
 
-              case 135:
+              case 127:
                 delete this._requests[data[1]];
 
-              case 136:
-                return _context2.abrupt("break", 293);
+              case 128:
+                return _context.abrupt("break", 278);
 
-              case 137:
+              case 129:
                 if (this._cache.sessionId) {
-                  _context2.next = 141;
+                  _context.next = 133;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received UNSUBSCRIBED message before session was established');
 
-                _context2.next = 150;
+                _context.next = 142;
                 break;
 
-              case 141:
+              case 133:
                 if (!this._requests[data[1]]) {
-                  _context2.next = 150;
+                  _context.next = 142;
                   break;
                 }
 
@@ -1490,71 +1436,71 @@ var Wampy = /*#__PURE__*/function () {
                 }
 
                 if (!this._requests[data[1]].callbacks.onSuccess) {
-                  _context2.next = 149;
+                  _context.next = 141;
                   break;
                 }
 
-                _context2.next = 149;
+                _context.next = 141;
                 return this._requests[data[1]].callbacks.onSuccess({
                   topic: this._requests[data[1]].topic,
                   requestId: data[1]
                 });
 
-              case 149:
+              case 141:
                 delete this._requests[data[1]];
 
-              case 150:
-                return _context2.abrupt("break", 293);
+              case 142:
+                return _context.abrupt("break", 278);
 
-              case 151:
+              case 143:
                 if (this._cache.sessionId) {
-                  _context2.next = 155;
+                  _context.next = 147;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received PUBLISHED message before session was established');
 
-                _context2.next = 160;
+                _context.next = 152;
                 break;
 
-              case 155:
+              case 147:
                 if (!this._requests[data[1]]) {
-                  _context2.next = 160;
+                  _context.next = 152;
                   break;
                 }
 
                 if (!(this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess)) {
-                  _context2.next = 159;
+                  _context.next = 151;
                   break;
                 }
 
-                _context2.next = 159;
+                _context.next = 151;
                 return this._requests[data[1]].callbacks.onSuccess({
                   topic: this._requests[data[1]].topic,
                   requestId: data[1],
                   publicationId: data[2]
                 });
 
-              case 159:
+              case 151:
                 delete this._requests[data[1]];
 
-              case 160:
-                return _context2.abrupt("break", 293);
+              case 152:
+                return _context.abrupt("break", 278);
 
-              case 161:
+              case 153:
                 if (this._cache.sessionId) {
-                  _context2.next = 165;
+                  _context.next = 157;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received EVENT message before session was established');
 
-                _context2.next = 187;
+                _context.next = 177;
                 break;
 
-              case 165:
+              case 157:
                 if (!this._subscriptions[data[1]]) {
-                  _context2.next = 187;
+                  _context.next = 177;
                   break;
                 }
 
@@ -1564,19 +1510,15 @@ var Wampy = /*#__PURE__*/function () {
                 // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
 
                 if (!options.ppt_scheme) {
-                  _context2.next = 179;
+                  _context.next = 169;
                   break;
                 }
 
                 pptPayload = data[4][0];
-                _context2.next = 171;
-                return this._unpackPPTPayload('broker', pptPayload, options);
-
-              case 171:
-                decodedPayload = _context2.sent;
+                decodedPayload = this._unpackPPTPayload('broker', pptPayload, options);
 
                 if (!decodedPayload.err) {
-                  _context2.next = 175;
+                  _context.next = 165;
                   break;
                 }
 
@@ -1586,55 +1528,55 @@ var Wampy = /*#__PURE__*/function () {
                 // Although the router should handle it
                 this._log(decodedPayload.err.message);
 
-                return _context2.abrupt("break", 293);
+                return _context.abrupt("break", 278);
 
-              case 175:
+              case 165:
                 argsList = decodedPayload.args;
                 argsDict = decodedPayload.kwargs;
-                _context2.next = 181;
+                _context.next = 171;
                 break;
 
-              case 179:
+              case 169:
                 argsList = data[4];
                 argsDict = data[5];
 
-              case 181:
+              case 171:
                 i = this._subscriptions[data[1]].callbacks.length;
 
-              case 182:
+              case 172:
                 if (!i--) {
-                  _context2.next = 187;
+                  _context.next = 177;
                   break;
                 }
 
-                _context2.next = 185;
+                _context.next = 175;
                 return this._subscriptions[data[1]].callbacks[i]({
                   details: options,
                   argsList: argsList,
                   argsDict: argsDict
                 });
 
-              case 185:
-                _context2.next = 182;
+              case 175:
+                _context.next = 172;
                 break;
 
-              case 187:
-                return _context2.abrupt("break", 293);
+              case 177:
+                return _context.abrupt("break", 278);
 
-              case 188:
+              case 178:
                 if (this._cache.sessionId) {
-                  _context2.next = 192;
+                  _context.next = 182;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received RESULT message before session was established');
 
-                _context2.next = 220;
+                _context.next = 208;
                 break;
 
-              case 192:
+              case 182:
                 if (!this._calls[data[1]]) {
-                  _context2.next = 220;
+                  _context.next = 208;
                   break;
                 }
 
@@ -1644,26 +1586,22 @@ var Wampy = /*#__PURE__*/function () {
                 // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
 
                 if (!_options.ppt_scheme) {
-                  _context2.next = 210;
+                  _context.next = 198;
                   break;
                 }
 
                 _pptPayload = data[3][0];
-                _context2.next = 198;
-                return this._unpackPPTPayload('dealer', _pptPayload, _options);
-
-              case 198:
-                _decodedPayload = _context2.sent;
+                _decodedPayload = this._unpackPPTPayload('dealer', _pptPayload, _options);
 
                 if (!_decodedPayload.err) {
-                  _context2.next = 206;
+                  _context.next = 194;
                   break;
                 }
 
                 this._log(_decodedPayload.err.message);
 
                 this._cache.opStatus = _decodedPayload.err;
-                _context2.next = 204;
+                _context.next = 192;
                 return this._calls[data[1]].onError(new Errors.CallError({
                   error: 'wamp.error.invocation_exception',
                   details: data[2],
@@ -1671,65 +1609,65 @@ var Wampy = /*#__PURE__*/function () {
                   argsDict: null
                 }));
 
-              case 204:
+              case 192:
                 delete this._calls[data[1]];
-                return _context2.abrupt("break", 293);
+                return _context.abrupt("break", 278);
 
-              case 206:
+              case 194:
                 _argsList = _decodedPayload.args;
                 _argsDict = _decodedPayload.kwargs;
-                _context2.next = 212;
+                _context.next = 200;
                 break;
 
-              case 210:
+              case 198:
                 _argsList = data[3];
                 _argsDict = data[4];
 
-              case 212:
+              case 200:
                 if (!(_options.progress === true)) {
-                  _context2.next = 217;
+                  _context.next = 205;
                   break;
                 }
 
-                _context2.next = 215;
+                _context.next = 203;
                 return this._calls[data[1]].onProgress({
                   details: _options,
                   argsList: _argsList,
                   argsDict: _argsDict
                 });
 
-              case 215:
-                _context2.next = 220;
+              case 203:
+                _context.next = 208;
                 break;
 
-              case 217:
-                _context2.next = 219;
+              case 205:
+                _context.next = 207;
                 return this._calls[data[1]].onSuccess({
                   details: _options,
                   argsList: _argsList,
                   argsDict: _argsDict
                 });
 
-              case 219:
+              case 207:
                 delete this._calls[data[1]];
 
-              case 220:
-                return _context2.abrupt("break", 293);
+              case 208:
+                return _context.abrupt("break", 278);
 
-              case 221:
+              case 209:
                 if (this._cache.sessionId) {
-                  _context2.next = 225;
+                  _context.next = 213;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received REGISTERED message before session was established');
 
-                _context2.next = 232;
+                _context.next = 220;
                 break;
 
-              case 225:
+              case 213:
                 if (!this._requests[data[1]]) {
-                  _context2.next = 232;
+                  _context.next = 220;
                   break;
                 }
 
@@ -1741,37 +1679,37 @@ var Wampy = /*#__PURE__*/function () {
                 this._rpcNames.add(this._requests[data[1]].topic);
 
                 if (!(this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess)) {
-                  _context2.next = 231;
+                  _context.next = 219;
                   break;
                 }
 
-                _context2.next = 231;
+                _context.next = 219;
                 return this._requests[data[1]].callbacks.onSuccess({
                   topic: this._requests[data[1]].topic,
                   requestId: data[1],
                   registrationId: data[2]
                 });
 
-              case 231:
+              case 219:
                 delete this._requests[data[1]];
 
-              case 232:
-                return _context2.abrupt("break", 293);
+              case 220:
+                return _context.abrupt("break", 278);
 
-              case 233:
+              case 221:
                 if (this._cache.sessionId) {
-                  _context2.next = 237;
+                  _context.next = 225;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received UNREGISTERED message before session was established');
 
-                _context2.next = 246;
+                _context.next = 234;
                 break;
 
-              case 237:
+              case 225:
                 if (!this._requests[data[1]]) {
-                  _context2.next = 246;
+                  _context.next = 234;
                   break;
                 }
 
@@ -1784,36 +1722,36 @@ var Wampy = /*#__PURE__*/function () {
                 }
 
                 if (!(this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess)) {
-                  _context2.next = 245;
+                  _context.next = 233;
                   break;
                 }
 
-                _context2.next = 245;
+                _context.next = 233;
                 return this._requests[data[1]].callbacks.onSuccess({
                   topic: this._requests[data[1]].topic,
                   requestId: data[1]
                 });
 
-              case 245:
+              case 233:
                 delete this._requests[data[1]];
 
-              case 246:
-                return _context2.abrupt("break", 293);
+              case 234:
+                return _context.abrupt("break", 278);
 
-              case 247:
+              case 235:
                 if (this._cache.sessionId) {
-                  _context2.next = 251;
+                  _context.next = 239;
                   break;
                 }
 
                 this._hardClose('wamp.error.protocol_violation', 'Received INVOCATION message before session was established');
 
-                _context2.next = 290;
+                _context.next = 275;
                 break;
 
-              case 251:
+              case 239:
                 if (!this._rpcRegs[data[2]]) {
-                  _context2.next = 288;
+                  _context.next = 273;
                   break;
                 }
 
@@ -1910,19 +1848,15 @@ var Wampy = /*#__PURE__*/function () {
                 // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
 
                 if (!_options2.ppt_scheme) {
-                  _context2.next = 273;
+                  _context.next = 259;
                   break;
                 }
 
                 _pptPayload2 = data[4][0];
-                _context2.next = 258;
-                return this._unpackPPTPayload('dealer', _pptPayload2, _options2);
-
-              case 258:
-                _decodedPayload2 = _context2.sent;
+                _decodedPayload2 = this._unpackPPTPayload('dealer', _pptPayload2, _options2); // This case should not happen at all, but for safety
 
                 if (!(_decodedPayload2.err && _decodedPayload2.err instanceof Errors.PPTNotSupportedError)) {
-                  _context2.next = 265;
+                  _context.next = 251;
                   break;
                 }
 
@@ -1930,11 +1864,11 @@ var Wampy = /*#__PURE__*/function () {
 
                 this._hardClose('wamp.error.protocol_violation', 'Received INVOCATION in PPT Mode, while Dealer didn\'t announce it');
 
-                return _context2.abrupt("break", 293);
+                return _context.abrupt("break", 278);
 
-              case 265:
+              case 251:
                 if (!_decodedPayload2.err) {
-                  _context2.next = 269;
+                  _context.next = 255;
                   break;
                 }
 
@@ -1947,70 +1881,67 @@ var Wampy = /*#__PURE__*/function () {
                   argsList: [_decodedPayload2.err.message],
                   argsDict: null
                 });
-                return _context2.abrupt("break", 293);
+                return _context.abrupt("break", 278);
 
-              case 269:
+              case 255:
                 _argsList2 = _decodedPayload2.args;
                 _argsDict2 = _decodedPayload2.kwargs;
-                _context2.next = 275;
+                _context.next = 261;
                 break;
 
-              case 273:
+              case 259:
                 _argsList2 = data[4];
                 _argsDict2 = data[5];
 
-              case 275:
-                p = new Promise(function (resolve, reject) {
-                  resolve(_this3._rpcRegs[data[2]].callbacks[0]({
-                    details: _options2,
-                    argsList: _argsList2,
-                    argsDict: _argsDict2,
-                    result_handler: invoke_result_handler,
-                    error_handler: invoke_error_handler
-                  }));
+              case 261:
+                _context.prev = 261;
+                _context.next = 264;
+                return this._rpcRegs[data[2]].callbacks[0]({
+                  details: _options2,
+                  argsList: _argsList2,
+                  argsDict: _argsDict2,
+                  result_handler: invoke_result_handler,
+                  error_handler: invoke_error_handler
                 });
-                _context2.prev = 276;
-                _context2.next = 279;
-                return p;
 
-              case 279:
-                results = _context2.sent;
+              case 264:
+                results = _context.sent;
                 invoke_result_handler(results);
-                _context2.next = 286;
+                _context.next = 271;
                 break;
 
-              case 283:
-                _context2.prev = 283;
-                _context2.t10 = _context2["catch"](276);
-                invoke_error_handler(_context2.t10);
+              case 268:
+                _context.prev = 268;
+                _context.t9 = _context["catch"](261);
+                invoke_error_handler(_context.t9);
 
-              case 286:
-                _context2.next = 290;
+              case 271:
+                _context.next = 275;
                 break;
 
-              case 288:
+              case 273:
                 // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
                 this._send([_constants.WAMP_MSG_SPEC.ERROR, _constants.WAMP_MSG_SPEC.INVOCATION, data[1], {}, 'wamp.error.no_such_procedure']);
 
                 this._log(_constants.WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION);
 
-              case 290:
-                return _context2.abrupt("break", 293);
+              case 275:
+                return _context.abrupt("break", 278);
 
-              case 291:
+              case 276:
                 this._hardClose('wamp.error.protocol_violation', 'Received non-compliant WAMP message');
 
-                return _context2.abrupt("break", 293);
+                return _context.abrupt("break", 278);
 
-              case 293:
+              case 278:
               case "end":
-                return _context2.stop();
+                return _context.stop();
             }
           }
-        }, _callee2, this, [[0, 6], [59, 66], [276, 283]]);
+        }, _callee, this, [[51, 58], [261, 268]]);
       }));
 
-      function _wsOnMessage(_x4) {
+      function _wsOnMessage(_x) {
         return _wsOnMessage2.apply(this, arguments);
       }
 
@@ -2176,25 +2107,25 @@ var Wampy = /*#__PURE__*/function () {
   }, {
     key: "connect",
     value: function () {
-      var _connect = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(url) {
+      var _connect = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(url) {
         var error, authOpts, defer;
-        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
+        return _regeneratorRuntime().wrap(function _callee2$(_context2) {
           while (1) {
-            switch (_context3.prev = _context3.next) {
+            switch (_context2.prev = _context2.next) {
               case 0:
                 if (url) {
                   this._url = url;
                 }
 
                 if (!this._options.realm) {
-                  _context3.next = 16;
+                  _context2.next = 16;
                   break;
                 }
 
                 authOpts = (this._options.authid ? 1 : 0) + (this._isArray(this._options.authmethods) && this._options.authmethods.length ? 1 : 0) + (typeof this._options.onChallenge === 'function' || Object.keys(this._options.authPlugins).length ? 1 : 0);
 
                 if (!(authOpts > 0 && authOpts < 3)) {
-                  _context3.next = 7;
+                  _context2.next = 7;
                   break;
                 }
 
@@ -2210,7 +2141,7 @@ var Wampy = /*#__PURE__*/function () {
                 this._ws = (0, _utils.getWebSocket)(this._url, this._protocols, this._options.ws, this._options.additionalHeaders, this._options.wsRequestOptions);
 
                 if (this._ws) {
-                  _context3.next = 13;
+                  _context2.next = 13;
                   break;
                 }
 
@@ -2223,7 +2154,7 @@ var Wampy = /*#__PURE__*/function () {
               case 13:
                 this._initWsCallbacks();
 
-                _context3.next = 19;
+                _context2.next = 19;
                 break;
 
               case 16:
@@ -2236,17 +2167,17 @@ var Wampy = /*#__PURE__*/function () {
               case 19:
                 defer = (0, _utils.getNewPromise)();
                 this._cache.connectPromise = defer;
-                return _context3.abrupt("return", defer.promise);
+                return _context2.abrupt("return", defer.promise);
 
               case 22:
               case "end":
-                return _context3.stop();
+                return _context2.stop();
             }
           }
-        }, _callee3, this);
+        }, _callee2, this);
       }));
 
-      function connect(_x5) {
+      function connect(_x2) {
         return _connect.apply(this, arguments);
       }
 
@@ -2260,14 +2191,14 @@ var Wampy = /*#__PURE__*/function () {
   }, {
     key: "disconnect",
     value: function () {
-      var _disconnect = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {
+      var _disconnect = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3() {
         var defer;
-        return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+        return _regeneratorRuntime().wrap(function _callee3$(_context3) {
           while (1) {
-            switch (_context4.prev = _context4.next) {
+            switch (_context3.prev = _context3.next) {
               case 0:
                 if (!this._cache.sessionId) {
-                  _context4.next = 9;
+                  _context3.next = 9;
                   break;
                 }
 
@@ -2279,7 +2210,7 @@ var Wampy = /*#__PURE__*/function () {
 
                 this._send([_constants.WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.close.system_shutdown']);
 
-                return _context4.abrupt("return", defer.promise);
+                return _context3.abrupt("return", defer.promise);
 
               case 9:
                 if (this._ws) {
@@ -2287,14 +2218,14 @@ var Wampy = /*#__PURE__*/function () {
                 }
 
               case 10:
-                return _context4.abrupt("return", true);
+                return _context3.abrupt("return", true);
 
               case 11:
               case "end":
-                return _context4.stop();
+                return _context3.stop();
             }
           }
-        }, _callee4, this);
+        }, _callee3, this);
       }));
 
       function disconnect() {
@@ -2337,34 +2268,34 @@ var Wampy = /*#__PURE__*/function () {
   }, {
     key: "subscribe",
     value: function () {
-      var _subscribe = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(topicURI, onEvent, advancedOptions) {
+      var _subscribe = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4(topicURI, onEvent, advancedOptions) {
         var reqId, patternBased, options, callbacks, error, _error2, _error3;
 
-        return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+        return _regeneratorRuntime().wrap(function _callee4$(_context4) {
           while (1) {
-            switch (_context5.prev = _context5.next) {
+            switch (_context4.prev = _context4.next) {
               case 0:
                 patternBased = false;
                 options = {}, callbacks = (0, _utils.getNewPromise)();
 
                 if (!this._isPlainObject(advancedOptions)) {
-                  _context5.next = 14;
+                  _context4.next = 14;
                   break;
                 }
 
                 if (!Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
-                  _context5.next = 12;
+                  _context4.next = 12;
                   break;
                 }
 
                 if (!/prefix|wildcard/.test(advancedOptions.match)) {
-                  _context5.next = 9;
+                  _context4.next = 9;
                   break;
                 }
 
                 options.match = advancedOptions.match;
                 patternBased = true;
-                _context5.next = 12;
+                _context4.next = 12;
                 break;
 
               case 9:
@@ -2375,12 +2306,12 @@ var Wampy = /*#__PURE__*/function () {
                 throw error;
 
               case 12:
-                _context5.next = 18;
+                _context4.next = 18;
                 break;
 
               case 14:
                 if (!(typeof advancedOptions !== 'undefined')) {
-                  _context5.next = 18;
+                  _context4.next = 18;
                   break;
                 }
 
@@ -2396,7 +2327,7 @@ var Wampy = /*#__PURE__*/function () {
                   patternBased: patternBased,
                   allowWAMP: true
                 }, 'broker')) {
-                  _context5.next = 20;
+                  _context4.next = 20;
                   break;
                 }
 
@@ -2404,12 +2335,12 @@ var Wampy = /*#__PURE__*/function () {
 
               case 20:
                 if (!(typeof onEvent === 'function')) {
-                  _context5.next = 24;
+                  _context4.next = 24;
                   break;
                 }
 
                 callbacks.onEvent = onEvent;
-                _context5.next = 27;
+                _context4.next = 27;
                 break;
 
               case 24:
@@ -2421,7 +2352,7 @@ var Wampy = /*#__PURE__*/function () {
 
               case 27:
                 if (!(!this._subscriptions[topicURI] || !this._subscriptions[topicURI].callbacks.length)) {
-                  _context5.next = 33;
+                  _context4.next = 33;
                   break;
                 }
 
@@ -2435,7 +2366,7 @@ var Wampy = /*#__PURE__*/function () {
 
                 this._send([_constants.WAMP_MSG_SPEC.SUBSCRIBE, reqId, options, topicURI]);
 
-                _context5.next = 35;
+                _context4.next = 35;
                 break;
 
               case 33:
@@ -2445,7 +2376,7 @@ var Wampy = /*#__PURE__*/function () {
                   this._subscriptions[topicURI].callbacks.push(callbacks.onEvent);
                 }
 
-                return _context5.abrupt("return", {
+                return _context4.abrupt("return", {
                   topic: topicURI,
                   subscriptionId: this._subscriptions[topicURI].id
                 });
@@ -2453,17 +2384,17 @@ var Wampy = /*#__PURE__*/function () {
               case 35:
                 this._cache.opStatus = _constants.SUCCESS;
                 this._cache.opStatus.reqId = reqId;
-                return _context5.abrupt("return", callbacks.promise);
+                return _context4.abrupt("return", callbacks.promise);
 
               case 38:
               case "end":
-                return _context5.stop();
+                return _context4.stop();
             }
           }
-        }, _callee5, this);
+        }, _callee4, this);
       }));
 
-      function subscribe(_x6, _x7, _x8) {
+      function subscribe(_x3, _x4, _x5) {
         return _subscribe.apply(this, arguments);
       }
 
@@ -2480,16 +2411,16 @@ var Wampy = /*#__PURE__*/function () {
   }, {
     key: "unsubscribe",
     value: function () {
-      var _unsubscribe = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6(topicURI, onEvent) {
+      var _unsubscribe = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(topicURI, onEvent) {
         var reqId, callbacks, i, error;
-        return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+        return _regeneratorRuntime().wrap(function _callee5$(_context5) {
           while (1) {
-            switch (_context6.prev = _context6.next) {
+            switch (_context5.prev = _context5.next) {
               case 0:
                 callbacks = (0, _utils.getNewPromise)();
 
                 if (this._preReqChecks(null, 'broker')) {
-                  _context6.next = 3;
+                  _context5.next = 3;
                   break;
                 }
 
@@ -2497,7 +2428,7 @@ var Wampy = /*#__PURE__*/function () {
 
               case 3:
                 if (!this._subscriptions[topicURI]) {
-                  _context6.next = 13;
+                  _context5.next = 13;
                   break;
                 }
 
@@ -2514,13 +2445,13 @@ var Wampy = /*#__PURE__*/function () {
                 }
 
                 if (!this._subscriptions[topicURI].callbacks.length) {
-                  _context6.next = 9;
+                  _context5.next = 9;
                   break;
                 }
 
                 // There are another callbacks for this topic
                 this._cache.opStatus = _constants.SUCCESS;
-                return _context6.abrupt("return", true);
+                return _context5.abrupt("return", true);
 
               case 9:
                 this._requests[reqId] = {
@@ -2530,7 +2461,7 @@ var Wampy = /*#__PURE__*/function () {
 
                 this._send([_constants.WAMP_MSG_SPEC.UNSUBSCRIBE, reqId, this._subscriptions[topicURI].id]);
 
-                _context6.next = 16;
+                _context5.next = 16;
                 break;
 
               case 13:
@@ -2543,17 +2474,17 @@ var Wampy = /*#__PURE__*/function () {
               case 16:
                 this._cache.opStatus = _constants.SUCCESS;
                 this._cache.opStatus.reqId = reqId;
-                return _context6.abrupt("return", callbacks.promise);
+                return _context5.abrupt("return", callbacks.promise);
 
               case 19:
               case "end":
-                return _context6.stop();
+                return _context5.stop();
             }
           }
-        }, _callee6, this);
+        }, _callee5, this);
       }));
 
-      function unsubscribe(_x9, _x10) {
+      function unsubscribe(_x6, _x7) {
         return _unsubscribe.apply(this, arguments);
       }
 
@@ -2597,7 +2528,7 @@ var Wampy = /*#__PURE__*/function () {
   }, {
     key: "publish",
     value: function () {
-      var _publish = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7(topicURI, payload, advancedOptions) {
+      var _publish = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6(topicURI, payload, advancedOptions) {
         var _this4 = this;
 
         var reqId,
@@ -2609,11 +2540,11 @@ var Wampy = /*#__PURE__*/function () {
             pptScheme,
             _error4,
             res,
-            _args7 = arguments;
+            _args6 = arguments;
 
-        return _regeneratorRuntime().wrap(function _callee7$(_context7) {
+        return _regeneratorRuntime().wrap(function _callee6$(_context6) {
           while (1) {
-            switch (_context7.prev = _context7.next) {
+            switch (_context6.prev = _context6.next) {
               case 0:
                 options = {
                   acknowledge: true
@@ -2636,7 +2567,7 @@ var Wampy = /*#__PURE__*/function () {
                   patternBased: false,
                   allowWAMP: false
                 }, 'broker')) {
-                  _context7.next = 3;
+                  _context6.next = 3;
                   break;
                 }
 
@@ -2644,12 +2575,12 @@ var Wampy = /*#__PURE__*/function () {
 
               case 3:
                 if (!this._isPlainObject(advancedOptions)) {
-                  _context7.next = 20;
+                  _context6.next = 20;
                   break;
                 }
 
                 if (!(!_optionsConvertHelper('exclude', 'number') || !_optionsConvertHelper('exclude_authid', 'string') || !_optionsConvertHelper('exclude_authrole', 'string') || !_optionsConvertHelper('eligible', 'number') || !_optionsConvertHelper('eligible_authid', 'string') || !_optionsConvertHelper('eligible_authrole', 'string'))) {
-                  _context7.next = 8;
+                  _context6.next = 8;
                   break;
                 }
 
@@ -2673,12 +2604,12 @@ var Wampy = /*#__PURE__*/function () {
                 pptScheme = advancedOptions.ppt_scheme;
 
                 if (!pptScheme) {
-                  _context7.next = 18;
+                  _context6.next = 18;
                   break;
                 }
 
                 if (this._checkPPTOptions('broker', advancedOptions)) {
-                  _context7.next = 14;
+                  _context6.next = 14;
                   break;
                 }
 
@@ -2700,12 +2631,12 @@ var Wampy = /*#__PURE__*/function () {
                 }
 
               case 18:
-                _context7.next = 24;
+                _context6.next = 24;
                 break;
 
               case 20:
                 if (!(typeof advancedOptions !== 'undefined')) {
-                  _context7.next = 24;
+                  _context6.next = 24;
                   break;
                 }
 
@@ -2724,8 +2655,8 @@ var Wampy = /*#__PURE__*/function () {
 
                 msg = [_constants.WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI];
 
-                if (!(_args7.length > 1)) {
-                  _context7.next = 32;
+                if (!(_args6.length > 1)) {
+                  _context6.next = 32;
                   break;
                 }
 
@@ -2733,7 +2664,7 @@ var Wampy = /*#__PURE__*/function () {
                 res = this._packPPTPayload(payload, options);
 
                 if (!res.err) {
-                  _context7.next = 31;
+                  _context6.next = 31;
                   break;
                 }
 
@@ -2747,17 +2678,17 @@ var Wampy = /*#__PURE__*/function () {
 
                 this._cache.opStatus = _constants.SUCCESS;
                 this._cache.opStatus.reqId = reqId;
-                return _context7.abrupt("return", callbacks.promise);
+                return _context6.abrupt("return", callbacks.promise);
 
               case 36:
               case "end":
-                return _context7.stop();
+                return _context6.stop();
             }
           }
-        }, _callee7, this);
+        }, _callee6, this);
       }));
 
-      function publish(_x11, _x12, _x13) {
+      function publish(_x8, _x9, _x10) {
         return _publish.apply(this, arguments);
       }
 
@@ -2790,12 +2721,12 @@ var Wampy = /*#__PURE__*/function () {
   }, {
     key: "call",
     value: function () {
-      var _call = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee8(topicURI, payload, advancedOptions) {
+      var _call = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7(topicURI, payload, advancedOptions) {
         var reqId, msg, options, callbacks, error, _error5, pptScheme, _error6, res;
 
-        return _regeneratorRuntime().wrap(function _callee8$(_context8) {
+        return _regeneratorRuntime().wrap(function _callee7$(_context7) {
           while (1) {
-            switch (_context8.prev = _context8.next) {
+            switch (_context7.prev = _context7.next) {
               case 0:
                 options = {}, callbacks = (0, _utils.getNewPromise)();
 
@@ -2804,7 +2735,7 @@ var Wampy = /*#__PURE__*/function () {
                   patternBased: false,
                   allowWAMP: true
                 }, 'dealer')) {
-                  _context8.next = 3;
+                  _context7.next = 3;
                   break;
                 }
 
@@ -2812,7 +2743,7 @@ var Wampy = /*#__PURE__*/function () {
 
               case 3:
                 if (!this._isPlainObject(advancedOptions)) {
-                  _context8.next = 32;
+                  _context7.next = 32;
                   break;
                 }
 
@@ -2821,18 +2752,18 @@ var Wampy = /*#__PURE__*/function () {
                 }
 
                 if (!Object.hasOwnProperty.call(advancedOptions, 'progress_callback')) {
-                  _context8.next = 14;
+                  _context7.next = 14;
                   break;
                 }
 
                 if (!(typeof advancedOptions.progress_callback === 'function')) {
-                  _context8.next = 11;
+                  _context7.next = 11;
                   break;
                 }
 
                 options.receive_progress = true;
                 callbacks.onProgress = advancedOptions.progress_callback;
-                _context8.next = 14;
+                _context7.next = 14;
                 break;
 
               case 11:
@@ -2844,17 +2775,17 @@ var Wampy = /*#__PURE__*/function () {
 
               case 14:
                 if (!Object.hasOwnProperty.call(advancedOptions, 'timeout')) {
-                  _context8.next = 22;
+                  _context7.next = 22;
                   break;
                 }
 
                 if (!(typeof advancedOptions.timeout === 'number')) {
-                  _context8.next = 19;
+                  _context7.next = 19;
                   break;
                 }
 
                 options.timeout = advancedOptions.timeout;
-                _context8.next = 22;
+                _context7.next = 22;
                 break;
 
               case 19:
@@ -2870,12 +2801,12 @@ var Wampy = /*#__PURE__*/function () {
                 pptScheme = advancedOptions.ppt_scheme;
 
                 if (!pptScheme) {
-                  _context8.next = 30;
+                  _context7.next = 30;
                   break;
                 }
 
                 if (this._checkPPTOptions('dealer', advancedOptions)) {
-                  _context8.next = 26;
+                  _context7.next = 26;
                   break;
                 }
 
@@ -2897,12 +2828,12 @@ var Wampy = /*#__PURE__*/function () {
                 }
 
               case 30:
-                _context8.next = 36;
+                _context7.next = 36;
                 break;
 
               case 32:
                 if (!(typeof advancedOptions !== 'undefined')) {
-                  _context8.next = 36;
+                  _context7.next = 36;
                   break;
                 }
 
@@ -2922,14 +2853,14 @@ var Wampy = /*#__PURE__*/function () {
                 msg = [_constants.WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
 
                 if (!(payload !== null && typeof payload !== 'undefined')) {
-                  _context8.next = 44;
+                  _context7.next = 44;
                   break;
                 }
 
                 res = this._packPPTPayload(payload, options);
 
                 if (!res.err) {
-                  _context8.next = 43;
+                  _context7.next = 43;
                   break;
                 }
 
@@ -2943,17 +2874,17 @@ var Wampy = /*#__PURE__*/function () {
 
                 this._cache.opStatus = _constants.SUCCESS;
                 this._cache.opStatus.reqId = reqId;
-                return _context8.abrupt("return", callbacks.promise);
+                return _context7.abrupt("return", callbacks.promise);
 
               case 48:
               case "end":
-                return _context8.stop();
+                return _context7.stop();
             }
           }
-        }, _callee8, this);
+        }, _callee7, this);
       }));
 
-      function call(_x14, _x15, _x16) {
+      function call(_x11, _x12, _x13) {
         return _call.apply(this, arguments);
       }
 
@@ -3030,34 +2961,34 @@ var Wampy = /*#__PURE__*/function () {
   }, {
     key: "register",
     value: function () {
-      var _register = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee9(topicURI, rpc, advancedOptions) {
+      var _register = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee8(topicURI, rpc, advancedOptions) {
         var reqId, patternBased, options, callbacks, error, _error9, _error10, _error11, _error12;
 
-        return _regeneratorRuntime().wrap(function _callee9$(_context9) {
+        return _regeneratorRuntime().wrap(function _callee8$(_context8) {
           while (1) {
-            switch (_context9.prev = _context9.next) {
+            switch (_context8.prev = _context8.next) {
               case 0:
                 patternBased = false;
                 options = {}, callbacks = (0, _utils.getNewPromise)();
 
                 if (!this._isPlainObject(advancedOptions)) {
-                  _context9.next = 22;
+                  _context8.next = 22;
                   break;
                 }
 
                 if (!Object.hasOwnProperty.call(advancedOptions, 'match')) {
-                  _context9.next = 12;
+                  _context8.next = 12;
                   break;
                 }
 
                 if (!/prefix|wildcard/.test(advancedOptions.match)) {
-                  _context9.next = 9;
+                  _context8.next = 9;
                   break;
                 }
 
                 options.match = advancedOptions.match;
                 patternBased = true;
-                _context9.next = 12;
+                _context8.next = 12;
                 break;
 
               case 9:
@@ -3069,17 +3000,17 @@ var Wampy = /*#__PURE__*/function () {
 
               case 12:
                 if (!Object.hasOwnProperty.call(advancedOptions, 'invoke')) {
-                  _context9.next = 20;
+                  _context8.next = 20;
                   break;
                 }
 
                 if (!/single|roundrobin|random|first|last/.test(advancedOptions.invoke)) {
-                  _context9.next = 17;
+                  _context8.next = 17;
                   break;
                 }
 
                 options.invoke = advancedOptions.invoke;
-                _context9.next = 20;
+                _context8.next = 20;
                 break;
 
               case 17:
@@ -3090,12 +3021,12 @@ var Wampy = /*#__PURE__*/function () {
                 throw _error9;
 
               case 20:
-                _context9.next = 26;
+                _context8.next = 26;
                 break;
 
               case 22:
                 if (!(typeof advancedOptions !== 'undefined')) {
-                  _context9.next = 26;
+                  _context8.next = 26;
                   break;
                 }
 
@@ -3111,7 +3042,7 @@ var Wampy = /*#__PURE__*/function () {
                   patternBased: patternBased,
                   allowWAMP: false
                 }, 'dealer')) {
-                  _context9.next = 28;
+                  _context8.next = 28;
                   break;
                 }
 
@@ -3119,12 +3050,12 @@ var Wampy = /*#__PURE__*/function () {
 
               case 28:
                 if (!(typeof rpc === 'function')) {
-                  _context9.next = 32;
+                  _context8.next = 32;
                   break;
                 }
 
                 callbacks.rpc = rpc;
-                _context9.next = 35;
+                _context8.next = 35;
                 break;
 
               case 32:
@@ -3136,7 +3067,7 @@ var Wampy = /*#__PURE__*/function () {
 
               case 35:
                 if (!(!this._rpcRegs[topicURI] || !this._rpcRegs[topicURI].callbacks.length)) {
-                  _context9.next = 43;
+                  _context8.next = 43;
                   break;
                 }
 
@@ -3151,7 +3082,7 @@ var Wampy = /*#__PURE__*/function () {
 
                 this._cache.opStatus = _constants.SUCCESS;
                 this._cache.opStatus.reqId = reqId;
-                _context9.next = 46;
+                _context8.next = 46;
                 break;
 
               case 43:
@@ -3163,17 +3094,17 @@ var Wampy = /*#__PURE__*/function () {
                 throw _error12;
 
               case 46:
-                return _context9.abrupt("return", callbacks.promise);
+                return _context8.abrupt("return", callbacks.promise);
 
               case 47:
               case "end":
-                return _context9.stop();
+                return _context8.stop();
             }
           }
-        }, _callee9, this);
+        }, _callee8, this);
       }));
 
-      function register(_x17, _x18, _x19) {
+      function register(_x14, _x15, _x16) {
         return _register.apply(this, arguments);
       }
 
@@ -3188,11 +3119,11 @@ var Wampy = /*#__PURE__*/function () {
   }, {
     key: "unregister",
     value: function () {
-      var _unregister = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee10(topicURI) {
+      var _unregister = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee9(topicURI) {
         var reqId, callbacks, error;
-        return _regeneratorRuntime().wrap(function _callee10$(_context10) {
+        return _regeneratorRuntime().wrap(function _callee9$(_context9) {
           while (1) {
-            switch (_context10.prev = _context10.next) {
+            switch (_context9.prev = _context9.next) {
               case 0:
                 callbacks = (0, _utils.getNewPromise)();
 
@@ -3201,7 +3132,7 @@ var Wampy = /*#__PURE__*/function () {
                   patternBased: false,
                   allowWAMP: false
                 }, 'dealer')) {
-                  _context10.next = 3;
+                  _context9.next = 3;
                   break;
                 }
 
@@ -3209,7 +3140,7 @@ var Wampy = /*#__PURE__*/function () {
 
               case 3:
                 if (!this._rpcRegs[topicURI]) {
-                  _context10.next = 11;
+                  _context9.next = 11;
                   break;
                 }
 
@@ -3224,7 +3155,7 @@ var Wampy = /*#__PURE__*/function () {
 
                 this._cache.opStatus = _constants.SUCCESS;
                 this._cache.opStatus.reqId = reqId;
-                _context10.next = 14;
+                _context9.next = 14;
                 break;
 
               case 11:
@@ -3236,17 +3167,17 @@ var Wampy = /*#__PURE__*/function () {
                 throw error;
 
               case 14:
-                return _context10.abrupt("return", callbacks.promise);
+                return _context9.abrupt("return", callbacks.promise);
 
               case 15:
               case "end":
-                return _context10.stop();
+                return _context9.stop();
             }
           }
-        }, _callee10, this);
+        }, _callee9, this);
       }));
 
-      function unregister(_x20) {
+      function unregister(_x17) {
         return _unregister.apply(this, arguments);
       }
 

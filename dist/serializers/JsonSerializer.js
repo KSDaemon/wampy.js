@@ -27,9 +27,7 @@ var JsonSerializer = /*#__PURE__*/function () {
   }, {
     key: "decode",
     value: function decode(data) {
-      return new Promise(function (resolve) {
-        resolve(JSON.parse(data));
-      });
+      return JSON.parse(data);
     }
   }]);
 

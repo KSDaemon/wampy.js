@@ -5,9 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.CborSerializer = void 0;
 
-var _cbor = _interopRequireDefault(require("cbor"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+var _cborX = require("cbor-x");
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -26,14 +24,12 @@ var CborSerializer = /*#__PURE__*/function () {
   _createClass(CborSerializer, [{
     key: "encode",
     value: function encode(data) {
-      return _cbor["default"].encode(data);
+      return (0, _cborX.encode)(data);
     }
   }, {
     key: "decode",
     value: function decode(data) {
-      return new Promise(function (resolve) {
-        resolve(_cbor["default"].decode(data));
-      });
+      return (0, _cborX.decode)(new Uint8Array(data));
     }
   }]);
 
