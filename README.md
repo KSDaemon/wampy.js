@@ -1,7 +1,8 @@
 wampy.js
 ========
 
-Feature-rich WAMP (WebSocket Application Messaging Protocol) Javascript implementation (Browser and node.js)
+Feature-rich, zero dependency (by default) WAMP (WebSocket Application Messaging Protocol)
+Javascript implementation (for browser and node.js)
 
 [![NPM version][npm-image]][npm-url]
 [![Build Status][gh-build-test-image]][gh-build-test-url]
