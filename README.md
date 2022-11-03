@@ -93,6 +93,8 @@ In node.js environment Wampy is compatible with next websocket clients:
 * [WebSocket-Node][]. A WebSocket Implementation for Node.JS (Draft -08 through the final RFC 6455)
 * [ws][]. Simple to use, blazing fast and thoroughly tested WebSocket client and server for Node.js
 
+For convenience, all API documentation is also available as a [GitBook here](https://ksdaemon.gitbook.io/wampy.js/).
+
 [Back to TOC](#table-of-contents)
 
 Usage example
