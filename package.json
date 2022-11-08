@@ -59,7 +59,7 @@
     "wampy-cra": "^0.1.2",
     "wampy-cryptosign": "^0.1.0",
     "websocket": "^1.0.34",
-    "ws": "^8.10.0"
+    "ws": "^8.11.0"
   },
   "repository": {
     "type": "git",
