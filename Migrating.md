@@ -95,7 +95,23 @@ options were removed. Rely on the promise resolution.
     }
     ```
 
-7. `unsubscribe(topicURI[, onEvent])` was promisified. `onSucess`, `onError` callbacks
+7. `subscribe(topicURI, onEvent[, advancedOptions])` now returns hash-map with next attributes:
+
+    * topic. Topic URI
+    * requestId.
+    * subscriptionId. You will need it for unsubscribe
+    * subscriptionKey. You will need it for unsubscribe
+
+8. `unsubscribe(topicURI[, onEvent])` method was changed -> `unsubscribe(subscriptionIdKey[, onEvent])`.
+
+    Instead of providing `topic URI` now you need to provide `subscriptionId` or `subscriptionKey`.
+    The reason for this change is that you can have a few subscriptions for the same topic but
+    with different options, e.g. one subscription with exact topic match and one handler and another
+    prefix-based subscription with different handler. Previously you can not have both and also can not
+    unsubscribe only one. Now it is possible. And you still may have a few different handlers for the same
+    subscription on client side, so `onEvent` option is still present.
+
+9. `unsubscribe(subscriptionIdKey[, onEvent])` was promisified. `onSucess`, `onError` callbacks
    options were removed. Rely on the promise resolution.
 
     ```javascript
@@ -110,9 +126,9 @@ options were removed. Rely on the promise resolution.
     });
 
     // Now
-    await ws.unsubscribe('subscribed.topic', f1);
+    await ws.unsubscribe('subscribed.topic.key', f1);
     try {
-        let res = await ws.unsubscribe('some.another.topic', f1);
+        let res = await ws.unsubscribe('some.another.topic.key', f1);
         console.log('Successfully unsubscribed to topic: ' + details.topic);
 
     } catch (e) {
@@ -120,88 +136,88 @@ options were removed. Rely on the promise resolution.
     }
     ```
 
-8. `publish(topicURI[, payload[, advancedOptions]]])` was promisified. `onSucess`, `onError` callbacks
-   options were removed. Rely on the promise resolution.
+10. `publish(topicURI[, payload[, advancedOptions]]])` was promisified. `onSucess`, `onError` callbacks
+    options were removed. Rely on the promise resolution.
 
-    ```javascript
-    //Before
-    ws.publish('user.logged.in');
-    ws.publish('chat.message.received', 'user message');
-    ws.publish('chat.message.received', ['user message1', 'user message2']);
-    ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
-    ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
-        onSuccess: function () { console.log('User successfully modified'); }
-    });
-    ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
-        onSuccess: function () { console.log('User successfully modified'); },
-        onError: function (errData) { console.log('User modification failed', errData.error, errData.details); }
-    });
-    ws.publish('chat.message.received', ['Private message'], null, { eligible: 123456789 });
+     ```javascript
+     //Before
+     ws.publish('user.logged.in');
+     ws.publish('chat.message.received', 'user message');
+     ws.publish('chat.message.received', ['user message1', 'user message2']);
+     ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
+     ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
+         onSuccess: function () { console.log('User successfully modified'); }
+     });
+     ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 }, {
+         onSuccess: function () { console.log('User successfully modified'); },
+         onError: function (errData) { console.log('User modification failed', errData.error, errData.details); }
+     });
+     ws.publish('chat.message.received', ['Private message'], null, { eligible: 123456789 });
 
-    // Now
-    await ws.publish('user.logged.in');
-    await ws.publish('chat.message.received', 'user message');
-    await ws.publish('chat.message.received', ['user message1', 'user message2']);
-    await ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
-    await ws.publish('chat.message.received', ['Private message'], { eligible: 123456789 });
+     // Now
+     await ws.publish('user.logged.in');
+     await ws.publish('chat.message.received', 'user message');
+     await ws.publish('chat.message.received', ['user message1', 'user message2']);
+     await ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
+     await ws.publish('chat.message.received', ['Private message'], { eligible: 123456789 });
 
-    try {
-        await ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
-        console.log('User successfully modified');
-    } catch (e) {
-        console.log('User modification failed', e.error, e.details);
-    }
-    ```
+     try {
+         await ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
+         console.log('User successfully modified');
+     } catch (e) {
+         console.log('User modification failed', e.error, e.details);
+     }
+     ```
 
-9. `call(topicURI[, payload[, advancedOptions]]])` was promisified. `onSucess`, `onError` callbacks
-   options were removed. Rely on the promise resolution.
+11. `call(topicURI[, payload[, advancedOptions]]])` was promisified. `onSucess`, `onError` callbacks
+    options were removed. Rely on the promise resolution.
 
-    ```javascript
-    //Before
-    ws.call('server.time', null,
-        function (result) {
-            console.log('Server time is ' + result.argsList[0]);
-        }
-    );
+     ```javascript
+     //Before
+     ws.call('server.time', null,
+         function (result) {
+             console.log('Server time is ' + result.argsList[0]);
+         }
+     );
 
-    ws.call('start.migration', null, {
-        onSuccess: function (result) {
-            console.log('RPC successfully called');
-        },
-        onError: function (err) {
-            console.log('RPC call failed!', err.error);
-        }
-    });
+     ws.call('start.migration', null, {
+         onSuccess: function (result) {
+             console.log('RPC successfully called');
+         },
+         onError: function (err) {
+             console.log('RPC call failed!', err.error);
+         }
+     });
 
-    ws.call('restore.backup', { backupFile: 'backup.zip' }, {
-        onSuccess: function (result) {
-            console.log('Backup successfully restored');
-        },
-        onError: function (err) {
-            console.log('Restore failed!', err.error, err.details);
-        }
-    });
+     ws.call('restore.backup', { backupFile: 'backup.zip' }, {
+         onSuccess: function (result) {
+             console.log('Backup successfully restored');
+         },
+         onError: function (err) {
+             console.log('Restore failed!', err.error, err.details);
+         }
+     });
 
-    // Now
-    let result = await ws.call('server.time');
-    console.log('Server time is ' + result.argsList[0]);
+     // Now
+     let result = await ws.call('server.time');
+     console.log('Server time is ' + result.argsList[0]);
 
-    try {
-        await ws.call('start.migration');
-        console.log('RPC successfully called');
-    } catch (e) {
-        console.log('RPC call failed!', e.error);
-    }
+     try {
+         await ws.call('start.migration');
+         console.log('RPC successfully called');
+     } catch (e) {
+         console.log('RPC call failed!', e.error);
+     }
 
-    try {
-        await ws.call('restore.backup', { backupFile: 'backup.zip' });
-        console.log('Backup successfully restored');
-    } catch (e) {
-        console.log('Restore failed!', e.error, e.details);
-    }
-    ```
+     try {
+         await ws.call('restore.backup', { backupFile: 'backup.zip' });
+         console.log('Backup successfully restored');
+     } catch (e) {
+         console.log('Restore failed!', e.error, e.details);
+     }
+     ```
 
-10. Progressive call results flow changed. As `call()` was promisified, so for getting a
+12. Progressive call results flow changed. As `call()` was promisified, so for getting a
 progressive call results you need to specify `progress_callback` in `advancedOptions`.
 This callback will be fired on every intermediate result. **But** the last one result or error
 will be processed on promise returned from the `.call()`. That means that final call result
@@ -234,7 +250,7 @@ will be received by call promise `resolve` handler.
     });
     ```
 
-11. `cancel(reqId[, advancedOptions]])` was promisified. `onSucess`, `onError` callbacks
+13. `cancel(reqId[, advancedOptions]])` was promisified. `onSucess`, `onError` callbacks
     options were removed. Rely on the promise resolution. Refer to the docs about returned objects.
 
     ```javascript
@@ -267,7 +283,7 @@ will be received by call promise `resolve` handler.
     ws.cancel(status.reqId);
     ```
 
-12. `register(topicURI, rpc[, advancedOptions])` was promisified. `onSucess`, `onError` callbacks
+14. `register(topicURI, rpc[, advancedOptions])` was promisified. `onSucess`, `onError` callbacks
     options were removed. Rely on the promise resolution. Refer to the docs about returned objects.
 
     ```javascript
@@ -299,7 +315,7 @@ will be received by call promise `resolve` handler.
     }
     ```
 
-13. `unregister(topicURI)` was promisified. `onSucess`, `onError` callbacks
+15. `unregister(topicURI)` was promisified. `onSucess`, `onError` callbacks
     options were removed. Rely on the promise resolution. Refer to the docs about returned objects.
 
     ```javascript
