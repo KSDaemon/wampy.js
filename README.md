@@ -32,7 +32,7 @@ Table of Contents
   - [Cryptosign-based Authentication](#cryptosign-based-authentication)
   - [Automatically chosen Authentication](#automatically-chosen-authentication)
   - [subscribe(topicURI, onEvent[, advancedOptions])](#subscribetopicuri-onevent-advancedoptions)
-  - [unsubscribe(topicURI[, onEvent])](#unsubscribetopicuri-onevent)
+  - [unsubscribe(subscriptionIdKey[, onEvent])](#unsubscribesubscriptionidkey-onevent)
   - [publish(topicURI[, payload[, advancedOptions]])](#publishtopicuri-payload-advancedoptions)
   - [call(topicURI[, payload[, advancedOptions]])](#calltopicuri-payload-advancedoptions)
   - [cancel(reqId[, advancedOptions])](#cancelreqid-advancedoptions)
@@ -664,6 +664,7 @@ Returns `promise`:
   * **topic**
   * **requestId**
   * **subscriptionId**
+  * **subscriptionKey**
 * Rejected with one of the [Errors instances](#errors-handling)
 
 ```javascript
@@ -682,15 +683,14 @@ try {
 
 [Back to TOC](#table-of-contents)
 
-unsubscribe(topicURI[, onEvent])
+unsubscribe(subscriptionIdKey[, onEvent])
 ----------------------------------
 
-Unsubscribe from topicURI events.
+Unsubscribe subscription from receiving events.
 
 Parameters:
 
-* **topicURI**. Required. A string that identifies the topic.
-Must meet a WAMP Spec URI requirements.
+* **subscriptionIdKey**. Required. Subscription ID (number) or Key (string), received during .subscribe()
 * **onEvent**. Published event callback instance to remove, or it can be not specified,
   in this case all callbacks and subscription will be removed.
 

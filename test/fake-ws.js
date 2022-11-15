@@ -73,7 +73,7 @@ function resetCursor () {
 function processQueue () {
     let f;
 
-    if (clientMessageQueue.length) {
+    while (clientMessageQueue.length) {
         f = clientMessageQueue.shift();
         f();
     }
@@ -110,12 +110,12 @@ WebSocket.prototype.send = function (data) {
     send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
 
     if ((rec_data[0] === WAMP_MSG_SPEC.CALL ||
-        rec_data[0] === WAMP_MSG_SPEC.PUBLISH ||
-        rec_data[0] === WAMP_MSG_SPEC.YIELD) &&
+            rec_data[0] === WAMP_MSG_SPEC.PUBLISH ||
+            rec_data[0] === WAMP_MSG_SPEC.YIELD) &&
         send_data.data &&
         (send_data.data[0] === WAMP_MSG_SPEC.EVENT ||
-        send_data.data[0] === WAMP_MSG_SPEC.RESULT ||
-        send_data.data[0] === WAMP_MSG_SPEC.INVOCATION)) {
+            send_data.data[0] === WAMP_MSG_SPEC.RESULT ||
+            send_data.data[0] === WAMP_MSG_SPEC.INVOCATION)) {
 
         if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
             opts = send_data.data[3];
@@ -186,6 +186,7 @@ WebSocket.prototype.send = function (data) {
     }
 
     clientMessageQueue.push(() => {
+
         if (send_data.data) {
             this.onmessage(enc_data);
         }

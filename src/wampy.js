@@ -204,18 +204,18 @@ class Wampy {
         this._calls = {};
 
         /**
-         * Stored Pub/Sub
-         * @type {object}
+         * Stored Pub/Subs to access by ID
+         * @type {Map}
          * @private
          */
-        this._subscriptions = {};
+        this._subscriptionsById = new Map();
 
         /**
-         * Stored Pub/Sub topics
-         * @type {Set}
+         * Stored Pub/Subs to access by Key
+         * @type {Map}
          * @private
          */
-        this._subsTopics = new Set();
+        this._subscriptionsByKey = new Map();
 
         /**
          * Stored RPC Registrations
@@ -794,8 +794,8 @@ class Wampy {
      */
     _resetState () {
         this._wsQueue = [];
-        this._subscriptions = {};
-        this._subsTopics = new Set();
+        this._subscriptionsById.clear();
+        this._subscriptionsByKey.clear();
         this._requests = {};
         this._calls = {};
         this._rpcRegs = {};
@@ -1115,19 +1115,26 @@ class Wampy {
                         'Received SUBSCRIBED message before session was established');
                 } else {
                     if (this._requests[data[1]]) {
-                        this._subscriptions[this._requests[data[1]].topic] = this._subscriptions[data[2]] = {
+                        const subscriptionKey = this._getSubscriptionKey(
+                            this._requests[data[1]].topic,
+                            this._requests[data[1]].advancedOptions);
+
+                        const sub = {
                             id             : data[2],
+                            topic          : this._requests[data[1]].topic,
                             callbacks      : [this._requests[data[1]].callbacks.onEvent],
                             advancedOptions: this._requests[data[1]].advancedOptions
                         };
 
-                        this._subsTopics.add(this._requests[data[1]].topic);
+                        this._subscriptionsById.set(data[2], sub);
+                        this._subscriptionsByKey.set(subscriptionKey, sub);
 
                         if (this._requests[data[1]].callbacks.onSuccess) {
                             await this._requests[data[1]].callbacks.onSuccess({
                                 topic         : this._requests[data[1]].topic,
                                 requestId     : data[1],
-                                subscriptionId: data[2]
+                                subscriptionId: data[2],
+                                subscriptionKey
                             });
                         }
 
@@ -1142,13 +1149,12 @@ class Wampy {
                         'Received UNSUBSCRIBED message before session was established');
                 } else {
                     if (this._requests[data[1]]) {
-                        id = this._subscriptions[this._requests[data[1]].topic].id;
-                        delete this._subscriptions[this._requests[data[1]].topic];
-                        delete this._subscriptions[id];
-
-                        if (this._subsTopics.has(this._requests[data[1]].topic)) {
-                            this._subsTopics.delete(this._requests[data[1]].topic);
-                        }
+                        const subscriptionKey = this._getSubscriptionKey(
+                            this._requests[data[1]].topic,
+                            this._requests[data[1]].advancedOptions);
+                        const id = this._subscriptionsByKey.get(subscriptionKey).id;
+                        this._subscriptionsByKey.delete(subscriptionKey);
+                        this._subscriptionsById.delete(id);
 
                         if (this._requests[data[1]].callbacks.onSuccess) {
                             await this._requests[data[1]].callbacks.onSuccess({
@@ -1185,7 +1191,8 @@ class Wampy {
                     this._hardClose('wamp.error.protocol_violation',
                         'Received EVENT message before session was established');
                 } else {
-                    if (this._subscriptions[data[1]]) {
+                    const sub = this._subscriptionsById.get(data[1]);
+                    if (sub) {
                         let argsList, argsDict, options = data[3];
 
                         // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
@@ -1215,9 +1222,9 @@ class Wampy {
                             argsDict = data[5];
                         }
 
-                        i = this._subscriptions[data[1]].callbacks.length;
+                        i = sub.callbacks.length;
                         while (i--) {
-                            await this._subscriptions[data[1]].callbacks[i]({
+                            await sub.callbacks[i]({
                                 details : options,
                                 argsList: argsList,
                                 argsDict: argsDict
@@ -1540,18 +1547,17 @@ class Wampy {
      */
     _renewSubscriptions () {
         let i;
-        const subs = this._subscriptions,
-            st = this._subsTopics;
+        const subs = new Map(this._subscriptionsById);
 
-        this._subscriptions = {};
-        this._subsTopics = new Set();
+        this._subscriptionsById.clear();
+        this._subscriptionsByKey.clear();
 
-        for (let topic of st) {
-            i = subs[topic].callbacks.length;
+        subs.forEach((sub) => {
+            i = sub.callbacks.length;
             while (i--) {
-                this.subscribe(topic, subs[topic].callbacks[i], subs[topic].advancedOptions);
+                this.subscribe(sub.topic, sub.callbacks[i], sub.advancedOptions);
             }
-        }
+        });
     }
 
     /**
@@ -1568,6 +1574,19 @@ class Wampy {
         for (let rpcName of rn) {
             this.register(rpcName, rpcs[rpcName].callbacks[0]);
         }
+    }
+
+    /**
+     * Generate a unique key for combination of topic and options
+     *
+     * This is needed to allow subscriptions to the same topic URI but with different options
+     *
+     * @param {string} topic
+     * @param {object} options
+     * @private
+     */
+    _getSubscriptionKey (topic, options) {
+        return `${topic}-${JSON.stringify(options)}`;
     }
 
     /*************************************************************************
@@ -1711,7 +1730,8 @@ class Wampy {
      * @returns {Promise}
      */
     async subscribe (topicURI, onEvent, advancedOptions) {
-        let reqId, patternBased = false;
+        let reqId, patternBased = false,
+            subscriptionKey = this._getSubscriptionKey(topicURI, advancedOptions);
         const options = {}, callbacks = getNewPromise();
 
         if (this._isPlainObject(advancedOptions)) {
@@ -1745,7 +1765,8 @@ class Wampy {
             throw error;
         }
 
-        if (!this._subscriptions[topicURI] || !this._subscriptions[topicURI].callbacks.length) {
+        const sub = this._subscriptionsByKey.get(subscriptionKey);
+        if (!sub || !sub.callbacks.length) {
             // no such subscription or processing unsubscribing
 
             reqId = this._getReqId();
@@ -1761,29 +1782,31 @@ class Wampy {
 
         } else {    // already have subscription to this topic
             // There is no such callback yet
-            if (this._subscriptions[topicURI].callbacks.indexOf(callbacks.onEvent) < 0) {
-                this._subscriptions[topicURI].callbacks.push(callbacks.onEvent);
+            if (sub.callbacks.indexOf(callbacks.onEvent) < 0) {
+                sub.callbacks.push(callbacks.onEvent);
             }
 
             return {
                 topic: topicURI,
-                subscriptionId: this._subscriptions[topicURI].id
+                requestId: 0,
+                subscriptionId: sub.id,
+                subscriptionKey
             };
         }
 
         this._cache.opStatus = SUCCESS;
-        this._cache.opStatus.reqId = reqId;
+        this._cache.opStatus.reqId = reqId ? reqId : 0;
         return callbacks.promise;
     }
 
     /**
      * Unsubscribe from topic
-     * @param {string} topicURI
+     * @param {string|number} subscriptionIdKey Subscription ID or Key, received during .subscribe()
      * @param {function} [onEvent] - received event callback to remove (optional). If not provided -
      *                               all callbacks will be removed and unsubscribed on the server
      * @returns {Promise}
      */
-    async unsubscribe (topicURI, onEvent) {
+    async unsubscribe (subscriptionIdKey, onEvent) {
         let reqId;
         const callbacks = getNewPromise();
 
@@ -1791,32 +1814,34 @@ class Wampy {
             throw this._cache.opStatus.error;
         }
 
-        if (this._subscriptions[topicURI]) {
+        const sub = this._subscriptionsById.get(subscriptionIdKey) ||
+            this._subscriptionsByKey.get(subscriptionIdKey);
+        if (sub) {
 
             reqId = this._getReqId();
 
             if (typeof onEvent === 'function') {
-                let i = this._subscriptions[topicURI].callbacks.indexOf(onEvent);
+                let i = sub.callbacks.indexOf(onEvent);
                 if (i >= 0) {
-                    this._subscriptions[topicURI].callbacks.splice(i, 1);
+                    sub.callbacks.splice(i, 1);
                 }
             } else {
-                this._subscriptions[topicURI].callbacks = [];
+                sub.callbacks = [];
             }
 
-            if (this._subscriptions[topicURI].callbacks.length) {
+            if (sub.callbacks.length) {
                 // There are another callbacks for this topic
                 this._cache.opStatus = SUCCESS;
                 return true;
             }
 
             this._requests[reqId] = {
-                topic: topicURI,
+                topic: sub.topic,
                 callbacks
             };
 
             // WAMP_SPEC: [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
-            this._send([WAMP_MSG_SPEC.UNSUBSCRIBE, reqId, this._subscriptions[topicURI].id]);
+            this._send([WAMP_MSG_SPEC.UNSUBSCRIBE, reqId, sub.id]);
 
         } else {
             let error = new Errors.NonExistUnsubscribeError();

@@ -1272,29 +1272,31 @@ serializers.forEach(function (item) {
                     },
                     handler1 = function (e) {
                         done('Called removed handler');
-                    };
+                    },
+                    subscriptionId;
 
-                wampy.subscribe('subscribe.topic9', handler1).then(() => {
+                wampy.subscribe('subscribe.topic9', handler1).then((s) => {
+                    subscriptionId = s.subscriptionId;
                     return wampy.subscribe('subscribe.topic9', handler2);
                 }).then(() => {
                     return wampy.subscribe('subscribe.topic9', handler3);
                 }).then(() => {
-                    return wampy.unsubscribe('subscribe.topic9', handler1);
+                    return wampy.unsubscribe(subscriptionId, handler1);
                 }).then(() => {
-                    return wampy.unsubscribe('subscribe.topic9', handler3);
+                    return wampy.unsubscribe(subscriptionId, handler3);
                 }).then(() => {
                     return wampy.publish('subscribe.topic9', 'payload', { exclude_me: false });
                 });
             });
 
             it('allows to unsubscribe all handlers from topic', async function () {
-                await wampy.unsubscribe('subscribe.topic9');
+                await wampy.unsubscribe('subscribe.topic9-undefined');
                 expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
             });
 
             it('receives error when trying to unsubscribe from non existent subscription', async function () {
                 try {
-                    await wampy.unsubscribe('subscribe.topic.non-exists');
+                    await wampy.unsubscribe('subscription.id.non-exists');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NonExistUnsubscribeError);
                 }
@@ -1311,7 +1313,7 @@ serializers.forEach(function (item) {
 
             it('fires error callback if error occurred during unsubscribing', async function () {
                 try {
-                    await wampy.unsubscribe('subscribe.topic3');
+                    await wampy.unsubscribe('subscribe.topic3-undefined');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UnsubscribeError);
                 }
