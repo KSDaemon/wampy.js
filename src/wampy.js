@@ -483,9 +483,11 @@ class Wampy {
      * @private
      */
     _setWsProtocols () {
-        if (!(this._options.serializer instanceof JsonSerializer)) {
-            this._protocols.unshift('wamp.2.' + this._options.serializer.protocol);
-        }
+        this._protocols = ['wamp.2.' + this._options.serializer.protocol];
+        // FIXME: Temporary commented out due to bug in Nexus
+        // if (!(this._options.serializer instanceof JsonSerializer)) {
+        //     this._protocols.unshift('wamp.2.' + this._options.serializer.protocol);
+        // }
     }
 
     /**
@@ -845,7 +847,7 @@ class Wampy {
             options.authextra = this._options.authextra;
         }
 
-        this._log('websocket connected');
+        this._log('websocket connected. Server have chosen ', serverProtocol);
 
         if (this._options.serializer.protocol !== serverProtocol) {
             // Server have chosen not our preferred protocol
