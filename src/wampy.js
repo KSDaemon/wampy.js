@@ -5,7 +5,7 @@
  *
  * A lightweight client-side implementation of
  * WAMP (The WebSocket Application Messaging Protocol v2)
- * http://wamp.ws
+ * https://wamp-proto.org
  *
  * Provides asynchronous RPC/PubSub over WebSocket.
  *
