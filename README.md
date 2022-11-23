@@ -266,7 +266,7 @@ const wampyCryptosign = require('wampy-cryptosign');
 wampy.options({
     authPlugins: {
         // No need to process challenge data in ticket flow, as it is empty
-        ticket: (function(userPassword) { return function() { return userPassword; }})(),
+        ticket: ((userPassword) => (() => userPassword ))(),
         wampcra: wampyCra.sign(secret),
         cryptosign: wampyCryptosign.sign(privateKey)
     },
@@ -305,10 +305,10 @@ wampy.options();
 wampy.options({
     reconnectInterval: 1000,
     maxRetries: 999,
-    onClose: function () { console.log('See you next time!'); },
-    onError: function () { console.log('Breakdown happened'); },
-    onReconnect: function () { console.log('Reconnecting...'); },
-    onReconnectSuccess: function (welcomeDetails) { console.log('Reconnection succeeded. Details:', welcomeDetails); }
+    onClose: () => { console.log('See you next time!'); },
+    onError: () => { console.log('Breakdown happened'); },
+    onReconnect: () => { console.log('Reconnecting...'); },
+    onReconnectSuccess: (welcomeDetails) => { console.log('Reconnection succeeded. Details:', welcomeDetails); }
 });
 ```
 
@@ -323,7 +323,7 @@ Returns the status of last operation. This method returns an object with attribu
 - `reqId` is a Request ID of last successful operation. It is useful in some cases (call canceling for example).
 
 ```javascript
-let defer = ws.publish('system.monitor.update');
+const defer = ws.publish('system.monitor.update');
 console.log(ws.getOpStatus());
 // may return
 //    { code: 1, error: UriError instance }
@@ -591,7 +591,7 @@ wampy = new Wampy('wss://wamp.router.url', {
         pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
     },
     authPlugins: {
-        ticket: (function(userPassword) { return function() { return userPassword; }})(),
+        ticket: ((userPassword) => (() => userPassword ))(),
         wampcra: wampyCra.sign(userSecret),
         cryptosign: wampyCS.sign(userPrivateKey)
     },
@@ -628,7 +628,7 @@ Returns a `Promise` that's either:
 - Rejected with one of the [Error instances](#error-handling)
 
 ```javascript
-await ws.subscribe('chat.message.received', function (eventData) { console.log('Received new chat message!', eventData); });
+await ws.subscribe('chat.message.received', (eventData) => { console.log('Received new chat message!', eventData); });
 
 try {
     const res = await ws.subscribe('some.another.topic',
@@ -663,7 +663,7 @@ Returns a `Promise` that's either:
 - Rejected with one of the [Error instances](#error-handling)
 
 ```javascript
-const f1 = function (data) { console.log('this was event handler for topic') };
+const f1 = (data) => { console.log('this was event handler for topic') };
 await ws.unsubscribe('subscribed.topic', f1);
 
 const defer = ws.unsubscribe('chat.message.received');
@@ -768,7 +768,7 @@ will be processed on promise returned from the `.call()`. That means that final 
 will be received by call promise `resolve` handler.
 
 ```javascript
-let result = await ws.call('server.time');
+const result = await ws.call('server.time');
 console.log('Server time is ' + result.argsList[0]);
 
 try {
@@ -807,7 +807,7 @@ Returns a `Boolean` or throws an `Error`:
 const defer = ws.call('start.migration');
 defer
     .then((result) => console.log('RPC successfully called'))
-    .catch((error) => console.log('RPC call failed!', error));
+    .catch((e) => console.log('RPC call failed!', e));
 
 status = ws.getOpStatus();
 
@@ -971,7 +971,7 @@ try {
 ### Error handling
 
 During wampy instance lifetime there can be many cases when error happens: some
-made by developer mistake, some are bound to WAMP proTable of Contentsol violation, some came
+made by developer mistake, some are bound to WAMP protocol violation, some came
 from other peers. Errors that can be caught by wampy instance itself are stored
 in `opStatus.error`, while others are just thrown.
 
@@ -1019,7 +1019,7 @@ Wampy package exposes the following `Error` classes:
 - PPTInvalidSchemeError
 - PPTSerializerInvalidError
 - PPTSerializationError
-- ProTable of ContentsolViolationError
+- ProtocolViolationError
 - AbortError
 - WampError
 - SubscribeError
@@ -1042,9 +1042,9 @@ Custom serializer instance must meet a few requirements:
 
 - Have a `encode (data)` method, that returns encoded data
 - Have a `decode (data)` method, that returns decoded data
-- Have a `proTable of Contentsol` string property, that contains a proTable of Contentsol name. This name is concatenated with
-"wamp.2." string and is then passed as websocket subproTable of Contentsol http header.
-- Have a `isBinary` boolean property, that indicates, is this a binary proTable of Contentsol or not.
+- Have a `protocol` string property, that contains a protocol name. This name is concatenated with
+"wamp.2." string and is then passed as websocket subprotocol http header.
+- Have a `isBinary` boolean property, that indicates, is this a binary protocol or not.
 
 Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or
 [MsgpackSerializer.js](src/serializers/MsgpackSerializer.js) as examples.
