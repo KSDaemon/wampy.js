@@ -40,11 +40,11 @@ Javascript implementation (for browser and node.js)
     - [register(topicURI, rpc\[, advancedOptions\])](#registertopicuri-rpc-advancedoptions)
     - [unregister(topicURI)](#unregistertopicuri)
     - [Error handling](#error-handling)
-    - [Using custom serializer](#using-custom-serializer)
-    - [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
-    - [Tests and code coverage](#tests-and-code-coverage)
-    - [Copyright and License](#copyright-and-license)
-    - [See Also](#see-also)
+  - [Using custom serializer](#using-custom-serializer)
+  - [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
+  - [Tests and code coverage](#tests-and-code-coverage)
+  - [Copyright and License](#copyright-and-license)
+  - [See Also](#see-also)
 
 ## Description
 
@@ -1034,7 +1034,7 @@ For errors attributes look at [src/errors.js](./src/errors.js) file.
 
 [Back to Table of Contents](#table-of-contents)
 
-### Using custom serializer
+## Using custom serializer
 
 From v5.0 version there is option to provide custom serializer.
 
@@ -1051,7 +1051,7 @@ Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or
 
 [Back to Table of Contents](#table-of-contents)
 
-### Connecting through TLS in node environment
+## Connecting through TLS in node environment
 
 Starting from v6.2.0 version you can pass additional HTTP Headers and TLS parameters to underlying socket connection
 in node.js environment (thnx `websocket` library). See example below. For `wsRequestOptions` you can pass any option,
@@ -1090,7 +1090,7 @@ wampy = new Wampy('wss://wamp.router.url:8888/wamp-router', {
 
 [Back to Table of Contents](#table-of-contents)
 
-### Tests and code coverage
+## Tests and code coverage
 
 Wampy.js uses mocha and chai for tests and c8/istanbul for code coverage.
 Wampy sources are mostly all covered with tests! :)
@@ -1110,7 +1110,7 @@ Wampy sources are mostly all covered with tests! :)
 
 [Back to Table of Contents](#table-of-contents)
 
-### Copyright and License
+## Copyright and License
 
 Wampy.js library is licensed under the MIT License (MIT).
 
@@ -1135,7 +1135,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 [Back to Table of Contents](#table-of-contents)
 
-### See Also
+## See Also
 
 - [WAMP specification][]
 - [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
