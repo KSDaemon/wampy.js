@@ -1,16 +1,24 @@
-import { decode, encode } from 'cbor-x';
+import { Encoder } from 'cbor-x';
+
+const cborxOptions = {
+    useRecords: false,
+    int64AsNumber: true,
+    largeBigIntToFloat: true
+};
 
 export class CborSerializer {
-    constructor () {
+    constructor (options) {
         this.protocol = 'cbor';
         this.isBinary = true;
+        const initOptions = options ? options : cborxOptions;
+        this.encoder = new Encoder(initOptions);
     }
 
     encode (data) {
-        return encode(data);
+        return this.encoder.encode(data);
     }
 
     decode (data) {
-        return decode(new Uint8Array(data));
+        return this.encoder.decode(new Uint8Array(data));
     }
 }
