@@ -1,5 +1,6 @@
-wampy.js
-========
+# Wampy.js
+
+## About
 
 Feature-rich, zero dependency (by default) WAMP (WebSocket Application Messaging Protocol)
 Javascript implementation (for browser and node.js)
@@ -10,98 +11,97 @@ Javascript implementation (for browser and node.js)
 [![MIT License][license-image]][license-url]
 [![Known Vulnerabilities][snyk-image]][snyk-url]
 
-Table of Contents
-=================
+## Table of Contents
 
-- [wampy.js](#wampyjs)
-- [Table of Contents](#table-of-contents)
-- [Description](#description)
-- [Usage example](#usage-example)
-- [Installation](#installation)
-- [Updating versions](#updating-versions)
-- [API](#api)
-  - [Constructor([url[, options]])](#constructorurl-options)
-  - [options([opts])](#optionsopts)
-  - [getOpStatus()](#getopstatus)
-  - [getSessionId()](#getsessionid)
-  - [connect([url])](#connecturl)
-  - [disconnect()](#disconnect)
-  - [abort()](#abort)
-  - [Ticket-based Authentication](#ticket-based-authentication)
-  - [Challenge Response Authentication](#challenge-response-authentication)
-  - [Cryptosign-based Authentication](#cryptosign-based-authentication)
-  - [Automatically chosen Authentication](#automatically-chosen-authentication)
-  - [subscribe(topicURI, onEvent[, advancedOptions])](#subscribetopicuri-onevent-advancedoptions)
-  - [unsubscribe(subscriptionIdKey[, onEvent])](#unsubscribesubscriptionidkey-onevent)
-  - [publish(topicURI[, payload[, advancedOptions]])](#publishtopicuri-payload-advancedoptions)
-  - [call(topicURI[, payload[, advancedOptions]])](#calltopicuri-payload-advancedoptions)
-  - [cancel(reqId[, advancedOptions])](#cancelreqid-advancedoptions)
-  - [register(topicURI, rpc[, advancedOptions])](#registertopicuri-rpc-advancedoptions)
-  - [unregister(topicURI)](#unregistertopicuri)
-  - [errors handling](#errors-handling)
-- [Using custom serializer](#using-custom-serializer)
-- [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
-- [Tests and code coverage](#tests-and-code-coverage)
-- [Copyright and License](#copyright-and-license)
-- [See Also](#see-also)
+- [Wampy.js](#wampyjs)
+  - [About](#about)
+  - [Table of Contents](#table-of-contents)
+  - [Description](#description)
+  - [Usage example](#usage-example)
+  - [Installation](#installation)
+  - [Migrating or Updating versions](#migrating-or-updating-versions)
+  - [API](#api)
+    - [Constructor(\[url\[, options\]\])](#constructorurl-options)
+    - [options(\[opts\])](#optionsopts)
+    - [getOpStatus()](#getopstatus)
+    - [getSessionId()](#getsessionid)
+    - [connect(\[url\])](#connecturl)
+    - [disconnect()](#disconnect)
+    - [abort()](#abort)
+    - [Ticket-based Authentication](#ticket-based-authentication)
+    - [Challenge Response Authentication](#challenge-response-authentication)
+    - [Cryptosign-based Authentication](#cryptosign-based-authentication)
+    - [Automatically chosen Authentication](#automatically-chosen-authentication)
+    - [subscribe(topicURI, onEvent\[, advancedOptions\])](#subscribetopicuri-onevent-advancedoptions)
+    - [unsubscribe(subscriptionIdKey\[, onEvent\])](#unsubscribesubscriptionidkey-onevent)
+    - [publish(topicURI\[, payload\[, advancedOptions\]\])](#publishtopicuri-payload-advancedoptions)
+    - [call(topicURI\[, payload\[, advancedOptions\]\])](#calltopicuri-payload-advancedoptions)
+    - [cancel(reqId\[, advancedOptions\]\])](#cancelreqid-advancedoptions)
+    - [register(topicURI, rpc\[, advancedOptions\])](#registertopicuri-rpc-advancedoptions)
+    - [unregister(topicURI)](#unregistertopicuri)
+    - [Error handling](#error-handling)
+  - [Using custom serializer](#using-custom-serializer)
+  - [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
+  - [Tests and code coverage](#tests-and-code-coverage)
+  - [Copyright and License](#copyright-and-license)
+  - [See Also](#see-also)
 
-Description
-===========
+## Description
 
 Wampy.js is javascript library, that runs both in browser and node.js environments, and even in react native
 environment. It implements [WAMP][] v2 specification on top of WebSocket object, also provides additional
 features like auto-reconnecting. It has no external dependencies (by default) and is easy to use.
 
-Wampy.js supports next WAMP roles and features:
+Wampy.js supports the following WAMP roles and features:
 
-* Authentication:
-    * Ticket-based Authentication
-    * Challenge Response Authentication (wampcra method)
-    * Cryptosign-based Authentication (cryptosign method)
-* publisher:
-    * subscriber blackwhite listing
-    * publisher exclusion
-    * publisher identification
-    * payload passthru mode
-* subscriber:
-    * pattern-based subscription
-    * publication trust levels
-    * publisher identification
-    * payload passthru mode
-* caller:
-    * caller identification
-    * progressive call results
-    * call canceling
-    * call timeout
-    * payload passthru mode
-* callee:
-    * caller identification
-    * call trust levels
-    * pattern-based registration
-    * shared registration
-    * payload passthru mode
+- Authentication:
+  - Ticket-based Authentication
+  - Challenge Response Authentication (wampcra method)
+  - Cryptosign-based Authentication (cryptosign method)
+- publisher:
+  - subscriber blackwhite listing
+  - publisher exclusion
+  - publisher identification
+  - payload passthru mode
+- subscriber:
+  - pattern-based subscription
+  - publication trust levels
+  - publisher identification
+  - payload passthru mode
+- caller:
+  - caller identification
+  - progressive call results
+  - call canceling
+  - call timeout
+  - payload passthru mode
+- callee:
+  - caller identification
+  - call trust levels
+  - pattern-based registration
+  - shared registration
+  - payload passthru mode
 
-Wampy supports next serializers:
+Wampy supports the following serializers:
 
-* JSON (default, native)
-* MsgPack (See [MessagePack][] Site for more info)
-* CBOR (See [CBOR][] Site for more info)
-* Any new serializer can be added easily
+- JSON (default, native)
+- MsgPack (See [MessagePack][] Site for more info)
+- CBOR (See [CBOR][] Site for more info)
+- Any new serializer can be added easily
 
-In node.js environment Wampy is compatible with next websocket clients:
+In node.js environment Wampy is compatible with the following websocket clients:
 
-* [WebSocket-Node][]. A WebSocket Implementation for Node.JS (Draft -08 through the final RFC 6455)
-* [ws][]. Simple to use, blazing fast and thoroughly tested WebSocket client and server for Node.js
+- [WebSocket-Node][]. A WebSocket Implementation for Node.JS (Draft -08 through the final RFC 6455)
+- [ws][]. Simple to use, blazing fast and thoroughly tested WebSocket client and server for Node.js
 
 For convenience, all API documentation is also available as a [GitBook here](https://ksdaemon.gitbook.io/wampy.js/).
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-Usage example
-=============
+## Usage example
 
 ```javascript
 const wampy = new Wampy('/ws/', { realm: 'AppRealm' });
+
 try {
     await wampy.connect();
 } catch (e) {
@@ -109,15 +109,16 @@ try {
 }
 
 try {
-    await wampy.subscribe('system.monitor.update', function (eventData) { console.log('Received system.monitor.update event!', eventData); });
+    await wampy.subscribe('system.monitor.update', (eventData) => {
+         console.log('Received event:', eventData);
+    });
 } catch (e) {
     console.log('subscription failed', e);
 }
 
 try {
-    let res = await wampy.call('get.server.time');
-    console.log('RPC successfully called');
-    console.log('Server time is ' + res.argsDict.serverTime);
+    const res = await wampy.call('get.server.time');
+    console.log('RPC called. Server time:', res.argsDict.serverTime);
 } catch (e) {
     console.log('RPC call failed', e);
 }
@@ -125,66 +126,59 @@ try {
 // Somewhere else for example
 await wampy.publish('system.monitor.update');
 
-// or just ignore promise (if you don't need it)
+// or just ignore promise if you don't need it
 wampy.publish('client.message', 'Hi guys!');
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-Installation
-============
+## Installation
 
-Wampy.js can be installed using `surprisingly` npm :)
+Wampy.js can be installed using npm:
 
 ```bash
 > npm install wampy
 ```
 
-For simple browser usage just download the latest [browser.zip](../../releases/latest) archive and
+For browser usage download the latest [browser.zip](../../releases/latest) archive and
 add wampy-all.min.js file to your page. It contains msgpack encoder plus wampy itself.
 
 ```html
 <script src="browser/wampy-all.min.js"></script>
 ```
 
-In case, you don't plan to use msgpack, just include clean wampy.min.js.
+If you don't plan to use msgpack, just include wampy.min.js.
 
 ```html
 <script src="browser/wampy.min.js"></script>
 ```
 
-In case you are using any kind of build tools and bundlers, like grunt/gulp/webpack/rollup/vite/etc,
-your entry point can be **src/wampy.js** if you transpile you code somehow, or **dist/wampy.js** (default package
-entry point) which is already transpiled to "env" preset, so it is working out of the box, just bundle modules.
+In case you are using build tools or bundlers like grunt/gulp/webpack/rollup/vite/etc, your entry point can be **src/wampy.js** if you transpile you code, or **dist/wampy.js** (default package
+entry point) which is already transpiled to "env" preset, which means it works out of the box, just bundle modules.
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-Updating versions
-=================
+## Migrating or Updating versions
 
 Please refer to [Migrating.md](Migrating.md) for instructions on upgrading major versions.
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-API
-===
+## API
 
-Below is a description of exposed public API.
-Btw, wampy has a type definitions, available at [DefinitelyTyped.org][].
-(_Unfortunately, they are for < 7.x versions only for now. Feel free to update!_)
+Below is a description of the exposed public API.
+Wampy also has type definitions available at [DefinitelyTyped.org][], but they are only for versions < 7.x for now. Feel free to update!)
 
-Constructor([url[, options]])
-------------------------------------------
+### Constructor([url[, options]])
 
 Wampy constructor can take 2 parameters:
 
-* **url** to wamp server - optional. URL can be specified in next forms:
-    * Undefined/null. In browser environment page-scheme://page-server:page-port/ws will be used in this case.
-    * String, begins with '/', meaning some path on current scheme://host:port.
-    * Full qualified URL, starting with scheme 'ws' or 'wss'.
-    * Host/domain with possible path, but without scheme. In browser environment page-scheme will be used.
-* **options** hash-table. The only required field is `realm`. For node.js environment also necessary to
-specify `ws` - websocket module. See description below.
+- **url** to wamp server - optional. URL can be specified in the following forms:
+  - Undefined/null. In-browser environment *"page-scheme://page-server:page-port/ws"* will be used in this case.
+  - String, begins with a '*/*', for some path in "*current-scheme://host:port.*"
+  - Fully qualified URL, starting with the '*ws*' or '*wss*' schemes.
+  - Host/domain without a scheme. In-browser environment *"page-scheme"* will be used.
+- **options** hash-table. The only required field is `realm`. For node.js environment it's also necessary to specify `ws` - websocket module. See description below.
 
 ```javascript
 // in browser
@@ -208,8 +202,7 @@ wampy = new Wampy('wss://socket.server.com:5000/ws', { autoReconnect: false, ws:
 wampy = new Wampy({ reconnectInterval: 1*1000, ws: WebSocket });
 ```
 
-Json serializer will be used by default. If you want to use msgpack or cbor serializer, pass it through options.
-Also, you can use your own serializer. Just be sure, it is supported on WAMP router side!
+Json serializer will be used by default. If you want to use msgpack or cbor serializer, pass it through options. Also, you can use your own serializer if it is supported on the WAMP router side.
 
 ```javascript
 // in browser
@@ -221,9 +214,9 @@ wampy = new Wampy({
 });
 
 // in node.js
-import {Wampy} from 'wampy';
-import {MsgpackSerializer} from 'wampy/MsgpackSerializer';
-import {CborSerializer} from 'wampy/CborSerializer';
+import { Wampy } from 'wampy';
+import { MsgpackSerializer } from 'wampy/MsgpackSerializer';
+import { CborSerializer } from 'wampy/CborSerializer';
 import WebSocket from 'ws';
 
 wampy = new Wampy('wss://socket.server.com:5000/ws', {
@@ -237,35 +230,31 @@ wampy = new Wampy({
 
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-options([opts])
----------------
+### options([opts])
 
 .options() method can be called in two forms:
 
-* without parameters, it will return current options
-* with one parameter as hash-table it will set new options and return Wampy instance back
+- without parameters it will return the current options
+- with one parameter as a hash-table it will set new options and return a Wampy instance back
 
 Options attributes description:
 
-* **debug**. Default value: false. Enable debug logging.
-* **logger**. Default value: null. User-provided logging function. If `debug=true` and no `logger` specified,
-`console.log` will be used.
-* **autoReconnect**. Default value: true. Enable auto reconnecting. In case of connection failure, Wampy will
-try to reconnect to WAMP server, and if you were subscribed to any topics,
-or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.
-* **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
-* **maxRetries**. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
+- **debug**. Default value: false. Enable debug logging.
+- **logger**. Default value: null. User-provided logging function. If `debug=true` and no `logger` specified, `console.log` will be used.
+- **autoReconnect**. Default value: true. Enable auto reconnecting. In case of connection failure, Wampy will try to reconnect to WAMP server, and if you were subscribed to any topics, or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.
+- **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
+- **maxRetries**. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
 will be called. Set to 0 to disable limit.
-* **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
-* **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
-* **uriValidation**. Default value: strict. Can be changed to `loose` for less strict URI validation.
-* **authid**. Default value: null. Authentication (user) id to use in challenge.
-* **authmethods**. Default value: []. Array of strings of supported authentication methods.
-* **authextra**. Default value: {}. Additional authentication options for Cryptosign-based authentication.
+- **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
+- **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
+- **uriValidation**. Default value: strict. Can be changed to `loose` for less strict URI validation.
+- **authid**. Default value: null. Authentication (user) id to use in challenge.
+- **authmethods**. Default value: []. Array of strings of supported authentication methods.
+- **authextra**. Default value: {}. Additional authentication options for Cryptosign-based authentication.
 See [Cryptosign-based Authentication](#cryptosign-based-authentication) section and [WAMP Spec CS][] for more info.
-* **authPlugins**. Default value: {}. Authentication helpers for processing different authmethods flows.
+- **authPlugins**. Default value: {}. Authentication helpers for processing different authmethods flows.
 It's a hash-map, where key is an authentication method and value is a function, that takes the necessary user
 secrets/keys and returns a function which accepts authmethod and challenge info and returns signed challenge answer.
 You can provide your own sign functions or use existing helpers. Functions may be asynchronous.
@@ -277,7 +266,7 @@ const wampyCryptosign = require('wampy-cryptosign');
 wampy.options({
     authPlugins: {
         // No need to process challenge data in ticket flow, as it is empty
-        ticket: (function(userPassword) { return function() { return userPassword; }})(),
+        ticket: ((userPassword) => (() => userPassword ))(),
         wampcra: wampyCra.sign(secret),
         cryptosign: wampyCryptosign.sign(privateKey)
     },
@@ -285,31 +274,30 @@ wampy.options({
 });
 ```
 
-* **authMode**. Default value: `manual`. Possible values: `manual`|`auto`. Mode of authorization flow. If it is set
+- **authMode**. Default value: `manual`. Possible values: `manual`|`auto`. Mode of authorization flow. If it is set
 to `manual` - you also need to provide **onChallenge** callback, which will process authorization challenge. Or you
 can set it to `auto` and provide **authPlugins** (described above). In this case the necessary authorization flow
 will be chosen automatically. This allows to support few authorization methods simultaneously.
-* **onChallenge**. Default value: null. Callback function.
+- **onChallenge**. Default value: null. Callback function.
 It is fired when wamp server requests authentication during session establishment.
 This function receives two arguments: auth method and challenge details.
 Function should return computed signature, based on challenge details.
 See [Challenge Response Authentication](#challenge-response-authentication) section, [WAMP Spec CRA][],
 [Cryptosign-based Authentication](#cryptosign-based-authentication) section and [WAMP Spec CS][] for more info.
 This function receives welcome details as an argument.
-* **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
-* **onError**. Default value: null. Callback function. Fired on error in websocket communication.
-* **onReconnect**. Default value: null. Callback function. Fired every time on reconnection attempt.
-* **onReconnectSuccess**. Default value: null. Callback function. Fired every time when reconnection succeeded.
+- **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
+- **onError**. Default value: null. Callback function. Fired on error in websocket communication.
+- **onReconnect**. Default value: null. Callback function. Fired every time on reconnection attempt.
+- **onReconnectSuccess**. Default value: null. Callback function. Fired every time when reconnection succeeded.
 This function receives welcome details as an argument.
-* **ws**. Default value: null. User provided WebSocket class. Useful in node environment.
-* **additionalHeaders**. Default value: null. User provided additional HTTP headers (for use in Node.js environment)
-* **wsRequestOptions**. Default value: null. User provided WS Client Config Options (for use in Node.js environment).
+- **ws**. Default value: null. User provided WebSocket class. Useful in node environment.
+- **additionalHeaders**. Default value: null. User provided additional HTTP headers (for use in Node.js environment)
+- **wsRequestOptions**. Default value: null. User provided WS Client Config Options (for use in Node.js environment).
 See docs for [WebSocketClient][], [tls.connect options][].
-* **serializer**. Default value: JsonSerializer. User provided serializer class. Useful if you plan to use other encoders
+- **serializer**. Default value: JsonSerializer. User provided serializer class. Useful if you plan to use other encoders
 instead of default `json`.
-* **payloadSerializers**. Default value: `{ json: jsonSerializer }`. User provided hashmap of serializer instances for
+- **payloadSerializers**. Default value: `{ json: jsonSerializer }`. User provided hashmap of serializer instances for
 using in Payload Passthru Mode. Allows to specify a few serializers and use them on per message/call basis.
-
 
 ```javascript
 wampy.options();
@@ -317,26 +305,25 @@ wampy.options();
 wampy.options({
     reconnectInterval: 1000,
     maxRetries: 999,
-    onClose: function () { console.log('See you next time!'); },
-    onError: function () { console.log('Breakdown happened'); },
-    onReconnect: function () { console.log('Reconnecting...'); },
-    onReconnectSuccess: function (welcomeDetails) { console.log('Reconnection succeeded. Details:', welcomeDetails); }
+    onClose: () => { console.log('See you next time!'); },
+    onError: () => { console.log('Breakdown happened'); },
+    onReconnect: () => { console.log('Reconnecting...'); },
+    onReconnectSuccess: (welcomeDetails) => { console.log('Reconnection succeeded. Details:', welcomeDetails); }
 });
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-getOpStatus()
----------------
+### getOpStatus()
 
 Returns the status of last operation. This method returns an object with attributes:
 
-* `code` is integer, and value > 0 means error.
-* `error` is Error instance of last operation. Check errors types exposed by wampy.
-* `reqId` is a Request ID of last successful operation. It is useful in some cases (call canceling for example).
+- `code` is integer, and value > 0 means error.
+- `error` is Error instance of last operation. Check errors types exposed by wampy.
+- `reqId` is a Request ID of last successful operation. It is useful in some cases (call canceling for example).
 
 ```javascript
-let defer = ws.publish('system.monitor.update');
+const defer = ws.publish('system.monitor.update');
 console.log(ws.getOpStatus());
 // may return
 //    { code: 1, error: UriError instance }
@@ -344,10 +331,9 @@ console.log(ws.getOpStatus());
 // or { code: 0, error: null }
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-getSessionId()
----------------
+### getSessionId()
 
 Returns the WAMP Session ID.
 
@@ -355,16 +341,15 @@ Returns the WAMP Session ID.
 ws.getSessionId();
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-connect([url])
----------------------------
+### connect([url])
 
 Connects to wamp server. **url** parameter is the same as specified in [Constructor](#constructorurl-options).
-Returns `promise`:
+Returns a `Promise` that's either:
 
-* Resolved with connection details provided by server (roles, features, authentication details)
-* Rejected with [error](#errors-handling) happened
+- Resolved with connection details provided by server (roles, features, authentication details)
+- Rejected with the thrown [error](#error-handling)
 
 ```javascript
 try {
@@ -375,28 +360,25 @@ try {
 
 await ws.connect('/my-socket-path');
 
-let defer = ws.connect('wss://socket.server.com:5000/ws');
+const defer = ws.connect('wss://socket.server.com:5000/ws');
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-disconnect()
-------------
+### disconnect()
 
-Disconnects from wamp server. Clears all queues, subscription, calls. Returns `promise`:
+Disconnects from wamp server. Clears all queues, subscription, calls. Returns a `Promise` that's either:
 
-* Resolved when wampy disconnects from WAMP server and closes websocket connection
-* Rejected with [error](#errors-handling) happened (probably never)
-
+- Resolved when wampy disconnects from WAMP server and closes websocket connection
+- Rejected with the thrown [error](#error-handling) (it probably never throws)
 
 ```javascript
 await ws.disconnect();
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-abort()
-------------
+### abort()
 
 Aborts WAMP session and closes a websocket connection.
 If it is called on handshake stage - it sends the `abort` message to wamp server (as described in spec).
@@ -406,22 +388,19 @@ Also clears all queues, subscription, calls. Returns wampy instance back.
 ws.abort();
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-Ticket-based Authentication
----------------------------
+### Ticket-based Authentication
 
 With Ticket-based authentication, the client needs to present the server an authentication "ticket" -
-some magic value to authenticate itself to the server. It can be user password, authentication token or
-any other kind of client secret. To use it you need to provide "ticket" in "authmethods", authid and
-onChallenge callback as wampy instance options.
+some magic value to authenticate itself to the server. It could be a user password, an authentication token or
+any other kind of client secret. To use it you need to provide "ticket" in "authmethods", "authid" and
+the "onChallenge" callback as wampy instance options.
 
 ```javascript
 'use strict';
 
-/**
- * Ticket authentication
- */
+// Ticket authentication
 wampy = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'joe',
@@ -432,9 +411,7 @@ wampy = new Wampy('wss://wamp.router.url', {
     }
 });
 
-/**
- * Promise-based ticket authentication
- */
+// Promise-based ticket authentication
 wampy = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'micky',
@@ -450,10 +427,9 @@ wampy = new Wampy('wss://wamp.router.url', {
 });
 ```
 
-Challenge Response Authentication
----------------------------------
+### Challenge Response Authentication
 
-Wampy.js supports challenge response authentication. To use it you need to provide authid and onChallenge callback
+Wampy.js supports challenge response authentication. To use it you need to provide the "authid" and the "onChallenge" callback
 as wampy instance options. Also, Wampy.js supports `wampcra` authentication method with a little helper
 plugin "[wampy-cra][]". Just add "wampy-cra" package and use provided methods as shown below.
 
@@ -464,9 +440,7 @@ const Wampy = require('wampy').Wampy;
 const wampyCra = require('wampy-cra');
 const w3cws = require('websocket').w3cwebsocket;
 
-/**
- * Manual authentication using signed message
- */
+// Manual authentication using signed message
 wampy = new Wampy('wss://wamp.router.url', {
     ws: w3cws,  // just for example in node.js env
     realm: 'realm1',
@@ -478,9 +452,7 @@ wampy = new Wampy('wss://wamp.router.url', {
     }
 });
 
-/**
- * Promise-based manual authentication using signed message
- */
+// Promise-based manual authentication using signed message
 wampy = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'micky',
@@ -495,9 +467,7 @@ wampy = new Wampy('wss://wamp.router.url', {
     }
 });
 
-/**
- * Manual authentication using salted key and pbkdf2 scheme
- */
+// Manual authentication using salted key and pbkdf2 scheme
 wampy = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'peter',
@@ -512,9 +482,7 @@ wampy = new Wampy('wss://wamp.router.url', {
     }
 });
 
-/**
- * Automatic CRA authentication
- */
+// Automatic CRA authentication
 wampy = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'patrik',
@@ -523,10 +491,9 @@ wampy = new Wampy('wss://wamp.router.url', {
 });
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-Cryptosign-based Authentication
--------------------------------
+### Cryptosign-based Authentication
 
 Wampy.js supports cryptosign-based authentication. To use it you need to provide `authid`, `onChallenge` callback
 and `authextra` as wampy instance options. Also, Wampy.js supports `cryptosign` authentication method
@@ -549,12 +516,10 @@ The `authextra` option may contain the following properties for WAMP-Cryptosign:
 
 import { Wampy } from 'wampy';
 import * as wampyCS from 'wampy-cryptosign';
-// or you can import only sign method
-//import { sign } from 'wampy-cryptosign';
+// or you can import only the "sign" method
+// import { sign } from 'wampy-cryptosign';
 
-/**
- * Manual authentication using signed message
- */
+// Manual authentication using signed message
 wampy = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'joe',
@@ -568,9 +533,7 @@ wampy = new Wampy('wss://wamp.router.url', {
     }
 });
 
-/**
- * Promise-based manual authentication using signed message
- */
+// Promise-based manual authentication using signed message
 wampy = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'micky',
@@ -588,9 +551,7 @@ wampy = new Wampy('wss://wamp.router.url', {
     }
 });
 
-/**
- * Automatic CryptoSign authentication
- */
+// Automatic CryptoSign authentication
 wampy = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
     authid: 'patrik',
@@ -602,20 +563,20 @@ wampy = new Wampy('wss://wamp.router.url', {
 });
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-Automatically chosen Authentication
------------------------------------
+### Automatically chosen Authentication
 
 If you server provides multiple options for authorization, you can configure wampy.js to automatically choose
 required authorization flow based on `authmethod` requested by server.
-For this flow you need to configure next options:
-* `authid`. Authentication id to use in challenge
-* `authmethods`. Supported authentication methods
-* `authextra`. Additional authentication options
-* `authPlugins`. Authentication helpers for processing different authmethods challenge flows
-* `authMode`. Mode of authorization flow. Should be set to `auto`
-* `onChallenge`. onChallenge callback. Is not used when `authMode=auto`
+For this flow you need to configure the following options:
+
+- `authid`. Authentication id to use in challenge
+- `authmethods`. Supported authentication methods
+- `authextra`. Additional authentication options
+- `authPlugins`. Authentication helpers for processing different authmethods challenge flows
+- `authMode`. Mode of authorization flow. Should be set to `auto`
+- `onChallenge`. onChallenge callback. Is not used when `authMode=auto`
 
 ```javascript
 import { Wampy } from 'wampy';
@@ -630,7 +591,7 @@ wampy = new Wampy('wss://wamp.router.url', {
         pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
     },
     authPlugins: {
-        ticket: (function(userPassword) { return function() { return userPassword; }})(),
+        ticket: ((userPassword) => (() => userPassword ))(),
         wampcra: wampyCra.sign(userSecret),
         cryptosign: wampyCS.sign(userPrivateKey)
     },
@@ -639,40 +600,41 @@ wampy = new Wampy('wss://wamp.router.url', {
 });
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-subscribe(topicURI, onEvent[, advancedOptions])
--------------------------------------------------
+### subscribe(topicURI, onEvent[, advancedOptions])
 
 Subscribes for topicURI events.
 
 Input Parameters:
 
-* **topicURI**. Required. A string that identifies the topic.
+- **topicURI**. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-* **onEvent**. Published event callback. Will be called on receiving published event with one hash-table
+- **onEvent**. Published event callback. Will be called on receiving published event with one hash-table
 parameter with following attributes:
-  * **argsList**: array payload (maybe omitted)
-  * **argsDict**: object payload (maybe omitted)
-  * **details**: some publication options object.
-* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-  * **match**: string matching policy ("prefix"|"wildcard")
+  - **argsList**: array payload (maybe omitted)
+  - **argsDict**: object payload (maybe omitted)
+  - **details**: some publication options object.
+- **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+  - **match**: string matching policy ("prefix"|"wildcard")
 
-Returns `promise`:
+Returns a `Promise` that's either:
 
-* Resolved with one hash-table parameter with following attributes:
-  * **topic**
-  * **requestId**
-  * **subscriptionId**
-  * **subscriptionKey**
-* Rejected with one of the [Errors instances](#errors-handling)
+- Resolved with a hash-table parameter with following attributes:
+  - **topic**
+  - **requestId**
+  - **subscriptionId**
+  - **subscriptionKey**
+- Rejected with one of the [Error instances](#error-handling)
 
 ```javascript
-await ws.subscribe('chat.message.received', function (eventData) { console.log('Received new chat message!', eventData); });
+await ws.subscribe('chat.message.received', (eventData) => { console.log('Received new chat message!', eventData); });
 
 try {
-    let res = await ws.subscribe('some.another.topic',
-        function (eventData) { console.log('Received topic event', eventData); }
+    const res = await ws.subscribe('some.another.topic',
+        (eventData) => {
+            console.log('Received topic event', eventData);
+        }
     );
     console.log('Successfully subscribed to topic: ' + res.topic);
 
@@ -681,75 +643,73 @@ try {
 }
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-unsubscribe(subscriptionIdKey[, onEvent])
-----------------------------------
+### unsubscribe(subscriptionIdKey[, onEvent])
 
 Unsubscribe subscription from receiving events.
 
 Parameters:
 
-* **subscriptionIdKey**. Required. Subscription ID (number) or Key (string), received during .subscribe()
-* **onEvent**. Published event callback instance to remove, or it can be not specified,
+- **subscriptionIdKey**. Required. Subscription ID (number) or Key (string), received during .subscribe()
+- **onEvent**. Published event callback instance to remove, or it can be not specified,
   in this case all callbacks and subscription will be removed.
 
-Returns `promise`:
+Returns a `Promise` that's either:
 
-* Resolved with one hash-table parameter with following attributes:
-  * **topic**
-  * **requestId**
-* Rejected with one of the [Errors instances](#errors-handling)
+- Resolved with one hash-table parameter with following attributes:
+  - **topic**
+  - **requestId**
+- Rejected with one of the [Error instances](#error-handling)
 
 ```javascript
-const f1 = function (data) { console.log('this was event handler for topic') };
+const f1 = (data) => { console.log('this was event handler for topic') };
 await ws.unsubscribe('subscribed.topic', f1);
 
-let defer = ws.unsubscribe('chat.message.received');
+const defer = ws.unsubscribe('chat.message.received');
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-publish(topicURI[, payload[, advancedOptions]])
------------------------------------------------
+### publish(topicURI[, payload[, advancedOptions]])
 
 Publish a new event to topic.
 
 Parameters:
 
-* **topicURI**. Required. A string that identifies the topic.
+- **topicURI**. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-* **payload**. Publishing event data. Optional. Maybe any single value or array or hash-table object or null. Also, it
-is possible to pass array and object-like data simultaneously. In this case pass a hash-table with next attributes:
-  * **argsList**: array payload (maybe omitted)
-  * **argsDict**: object payload (maybe omitted)
-* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-  * **exclude**: integer|array WAMP session id(s) that won't receive a published event,
+- **payload**. Publishing event data. Optional. Maybe any single value or array or hash-table object or null. Also, it
+is possible to pass array and object-like data simultaneously. In this case pass a hash-table with the following attributes:
+  - **argsList**: array payload (maybe omitted)
+  - **argsDict**: object payload (maybe omitted)
+- **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+  - **exclude**: integer|array WAMP session id(s) that won't receive a published event,
                even though they may be subscribed
-  * **exclude_authid**: string|array Authentication id(s) that won't receive
+  - **exclude_authid**: string|array Authentication id(s) that won't receive
                       a published event, even though they may be subscribed
-  * **exclude_authrole**: string|array Authentication role(s) that won't receive
+  - **exclude_authrole**: string|array Authentication role(s) that won't receive
                         a published event, even though they may be subscribed
-  * **eligible**: integer|array WAMP session id(s) that are allowed to receive a published event
-  * **eligible_authid**: string|array Authentication id(s) that are allowed to receive a published event
-  * **eligible_authrole**: string|array Authentication role(s) that are allowed
+  - **eligible**: integer|array WAMP session id(s) that are allowed to receive a published event
+  - **eligible_authid**: string|array Authentication id(s) that are allowed to receive a published event
+  - **eligible_authrole**: string|array Authentication role(s) that are allowed
                          to receive a published event
-  * **exclude_me**: bool flag of receiving publishing event by initiator
+  - **exclude_me**: bool flag of receiving publishing event by initiator
                        (if it is subscribed to this topic)
-  * **disclose_me**: bool flag of disclosure of publisher identity (its WAMP session ID)
+  - **disclose_me**: bool flag of disclosure of publisher identity (its WAMP session ID)
                        to receivers of a published event
-  * **ppt_scheme**: string Identifies the Payload Schema for Payload Passthru Mode
-  * **ppt_serializer**: string Specifies what serializer was used to encode the payload
-  * **ppt_cipher**: string Specifies the cryptographic algorithm that was used to encrypt the payload
-  * **ppt_keyid**: string Contains the encryption key id that was used to encrypt the payload
+  - **ppt_scheme**: string Identifies the Payload Schema for Payload Passthru Mode
+  - **ppt_serializer**: string Specifies what serializer was used to encode the payload
+  - **ppt_cipher**: string Specifies the cryptographic algorithm that was used to encrypt the payload
+  - **ppt_keyid**: string Contains the encryption key id that was used to encrypt the payload
 
-Returns `promise`:
+Returns a `Promise` that's either:
 
-* Resolved with one hash-table parameter with following attributes:
-  * **topic**
-  * **requestId**
-  * **publicationId**
-* Rejected with one of the [Errors instances](#errors-handling)
+- Resolved with one hash-table parameter with following attributes:
+  - **topic**
+  - **requestId**
+  - **publicationId**
+- Rejected with one of the [Error instances](#error-handling)
 
 ```javascript
 await ws.publish('user.logged.in');
@@ -766,40 +726,39 @@ try {
 }
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-call(topicURI[, payload[, advancedOptions]])
----------------------------------------------
+### call(topicURI[, payload[, advancedOptions]])
 
 Make an RPC call to topicURI.
 
 Parameters:
 
-* **topicURI**. Required. A string that identifies the remote procedure to be called.
+- **topicURI**. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
-* **payload**. RPC data. Optional. Maybe any single value or array or hash-table object or null. Also, it
-is possible to pass array and object-like data simultaneously. In this case pass a hash-table with next attributes:
-  * **argsList**: array payload (maybe omitted)
-  * **argsDict**: object payload (maybe omitted)
-* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-  * **disclose_me**: bool flag of disclosure of Caller identity (WAMP session ID)
+- **payload**. RPC data. Optional. Maybe any single value or array or hash-table object or null. Also, it
+is possible to pass array and object-like data simultaneously. In this case pass a hash-table with the following attributes:
+  - **argsList**: array payload (maybe omitted)
+  - **argsDict**: object payload (maybe omitted)
+- **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+  - **disclose_me**: bool flag of disclosure of Caller identity (WAMP session ID)
                       to endpoints of a routed call
-  * **progress_callback**: function for handling intermediate progressive call results
-  * **timeout**: integer timeout (in ms) for the call to finish
-  * **ppt_scheme**: string Identifies the Payload Schema for Payload Passthru Mode
-  * **ppt_serializer**: string Specifies what serializer was used to encode the payload
-  * **ppt_cipher**: string Specifies the cryptographic algorithm that was used to encrypt the payload
-  * **ppt_keyid**: string Contains the encryption key id that was used to encrypt the payload
+  - **progress_callback**: function for handling intermediate progressive call results
+  - **timeout**: integer timeout (in ms) for the call to finish
+  - **ppt_scheme**: string Identifies the Payload Schema for Payload Passthru Mode
+  - **ppt_serializer**: string Specifies what serializer was used to encode the payload
+  - **ppt_cipher**: string Specifies the cryptographic algorithm that was used to encrypt the payload
+  - **ppt_keyid**: string Contains the encryption key id that was used to encrypt the payload
 
-Returns `promise`:
+Returns a `Promise` that's either:
 
-* Resolved with one hash-table parameter with following attributes:
-  * **details**: hash-table with some additional details
-  * **argsList**: optional array containing the original list of positional result
-  elements as returned by the _Callee_
-  * **argsDict**: optional hash-table containing the original dictionary of keyword result
-  elements as returned by the _Callee_
-* Rejected with one of the [Errors instances](#errors-handling)
+- Resolved with one hash-table parameter with following attributes:
+  - **details**: hash-table with some additional details
+  - **argsList**: optional array containing the original list of positional result
+  elements as returned by the *Callee*
+  - **argsDict**: optional hash-table containing the original dictionary of keyword result
+  elements as returned by the *Callee*
+- Rejected with one of the [Error instances](#error-handling)
 
 **Important note on progressive call results**:
 
@@ -809,7 +768,7 @@ will be processed on promise returned from the `.call()`. That means that final 
 will be received by call promise `resolve` handler.
 
 ```javascript
-let result = await ws.call('server.time');
+const result = await ws.call('server.time');
 console.log('Server time is ' + result.argsList[0]);
 
 try {
@@ -827,86 +786,80 @@ try {
 }
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-cancel(reqId[, advancedOptions]])
----------------------------------
+### cancel(reqId[, advancedOptions]])
 
 RPC invocation cancelling.
 
 Parameters:
 
-* **reqId**. Required. Request ID of RPC call that need to be canceled.
-* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-  * **mode**: string|one of the possible modes: "skip" | "kill" | "killnowait". Skip is default.
+- **reqId**. Required. Request ID of RPC call that need to be canceled.
+- **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+  - **mode**: string|one of the possible modes: "skip" | "kill" | "killnowait". Skip is default.
 
-Returns `boolean` or throws `Error`:
+Returns a `Boolean` or throws an `Error`:
 
-* `true` if successfully sent canceling message
-* `Error` if some error occurred
+- `true` if successfully sent canceling message
+- `Error` if some error occurred
 
 ```javascript
-let defer = ws.call('start.migration');
+const defer = ws.call('start.migration');
 defer
-    .then((result) => {
-        console.log('RPC successfully called');
-    })
-    .catch((err) => {
-        console.log('RPC call failed!', err);
-});
+    .then((result) => console.log('RPC successfully called'))
+    .catch((e) => console.log('RPC call failed!', e));
 
 status = ws.getOpStatus();
 
 ws.cancel(status.reqId);
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-register(topicURI, rpc[, advancedOptions])
-------------------------------------------
+### register(topicURI, rpc[, advancedOptions])
 
 RPC registration for invocation.
 
 Parameters:
 
-* **topicURI**. Required. A string that identifies the remote procedure to be called.
+- **topicURI**. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
-* **rpc**. Required. registered procedure.
-* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-  * **match**: string matching policy ("prefix"|"wildcard")
-  * **invoke**: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
+- **rpc**. Required. registered procedure.
+- **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+  - **match**: string matching policy ("prefix"|"wildcard")
+  - **invoke**: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
 
-Returns `promise`:
+Returns a `Promise` that's either:
 
-* Resolved with one hash-table parameter with following attributes:
-  * **topic**
-  * **requestId**
-  * **registrationId**
-* Rejected with one of the [Errors instances](#errors-handling)
+- Resolved with one hash-table parameter with following attributes:
+  - **topic**
+  - **requestId**
+  - **registrationId**
+- Rejected with one of the [Error instances](#error-handling)
 
 Registered PRC during invocation will receive one hash-table argument with following attributes:
 
-* **argsList**: array payload (maybe omitted)
-* **argsDict**: object payload (maybe omitted)
-* **details**: some invocation options object. One attribute of interest in options is "receive_progress" (boolean),
+- **argsList**: array payload (maybe omitted)
+- **argsDict**: object payload (maybe omitted)
+- **details**: some invocation options object. One attribute of interest in options is "receive_progress" (boolean),
 which indicates, that caller is willing to receive progressive results, if possible. Another one is "trustlevel", which
 indicates the call trust level, assigned by dealer (of course if it is configured accordingly).
-* **result_handler**: result handler for case when you want to send progressive results.
+- **result_handler**: result handler for case when you want to send progressive results.
 Just call it with one parameter, same as you return from simple invocation. Also, do not forget to
 set options: `{ progress: true }` for intermediate results.
-* **error_handler**: error handler for case when you want to send progressive results and caught
+- **error_handler**: error handler for case when you want to send progressive results and caught
 some exception or error.
 
-RPC can return no result (undefined), or it must return an object with next attributes:
+RPC can return no result (undefined), or it must return an object with the following attributes:
 
-* **argsList**: array result or single value, (maybe omitted)
-* **argsDict**: object result payload (maybe omitted)
-* **options**: some result options object. Possible attribute of options is `"progress": true`, which
+- **argsList**: array result or single value, (maybe omitted)
+- **argsDict**: object result payload (maybe omitted)
+- **options**: some result options object. Possible attribute of options is `"progress": true`, which
 indicates, that it's a progressive result, so there will be more results in the future.
 Be sure to unset "progress" on last result message.
 
 ```javascript
-const sqrt_f = function (data) { return { argsList: data.argsList[0]*data.argsList[0] } };
+const sqrt_f = (data) => { return { argsList: data.argsList[0]*data.argsList[0] } };
 
 await ws.register('sqrt.value', sqrt_f);
 
@@ -924,8 +877,8 @@ like [es6-promise](https://github.com/jakearchibald/es6-promise). Check browser 
 at [can i use](http://caniuse.com/#search=promise) site.
 
 ```javascript
-const getUserName = function () {
-    return new Promise(function (resolve, reject) {
+const getUserName = () => {
+    return new Promise((resolve, reject) => {
         /* Ask user to input his username somehow,
            and resolve promise with user input at the end */
         resolve({ argsList: userInput });
@@ -938,12 +891,13 @@ ws.register('get.user.name', getUserName);
 Also, it is possible to abort rpc processing and throw error with custom application specific data.
 This data will be passed to caller onError callback.
 
-Exception object with custom data may have next attributes:
-* **error**. String with custom error uri. Must meet a WAMP Spec URI requirements.
-* **details**. Custom details dictionary object.
-* **argsList**. Custom arguments array, this will be forwarded to the caller by the WAMP router's
+Exception object with custom data may have the following attributes:
+
+- **error**. String with custom error uri. Must meet a WAMP Spec URI requirements.
+- **details**. Custom details dictionary object.
+- **argsList**. Custom arguments array, this will be forwarded to the caller by the WAMP router's
 dealer role. In most cases this attribute is used to pass the human-readable message to the client.
-* **argsDict**. Custom arguments object, this will be forwarded to the caller by the WAMP router's
+- **argsDict**. Custom arguments object, this will be forwarded to the caller by the WAMP router's
 dealer role.
 
 **Note:** Any other type of errors (like built in Javascript runtime TypeErrors, ReferenceErrors)
@@ -951,15 +905,15 @@ and exceptions are caught by wampy and sent back to the client's side, not just 
 custom errors. In this case the details of the error can be lost.
 
 ```javascript
-const getSystemInfo = function () {
+const getSystemInfo = () => {
 
     // Application logic
 
-    // for example, you need to get data from db
+    // for example, if you need to get data from db
     // and at this time you can't connect to db
     // you can throw exception with some details for client application
 
-    const UserException = function () {
+    const UserException = () => {
         this.error = 'app.error.no_database_connection';
         this.details = {
          errorCode: 'ECONNREFUSED',
@@ -977,31 +931,31 @@ const getSystemInfo = function () {
 };
 
 await wampy.register('get.system.info', getSystemInfo);
+
 try {
     await wampy.call('get.system.info');
-} catch (e) {
-    console.log('Error happened', e);
+} catch (error) {
+    console.log('Error happened', error);
 }
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-unregister(topicURI)
---------------------
+### unregister(topicURI)
 
 RPC unregistration from invocations.
 
 Parameters:
 
-* **topicURI**. Required. A string that identifies the remote procedure to be unregistered.
+- **topicURI**. Required. A string that identifies the remote procedure to be unregistered.
 Must meet a WAMP Spec URI requirements.
 
-Returns `promise`:
+Returns a `Promise` that's either:
 
-* Resolved with one hash-table parameter with following attributes:
-  * **topic**
-  * **requestId**
-* Rejected with one of the [Errors instances](#errors-handling)
+- Resolved with one hash-table parameter with following attributes:
+  - **topic**
+  - **requestId**
+- Rejected with one of the [Error instances](#error-handling)
 
 ```javascript
 await ws.unregister('sqrt.value');
@@ -1014,8 +968,7 @@ try {
 }
 ```
 
-errors handling
----------------
+### Error handling
 
 During wampy instance lifetime there can be many cases when error happens: some
 made by developer mistake, some are bound to WAMP protocol violation, some came
@@ -1031,13 +984,13 @@ const wampy = new Wampy('/ws/', { realm: 'AppRealm' });
 try {
     await wampy.call('start.migration');
     console.log('RPC successfully called');
-} catch (e) {
+} catch (error) {
     console.log('Error happened!');
-    if (e instanceof Errors.UriError) {
+    if (error instanceof Errors.UriError) {
         // statements to handle UriError exceptions
-    } else if (e instanceof Errors.InvalidParamError) {
+    } else if (error instanceof Errors.InvalidParamError) {
         // statements to handle InvalidParamError exceptions
-    } else if (e instanceof Errors.NoSerializerAvailableError) {
+    } else if (error instanceof Errors.NoSerializerAvailableError) {
         // statements to handle NoSerializerAvailableError exceptions
     } else {
         // statements to handle any unspecified exceptions
@@ -1045,62 +998,60 @@ try {
 }
 ```
 
-Wampy package exposes next `Errors` classes:
+Wampy package exposes the following `Error` classes:
 
-* UriError
-* NoBrokerError
-* NoCallbackError
-* InvalidParamError
-* NoSerializerAvailableError
-* NonExistUnsubscribeError
-* NoDealerError
-* RPCAlreadyRegisteredError
-* NonExistRPCUnregistrationError
-* NonExistRPCInvocationError
-* NonExistRPCReqIdError
-* NoRealmError
-* NoWsOrUrlError
-* NoCRACallbackOrIdError
-* ChallengeExceptionError
-* PPTNotSupportedError
-* PPTInvalidSchemeError
-* PPTSerializerInvalidError
-* PPTSerializationError
-* ProtocolViolationError
-* AbortError
-* WampError
-* SubscribeError
-* UnsubscribeError
-* PublishError
-* RegisterError
-* UnregisterError
-* CallError
-* WebsocketError
+- UriError
+- NoBrokerError
+- NoCallbackError
+- InvalidParamError
+- NoSerializerAvailableError
+- NonExistUnsubscribeError
+- NoDealerError
+- RPCAlreadyRegisteredError
+- NonExistRPCUnregistrationError
+- NonExistRPCInvocationError
+- NonExistRPCReqIdError
+- NoRealmError
+- NoWsOrUrlError
+- NoCRACallbackOrIdError
+- ChallengeExceptionError
+- PPTNotSupportedError
+- PPTInvalidSchemeError
+- PPTSerializerInvalidError
+- PPTSerializationError
+- ProtocolViolationError
+- AbortError
+- WampError
+- SubscribeError
+- UnsubscribeError
+- PublishError
+- RegisterError
+- UnregisterError
+- CallError
+- WebsocketError
 
 For errors attributes look at [src/errors.js](./src/errors.js) file.
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-Using custom serializer
-=======================
+## Using custom serializer
 
 From v5.0 version there is option to provide custom serializer.
 
 Custom serializer instance must meet a few requirements:
 
-* Have a `encode (data)` method, that returns encoded data
-* Have a `decode (data)` method, that returns decoded data
-* Have a `protocol` string property, that contains a protocol name. This name is concatenated with
+- Have a `encode (data)` method, that returns encoded data
+- Have a `decode (data)` method, that returns decoded data
+- Have a `protocol` string property, that contains a protocol name. This name is concatenated with
 "wamp.2." string and is then passed as websocket subprotocol http header.
-* Have a `isBinary` boolean property, that indicates, is this a binary protocol or not.
+- Have a `isBinary` boolean property, that indicates, is this a binary protocol or not.
 
 Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or
 [MsgpackSerializer.js](src/serializers/MsgpackSerializer.js) as examples.
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-Connecting through TLS in node environment
-==========================================
+## Connecting through TLS in node environment
 
 Starting from v6.2.0 version you can pass additional HTTP Headers and TLS parameters to underlying socket connection
 in node.js environment (thnx `websocket` library). See example below. For `wsRequestOptions` you can pass any option,
@@ -1137,10 +1088,9 @@ wampy = new Wampy('wss://wamp.router.url:8888/wamp-router', {
 });
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-Tests and code coverage
-=======================
+## Tests and code coverage
 
 Wampy.js uses mocha and chai for tests and c8/istanbul for code coverage.
 Wampy sources are mostly all covered with tests! :)
@@ -1158,10 +1108,9 @@ Wampy sources are mostly all covered with tests! :)
 # and then open coverage/lcov-report/index.html
 ```
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-Copyright and License
-=====================
+## Copyright and License
 
 Wampy.js library is licensed under the MIT License (MIT).
 
@@ -1184,20 +1133,19 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
-See Also
-========
+## See Also
 
-* [WAMP specification][]
-* [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
-* [wampy-cryptosign][] - WAMP Cryptosign-based Authentication plugin for Wampy.js
-* [Wiola][] - WAMP Router in Lua on top of nginx/openresty
-* [Loowy][] - LUA WAMP client
-* [msgpackr][] - Ultra-fast MessagePack implementation with extension for record and structural cloning.
-* [cbor-x][] - Ultra-fast CBOR encoder/decoder with extensions for records and structural cloning.
+- [WAMP specification][]
+- [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
+- [wampy-cryptosign][] - WAMP Cryptosign-based Authentication plugin for Wampy.js
+- [Wiola][] - WAMP Router in Lua on top of nginx/openresty
+- [Loowy][] - LUA WAMP client
+- [msgpackr][] - Ultra-fast MessagePack implementation with extension for record and structural cloning.
+- [cbor-x][] - Ultra-fast CBOR encoder/decoder with extensions for records and structural cloning.
 
-[Back to TOC](#table-of-contents)
+[Back to Table of Contents](#table-of-contents)
 
 Thanks JetBrains for support! Best IDEs for every language!
 
@@ -1215,7 +1163,6 @@ Thanks JetBrains for support! Best IDEs for every language!
 [WAMP Spec CS]: https://wamp-proto.org/wamp_latest_ietf.html#name-cryptosign-based-authentica
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
 [tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
-[WS Client Options]: https://github.com/websockets/ws/blob/master/doc/ws.md#new-websocketaddress-protocols-options
 [wampy-cra]: https://github.com/KSDaemon/wampy-cra
 [wampy-cryptosign]: https://github.com/KSDaemon/wampy-cryptosign
 

@@ -371,6 +371,7 @@ let errorObject = {
 ```
 
 Subscribe event callback method signature change:
+
 ```javascript
 // WAS:
 ws.subscribe('some.topic', {
@@ -397,6 +398,7 @@ ws.subscribe('some.topic', {
 ```
 
 RPC Call callback method signature change:
+
 ```javascript
 // WAS:
 ws.call('restore.backup', { backupFile: 'backup.zip' }, {
@@ -426,6 +428,7 @@ ws.call('restore.backup', { backupFile: 'backup.zip' }, {
 ```
 
 RPC registration method signature change:
+
 ```javascript
 // WAS:
 const sqrt_f = function (x) { return [{}, x*x]; };
@@ -456,6 +459,7 @@ ws.register('sqrt.value', {
 ```
 
 Wampy instance onError callback method signature change:
+
 ```javascript
 // WAS:
 ws.options({
@@ -558,10 +562,11 @@ For simple one-time result, options object should be empty ({}), for progressive
 intermediate results must contain "progress": true attribute, and no "progress" attribute for final result.
 
 In 3.0.0 next attributes were removed:
+
 * In call method:
-    * exclude
-    * eligible
-    * exclude_me
+  * exclude
+  * eligible
+  * exclude_me
 
 Migrating from 1.x to 2.x versions
 ==================================
