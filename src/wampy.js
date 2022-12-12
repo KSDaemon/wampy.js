@@ -38,7 +38,7 @@ class Wampy {
          * @type {string}
          * @private
          */
-        this.version = 'v7.0.0-rc9';
+        this.version = 'v7.0.0-rc10';
 
         /**
          * WS Url
