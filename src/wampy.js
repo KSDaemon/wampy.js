@@ -18,6 +18,7 @@ import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS, SUCCESS } from './cons
 import * as Errors from './errors.js';
 import { getWebSocket, getNewPromise } from './utils.js';
 import { JsonSerializer } from './serializers/JsonSerializer.js';
+import {InvalidParamError} from "./errors.js";
 const jsonSerializer = new JsonSerializer();
 
 /**
@@ -616,15 +617,21 @@ class Wampy {
         } else if (this._isPlainObject(payload)) {
             // It's a wampy unified form of payload passing
             if (payload.argsList || payload.argsDict) {
-                if (this._isArray(payload.argsList)) {
-                    argsList = payload.argsList;
-                } else if (typeof (payload.argsList) !== 'undefined') {
-                    argsList = [payload.argsList];
+
+                if (payload.argsList && !this._isArray(payload.argsList)) {
+                    err = true;
+                    this._fillOpStatusByError(new Errors.InvalidParamError(payload.argsList));
+                    return {err, payloadItems};
                 }
 
-                if (payload.argsDict) {
-                    argsDict = payload.argsDict;
+                if (payload.argsDict && !this._isPlainObject(payload.argsDict)) {
+                    err = true;
+                    this._fillOpStatusByError(new Errors.InvalidParamError(payload.argsDict));
+                    return {err, payloadItems};
                 }
+
+                argsList = payload.argsList;
+                argsDict = payload.argsDict;
             } else {
                 argsDict = payload;
             }
@@ -1422,7 +1429,6 @@ class Wampy {
 
                                         msg[2] = options;
                                     }
-
                                 }
 
                                 if (results !== null && typeof (results) !== 'undefined') {

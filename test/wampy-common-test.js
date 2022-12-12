@@ -886,6 +886,18 @@ serializers.forEach(function (item) {
                 return wampy.subscribe('subscribe.topic2', function (e) { });
             });
 
+            it('allows to subscribe to topic lax URI (with loose check option)', async function () {
+                wampy.options({uriValidation: 'loose'});
+
+                try {
+                    await wampy.subscribe('qwe//adsa//dfff', function (e) {});
+                } catch (e) {
+                    throw e
+                }
+                wampy.options({uriValidation: 'strict'});
+            });
+
+
             it('allows to setup multiple handlers to same topic', async function () {
                 await wampy.subscribe('subscribe.topic2', function (e) {});
                 expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
@@ -1665,6 +1677,24 @@ serializers.forEach(function (item) {
                 expect(res.argsDict).to.be.deep.equal(dictpayload);
             });
 
+            it('disallows to call RPC with invalid payload using unified payload format', async function () {
+                let payload = { argsList: 'not an array', argsDict: {} };
+                try {
+                    await wampy.call('call.rpc.fail', payload);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                payload = { argsList: [123], argsDict: 'not an object' };
+                try {
+                    await wampy.call('call.rpc.fail', payload);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+            });
+
             it('allows to call RPC with different advanced options', async function () {
                 let res = await wampy.call('call.rpc6', 'payload', {
                     disclose_me: true,
@@ -1805,7 +1835,7 @@ serializers.forEach(function (item) {
                 await wampy.register('register.rpc4', function (e) {
                     return new Promise(function (resolve, reject) {
                         setTimeout(function () {
-                            resolve({ options: {}, argsList: 100 });
+                            resolve({ options: {}, argsList: [100] });
                         }, 1);
                     });
                 });
@@ -1867,13 +1897,13 @@ serializers.forEach(function (item) {
                         for (let i = 1; i <= 5; i++) {
                             (function (j, p) {
                                 setTimeout(function () {
-                                    e.result_handler({ options: { progress: p }, argsList: j });
+                                    e.result_handler({ options: { progress: p }, argsList: [j] });
                                 }, 10 * j);
                             }(i, i < 5));
                         }
 
                         setTimeout(function () {
-                            resolve({ options: { progress: true }, argsList: 0 });
+                            resolve({ options: { progress: true }, argsList: [0] });
                         }, 1);
                     });
                 });

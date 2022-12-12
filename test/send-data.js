@@ -1057,11 +1057,22 @@ const WAMP_MSG_SPEC = {
         //    data: null,
         //    silent: true
         //},
+        // allows to subscribe to topic with notification on subscribing
         {
             data: [
                 WAMP_MSG_SPEC.SUBSCRIBED,
                 'RequestId',
                 2
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to subscribe to topic lax URI (with loose check option)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                239045
             ],
             from: [1],
             to: [1]

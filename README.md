@@ -679,12 +679,19 @@ Parameters:
 
 - **topicURI**. Required. A string that identifies the topic.
 Must meet a WAMP Spec URI requirements.
-- **payload**. Publishing event data. Optional. Maybe any single value or array or hash-table object or null. Also, it
-is possible to pass array and object-like data simultaneously. In this case pass a hash-table with the following attributes:
-  - **argsList**: array payload (maybe omitted)
-  - **argsDict**: object payload (maybe omitted)
-- **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-  - **exclude**: integer|array WAMP session id(s) that won't receive a published event,
+* **payload**. Publishing event data. Optional. Maybe any single value or array or hash-table object or null:
+  * If it is an array - it is sent as is as WAMP positional arguments attribute
+  * If it is a single object (without **argsList** and **argsDict** keys) - it is sent as is as WAMP key-value
+  arguments attribute
+  * If it is a single Number/String/Boolean/Null value - it is packed into one-item array and is sent as WAMP
+  positional arguments attribute. Be aware: receiver will get it in **argsList** as one-item array and not as
+  single value!
+  * It is possible to pass array and object-like data simultaneously. In this case pass a hash-table with
+  next attributes:
+    * **argsList**: array payload (maybe omitted)
+    * **argsDict**: object payload (maybe omitted)
+* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+  * **exclude**: integer|array WAMP session id(s) that won't receive a published event,
                even though they may be subscribed
   - **exclude_authid**: string|array Authentication id(s) that won't receive
                       a published event, even though they may be subscribed
@@ -713,7 +720,7 @@ Returns a `Promise` that's either:
 
 ```javascript
 await ws.publish('user.logged.in');
-await ws.publish('chat.message.received', 'user message');
+await ws.publish('chat.message.received', 'user message');  // will be sent as ['user message1']
 await ws.publish('chat.message.received', ['user message1', 'user message2']);
 await ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
 await ws.publish('chat.message.received', ['Private message'], { eligible: 123456789 });
@@ -736,12 +743,19 @@ Parameters:
 
 - **topicURI**. Required. A string that identifies the remote procedure to be called.
 Must meet a WAMP Spec URI requirements.
-- **payload**. RPC data. Optional. Maybe any single value or array or hash-table object or null. Also, it
-is possible to pass array and object-like data simultaneously. In this case pass a hash-table with the following attributes:
-  - **argsList**: array payload (maybe omitted)
-  - **argsDict**: object payload (maybe omitted)
-- **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
-  - **disclose_me**: bool flag of disclosure of Caller identity (WAMP session ID)
+* **payload**. RPC data. Optional. Maybe any single value or array or hash-table object or null:
+  * If it is an array - it is sent as is as WAMP positional arguments attribute
+  * If it is a single object (without **argsList** and **argsDict** keys) - it is sent as is as WAMP key-value
+  arguments attribute
+  * If it is a single Number/String/Boolean/Null value - it is packed into one-item array and is sent as WAMP
+  positional arguments attribute. Be aware: receiver will get it in **argsList** as one-item array and not as
+  single value!
+  * It is possible to pass array and object-like data simultaneously. In this case pass a hash-table with
+  next attributes:
+    * **argsList**: array payload (maybe omitted)
+    * **argsDict**: object payload (maybe omitted)
+* **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
+  * **disclose_me**: bool flag of disclosure of Caller identity (WAMP session ID)
                       to endpoints of a routed call
   - **progress_callback**: function for handling intermediate progressive call results
   - **timeout**: integer timeout (in ms) for the call to finish
@@ -850,16 +864,24 @@ set options: `{ progress: true }` for intermediate results.
 - **error_handler**: error handler for case when you want to send progressive results and caught
 some exception or error.
 
-RPC can return no result (undefined), or it must return an object with the following attributes:
+RPC can return no result (undefined), any single value, array or hash-table object:
 
-- **argsList**: array result or single value, (maybe omitted)
-- **argsDict**: object result payload (maybe omitted)
-- **options**: some result options object. Possible attribute of options is `"progress": true`, which
-indicates, that it's a progressive result, so there will be more results in the future.
-Be sure to unset "progress" on last result message.
+* If it is an array - it is sent as is as WAMP positional arguments attribute
+* If it is a single object (without **argsList** and **argsDict** keys) - it is sent as is as WAMP key-value
+arguments attribute
+* If it is a single Number/String/Boolean/Null value - it is packed into one-item array and is sent as WAMP
+positional arguments attribute. Be aware: receiver will get it in **argsList** as one-item array and not as
+single value!
+* It is possible to pass array and object-like data simultaneously. In this case pass a hash-table with
+next attributes:
+  * **argsList**: array payload (maybe omitted)
+  * **argsDict**: object payload (maybe omitted)
+  * **options**: some result options object. Possible attribute of options is `"progress": true`, which
+  indicates, that it's a progressive result, so there will be more results in the future.
+  Be sure to unset "progress" on last result message.
 
 ```javascript
-const sqrt_f = (data) => { return { argsList: data.argsList[0]*data.argsList[0] } };
+const sqrt_f = function (data) { return { result: data.argsList[0]*data.argsList[0] } };
 
 await ws.register('sqrt.value', sqrt_f);
 
