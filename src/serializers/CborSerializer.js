@@ -2,6 +2,7 @@ import { Encoder } from 'cbor-x';
 
 const cborxOptions = {
     useRecords: false,
+    mapsAsObjects: true,
     int64AsNumber: true,
     largeBigIntToFloat: true
 };
