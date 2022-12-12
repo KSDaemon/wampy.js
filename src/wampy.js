@@ -739,7 +739,7 @@ class Wampy {
         try {
             return this._options.serializer.encode(msg);
         } catch (e) {
-            this._hardClose('wamp.error.protocol_violation', 'Can not encode message');
+            this._hardClose('wamp.error.protocol_violation', 'Can not encode message', true);
         }
     }
 
@@ -750,20 +750,28 @@ class Wampy {
      * @private
      */
     _decode (msg) {
-        return this._options.serializer.decode(msg);
+        try {
+            return this._options.serializer.decode(msg);
+        } catch (e) {
+            this._hardClose('wamp.error.protocol_violation', 'Can not decode received message');
+        }
     }
 
     /**
      * Hard close of connection due to protocol violations
      * @param {string} errorUri
      * @param {string} details
+     * @param {boolean} [noSend]
      * @private
      */
-    _hardClose (errorUri, details) {
+    _hardClose (errorUri, details, noSend = false) {
         this._log(details);
         // Cleanup outgoing message queue
         this._wsQueue = [];
-        this._send([WAMP_MSG_SPEC.ABORT, { message: details }, errorUri]);
+
+        if(!noSend) {
+            this._send([WAMP_MSG_SPEC.ABORT, { message: details }, errorUri]);
+        }
 
         let err = new Errors.ProtocolViolationError(errorUri, details);
 
@@ -854,7 +862,7 @@ class Wampy {
             options.authextra = this._options.authextra;
         }
 
-        this._log('websocket connected. Server have chosen ', serverProtocol);
+        this._log('websocket connected. Server has chosen ', serverProtocol);
 
         if (this._options.serializer.protocol !== serverProtocol) {
             // Server have chosen not our preferred protocol
@@ -885,7 +893,10 @@ class Wampy {
 
         // WAMP SPEC: [HELLO, Realm|uri, Details|dict]
         // Sending directly 'cause it's a hello msg and no sessionId check is needed
-        this._ws.send(this._encode([WAMP_MSG_SPEC.HELLO, this._options.realm, options]));
+        const encMsg = this._encode([WAMP_MSG_SPEC.HELLO, this._options.realm, options]);
+        if (encMsg) {
+            this._ws.send(encMsg);
+        }
     }
 
     /**
@@ -925,12 +936,7 @@ class Wampy {
      * @private
      */
     async _wsOnMessage (event) {
-        let data;
-        try {
-            data = this._decode(event.data);
-        } catch (e) {
-            this._hardClose('wamp.error.protocol_violation', 'Can not decode received message');
-        }
+        const data = this._decode(event.data);
 
         this._log('websocket message received: ', data);
 
