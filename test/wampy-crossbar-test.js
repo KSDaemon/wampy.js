@@ -18,7 +18,7 @@ describe('Wampy.js with Crossbar', function () {
 
         wampy.connect().then(() => {
             wampy.register('sayhello.test', () => {
-                return { argsList: 'hello' };
+                return { argsList: ['hello'] };
             }).then(() => {
                 const client = new Wampy('ws://localhost:8888/test', {
                     realm: 'realm1',
@@ -51,7 +51,7 @@ describe('Wampy.js with Crossbar', function () {
 
         wampy.connect().then(() => {
             wampy.register('sayhello2', () => {
-                return { argsList: 'hello' };
+                return { argsList: ['hello'] };
             }).then(() => {
                 const client = new Wampy('ws://localhost:8888/test', {
                     realm: 'realm1',
