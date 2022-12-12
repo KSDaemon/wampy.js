@@ -71,6 +71,31 @@ serializers.forEach(function (item) {
                 });
             });
 
+            it('aborts connection if it can not encode outgoing message', function (done) {
+                const origSerializer = new serializer();
+                const testSrlzr = class {
+                    constructor () {
+                        this.protocol = origSerializer.protocol;
+                        this.isBinary = origSerializer.isBinary;
+                    }
+                    encode() {
+                        throw new Error('failed encode')
+                    }
+
+                    decode() {
+                        throw new Error('failed decode')
+                    }
+                };
+                let wampy = new Wampy(routerUrl, {
+                    realm     : 'AppRealm',
+                    ws,
+                    serializer: new testSrlzr()
+                });
+                wampy.connect().catch((e) => {
+                    done();
+                });
+            });
+
             it('aborts connection if it can not decode incoming message', function (done) {
                 let wampy = new Wampy(routerUrl, {
                     realm     : 'AppRealm',

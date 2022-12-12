@@ -5,6 +5,7 @@
  */
 
 import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
+import {WAMP_MSG_SPEC} from "../src/constants.js";
 
 const TIMEOUT = 15,
 
@@ -51,7 +52,34 @@ WebSocket.prototype.abort = function () {
     this.onerror();
 };
 
-WebSocket.prototype.send = function (data) { };
+WebSocket.prototype.send = function (data) {
+    setTimeout(() => {
+        this.onmessage({
+            data: this.encode([
+                WAMP_MSG_SPEC.WELCOME,
+                127,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        broker: {
+                            features: {
+                                subscriber_blackwhite_listing: true,
+                                publisher_exclusion: true,
+                                publisher_identification: true
+                            }
+                        },
+                        dealer: {
+                            features: {
+                                caller_identification: true,
+                                progressive_call_results: true
+                            }
+                        }
+                    }
+                }
+            ])
+        });
+    }, 10)
+};
 
 export { WebSocket, setProtocol };
 
