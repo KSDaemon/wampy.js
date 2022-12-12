@@ -22,6 +22,7 @@ let sendDataCursor = 0,
         this.url = url;
         this.protocols = protocols;
         this.transportEncoding = this.protocols[0].split('.')[2];
+        this.protocol = 'wamp.2.' + this.transportEncoding;
 
         switch (this.transportEncoding) {
             case 'msgpack':
@@ -44,12 +45,10 @@ let sendDataCursor = 0,
         this.onmessage = null;
         this.onopen = null;
 
-        this.protocol = '';
-
         this.readyState = 1;    // Closed
 
         openTimer = setTimeout(() => {
-            this.protocol = 'wamp.2.' + this.transportEncoding;
+
             this.onopen();
         }, TIMEOUT);
     };
