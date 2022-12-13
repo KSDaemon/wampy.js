@@ -886,6 +886,15 @@ serializers.forEach(function (item) {
                 expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
+                    let object = {};
+                    Object.setPrototypeOf(object, null);
+                    await wampy.subscribe('qqq.www.eee', function () {}, object);
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                try {
                     await wampy.subscribe('qqq.www.eee', function () {}, { 'match': 'invalid' });
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
