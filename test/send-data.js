@@ -26,6 +26,24 @@ const WAMP_MSG_SPEC = {
         YIELD: 70
     },
 
+    routerRoles = {
+        broker: {
+            features: {
+                subscriber_blackwhite_listing: true,
+                publisher_exclusion: true,
+                publisher_identification: true
+            }
+        },
+        dealer: {
+            features: {
+                caller_identification: true,
+                progressive_call_results: true,
+                call_canceling: true,
+                call_timeout: true
+            }
+        }
+    },
+
     sendData = [
         // rejects connection on websocket error
         {
@@ -39,21 +57,7 @@ const WAMP_MSG_SPEC = {
                 2,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ],
             ruinMessage: true
@@ -65,21 +69,7 @@ const WAMP_MSG_SPEC = {
                 2,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -90,21 +80,7 @@ const WAMP_MSG_SPEC = {
                 3,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ],
             close: true
@@ -115,21 +91,7 @@ const WAMP_MSG_SPEC = {
                 7458547,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -140,21 +102,7 @@ const WAMP_MSG_SPEC = {
                 4,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -177,21 +125,7 @@ const WAMP_MSG_SPEC = {
                     authrole    : 'user',
                     authmethod  : 'ticket',
                     authprovider: 'userdb',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -222,21 +156,7 @@ const WAMP_MSG_SPEC = {
                     authrole    : 'user',
                     authmethod  : 'wampcra',
                     authprovider: 'userdb',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -259,21 +179,7 @@ const WAMP_MSG_SPEC = {
                     authrole    : 'user',
                     authmethod  : 'ticket',
                     authprovider: 'userdb',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -310,21 +216,7 @@ const WAMP_MSG_SPEC = {
                     authrole    : 'user',
                     authmethod  : 'wampcra',
                     authprovider: 'userdb',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -355,21 +247,7 @@ const WAMP_MSG_SPEC = {
                     authrole    : 'user',
                     authmethod  : 'cryptosign',
                     authprovider: 'userdb',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -380,21 +258,7 @@ const WAMP_MSG_SPEC = {
                 2,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ],
             next: true
@@ -417,21 +281,7 @@ const WAMP_MSG_SPEC = {
                 2,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ],
             next: true
@@ -470,21 +320,7 @@ const WAMP_MSG_SPEC = {
                 2,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ],
             next: true
@@ -579,21 +415,7 @@ const WAMP_MSG_SPEC = {
                 2,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ],
             next: true
@@ -609,21 +431,7 @@ const WAMP_MSG_SPEC = {
                 2,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -684,21 +492,7 @@ const WAMP_MSG_SPEC = {
                 378,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ],
             next: true
@@ -726,21 +520,7 @@ const WAMP_MSG_SPEC = {
                 4,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -758,21 +538,7 @@ const WAMP_MSG_SPEC = {
                 475,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -791,21 +557,7 @@ const WAMP_MSG_SPEC = {
                 284,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -861,21 +613,7 @@ const WAMP_MSG_SPEC = {
                 28,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -944,21 +682,7 @@ const WAMP_MSG_SPEC = {
                 654274,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ],
             close: true
@@ -969,21 +693,7 @@ const WAMP_MSG_SPEC = {
                 357445,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -1035,21 +745,7 @@ const WAMP_MSG_SPEC = {
                 7,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -1612,21 +1308,7 @@ const WAMP_MSG_SPEC = {
                 18,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -2348,21 +2030,7 @@ const WAMP_MSG_SPEC = {
                 7,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -3361,21 +3029,7 @@ const WAMP_MSG_SPEC = {
                 7,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
@@ -3471,21 +3125,7 @@ const WAMP_MSG_SPEC = {
                 127,
                 {
                     agent: 'Wampy.js test suite',
-                    roles: {
-                        broker: {
-                            features: {
-                                subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true
-                            }
-                        },
-                        dealer: {
-                            features: {
-                                caller_identification: true,
-                                progressive_call_results: true
-                            }
-                        }
-                    }
+                    roles: routerRoles
                 }
             ]
         },
