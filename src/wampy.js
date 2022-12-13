@@ -18,6 +18,7 @@ import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS, SUCCESS } from './cons
 import * as Errors from './errors.js';
 import { getWebSocket, getNewPromise } from './utils.js';
 import { JsonSerializer } from './serializers/JsonSerializer.js';
+import { FeatureNotSupportedError } from './errors.js';
 const jsonSerializer = new JsonSerializer();
 
 /**
@@ -542,7 +543,12 @@ class Wampy {
      * @private
      */
     _checkRouterFeature (role, feature) {
-        return this._cache.server_wamp_features.roles[role].features[feature] === true;
+        if (this._cache.server_wamp_features.roles[role].features[feature] !== true) {
+            this._fillOpStatusByError(new Errors.FeatureNotSupportedError(role, feature));
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -2120,6 +2126,10 @@ class Wampy {
         const options = {};
 
         if (!this._preReqChecks(null, 'dealer')) {
+            throw this._cache.opStatus.error;
+        }
+
+        if (!this._checkRouterFeature('dealer', 'call_canceling')) {
             throw this._cache.opStatus.error;
         }
 

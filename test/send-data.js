@@ -1312,7 +1312,56 @@ const WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // disallows to cancel RPC invocation if dealer does not support call cancelling
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                7,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        dealer: {
+                            features: {
+                                caller_identification   : true,
+                                progressive_call_results: true,
+                                call_timeout            : true,
+                                payload_passthru_mode   : true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            data: null,
+            silent: true
+        },
         // allows to register RPC
+        // Reinit feature-rich connection first
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                2,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: routerRoles
+                }
+            ]
+        },
         {
             data: [
                 WAMP_MSG_SPEC.REGISTERED,
@@ -2053,16 +2102,18 @@ const WAMP_MSG_SPEC = {
                         broker: {
                             features: {
                                 subscriber_blackwhite_listing: true,
-                                publisher_exclusion: true,
-                                publisher_identification: true,
-                                payload_passthru_mode: true
+                                publisher_exclusion          : true,
+                                publisher_identification     : true,
+                                payload_passthru_mode        : true
                             }
                         },
                         dealer: {
                             features: {
-                                caller_identification: true,
+                                caller_identification   : true,
                                 progressive_call_results: true,
-                                payload_passthru_mode: true
+                                call_canceling          : true,
+                                call_timeout            : true,
+                                payload_passthru_mode   : true
                             }
                         }
                     }

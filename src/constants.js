@@ -54,7 +54,8 @@ export const WAMP_ERROR_MSG = {
     PROTOCOL_VIOLATION: 'Protocol violation',
     WAMP_ABORT: 'Router aborted connection',
     WAMP_GENERAL_ERROR: 'Wamp error',
-    WEBSOCKET_ERROR: 'Websocket error'
+    WEBSOCKET_ERROR: 'Websocket error',
+    FEATURE_NOT_SUPPORTED: 'Feature not supported'
 };
 
 export const E2EE_SERIALIZERS = ['cbor'];

@@ -1486,8 +1486,35 @@ serializers.forEach(function (item) {
                 expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
             });
 
-            it('allows to register RPC', async function () {
-                return wampy.register('register.rpc1', function (e) {});
+            it('disallows to cancel RPC invocation if dealer does not support call cancelling', function (done) {
+                wampy.options({
+                    onClose: function () {
+                        setTimeout(async function () {
+                            await wampy.connect();
+
+                            wampy.call('call.rpc9', 'payload').catch((e) => { done(e); });
+                            let reqId = wampy.getOpStatus().reqId;
+                            try {
+                                wampy.cancel(reqId, { mode: 'kill' });
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.FeatureNotSupportedError);
+                                done();
+                            }
+                        }, 1);
+                    }
+                }).disconnect();
+            });
+
+            it('allows to register RPC', function (done) {
+                wampy.options({
+                    onClose: function () {
+                        setTimeout(async function () {
+                            await wampy.connect();
+                            await wampy.register('register.rpc1', function (e) {});
+                            done();
+                        }, 1);
+                    }
+                }).disconnect();
             });
 
             it('allows to register prefix-based RPC', async function () {

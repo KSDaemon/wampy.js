@@ -242,3 +242,13 @@ export class WebsocketError extends Error {
         this.error = error;
     }
 }
+
+export class FeatureNotSupportedError extends Error {
+    constructor (role, feature) {
+        super(WAMP_ERROR_MSG.FEATURE_NOT_SUPPORTED);
+        this.name = 'FeatureNotSupportedError';
+        this.code = 39;
+        this.role = role;
+        this.feature = feature;
+    }
+}
