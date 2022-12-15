@@ -25,7 +25,7 @@ module.exports = function (grunt) {
                 },
                 files  : {
                     'dist/browser/wampy.js': 'src/browser.js',
-                    'dist/browser/msgpacksrlzr.js': 'src/msgpacksrlzrbrowser.js'
+                    'dist/browser/serializers4browser.js': 'src/serializers4browser.js'
                 }
             }
         },
@@ -40,23 +40,14 @@ module.exports = function (grunt) {
             dist4Browser: {
                 files: {
                     'dist/browser/wampy.min.js': ['dist/browser/wampy.js'],
-                    'dist/browser/msgpacksrlzr.min.js': ['dist/browser/msgpacksrlzr.js']
+                    'dist/browser/serializers4browser.min.js': ['dist/browser/serializers4browser.js']
                 }
             }
         },
-        copy: {
-            msgpackToDist: {
-                files: [{
-                    src: ['node_modules/msgpack5/dist/msgpack5.min.js'],
-                    dest: 'dist/browser/msgpack5.min.js'
-                }]
-            }
-        },
         concat: {
-            concatWampyMsgpack: {
+            concatWampySerializers: {
                 src: [
-                    'dist/browser/msgpack5.min.js',
-                    'dist/browser/msgpacksrlzr.min.js',
+                    'dist/browser/serializers4browser.min.js',
                     'dist/browser/wampy.min.js'
                 ],
                 dest: 'dist/browser/wampy-all.min.js'
@@ -80,6 +71,6 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('default', [
-        'clean:dist', 'babel', 'browserify', 'uglify', 'copy',
+        'clean:dist', 'babel', 'browserify', 'uglify',
         'concat', 'compress', 'clean:browserFolder']);
 };
