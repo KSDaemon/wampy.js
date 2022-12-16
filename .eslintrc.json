@@ -23,6 +23,8 @@
         "max-nested-callbacks": ["error", 5],
         "max-params": ["error", 5],
         "no-trailing-spaces": ["warn", { "skipBlankLines": true }],
+        "no-constant-condition": ["error"],
+        "no-else-return": ["error"],
         "object-curly-spacing": ["warn", "always"],
         "keyword-spacing": ["warn", { "before": true, "after": true, "overrides": {} }],
         "space-before-blocks": "warn",
