@@ -78,8 +78,8 @@
   "homepage": "https://github.com/KSDaemon/wampy.js#readme",
   "scripts": {
     "build": "node ./node_modules/.bin/grunt",
-    "lint": "node ./node_modules/eslint/bin/eslint src test Gruntfile.js",
-    "lint:fix": "node ./node_modules/eslint/bin/eslint --fix src test Gruntfile.js",
+    "lint": "node ./node_modules/eslint/bin/eslint src test Gruntfile.cjs",
+    "lint:fix": "node ./node_modules/eslint/bin/eslint --fix src test Gruntfile.cjs",
     "test": "npm run test:node && npm run test:browser",
     "test:node": "NODE_ENV=test c8 ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec",
     "test:node-no-crossbar": "NODE_ENV=test c8 ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec 'test/!(wampy-crossbar)-test.js'",

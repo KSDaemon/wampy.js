@@ -54,7 +54,7 @@ describe('Wampy.js Serializer Handshake', function () {
         wsSetProtocol('json');
 
         await wampy.connect();
-        const options = wampy.options()
+        const options = wampy.options();
         expect(options.serializer).to.be.instanceOf(JsonSerializer);
     });
 });
