@@ -5,7 +5,7 @@
  */
 
 import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
-import {WAMP_MSG_SPEC} from "../src/constants.js";
+import { WAMP_MSG_SPEC } from '../src/constants.js';
 
 const TIMEOUT = 15,
 
@@ -78,7 +78,7 @@ WebSocket.prototype.send = function (data) {
                 }
             ])
         });
-    }, 10)
+    }, 10);
 };
 
 export { WebSocket, setProtocol };
