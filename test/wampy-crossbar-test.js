@@ -1,75 +1,53 @@
 import { expect } from 'chai';
-import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer.js';
-import { JsonSerializer } from './../src/serializers/JsonSerializer.js';
-import { Wampy } from './../src/wampy.js';
 import websocket from 'websocket';
-const w3cwebsocket = websocket.w3cwebsocket;
+import { JsonSerializer } from './../src/serializers/JsonSerializer.js';
+import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer.js';
+import { Wampy } from './../src/wampy.js';
 
 describe('Wampy.js with Crossbar', function () {
     this.timeout(10000);
 
-    it('Works with Json serializer', function (done) {
+    const testUrl = 'ws://localhost:8888/test';
+    const defaultOptions = { realm: 'realm1', ws: websocket.w3cwebsocket };
+    const jsonSerializerOptions = { ...defaultOptions, serializer: new JsonSerializer() };
+    const msgpackSerializerOptions = { ...defaultOptions, serializer: new MsgpackSerializer() };
 
-        const wampy = new Wampy('ws://localhost:8888/test', {
-            realm: 'realm1',
-            serializer: new JsonSerializer(),
-            ws: w3cwebsocket
-        });
+    it('Works with Json serializer', async (done) => {
+        try {
+            const wampy = new Wampy(testUrl, jsonSerializerOptions);
 
-        wampy.connect().then(() => {
-            wampy.register('sayhello.test', () => {
-                return { argsList: ['hello'] };
-            }).then(() => {
-                const client = new Wampy('ws://localhost:8888/test', {
-                    realm: 'realm1',
-                    serializer: new JsonSerializer(),
-                    ws: w3cwebsocket
-                });
-                client.connect().then(() => {
-                    client.call('sayhello.test', []).then((result) => {
-                        expect(result.argsList.shift()).to.equal('hello');
-                        done();
-                    }).catch((e) => {
-                        done('Error happened');
-                    });
+            await wampy.connect();
+            await wampy.register('sayhello.test', () => { return { argsList: ['hello'] }; });
 
-                });
-            }).catch((e) => {
-                done('Error happened');
-            });
-        });
+            const client = new Wampy(testUrl, jsonSerializerOptions);
 
+            await client.connect();
+            const result = await client.call('sayhello.test', []);
+
+            expect(result.argsList.shift()).to.equal('hello');
+            done();
+        } catch (error) {
+            done(error);
+        }
     });
 
-    it('works with Msgpack serialization', function (done) {
+    it('works with Msgpack serialization', async (done) => {
+        try {
+            const wampy = new Wampy(testUrl, msgpackSerializerOptions);
 
-        const wampy = new Wampy('ws://localhost:8888/test', {
-            realm: 'realm1',
-            serializer: new MsgpackSerializer(),
-            ws: w3cwebsocket
-        });
+            await wampy.connect();
+            await wampy.register('sayhello2', () => { return { argsList: ['hello'] }; });
 
-        wampy.connect().then(() => {
-            wampy.register('sayhello2', () => {
-                return { argsList: ['hello'] };
-            }).then(() => {
-                const client = new Wampy('ws://localhost:8888/test', {
-                    realm: 'realm1',
-                    serializer: new MsgpackSerializer(),
-                    ws: w3cwebsocket
-                });
-                client.connect().then(() => {
-                    client.call('sayhello2', []).then((result) => {
-                        expect(result.argsList.shift()).to.equal('hello');
-                        done();
-                    });
-                }).catch((e) => {
-                    done('Error happened');
-                });
-            }).catch((e) => {
-                done('Error happened');
-            });
-        });
+            const client = new Wampy(testUrl, msgpackSerializerOptions);
 
+            await client.connect();
+            const result = await client.call('sayhello2', []);
+
+            expect(result.argsList.shift()).to.equal('hello');
+            done();
+        } catch (error) {
+            done(error);
+        }
     });
 });
+
