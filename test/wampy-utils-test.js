@@ -12,7 +12,7 @@ import * as utils  from './../src/utils.js';
 let getWebSocket = utils.getWebSocket;
 
 function getPseudoBrowserWebSocket (url, protocols, ws, headers, requestOptions) {
-    const parsedUrl = utils.getServerUrlBrowser(url);
+    const parsedUrl = utils.getServerUrlForBrowser(url);
 
     if (!parsedUrl) {
         return null;
