@@ -59,4 +59,3 @@ export function getNewPromise () {
 
     return promise;
 }
-
