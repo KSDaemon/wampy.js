@@ -12,42 +12,31 @@ describe('Wampy.js with Crossbar', function () {
     const jsonSerializerOptions = { ...defaultOptions, serializer: new JsonSerializer() };
     const msgpackSerializerOptions = { ...defaultOptions, serializer: new MsgpackSerializer() };
 
-    it('Works with Json serializer', async (done) => {
-        try {
-            const wampy = new Wampy(testUrl, jsonSerializerOptions);
+    it('Works with Json serializer', async () => {
+        const wampy = new Wampy(testUrl, jsonSerializerOptions);
 
-            await wampy.connect();
-            await wampy.register('sayhello.test', () => { return { argsList: ['hello'] }; });
+        await wampy.connect();
+        await wampy.register('sayhello.test', () => { return { argsList: ['hello'] }; });
 
-            const client = new Wampy(testUrl, jsonSerializerOptions);
+        const client = new Wampy(testUrl, jsonSerializerOptions);
 
-            await client.connect();
-            const result = await client.call('sayhello.test', []);
+        await client.connect();
+        const result = await client.call('sayhello.test', []);
 
-            expect(result.argsList.shift()).to.equal('hello');
-            done();
-        } catch (error) {
-            done(error);
-        }
+        expect(result.argsList.shift()).to.equal('hello');
     });
 
-    it('works with Msgpack serialization', async (done) => {
-        try {
-            const wampy = new Wampy(testUrl, msgpackSerializerOptions);
+    it('works with Msgpack serialization', async () => {
+        const wampy = new Wampy(testUrl, msgpackSerializerOptions);
 
-            await wampy.connect();
-            await wampy.register('sayhello2', () => { return { argsList: ['hello'] }; });
+        await wampy.connect();
+        await wampy.register('sayhello2', () => { return { argsList: ['hello'] }; });
 
-            const client = new Wampy(testUrl, msgpackSerializerOptions);
+        const client = new Wampy(testUrl, msgpackSerializerOptions);
 
-            await client.connect();
-            const result = await client.call('sayhello2', []);
+        await client.connect();
+        const result = await client.call('sayhello2', []);
 
-            expect(result.argsList.shift()).to.equal('hello');
-            done();
-        } catch (error) {
-            done(error);
-        }
+        expect(result.argsList.shift()).to.equal('hello');
     });
 });
-
