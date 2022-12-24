@@ -78,12 +78,12 @@ serializers.forEach(function (item) {
                         this.protocol = origSerializer.protocol;
                         this.isBinary = origSerializer.isBinary;
                     }
-                    encode() {
-                        throw new Error('failed encode')
+                    encode () {
+                        throw new Error('failed encode');
                     }
 
-                    decode() {
-                        throw new Error('failed decode')
+                    decode () {
+                        throw new Error('failed decode');
                     }
                 };
                 let wampy = new Wampy(routerUrl, {
@@ -863,6 +863,34 @@ serializers.forEach(function (item) {
                 }).disconnect();
             });
 
+            it('disallows to publish/subscribe to topic if uri validation mode is specified incorrectly', async function () {
+                wampy.options({ uriValidation: 'invalid' });
+                try {
+                    await wampy.subscribe('qwe.asd.zxc.', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+
+                try {
+                    await wampy.subscribe('good.uri.topic', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+
+                try {
+                    await wampy.publish('qwe.asd.zxc.', 'payload');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+
+                try {
+                    await wampy.publish('good.uri.topic', 'payload');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+                wampy.options({ uriValidation: 'strict' });
+            });
+
             it('checks for valid advanced options during subscribing to topic', async function () {
                 try {
                     await wampy.subscribe('qqq.www.eee', function () {}, 'string instead of object');
@@ -921,14 +949,10 @@ serializers.forEach(function (item) {
             });
 
             it('allows to subscribe to topic lax URI (with loose check option)', async function () {
-                wampy.options({uriValidation: 'loose'});
+                wampy.options({ uriValidation: 'loose' });
 
-                try {
-                    await wampy.subscribe('qwe//adsa//dfff', function (e) {});
-                } catch (e) {
-                    throw e
-                }
-                wampy.options({uriValidation: 'strict'});
+                await wampy.subscribe('qwe//adsa//dfff', function (e) {});
+                wampy.options({ uriValidation: 'strict' });
             });
 
 
@@ -1447,11 +1471,45 @@ serializers.forEach(function (item) {
                                 expect(e).to.be.instanceOf(Errors.UriError);
                             }
 
+                            try {
+                                await wampy.register('wamp.prohibit.uri', function (e) {});
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.UriError);
+                            }
+
                             done();
 
                         }, 1);
                     }
                 }).disconnect();
+            });
+
+            it('disallows to call/register an RPC if uri validation mode is specified incorrectly', async function () {
+                wampy.options({ uriValidation: 'invalid' });
+                try {
+                    await wampy.register('qwe.asd.zxc.', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+
+                try {
+                    await wampy.register('good.uri.topic', function (e) {});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+
+                try {
+                    await wampy.call('qwe.asd.zxc.', 'payload');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+
+                try {
+                    await wampy.call('good.uri.topic', 'payload');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.UriError);
+                }
+                wampy.options({ uriValidation: 'strict' });
             });
 
             it('checks for valid advanced options during RPC registration', function () {
