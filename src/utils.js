@@ -1,35 +1,36 @@
 import { isNode } from './constants.js';
 
-export function getServerUrlBrowser (url) {
-    let scheme, port;
+function isWebSocketSchemeSpecified (url) {
+    return /^ws(s)?:\/\//.test(url);
+}
 
-    if (/^ws(s)?:\/\//.test(url)) {   // ws scheme is specified
+function getServerUrlForNode (url) {
+    return isWebSocketSchemeSpecified(url) ? url : null;
+}
+
+function getServerUrlForBrowser (url) {
+    if (isWebSocketSchemeSpecified(url)) {
         return url;
     }
 
-    scheme = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+    const isSecureProtocol = window.location.protocol === 'https:';
+    const scheme = isSecureProtocol ? 'wss://' : 'ws://';
+    const port = window.location.port ? `:${window.location.port}` : '';
 
     if (!url) {
-        port = window.location.port !== '' ? ':' + window.location.port : '';
-        return scheme + window.location.hostname + port + '/ws';
-    } else if (url[0] === '/') {    // just path on current server
-        port = window.location.port !== '' ? ':' + window.location.port : '';
-        return scheme + window.location.hostname + port + url;
-    } else {    // assuming just domain+path
-        return scheme + url;
+        return `${scheme}${window.location.hostname}${port}/ws`;
     }
+
+    if (url.startsWith('/')) {    // just path on current server
+        return `${scheme}${window.location.hostname}${port}${url}`;
+    }
+
+    // assuming just domain + path
+    return `${scheme}${url}`;
 }
 
-export function getServerUrlNode (url) {
-    if (/^ws(s)?:\/\//.test(url)) {   // ws scheme is specified
-        return url;
-    } else {
-        return null;
-    }
-}
-
-export function getWebSocket (url, protocols, ws, headers, requestOptions) {
-    const parsedUrl = isNode ? getServerUrlNode(url) : getServerUrlBrowser(url);
+function getWebSocket (url, protocols, ws, headers, requestOptions) {
+    const parsedUrl = isNode ? getServerUrlForNode(url) : getServerUrlForBrowser(url);
 
     if (!parsedUrl) {
         return null;
@@ -39,18 +40,16 @@ export function getWebSocket (url, protocols, ws, headers, requestOptions) {
         return new ws(parsedUrl, protocols, null, headers, requestOptions);
     } else if (isNode) {    // we're in node, but no webSocket provided
         return null;
-    } else if ('WebSocket' in window) {
-        // Chrome, MSIE, newer Firefox
+    } else if ('WebSocket' in window) { // Chrome, MSIE, newer Firefox
         return new window.WebSocket(parsedUrl, protocols);
-    } else if ('MozWebSocket' in window) {
-        // older versions of Firefox
+    } else if ('MozWebSocket' in window) { // older versions of Firefox
         return new window.MozWebSocket(parsedUrl, protocols);
     }
 
     return null;
 }
 
-export function getNewPromise () {
+function getNewPromise () {
     let promise = {};
 
     promise.promise = new Promise(function (resolve, reject) {
@@ -60,3 +59,5 @@ export function getNewPromise () {
 
     return promise;
 }
+
+export { getWebSocket, getNewPromise };
