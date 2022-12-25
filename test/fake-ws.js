@@ -13,6 +13,12 @@ import { WAMP_MSG_SPEC } from '../src/constants.js';
 
 const TIMEOUT = 15;
 
+const serializers = {
+    msgpack: new MsgpackSerializer(),
+    cbor: new CborSerializer(),
+    json: new JsonSerializer(),
+};
+
 let sendDataCursor = 0,
     clientMessageQueue = [],
     openTimer = null,
@@ -22,20 +28,13 @@ let sendDataCursor = 0,
         this.url = url;
         this.protocols = protocols;
         this.transportEncoding = this.protocols[0].split('.')[2];
-        this.protocol = 'wamp.2.' + this.transportEncoding;
+        this.protocol = `wamp.2.${this.transportEncoding}`;
 
-        switch (this.transportEncoding) {
-            case 'msgpack':
-                this.binaryType = 'arraybuffer';
-                this.encoder = new MsgpackSerializer();
-                break;
-            case 'cbor':
-                this.binaryType = 'arraybuffer';
-                this.encoder = new CborSerializer();
-                break;
-            default:
-                this.encoder = new JsonSerializer();
+        if (['msgpack', 'cbor'].includes(this.transportEncoding)) {
+            this.binaryType = 'arraybuffer';
         }
+
+        this.encoder = serializers[this.transportEncoding] || new JsonSerializer();
 
         this.encode = this.encoder.encode;
         this.decode = this.encoder.decode;
@@ -47,10 +46,7 @@ let sendDataCursor = 0,
 
         this.readyState = 1;    // Closed
 
-        openTimer = setTimeout(() => {
-
-            this.onopen();
-        }, TIMEOUT);
+        openTimer = setTimeout(() => { this.onopen(); }, TIMEOUT);
     };
 
 function clearTimers () {
@@ -70,11 +66,11 @@ function resetCursor () {
 }
 
 function processQueue () {
-    let f;
+    let currentClientMessage;
 
     while (clientMessageQueue.length) {
-        f = clientMessageQueue.shift();
-        f();
+        currentClientMessage = clientMessageQueue.shift();
+        currentClientMessage();
     }
 }
 
@@ -82,7 +78,7 @@ function startTimers () {
     sendTimer = setInterval(processQueue, TIMEOUT);
 }
 
-WebSocket.prototype.close = function (code, reason) {
+WebSocket.prototype.close = function () {
     if (openTimer) {
         clearTimeout(openTimer);
         openTimer = null;
@@ -101,74 +97,43 @@ WebSocket.prototype.abort = function () {
 };
 
 WebSocket.prototype.send = function (data) {
-
     let rec_data = this.decode(data);
+    let enc_data, i, options, pptSerializer;
+    let send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
 
-    // console.log('Server received a message: ', rec_data);
-    let send_data, enc_data, i, opts, pptSerializer;
-    send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
-
-    if ((rec_data[0] === WAMP_MSG_SPEC.CALL ||
-            rec_data[0] === WAMP_MSG_SPEC.PUBLISH ||
-            rec_data[0] === WAMP_MSG_SPEC.YIELD) &&
-        send_data.data &&
-        (send_data.data[0] === WAMP_MSG_SPEC.EVENT ||
-            send_data.data[0] === WAMP_MSG_SPEC.RESULT ||
-            send_data.data[0] === WAMP_MSG_SPEC.INVOCATION)) {
-
-        if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
-            opts = send_data.data[3];
-        } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
-            opts = send_data.data[2];
-        } else if (send_data.data[0] === WAMP_MSG_SPEC.INVOCATION) {
-            opts = send_data.data[3];
+    if (
+        ([WAMP_MSG_SPEC.CALL, WAMP_MSG_SPEC.PUBLISH, WAMP_MSG_SPEC.YIELD].includes(rec_data?.[0])) &&
+        ([WAMP_MSG_SPEC.EVENT, WAMP_MSG_SPEC.RESULT, WAMP_MSG_SPEC.INVOCATION].includes(send_data?.data?.[0]))
+    ) {
+        if ([WAMP_MSG_SPEC.EVENT, WAMP_MSG_SPEC.INVOCATION].includes(send_data.data[0])) {
+            options = send_data.data[3];
+        } else if ([WAMP_MSG_SPEC.RESULT].includes(send_data.data[0])) {
+            options = send_data.data[2];
         }
 
-        // Check for PPT mode and encode payload with appreciate serializer
-        if (opts.ppt_scheme &&
-            opts.ppt_serializer &&
-            opts.ppt_serializer !== 'native') {
-            switch (opts.ppt_serializer) {
-                case 'cbor':
-                    pptSerializer = new CborSerializer();
-                    break;
-                case 'msgpack':
-                    pptSerializer = new MsgpackSerializer();
-                    break;
-                case 'json':
-                    pptSerializer = new JsonSerializer();
-                    break;
-            }
+        // Check for PPT mode and encode payload with serializer
+        if (options.ppt_scheme &&
+            options.ppt_serializer &&
+            options.ppt_serializer !== 'native') {
+            pptSerializer = serializers[options.ppt_serializer];
 
-            if (send_data.data[0] === WAMP_MSG_SPEC.EVENT) {
-                send_data.data[4] = [
-                    send_data.ruinPayload ?
-                        pptSerializer.encode(send_data.data[4][0]) + '123' :
-                        pptSerializer.encode(send_data.data[4][0])
-                ];
-            } else if (send_data.data[0] === WAMP_MSG_SPEC.RESULT) {
-                send_data.data[3] = [
-                    send_data.ruinPayload ?
-                        pptSerializer.encode(send_data.data[3][0]) + '123' :
-                        pptSerializer.encode(send_data.data[3][0])
-                ];
-            } else if (send_data.data[0] === WAMP_MSG_SPEC.INVOCATION) {
-                send_data.data[4] = [
-                    send_data.ruinPayload ?
-                        pptSerializer.encode(send_data.data[4][0]) + '123' :
-                        pptSerializer.encode(send_data.data[4][0])
-                ];
+            if ([WAMP_MSG_SPEC.EVENT, WAMP_MSG_SPEC.INVOCATION].includes(send_data.data[0])) {
+                const payload = pptSerializer.encode(send_data.data[4][0]);
+                const ruinedPayload = String(payload);
+
+                send_data.data[4] = [send_data.ruinPayload ? ruinedPayload : payload];
+            } else if ([WAMP_MSG_SPEC.RESULT].includes(send_data.data[0])) {
+                const payload = pptSerializer.encode(send_data.data[3][0]);
+                const ruinedPayload = String(payload);
+
+                send_data.data[3] = [send_data.ruinPayload ? ruinedPayload : payload];
             }
         }
     }
 
-    // console.log('Data received by server:', rec_data);
-    // console.log('Is silent answer? ', send_data.silent ? 'yes' : 'no');
     if (send_data.silent) {
         return;
     }
-
-    // console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor);
 
     if (send_data.data) {
         // Prepare answer (copy request id from request to answer, etc)
@@ -179,36 +144,25 @@ WebSocket.prototype.send = function (data) {
             }
         }
 
-        enc_data = {
-            data: send_data.ruinMessage ? this.encode(send_data.data) + '123' : this.encode(send_data.data)
-        };
+        const message = this.encode(send_data.data);
+        const ruinedMessage = `${String(message)}123`;
+
+        enc_data = { data: send_data.ruinMessage ? ruinedMessage : message };
     }
 
     clientMessageQueue.push(() => {
-
         if (send_data.data) {
             this.onmessage(enc_data);
         }
 
-        // console.log('Processing message: data? ', send_data.data ? 'yes' : 'no',
-        //     ' next? ', send_data.next ? 'yes' : 'no',
-        //     ' abort? ', send_data.abort ? 'yes' : 'no',
-        //     ' close? ', send_data.close ? 'yes' : 'no')
-        if (send_data.next) {           // Send to client next message
-            setTimeout(() => {
-                this.send(data);
-            }, TIMEOUT);
-        } else if (send_data.abort) {   // Abort ws connection
-            setTimeout(() => {
-                this.abort();
-            }, TIMEOUT);
-        } else if (send_data.close) {   // Close ws connection
-            setTimeout(() => {
-                this.close();
-            }, TIMEOUT);
+        if (send_data.next) {           // Send next message to client
+            setTimeout(() => { this.send(data); }, TIMEOUT);
+        } else if (send_data.abort) {   // Abort websocket connection
+            setTimeout(() => { this.abort(); }, TIMEOUT);
+        } else if (send_data.close) {   // Close websocket connection
+            setTimeout(() => { this.close(); }, TIMEOUT);
         }
     });
 };
 
 export { WebSocket, startTimers, clearTimers, resetCursor };
-
