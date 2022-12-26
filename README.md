@@ -2,7 +2,7 @@
 
 ## About
 
-Feature-rich, zero dependency (by default) WAMP (WebSocket Application Messaging Protocol)
+Feature-rich, lightweight and zero dependency (by default) WAMP (WebSocket Application Messaging Protocol)
 Javascript implementation (for browser and node.js)
 
 [![NPM version][npm-image]][npm-url]
