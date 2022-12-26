@@ -431,10 +431,10 @@ class Wampy {
         const constructor = input?.constructor;
         const prototype = constructor?.prototype;
 
-        return Object.prototype.toString.call(input) === '[object Object]'      // checks for primitives, null, Arrays, DOM, etc.
-            && typeof constructor === 'function'                                // checks for modified constructors
-            && Object.hasOwn(prototype, 'isPrototypeOf')                        // checks for missing object-specific property
-            && Object.prototype.toString.call(prototype) === '[object Object]'; // checks for modified prototypes
+        return Object.prototype.toString.call(input) === '[object Object]'     // checks for primitives, null, Arrays, DOM, etc.
+            && typeof constructor === 'function'                               // checks for modified constructors
+            && Object.prototype.toString.call(prototype) === '[object Object]' // checks for modified prototypes
+            && Object.hasOwnProperty.call(prototype, 'isPrototypeOf');         // checks for missing object-specific property
     }
 
     /**
