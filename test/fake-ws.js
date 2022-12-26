@@ -13,6 +13,9 @@ import { WAMP_MSG_SPEC } from '../src/constants.js';
 
 const TIMEOUT = 15;
 
+// Set this to true to enable console.logs
+const isDebugMode = false;
+
 const serializers = {
     msgpack: new MsgpackSerializer(),
     cbor: new CborSerializer(),
@@ -20,7 +23,7 @@ const serializers = {
 };
 
 let sendDataCursor = 0,
-    clientMessageQueue = [],
+    clientMessageHandlersQueue = [],
     openTimer = null,
     sendTimer = null,
 
@@ -66,11 +69,11 @@ function resetCursor () {
 }
 
 function processQueue () {
-    let currentClientMessage;
+    let currentHandler;
 
-    while (clientMessageQueue.length) {
-        currentClientMessage = clientMessageQueue.shift();
-        currentClientMessage();
+    while (clientMessageHandlersQueue.length) {
+        currentHandler = clientMessageHandlersQueue.shift();
+        currentHandler();
     }
 }
 
@@ -101,6 +104,8 @@ WebSocket.prototype.send = function (data) {
     let enc_data, i, options, pptSerializer;
     let send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
 
+    if (isDebugMode) { console.log('Server received a message: ', rec_data); }
+
     if (
         ([WAMP_MSG_SPEC.CALL, WAMP_MSG_SPEC.PUBLISH, WAMP_MSG_SPEC.YIELD].includes(rec_data?.[0])) &&
         ([WAMP_MSG_SPEC.EVENT, WAMP_MSG_SPEC.RESULT, WAMP_MSG_SPEC.INVOCATION].includes(send_data?.data?.[0]))
@@ -119,21 +124,25 @@ WebSocket.prototype.send = function (data) {
 
             if ([WAMP_MSG_SPEC.EVENT, WAMP_MSG_SPEC.INVOCATION].includes(send_data.data[0])) {
                 const payload = pptSerializer.encode(send_data.data[4][0]);
-                const ruinedPayload = String(payload);
+                const ruinedPayload = `${String(payload)}123`;
 
                 send_data.data[4] = [send_data.ruinPayload ? ruinedPayload : payload];
             } else if ([WAMP_MSG_SPEC.RESULT].includes(send_data.data[0])) {
                 const payload = pptSerializer.encode(send_data.data[3][0]);
-                const ruinedPayload = String(payload);
+                const ruinedPayload = `${String(payload)}123`;
 
                 send_data.data[3] = [send_data.ruinPayload ? ruinedPayload : payload];
             }
         }
     }
 
+    if (isDebugMode) { console.log('Is silent answer? ', Boolean(send_data.silent)); }
+
     if (send_data.silent) {
         return;
     }
+
+    if (isDebugMode) { console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor); }
 
     if (send_data.data) {
         // Prepare answer (copy request id from request to answer, etc)
@@ -150,10 +159,16 @@ WebSocket.prototype.send = function (data) {
         enc_data = { data: send_data.ruinMessage ? ruinedMessage : message };
     }
 
-    clientMessageQueue.push(() => {
+    clientMessageHandlersQueue.push(() => {
         if (send_data.data) {
             this.onmessage(enc_data);
         }
+
+        if (isDebugMode) { console.log('Processing message:',
+            ' data? ', Boolean(send_data.data),
+            ' next? ', Boolean(send_data.next),
+            ' abort? ', Boolean(send_data.abort),
+            ' close? ', Boolean(send_data.close)); }
 
         if (send_data.next) {           // Send next message to client
             setTimeout(() => { this.send(data); }, TIMEOUT);
