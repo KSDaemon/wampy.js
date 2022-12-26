@@ -591,16 +591,13 @@ class Wampy {
         } else if (this._isPlainObject(payload)) {
             // It's a wampy unified form of payload passing
             if (payload.argsList || payload.argsDict) {
+                const isArgsListInvalid = payload.argsList && !Array.isArray(payload.argsList);
+                const isArgsDictInvalid = payload.argsDict && !this._isPlainObject(payload.argsDict);
 
-                if (payload.argsList && !Array.isArray(payload.argsList)) {
+                if (isArgsListInvalid || isArgsDictInvalid) {
+                    const invalidParameter = isArgsListInvalid ? payload.argsList : payload.argsDict;
                     err = true;
-                    this._fillOpStatusByError(new Errors.InvalidParamError(payload.argsList));
-                    return { err, payloadItems };
-                }
-
-                if (payload.argsDict && !this._isPlainObject(payload.argsDict)) {
-                    err = true;
-                    this._fillOpStatusByError(new Errors.InvalidParamError(payload.argsDict));
+                    this._fillOpStatusByError(new Errors.InvalidParamError(invalidParameter));
                     return { err, payloadItems };
                 }
 
