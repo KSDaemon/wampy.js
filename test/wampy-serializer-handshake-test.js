@@ -9,37 +9,37 @@ describe('Wampy.js Serializer Handshake', function () {
     this.timeout(0);
 
     const testUrl = 'ws://fake.server.org/ws/';
-    const defaultOptions = { realm: 'AppRealm', ws: WebSocket };
-    const jsonSerializerOptions = { ...defaultOptions, serializer: new JsonSerializer() };
-    const cborSerializerOptions = { ...defaultOptions, serializer: new CborSerializer() };
+    const wampyCommonOptions = { realm: 'AppRealm', ws: WebSocket };
+    const wampyOptionsWithJsonSerializer = { ...wampyCommonOptions, serializer: new JsonSerializer() };
+    const wampyOptionsWithCborSerializer = { ...wampyCommonOptions, serializer: new CborSerializer() };
 
     it('disallows to connect when server choose not available serializer', async () => {
         try {
-            const wampy = new Wampy(testUrl, jsonSerializerOptions);
+            const wampy = new Wampy(testUrl, wampyOptionsWithJsonSerializer);
 
             wsSetProtocol('cbor');
             await wampy.connect();
-        } catch (error) {
-            expect(error).to.be.instanceOf(NoSerializerAvailableError);
+        } catch (e) {
+            expect(e).to.be.instanceOf(NoSerializerAvailableError);
         }
     });
 
     it('calls onError if provided when server choose not available serializer',  async () => {
         try {
             const wampy = new Wampy(testUrl, {
-                ...jsonSerializerOptions,
-                onError: (error) => { expect(error).to.be.instanceOf(NoSerializerAvailableError); }
+                ...wampyOptionsWithJsonSerializer,
+                onError: (e) => { expect(e).to.be.instanceOf(NoSerializerAvailableError); }
             });
 
             wsSetProtocol('cbor');
             await wampy.connect();
-        } catch (error) {
-            expect(error).to.be.instanceOf(NoSerializerAvailableError);
+        } catch (e) {
+            expect(e).to.be.instanceOf(NoSerializerAvailableError);
         }
     });
 
     it('falls back to Json serializer if server supports only that', async () => {
-        const wampy = new Wampy(testUrl, cborSerializerOptions);
+        const wampy = new Wampy(testUrl, wampyOptionsWithCborSerializer);
 
         wsSetProtocol('json');
         await wampy.connect();
