@@ -380,9 +380,9 @@ class Wampy {
         };
 
         if (this._isPlainObject(options)) {
-            this._options = this._merge(this._options, options);
+            this._options = Object.assign({}, this._options, options);
         } else if (this._isPlainObject(url)) {
-            this._options = this._merge(this._options, url);
+            this._options = Object.assign({}, this._options, url);
         }
 
     }
@@ -409,23 +409,6 @@ class Wampy {
      */
     _getReqId () {
         return ++this._cache.reqId;
-    }
-
-    /**
-     * Merge argument objects into one
-     * @returns {Object}
-     * @private
-     */
-    _merge (...args) {
-        const obj = {}, l = args.length;
-        let i, attr;
-
-        for (i = 0; i < l; i++) {
-            for (attr in args[i]) {
-                obj[attr] = args[i][attr];
-            }
-        }
-        return obj;
     }
 
     /**
@@ -847,7 +830,7 @@ class Wampy {
      * @private
      */
     _wsOnOpen () {
-        const options = this._merge(this._options.helloCustomDetails, this._wamp_features),
+        const options = Object.assign({}, this._options.helloCustomDetails, this._wamp_features),
             serverProtocol = this._ws.protocol ? this._ws.protocol.split('.')[2] : '';
         if (this._options.authid) {
             options.authmethods = this._options.authmethods;
@@ -1613,7 +1596,7 @@ class Wampy {
         if (typeof (opts) === 'undefined') {
             return this._options;
         } else if (this._isPlainObject(opts)) {
-            this._options = this._merge(this._options, opts);
+            this._options = Object.assign({}, this._options, opts);
             return this;
         }
     }
