@@ -1797,15 +1797,15 @@ class Wampy {
             return true;
         }
 
-        const requestId = this._getReqId();
+        const reqId = this._getReqId();
 
-        this._requests[requestId] = { topic: subscription.topic, callbacks: getNewPromise() };
+        this._requests[reqId] = { topic: subscription.topic, callbacks: getNewPromise() };
 
         // WAMP_SPEC: [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
-        this._send([WAMP_MSG_SPEC.UNSUBSCRIBE, requestId, subscription.id]);
-        this._cache.opStatus = { ...SUCCESS, reqId: requestId };
+        this._send([WAMP_MSG_SPEC.UNSUBSCRIBE, reqId, subscription.id]);
+        this._cache.opStatus = { ...SUCCESS, reqId: reqId };
 
-        return this._requests[requestId].callbacks.promise;
+        return this._requests[reqId].callbacks.promise;
     }
 
     /**
