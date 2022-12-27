@@ -2061,7 +2061,7 @@ class Wampy {
     /**
      * RPC invocation cancelling
      *
-     * @param {int} requestId RPC call request ID
+     * @param {int} reqId RPC call request ID
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { mode: string|one of the possible modes:
      *                                  "skip" | "kill" | "killnowait". Skip is default.
@@ -2069,12 +2069,12 @@ class Wampy {
      *
      * @returns {Boolean}
      */
-    cancel (requestId, advancedOptions) {
+    cancel (reqId, advancedOptions) {
         if (!this._preReqChecks(null, 'dealer') || !this._checkRouterFeature('dealer', 'call_canceling')) {
             throw this._cache.opStatus.error;
         }
 
-        if (!requestId || !this._calls[requestId]) {
+        if (!reqId || !this._calls[reqId]) {
             const nonExistRPCReqIdError = new Errors.NonExistRPCReqIdError();
             this._fillOpStatusByError(nonExistRPCReqIdError);
             throw nonExistRPCReqIdError;
@@ -2097,8 +2097,8 @@ class Wampy {
         }
 
         // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
-        this._send([WAMP_MSG_SPEC.CANCEL, requestId, { mode }]);
-        this._cache.opStatus = { ...SUCCESS, reqId: requestId };
+        this._send([WAMP_MSG_SPEC.CANCEL, reqId, { mode }]);
+        this._cache.opStatus = { ...SUCCESS, reqId: reqId };
 
         return true;
     }
