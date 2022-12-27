@@ -1770,57 +1770,45 @@ class Wampy {
 
     /**
      * Unsubscribe from topic
-     * @param {string|number} subscriptionIdKey Subscription ID or Key, received during .subscribe()
+     * @param {string|number} subscriptionIdOrKey Subscription ID or Key, received during .subscribe()
      * @param {function} [onEvent] - received event callback to remove (optional). If not provided -
      *                               all callbacks will be removed and unsubscribed on the server
      * @returns {Promise}
      */
-    async unsubscribe (subscriptionIdKey, onEvent) {
-        let reqId;
-        const callbacks = getNewPromise();
-
+    async unsubscribe (subscriptionIdOrKey, onEvent) {
         if (!this._preReqChecks(null, 'broker')) {
             throw this._cache.opStatus.error;
         }
 
-        const sub = this._subscriptionsById.get(subscriptionIdKey) ||
-            this._subscriptionsByKey.get(subscriptionIdKey);
-        if (sub) {
+        const subscription = this._subscriptionsById.get(subscriptionIdOrKey) ||
+            this._subscriptionsByKey.get(subscriptionIdOrKey);
 
-            reqId = this._getReqId();
-
-            if (typeof onEvent === 'function') {
-                const i = sub.callbacks.indexOf(onEvent);
-                if (i >= 0) {
-                    sub.callbacks.splice(i, 1);
-                }
-            } else {
-                sub.callbacks = [];
-            }
-
-            if (sub.callbacks.length) {
-                // There are another callbacks for this topic
-                this._cache.opStatus = SUCCESS;
-                return true;
-            }
-
-            this._requests[reqId] = {
-                topic: sub.topic,
-                callbacks
-            };
-
-            // WAMP_SPEC: [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
-            this._send([WAMP_MSG_SPEC.UNSUBSCRIBE, reqId, sub.id]);
-
-        } else {
+        if (!subscription) {
             const nonExistUnsubscribeError = new Errors.NonExistUnsubscribeError();
             this._fillOpStatusByError(nonExistUnsubscribeError);
             throw nonExistUnsubscribeError;
         }
 
-        this._cache.opStatus = SUCCESS;
-        this._cache.opStatus.reqId = reqId;
-        return callbacks.promise;
+        subscription.callbacks = typeof onEvent === 'function'
+            ? subscription.callbacks.filter((callback) => callback !== onEvent)
+            : [];
+
+        const isThereOtherCallbackForThisTopic = subscription.callbacks.length > 0;
+
+        if (isThereOtherCallbackForThisTopic) {
+            this._cache.opStatus = SUCCESS;
+            return true;
+        }
+
+        const reqId = this._getReqId();
+
+        this._requests[reqId] = { topic: subscription.topic, callbacks: getNewPromise() };
+
+        // WAMP_SPEC: [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
+        this._send([WAMP_MSG_SPEC.UNSUBSCRIBE, reqId, subscription.id]);
+        this._cache.opStatus = { ...SUCCESS, reqId: reqId };
+
+        return this._requests[reqId].callbacks.promise;
     }
 
     /**
@@ -2072,13 +2060,7 @@ class Wampy {
      * @returns {Boolean}
      */
     cancel (reqId, advancedOptions) {
-        const options = {};
-
-        if (!this._preReqChecks(null, 'dealer')) {
-            throw this._cache.opStatus.error;
-        }
-
-        if (!this._checkRouterFeature('dealer', 'call_canceling')) {
+        if (!this._preReqChecks(null, 'dealer') || !this._checkRouterFeature('dealer', 'call_canceling')) {
             throw this._cache.opStatus.error;
         }
 
@@ -2088,26 +2070,25 @@ class Wampy {
             throw nonExistRPCReqIdError;
         }
 
-        if (this._isPlainObject(advancedOptions)) {
-            if (Object.hasOwnProperty.call(advancedOptions, 'mode')) {
-                if (/skip|kill|killnowait/.test(advancedOptions.mode)) {
-                    options.mode = advancedOptions.mode;
-                } else {
-                    const error = new Errors.InvalidParamError('mode');
-                    this._fillOpStatusByError(error);
-                    throw error;
-                }
+        if (!this._isPlainObject(advancedOptions) && typeof (advancedOptions) !== 'undefined') {
+            const invalidParamError = new Errors.InvalidParamError('advancedOptions');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
+        }
+
+        let mode;
+        if (this._isPlainObject(advancedOptions) && Object.hasOwnProperty.call(advancedOptions, 'mode')) {
+            if (!['skip', 'kill', 'killnowait'].includes(advancedOptions.mode)) {
+                const error = new Errors.InvalidParamError('mode');
+                this._fillOpStatusByError(error);
+                throw error;
             }
-        } else if (typeof (advancedOptions) !== 'undefined') {
-            const error = new Errors.InvalidParamError('advancedOptions');
-            this._fillOpStatusByError(error);
-            throw error;
+            mode = advancedOptions.mode;
         }
 
         // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
-        this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
-        this._cache.opStatus = SUCCESS;
-        this._cache.opStatus.reqId = reqId;
+        this._send([WAMP_MSG_SPEC.CANCEL, reqId, { mode }]);
+        this._cache.opStatus = { ...SUCCESS, reqId: reqId };
 
         return true;
     }
