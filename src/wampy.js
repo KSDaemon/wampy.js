@@ -412,16 +412,6 @@ class Wampy {
     }
 
     /**
-     * Check if value is array
-     * @param obj
-     * @returns {boolean}
-     * @private
-     */
-    _isArray (obj) {
-        return (!!obj) && (Array.isArray(obj));
-    }
-
-    /**
      * Check if input is an object literal
      * @param input
      * @returns {boolean}
@@ -572,21 +562,18 @@ class Wampy {
     _packPPTPayload (payload, options) {
         let payloadItems = [], err = false, argsList, argsDict;
 
-        if (this._isArray(payload)) {
+        if (Array.isArray(payload)) {
             argsList = payload;
         } else if (this._isPlainObject(payload)) {
             // It's a wampy unified form of payload passing
             if (payload.argsList || payload.argsDict) {
+                const isArgsListInvalid = payload.argsList && !Array.isArray(payload.argsList);
+                const isArgsDictInvalid = payload.argsDict && !this._isPlainObject(payload.argsDict);
 
-                if (payload.argsList && !this._isArray(payload.argsList)) {
+                if (isArgsListInvalid || isArgsDictInvalid) {
+                    const invalidParameter = isArgsListInvalid ? payload.argsList : payload.argsDict;
                     err = true;
-                    this._fillOpStatusByError(new Errors.InvalidParamError(payload.argsList));
-                    return { err, payloadItems };
-                }
-
-                if (payload.argsDict && !this._isPlainObject(payload.argsDict)) {
-                    err = true;
-                    this._fillOpStatusByError(new Errors.InvalidParamError(payload.argsDict));
+                    this._fillOpStatusByError(new Errors.InvalidParamError(invalidParameter));
                     return { err, payloadItems };
                 }
 
@@ -1330,7 +1317,7 @@ class Wampy {
                                 const msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
                                     data[1], details || {}, error || 'wamp.error.invocation_exception'];
 
-                                if (argsList && self._isArray(argsList)) {
+                                if (argsList && Array.isArray(argsList)) {
                                     msg.push(argsList);
                                 }
 
@@ -1614,7 +1601,7 @@ class Wampy {
         if (this._options.realm) {
 
             const authOpts = (this._options.authid ? 1 : 0) +
-                ((this._isArray(this._options.authmethods) && this._options.authmethods.length) ? 1 : 0) +
+                ((Array.isArray(this._options.authmethods) && this._options.authmethods.length) ? 1 : 0) +
                 (typeof this._options.onChallenge === 'function' ||
                  Object.keys(this._options.authPlugins).length ? 1 : 0);
 
@@ -1847,7 +1834,7 @@ class Wampy {
         const options = { acknowledge: true }, callbacks = getNewPromise(),
             _optionsConvertHelper = (option, sourceType) => {
                 if (advancedOptions[option]) {
-                    if (this._isArray(advancedOptions[option]) && advancedOptions[option].length) {
+                    if (Array.isArray(advancedOptions[option]) && advancedOptions[option].length) {
                         options[option] = advancedOptions[option];
                     } else if (typeof advancedOptions[option] === sourceType) {
                         options[option] = [advancedOptions[option]];
