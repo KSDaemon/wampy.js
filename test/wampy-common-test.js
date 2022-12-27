@@ -50,7 +50,7 @@ serializers.forEach(function (item) {
 
             it('disallows to connect if no realm is specified', async function () {
                 try {
-                    let wampy = new Wampy(routerUrl, {
+                    const wampy = new Wampy(routerUrl, {
                         ws,
                         serializer: new serializer()
                     });
@@ -61,7 +61,7 @@ serializers.forEach(function (item) {
             });
 
             it('rejects connection on websocket error', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm     : 'AppRealm',
                     ws,
                     serializer: new serializer()
@@ -86,7 +86,7 @@ serializers.forEach(function (item) {
                         throw new Error('failed decode');
                     }
                 };
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm     : 'AppRealm',
                     ws,
                     serializer: new testSrlzr()
@@ -97,7 +97,7 @@ serializers.forEach(function (item) {
             });
 
             it('aborts connection if it can not decode incoming message', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm     : 'AppRealm',
                     ws,
                     serializer: new serializer()
@@ -108,18 +108,18 @@ serializers.forEach(function (item) {
             });
 
             it('passes welcome details to onConnect() callback', async function () {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm     : 'AppRealm',
                     ws,
                     serializer: new serializer()
                 });
                 expect(wampy).to.be.an('object');
-                let welcomeDetails = await wampy.connect();
+                const welcomeDetails = await wampy.connect();
                 expect(welcomeDetails).to.be.an('object');
             });
 
             it('passes welcome details to onReconnectSuccess() callback', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     autoReconnect: true,
                     reconnectInterval : 500,
                     realm: 'AppRealm',
@@ -135,42 +135,42 @@ serializers.forEach(function (item) {
             });
 
             it('allows to set different options on instantiation', async function () {
-                let helloCustomDetails = {
-                        customFiled1: 25,
-                        customFiled2: 'string',
-                        customFiled3: [1, 2, 3, 4, 5]
+                const helloCustomDetails = {
+                    customFiled1: 25,
+                    customFiled2: 'string',
+                    customFiled3: [1, 2, 3, 4, 5]
+                };
+                const setoptions = {
+                    debug: true,
+                    logger: function () {},
+                    autoReconnect: true,
+                    reconnectInterval: 10000,
+                    maxRetries: 50,
+                    realm: 'AppRealm',
+                    uriValidation: 'loose',
+                    helloCustomDetails: helloCustomDetails,
+                    onChallenge: function () {
+                        throw new Error('Reached onChallenge');
                     },
-                    setoptions = {
-                        debug: true,
-                        logger: function () {},
-                        autoReconnect: true,
-                        reconnectInterval: 10000,
-                        maxRetries: 50,
-                        realm: 'AppRealm',
-                        uriValidation: 'loose',
-                        helloCustomDetails: helloCustomDetails,
-                        onChallenge: function () {
-                            throw new Error('Reached onChallenge');
-                        },
-                        authid: 'userid',
-                        authmethods: ['wampcra'],
-                        onClose: function () {
-                            throw new Error('Reached onClose');
-                        },
-                        onError: function () {
-                            throw new Error('Reached onError');
-                        },
-                        onReconnect: function () {
-                            throw new Error('Reached onReconnect');
-                        },
-                        onReconnectSuccess: function () {
-                            throw new Error('Reached onReconnectSuccess');
-                        },
-                        ws,
-                        serializer: new serializer()
+                    authid: 'userid',
+                    authmethods: ['wampcra'],
+                    onClose: function () {
+                        throw new Error('Reached onClose');
                     },
-                    wampy = new Wampy(setoptions),
-                    options = wampy.options();
+                    onError: function () {
+                        throw new Error('Reached onError');
+                    },
+                    onReconnect: function () {
+                        throw new Error('Reached onReconnect');
+                    },
+                    onReconnectSuccess: function () {
+                        throw new Error('Reached onReconnectSuccess');
+                    },
+                    ws,
+                    serializer: new serializer()
+                };
+                let wampy = new Wampy(setoptions);
+                let options = wampy.options();
 
                 expect(options.autoReconnect).to.be.true;
                 expect(options.reconnectInterval).to.be.equal(10000);
@@ -208,7 +208,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to use Ticket-based Authentication while connecting to server', async function () {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     onChallenge: function () {
                         return 'secretKey';
@@ -236,7 +236,7 @@ serializers.forEach(function (item) {
 
 
             it('allows to use Challenge Response Authentication while connecting to server', async function () {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     onChallenge: function (method, info) {
                         return 'secretKey';
@@ -263,7 +263,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to use Automatically chosen Authentication while connecting to server', async function () {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     authid: 'user1',
                     authmethods: ['ticket', 'wampcra', 'cryptosign'],
@@ -299,7 +299,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving WELCOME message after session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -314,7 +314,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving CHALLENGE message after session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -329,7 +329,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving GOODBYE message before session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -344,7 +344,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving ERROR message before session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -359,7 +359,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving invalid ERROR message after session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -374,7 +374,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving SUBSCRIBED message before session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -389,7 +389,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving UNSUBSCRIBED message before session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -404,7 +404,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving PUBLISHED message before session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -419,7 +419,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving EVENT message before session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -434,7 +434,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving RESULT message before session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -449,7 +449,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving REGISTERED message before session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -464,7 +464,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving UNREGISTERED message before session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -479,7 +479,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving INVOCATION message before session was established', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -494,7 +494,7 @@ serializers.forEach(function (item) {
             });
 
             it('drops connection on receiving non-compliant WAMP message', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -509,7 +509,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls Error handler on websocket errors', function (done) {
-                let wampy = new Wampy(routerUrl, {
+                const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     autoReconnect: false,
                     onClose: null,
@@ -528,7 +528,7 @@ serializers.forEach(function (item) {
                     return;
                 }
 
-                let wampy = new Wampy({ realm: 'AppRealm' });
+                const wampy = new Wampy({ realm: 'AppRealm' });
 
                 try {
                     await wampy.connect();
@@ -538,7 +538,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to get and set different options', function () {
-                let helloCustomDetails = {
+                const helloCustomDetails = {
                         customFiled1: 25,
                         customFiled2: 'string',
                         customFiled3: [1, 2, 3, 4, 5]
@@ -581,7 +581,7 @@ serializers.forEach(function (item) {
                     serializer: new serializer()
                 });
                 await wampy.connect(routerUrl);
-                let s = wampy.getSessionId();
+                const s = wampy.getSessionId();
                 expect(s).to.be.a('number');
                 expect(s).to.be.above(0);
             });
@@ -914,7 +914,7 @@ serializers.forEach(function (item) {
                 expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    let object = {};
+                    const object = {};
                     Object.setPrototypeOf(object, null);
                     await wampy.subscribe('qqq.www.eee', function () {}, object);
                 } catch (e) {
@@ -1092,7 +1092,8 @@ serializers.forEach(function (item) {
             });
 
             it('allows to publish event with hash-table payload', function (done) {
-                let i = 1, payload = { key1: 100, key2: 'string-key' };
+                const payload = { key1: 100, key2: 'string-key' };
+                let i = 1;
 
                 wampy.subscribe('subscribe.topic7', function (e) {
                     expect(e).to.be.an('object');
@@ -1117,8 +1118,9 @@ serializers.forEach(function (item) {
             });
 
             it('allows to publish event with both array and hash-table payload', function (done) {
-                let i = 1, dictpayload = { key1: 100, key2: 'string-key' },
-                    payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+                const dictpayload = { key1: 100, key2: 'string-key' };
+                const payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
+                let i = 1;
 
                 wampy.subscribe('subscribe.topic77', function (e) {
                     expect(e).to.be.an('object');
@@ -1333,17 +1335,10 @@ serializers.forEach(function (item) {
             });
 
             it('allows to unsubscribe from topic only specified handler', function (done) {
-
-                let handler3 = function (e) {
-                        done('Called removed handler');
-                    },
-                    handler2 = function (e) {
-                        done();
-                    },
-                    handler1 = function (e) {
-                        done('Called removed handler');
-                    },
-                    subscriptionId;
+                const handler1 = () => { done('Called removed handler'); };
+                const handler2 = () => { done(); };
+                const handler3 = () => { done('Called removed handler'); };
+                let subscriptionId;
 
                 wampy.subscribe('subscribe.topic9', handler1).then((s) => {
                     subscriptionId = s.subscriptionId;
@@ -1560,7 +1555,7 @@ serializers.forEach(function (item) {
                             await wampy.connect();
 
                             wampy.call('call.rpc9', 'payload').catch((e) => { done(e); });
-                            let reqId = wampy.getOpStatus().reqId;
+                            const reqId = wampy.getOpStatus().reqId;
                             try {
                                 wampy.cancel(reqId, { mode: 'kill' });
                             } catch (e) {
@@ -1734,14 +1729,14 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC without payload', async function () {
-                let res = await wampy.call('call.rpc1');
+                const res = await wampy.call('call.rpc1');
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.undefined;
                 expect(res.argsDict).to.be.undefined;
             });
 
             it('allows to call RPC with int payload', async function () {
-                let res = await wampy.call('call.rpc2', 25);
+                const res = await wampy.call('call.rpc2', 25);
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -1749,7 +1744,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with string payload', async function () {
-                let res = await wampy.call('call.rpc3', 'payload');
+                const res = await wampy.call('call.rpc3', 'payload');
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -1757,7 +1752,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with array payload', async function () {
-                let res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5]);
+                const res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5]);
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -1766,7 +1761,8 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with hash-table payload', async function () {
-                let payload = { key1: 100, key2: 'string-key' }, res;
+                const payload = { key1: 100, key2: 'string-key' };
+                let res;
 
                 res = await wampy.call('call.rpc5', payload);
                 expect(res).to.be.an('object');
@@ -1784,10 +1780,10 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with both array and hash-table payload', async function () {
-                let dictpayload = { key1: 100, key2: 'string-key' },
+                const dictpayload = { key1: 100, key2: 'string-key' },
                     payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
 
-                let res = await wampy.call('call.rpc5', payload);
+                const res = await wampy.call('call.rpc5', payload);
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsList[0]).to.be.equal(1);
@@ -1815,7 +1811,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with different advanced options', async function () {
-                let res = await wampy.call('call.rpc6', 'payload', {
+                const res = await wampy.call('call.rpc6', 'payload', {
                     disclose_me: true,
                     receive_progress: false,
                     timeout: 5000
@@ -1828,7 +1824,7 @@ serializers.forEach(function (item) {
 
             it('allows to call RPC with progressive result receiving', async function () {
                 let progress = false;
-                let res = await wampy.call(
+                const res = await wampy.call(
                     'call.rpc7',
                     'payload',
                     {
@@ -1904,7 +1900,7 @@ serializers.forEach(function (item) {
                         }, 1);
                     });
                 });
-                let res = await wampy.call(
+                const res = await wampy.call(
                     'register.rpc3',
                     null,
                     { exclude_me: false }
@@ -1922,7 +1918,7 @@ serializers.forEach(function (item) {
                         }, 1);
                     });
                 });
-                let res = await wampy.call(
+                const res = await wampy.call(
                     'register.rpc33',
                     null,
                     { disclose_me: false }
@@ -1943,7 +1939,7 @@ serializers.forEach(function (item) {
                         }, 1);
                     });
                 }, { match: 'prefix' });
-                let res = await wampy.call('register.prefixbased.maiden');
+                const res = await wampy.call('register.prefixbased.maiden');
                 expect(res).to.be.an('object');
                 expect(res.details).to.be.an('object');
                 expect(res.argsList).to.be.undefined;
@@ -1958,7 +1954,7 @@ serializers.forEach(function (item) {
                         }, 1);
                     });
                 });
-                let res = await wampy.call(
+                const res = await wampy.call(
                     'register.rpc4',
                     100
                 );
@@ -1976,7 +1972,7 @@ serializers.forEach(function (item) {
                         }, 1);
                     });
                 });
-                let res = await wampy.call(
+                const res = await wampy.call(
                     'register.rpc5',
                     [1, 2, 3, 4, 5]
                 );
@@ -1988,7 +1984,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to invoke asynchronous RPC with hash-table value', async function () {
-                let payload = { key1: 100, key2: 'string-key' };
+                const payload = { key1: 100, key2: 'string-key' };
                 await wampy.register('register.rpc6', function (e) {
                     return new Promise(function (resolve, reject) {
                         setTimeout(function () {
@@ -1996,7 +1992,7 @@ serializers.forEach(function (item) {
                         }, 1);
                     });
                 });
-                let res = await wampy.call(
+                const res = await wampy.call(
                     'register.rpc6',
                     payload
                 );
@@ -2008,7 +2004,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to return progressive results from asynchronous RPC', async function () {
-                let payload = 1;
+                const payload = 1;
                 let progress = false;
                 await wampy.register('register.rpc61', function (e) {
 
@@ -2026,7 +2022,7 @@ serializers.forEach(function (item) {
                         }, 1);
                     });
                 });
-                let res = await wampy.call(
+                const res = await wampy.call(
                     'register.rpc61',
                     payload,
                     {
@@ -2072,13 +2068,13 @@ serializers.forEach(function (item) {
             });
 
             it('calls error handler with custom data if asynchronous RPC raised exception', async function () {
-                let definedUri = 'app.error.custom_invocation_exception',
+                const definedUri = 'app.error.custom_invocation_exception',
                     definedDetails = { key1: 'key1', key2: true, key3: 25 },
                     definedArgsList = [1, 2, 3, 4, 5],
                     definedArgsDict = { key1: 'key1', key2: true, key3: 25 };
 
                 await wampy.register('register.rpc88', function (e) {
-                    let UserException = function () {
+                    const UserException = function () {
                         this.error = definedUri;
                         this.details = definedDetails;
                         this.argsList = definedArgsList;
@@ -2100,7 +2096,7 @@ serializers.forEach(function (item) {
                 }
 
                 await wampy.register('register.rpc99', function (e) {
-                    let UserException = function () {
+                    const UserException = function () {
                         this.error = definedUri;
                         // no details
                         // no args list, only args dict
@@ -2365,7 +2361,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to publish event with hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
-                let payload = { key1: 100, key2: 'string-key' };
+                const payload = { key1: 100, key2: 'string-key' };
 
                 wampy.subscribe('subscribe.topic7', function (e) {
                     expect(e).to.be.an('object');
@@ -2389,7 +2385,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, native serializer)', function (done) {
-                let dictpayload = { key1: 100, key2: 'string-key' },
+                const dictpayload = { key1: 100, key2: 'string-key' },
                     payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
 
                 wampy.subscribe('subscribe.topic77', function (e) {
@@ -2415,7 +2411,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with int payload in ppt mode (custom scheme, native serializer)', async function () {
-                let res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme' });
+                const res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -2425,7 +2421,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with string payload in ppt mode (custom scheme, native serializer)', async function () {
-                let res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme' });
+                const res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -2435,7 +2431,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with array payload in ppt mode (custom scheme, native serializer)', async function () {
-                let res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme' });
+                const res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -2446,7 +2442,8 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with hash-table payload in ppt mode (custom scheme, native serializer)', async function () {
-                let payload = { key1: 100, key2: 'string-key' }, res;
+                const payload = { key1: 100, key2: 'string-key' };
+                let res;
 
                 res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
@@ -2468,10 +2465,10 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, native serializer)', async function () {
-                let dictpayload = { key1: 100, key2: 'string-key' },
+                const dictpayload = { key1: 100, key2: 'string-key' },
                     payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
 
-                let res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme' });
+                const res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsList[0]).to.be.equal(1);
@@ -2553,7 +2550,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to publish event with hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                let payload = { key1: 100, key2: 'string-key' };
+                const payload = { key1: 100, key2: 'string-key' };
 
                 wampy.subscribe('subscribe.topic7.cbor', function (e) {
                     expect(e).to.be.an('object');
@@ -2579,7 +2576,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, cbor serializer)', function (done) {
-                let dictpayload = { key1: 100, key2: 'string-key' },
+                const dictpayload = { key1: 100, key2: 'string-key' },
                     payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
 
                 wampy.subscribe('subscribe.topic8.cbor', function (e) {
@@ -2607,7 +2604,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with int payload in ppt mode (custom scheme, cbor serializer)', async function () {
-                let res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                const res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -2618,7 +2615,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with string payload in ppt mode (custom scheme, cbor serializer)', async function () {
-                let res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                const res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -2629,7 +2626,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with array payload in ppt mode (custom scheme, cbor serializer)', async function () {
-                let res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                const res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -2641,7 +2638,8 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with hash-table payload in ppt mode (custom scheme, cbor serializer)', async function () {
-                let payload = { key1: 100, key2: 'string-key' }, res;
+                const payload = { key1: 100, key2: 'string-key' };
+                let res;
 
                 res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
@@ -2665,10 +2663,10 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, cbor serializer)', async function () {
-                let dictpayload = { key1: 100, key2: 'string-key' },
+                const dictpayload = { key1: 100, key2: 'string-key' },
                     payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
 
-                let res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                const res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsList[0]).to.be.equal(1);
@@ -2751,7 +2749,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to publish event with hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                let payload = { key1: 100, key2: 'string-key' };
+                const payload = { key1: 100, key2: 'string-key' };
 
                 wampy.subscribe('subscribe.topic7.msgpack', function (e) {
                     expect(e).to.be.an('object');
@@ -2777,7 +2775,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to publish event with both array and hash-table payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
-                let dictpayload = { key1: 100, key2: 'string-key' },
+                const dictpayload = { key1: 100, key2: 'string-key' },
                     payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
 
                 wampy.subscribe('subscribe.topic8.msgpack', function (e) {
@@ -2805,7 +2803,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with int payload in ppt mode (custom scheme, msgpack serializer)', async function () {
-                let res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                const res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -2816,7 +2814,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with string payload in ppt mode (custom scheme, msgpack serializer)', async function () {
-                let res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                const res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -2827,7 +2825,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with array payload in ppt mode (custom scheme, msgpack serializer)', async function () {
-                let res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                const res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsDict).to.be.undefined;
@@ -2839,7 +2837,8 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with hash-table payload in ppt mode (custom scheme, msgpack serializer)', async function () {
-                let payload = { key1: 100, key2: 'string-key' }, res;
+                const payload = { key1: 100, key2: 'string-key' };
+                let res;
 
                 res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
@@ -2863,10 +2862,10 @@ serializers.forEach(function (item) {
             });
 
             it('allows to call RPC with both array and hash-table payload in ppt mode (custom scheme, msgpack serializer)', async function () {
-                let dictpayload = { key1: 100, key2: 'string-key' },
+                const dictpayload = { key1: 100, key2: 'string-key' },
                     payload = { argsList: [1, 2, 3, 4, 5], argsDict: dictpayload };
 
-                let res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                const res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsList[0]).to.be.equal(1);
@@ -2993,7 +2992,7 @@ serializers.forEach(function (item) {
                         msgpack: new MsgpackSerializer(),
                     }
                 }).register('register.rpc.ppt.yield.srzl.fails', function () {
-                    let a = {}, b = {};
+                    const a = {}, b = {};
                     a.b = b;
                     b.a = a;
 

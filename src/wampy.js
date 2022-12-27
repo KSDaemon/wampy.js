@@ -570,7 +570,8 @@ class Wampy {
      * @private
      */
     _packPPTPayload (payload, options) {
-        let payloadItems = [], err = false, argsList, argsDict;
+        const payloadItems = [];
+        let err = false, argsList, argsDict;
 
         if (this._isArray(payload)) {
             argsList = payload;
@@ -602,10 +603,11 @@ class Wampy {
         // Check and handle Payload PassThru Mode
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
         if (options.ppt_scheme) {
-            let binPayload, pptPayload = { args: argsList, kwargs: argsDict };
+            const pptPayload = { args: argsList, kwargs: argsDict };
+            let binPayload;
 
             if (options.ppt_serializer && options.ppt_serializer !== 'native') {
-                let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+                const pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
 
                 if (!pptSerializer) {
                     err = true;
@@ -657,7 +659,7 @@ class Wampy {
      * @private
      */
     _unpackPPTPayload (role, pptPayload, options) {
-        let err = false, decodedPayload;
+        let decodedPayload;
 
         if (!this._checkPPTOptions(role, options)) {
             return { err: this._cache.opStatus.error };
@@ -672,7 +674,7 @@ class Wampy {
         }
 
         if (options.ppt_serializer && options.ppt_serializer !== 'native') {
-            let pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
+            const pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
 
             if (!pptSerializer) {
                 return { err: new Errors.PPTSerializerInvalidError() };
@@ -686,7 +688,7 @@ class Wampy {
         } else {
             decodedPayload = pptPayload;
         }
-        return { err, args: decodedPayload.args, kwargs: decodedPayload.kwargs };
+        return { err:false, args: decodedPayload.args, kwargs: decodedPayload.kwargs };
     }
 
     /**
@@ -892,7 +894,8 @@ class Wampy {
 
         this._log('websocket message received: ', data);
 
-        let id, i, p, self = this;
+        const self = this;
+        let id, i, p;
 
         switch (data[0]) {
             case WAMP_MSG_SPEC.WELCOME:
@@ -1160,7 +1163,8 @@ class Wampy {
                 } else {
                     const sub = this._subscriptionsById.get(data[1]);
                     if (sub) {
-                        let argsList, argsDict, options = data[3];
+                        const options = data[3];
+                        let argsList, argsDict;
 
                         // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
                         //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
@@ -1168,9 +1172,8 @@ class Wampy {
                         // Check and handle Payload PassThru Mode
                         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
                         if (options.ppt_scheme) {
-                            let decodedPayload, pptPayload = data[4][0];
-
-                            decodedPayload = this._unpackPPTPayload('broker', pptPayload, options);
+                            const pptPayload = data[4][0];
+                            const decodedPayload = this._unpackPPTPayload('broker', pptPayload, options);
 
                             if (decodedPayload.err) {
                                 // Since it is async publication, and no link to
@@ -1206,7 +1209,8 @@ class Wampy {
                         'Received RESULT message before session was established');
                 } else {
                     if (this._calls[data[1]]) {
-                        let argsList, argsDict, options = data[2];
+                        const options = data[2];
+                        let argsList, argsDict;
 
                         // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
                         //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
@@ -1214,9 +1218,8 @@ class Wampy {
                         // Check and handle Payload PassThru Mode
                         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
                         if (options.ppt_scheme) {
-                            let decodedPayload, pptPayload = data[3][0];
-
-                            decodedPayload = this._unpackPPTPayload('dealer', pptPayload, options);
+                            const pptPayload = data[3][0];
+                            const decodedPayload = this._unpackPPTPayload('dealer', pptPayload, options);
 
                             if (decodedPayload.err) {
                                 this._log(decodedPayload.err.message);
@@ -1321,7 +1324,8 @@ class Wampy {
                         'Received INVOCATION message before session was established');
                 } else {
                     if (this._rpcRegs[data[2]]) {
-                        let argsList, argsDict, options = data[3];
+                        const options = data[3];
+                        let argsList, argsDict;
 
                         // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
                         //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
@@ -1410,9 +1414,8 @@ class Wampy {
                         // Check and handle Payload PassThru Mode
                         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
                         if (options.ppt_scheme) {
-                            let decodedPayload, pptPayload = data[4][0];
-
-                            decodedPayload = this._unpackPPTPayload('dealer', pptPayload, options);
+                            const pptPayload = data[4][0];
+                            const decodedPayload = this._unpackPPTPayload('dealer', pptPayload, options);
 
                             // This case should not happen at all, but for safety
                             if (decodedPayload.err && decodedPayload.err instanceof Errors.PPTNotSupportedError) {
@@ -1696,9 +1699,9 @@ class Wampy {
      * @returns {Promise}
      */
     async subscribe (topicURI, onEvent, advancedOptions) {
-        let reqId, patternBased = false,
-            subscriptionKey = this._getSubscriptionKey(topicURI, advancedOptions);
+        const subscriptionKey = this._getSubscriptionKey(topicURI, advancedOptions);
         const options = {}, callbacks = getNewPromise();
+        let reqId, patternBased = false;
 
         if (this._isPlainObject(advancedOptions)) {
             if (Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
@@ -1855,7 +1858,6 @@ class Wampy {
      * @returns {Promise}
      */
     async publish (topicURI, payload, advancedOptions) {
-        let reqId, msg;
         const options = { acknowledge: true }, callbacks = getNewPromise(),
             _optionsConvertHelper = (option, sourceType) => {
                 if (advancedOptions[option]) {
@@ -1924,15 +1926,15 @@ class Wampy {
             throw error;
         }
 
-        reqId = this._getReqId();
+        const requestId = this._getReqId();
 
-        this._requests[reqId] = {
+        this._requests[requestId] = {
             topic: topicURI,
             callbacks
         };
 
         // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
-        msg = [WAMP_MSG_SPEC.PUBLISH, reqId, options, topicURI];
+        let msg = [WAMP_MSG_SPEC.PUBLISH, requestId, options, topicURI];
 
         if (arguments.length > 1) {
             // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
@@ -1946,7 +1948,7 @@ class Wampy {
 
         this._send(msg);
         this._cache.opStatus = SUCCESS;
-        this._cache.opStatus.reqId = reqId;
+        this._cache.opStatus.reqId = requestId;
         return callbacks.promise;
     }
 

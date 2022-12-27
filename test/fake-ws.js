@@ -102,7 +102,7 @@ WebSocket.prototype.abort = function () {
 
 WebSocket.prototype.send = function (data) {
 
-    let rec_data = this.decode(data);
+    const rec_data = this.decode(data);
 
     // console.log('Server received a message: ', rec_data);
     let send_data, enc_data, i, opts, pptSerializer;

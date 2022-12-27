@@ -26,6 +26,7 @@
         "no-constant-condition": ["error"],
         "no-else-return": ["error"],
         "object-curly-spacing": ["warn", "always"],
+        "prefer-const": ["error"],
         "keyword-spacing": ["warn", { "before": true, "after": true, "overrides": {} }],
         "space-before-blocks": "warn",
         "space-before-function-paren": "warn",

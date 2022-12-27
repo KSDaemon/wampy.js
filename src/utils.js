@@ -50,7 +50,7 @@ export function getWebSocket (url, protocols, ws, headers, requestOptions) {
 }
 
 export function getNewPromise () {
-    let promise = {};
+    const promise = {};
 
     promise.promise = new Promise(function (resolve, reject) {
         promise.onSuccess = resolve;
