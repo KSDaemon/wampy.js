@@ -1787,7 +1787,7 @@ class Wampy {
         }
 
         subscription.callbacks = typeof onEvent === 'function'
-            ? subscription.callbacks = subscription.callbacks.filter((callback) => callback !== onEvent)
+            ? subscription.callbacks.filter((callback) => callback !== onEvent)
             : [];
 
         const isThereOtherCallbackForThisTopic = subscription.callbacks.length > 0;
