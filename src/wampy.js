@@ -2058,13 +2058,7 @@ class Wampy {
      * @returns {Boolean}
      */
     cancel (reqId, advancedOptions) {
-        const options = {};
-
-        if (!this._preReqChecks(null, 'dealer')) {
-            throw this._cache.opStatus.error;
-        }
-
-        if (!this._checkRouterFeature('dealer', 'call_canceling')) {
+        if (!this._preReqChecks(null, 'dealer') || !this._checkRouterFeature('dealer', 'call_canceling')) {
             throw this._cache.opStatus.error;
         }
 
@@ -2074,26 +2068,25 @@ class Wampy {
             throw nonExistRPCReqIdError;
         }
 
-        if (this._isPlainObject(advancedOptions)) {
-            if (Object.hasOwnProperty.call(advancedOptions, 'mode')) {
-                if (/skip|kill|killnowait/.test(advancedOptions.mode)) {
-                    options.mode = advancedOptions.mode;
-                } else {
-                    const error = new Errors.InvalidParamError('mode');
-                    this._fillOpStatusByError(error);
-                    throw error;
-                }
+        if (!this._isPlainObject(advancedOptions) && typeof (advancedOptions) !== 'undefined') {
+            const invalidParamError = new Errors.InvalidParamError('advancedOptions');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
+        }
+
+        let mode;
+        if (this._isPlainObject(advancedOptions) && Object.hasOwnProperty.call(advancedOptions, 'mode')) {
+            if (!['skip', 'kill', 'killnowait'].includes(advancedOptions.mode)) {
+                const error = new Errors.InvalidParamError('mode');
+                this._fillOpStatusByError(error);
+                throw error;
             }
-        } else if (typeof (advancedOptions) !== 'undefined') {
-            const error = new Errors.InvalidParamError('advancedOptions');
-            this._fillOpStatusByError(error);
-            throw error;
+            mode = advancedOptions.mode;
         }
 
         // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
-        this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
-        this._cache.opStatus = SUCCESS;
-        this._cache.opStatus.reqId = reqId;
+        this._send([WAMP_MSG_SPEC.CANCEL, reqId, { mode }]);
+        this._cache.opStatus = { ...SUCCESS, reqId: reqId };
 
         return true;
     }
