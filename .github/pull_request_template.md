@@ -5,7 +5,7 @@
 <!--- Why is this change required? What problem does it solve? -->
 <!--- If it fixes an open issue, please link to the issue here. -->
 
-### What is the current behavior? 
+### What is the current behavior?
 (You can also link to an open issue here)
 
 ### What is the new behavior?
@@ -16,6 +16,7 @@
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Refactoring (no new functionality, only code improvements)
 
 ### Checklist:
 <!--- Go over all the following points, and put an `x` in all the boxes that apply. -->
