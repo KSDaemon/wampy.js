@@ -100,9 +100,9 @@ WebSocket.prototype.abort = function () {
 };
 
 WebSocket.prototype.send = function (data) {
-    let rec_data = this.decode(data);
-    let enc_data, i, options, pptSerializer;
-    let send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
+    const rec_data = this.decode(data);
+    const send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
+    let options;
 
     if (isDebugMode) { console.log('Server received a message: ', rec_data); }
 
@@ -120,7 +120,7 @@ WebSocket.prototype.send = function (data) {
         if (options.ppt_scheme &&
             options.ppt_serializer &&
             options.ppt_serializer !== 'native') {
-            pptSerializer = serializers[options.ppt_serializer];
+            const pptSerializer = serializers[options.ppt_serializer];
 
             if ([WAMP_MSG_SPEC.EVENT, WAMP_MSG_SPEC.INVOCATION].includes(send_data.data[0])) {
                 const payload = pptSerializer.encode(send_data.data[4][0]);
@@ -144,10 +144,12 @@ WebSocket.prototype.send = function (data) {
 
     if (isDebugMode) { console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor); }
 
+    let enc_data;
+
     if (send_data.data) {
         // Prepare answer (copy request id from request to answer, etc)
         if (send_data.from) {
-            i = send_data.from.length;
+            let i = send_data.from.length;
             while (i--) {
                 send_data.data[send_data.to[i]] = rec_data[send_data.from[i]];
             }

@@ -51,11 +51,11 @@ describe('Wampy.js Utils submodule', function () {
         });
 
         it('disallows to create websocket instance without providing websocket class object', function () {
-            let wsClass = function (url) { this.name = 'UserWebSocket'; this.url = url; };
+            const wsClass = function (url) { this.name = 'UserWebSocket'; this.url = url; };
 
             expect(getWebSocket('ws://example.com/ws/path')).to.be.null;
 
-            let ws = getWebSocket('ws://example.com/ws/path', ['wamp.2.json'], wsClass);
+            const ws = getWebSocket('ws://example.com/ws/path', ['wamp.2.json'], wsClass);
             expect(ws).to.be.instanceOf(wsClass);
         });
 
@@ -208,21 +208,21 @@ describe('Wampy.js Utils submodule', function () {
         }
 
         it('allows to create websocket object without providing url', function () {
-            let ws = getWebSocket();
+            const ws = getWebSocket();
 
             expect(ws.url).to.be.equal('ws://localhost:9876/ws');
 
         });
 
         it('allows to create websocket object with just path in url', function () {
-            let ws = getWebSocket('/websocket/wamp');
+            const ws = getWebSocket('/websocket/wamp');
 
             expect(ws.url).to.be.equal('ws://localhost:9876/websocket/wamp');
         });
 
         it('allows to create websocket object with domain+path url', function () {
 
-            let ws = getWebSocket('example.com/websocket/wamp');
+            const ws = getWebSocket('example.com/websocket/wamp');
 
             expect(ws.url).to.be.equal('ws://example.com/websocket/wamp');
 
