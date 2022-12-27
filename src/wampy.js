@@ -412,43 +412,19 @@ class Wampy {
     }
 
     /**
-     * Check if value is object literal
-     * @param obj
+     * Check if input is an object literal
+     * @param input
      * @returns {boolean}
      * @private
      */
-    _isPlainObject (obj) {
-        if (!this._isObject(obj)) {
-            return false;
-        }
+    _isPlainObject (input) {
+        const constructor = input?.constructor;
+        const prototype = constructor?.prototype;
 
-        // If obj has modified constructor
-        const ctor = obj.constructor;
-        if (typeof ctor !== 'function') {
-            return false;
-        }
-
-        // If obj has modified prototype
-        const prot = ctor.prototype;
-        if (this._isObject(prot) === false) {
-            return false;
-        }
-
-        // If constructor does not have an Object-specific method
-        return Object.hasOwnProperty.call(prot, 'isPrototypeOf') !== false;
-    }
-
-    /**
-     * Check if value is an object
-     * @param obj
-     * @returns {boolean}
-     * @private
-     */
-    _isObject (obj) {
-        return obj !== null
-            && typeof obj === 'object'
-            && Array.isArray(obj) === false
-            && Object.prototype.toString.call(obj) === '[object Object]';
+        return Object.prototype.toString.call(input) === '[object Object]'     // checks for primitives, null, Arrays, DOM, etc.
+            && typeof constructor === 'function'                               // checks for modified constructors
+            && Object.prototype.toString.call(prototype) === '[object Object]' // checks for modified prototypes
+            && Object.hasOwnProperty.call(prototype, 'isPrototypeOf');         // checks for missing object-specific property
     }
 
     /**
