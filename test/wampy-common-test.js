@@ -1841,7 +1841,7 @@ serializers.forEach(function (item) {
             });
 
             it('checks options during canceling RPC invocation', function (done) {
-                let reqId;
+                let reqId;  // eslint-disable-line prefer-const
 
                 wampy.call(
                     'call.rpc8',
@@ -1872,7 +1872,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to cancel RPC invocation', function (done) {
-                let reqId;
+                let reqId;  // eslint-disable-line prefer-const
 
                 wampy.call(
                     'call.rpc8',
