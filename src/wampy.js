@@ -1595,40 +1595,38 @@ class Wampy {
      * @returns {Promise}
      */
     async connect (url) {
-        let error;
-
         if (url) {
             this._url = url;
         }
 
-        if (this._options.realm) {
+        if (!this._options.realm) {
+            const noRealmError = new Errors.NoRealmError();
+            this._fillOpStatusByError(noRealmError);
+            throw noRealmError;
+        }
 
-            const authOpts = (this._options.authid ? 1 : 0) +
+        const numberOfAuthOptions = (this._options.authid ? 1 : 0) +
                 ((Array.isArray(this._options.authmethods) && this._options.authmethods.length) ? 1 : 0) +
                 (typeof this._options.onChallenge === 'function' ||
                  Object.keys(this._options.authPlugins).length ? 1 : 0);
 
-            if (authOpts > 0 && authOpts < 3) {
-                error = new Errors.NoCRACallbackOrIdError();
-                this._fillOpStatusByError(error);
-                throw error;
-            }
-
-            this._setWsProtocols();
-            this._ws = getWebSocket(this._url, this._protocols, this._options.ws,
-                this._options.additionalHeaders, this._options.wsRequestOptions);
-            if (!this._ws) {
-                error = new Errors.NoWsOrUrlError();
-                this._fillOpStatusByError(error);
-                throw error;
-            }
-            this._initWsCallbacks();
-
-        } else {
-            error = new Errors.NoRealmError();
-            this._fillOpStatusByError(error);
-            throw error;
+        if (numberOfAuthOptions > 0 && numberOfAuthOptions < 3) {
+            const noCRACallbackOrIdError = new Errors.NoCRACallbackOrIdError();
+            this._fillOpStatusByError(noCRACallbackOrIdError);
+            throw noCRACallbackOrIdError;
         }
+
+        this._setWsProtocols();
+        this._ws = getWebSocket(this._url, this._protocols, this._options.ws,
+            this._options.additionalHeaders, this._options.wsRequestOptions);
+
+        if (!this._ws) {
+            const noWsOrUrlError = new Errors.NoWsOrUrlError();
+            this._fillOpStatusByError(noWsOrUrlError);
+            throw noWsOrUrlError;
+        }
+
+        this._initWsCallbacks();
 
         const defer = getNewPromise();
         this._cache.connectPromise = defer;
