@@ -12,9 +12,9 @@ const TIMEOUT = 15,
     root = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]') ?
         global : window;
 
-let protocol = 'json',
+let protocol = 'json';
 
-    WebSocket = function (url, protocols) {
+const WebSocket = function (url, protocols) {
         this.url = url;
         this.protocols = protocols;
 

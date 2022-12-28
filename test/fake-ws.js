@@ -23,10 +23,10 @@ const serializers = {
 };
 
 let sendDataCursor = 0,
-    clientMessageHandlersQueue = [],
     openTimer = null,
-    sendTimer = null,
+    sendTimer = null;
 
+const clientMessageHandlersQueue = [],
     WebSocket = function (url, protocols) {
         this.url = url;
         this.protocols = protocols;
@@ -49,7 +49,9 @@ let sendDataCursor = 0,
 
         this.readyState = 1;    // Closed
 
-        openTimer = setTimeout(() => { this.onopen(); }, TIMEOUT);
+        openTimer = setTimeout(() => {
+            this.onopen();
+        }, TIMEOUT);
     };
 
 function clearTimers () {
