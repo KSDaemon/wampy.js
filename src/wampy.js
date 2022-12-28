@@ -1676,80 +1676,65 @@ class Wampy {
     /**
      * Subscribe to a topic on a broker
      *
-     * @param {string} topicURI
+     * @param {string} topic - a URI to subscribe to
      * @param {function} onEvent - received event callback
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          { match: string matching policy ("prefix"|"wildcard") }
      *
      * @returns {Promise}
      */
-    async subscribe (topicURI, onEvent, advancedOptions) {
-        const subscriptionKey = this._getSubscriptionKey(topicURI, advancedOptions);
-        const options = {}, callbacks = getNewPromise();
-        let reqId, patternBased = false;
+    async subscribe (topic, onEvent, advancedOptions) {
+        const isAdvancedOptionsAnObject = this._isPlainObject(advancedOptions);
 
-        if (this._isPlainObject(advancedOptions)) {
-            if (Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
-                if (/prefix|wildcard/.test(advancedOptions.match)) {
-                    options.match = advancedOptions.match;
-                    patternBased = true;
-                } else {
-                    const error = new Errors.InvalidParamError('match');
-                    this._fillOpStatusByError(error);
-                    throw error;
-                }
-            }
-        } else if (typeof (advancedOptions) !== 'undefined') {
-            const error = new Errors.InvalidParamError('advancedOptions');
-            this._fillOpStatusByError(error);
-            throw error;
+        if (!isAdvancedOptionsAnObject && (typeof (advancedOptions) !== 'undefined')) {
+            const invalidParamError = new Errors.InvalidParamError('advancedOptions');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
         }
 
-        // Need to be placed here as patternBased flag is determined above
-        if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: true },
-            'broker')) {
+        let match, patternBased = false;
+        if (isAdvancedOptionsAnObject && Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
+            if (!['prefix', 'wildcard'].includes(advancedOptions.match)) {
+                const invalidParamError = new Errors.InvalidParamError('match');
+                this._fillOpStatusByError(invalidParamError);
+                throw invalidParamError;
+            }
+
+            match = advancedOptions.match;
+            patternBased = true;
+        }
+
+        if (!this._preReqChecks({ topic, patternBased, allowWAMP: true }, 'broker')) {
             throw this._cache.opStatus.error;
         }
 
-        if (typeof onEvent === 'function') {
-            callbacks.onEvent = onEvent;
-        } else {
+        if (typeof onEvent !== 'function') {
             const noCallbackError = new Errors.NoCallbackError();
             this._fillOpStatusByError(noCallbackError);
             throw noCallbackError;
         }
 
-        const sub = this._subscriptionsByKey.get(subscriptionKey);
-        if (!sub || !sub.callbacks.length) {
-            // no such subscription or processing unsubscribing
+        const subscriptionKey = this._getSubscriptionKey(topic, advancedOptions);
+        const subscription = this._subscriptionsByKey.get(subscriptionKey);
 
-            reqId = this._getReqId();
-
-            this._requests[reqId] = {
-                topic: topicURI,
-                callbacks,
-                advancedOptions
-            };
-
-            // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
-            this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, options, topicURI]);
-
-        } else {    // already have subscription to this topic
-            // There is no such callback yet
-            if (sub.callbacks.indexOf(callbacks.onEvent) < 0) {
-                sub.callbacks.push(callbacks.onEvent);
+        if (subscription && subscription.callbacks.length > 0) {
+            if (!subscription.callbacks.includes(onEvent)) {
+                subscription.callbacks.push(onEvent);
             }
 
-            return {
-                topic: topicURI,
-                requestId: 0,
-                subscriptionId: sub.id,
-                subscriptionKey
-            };
+            return { topic, requestId: 0, subscriptionId: subscription.id, subscriptionKey };
         }
 
-        this._cache.opStatus = SUCCESS;
-        this._cache.opStatus.reqId = reqId ? reqId : 0;
+        const reqId = this._getReqId();
+        const callbacks = getNewPromise();
+
+        callbacks.onEvent = onEvent;
+        this._requests[reqId] = { topic, callbacks, advancedOptions };
+
+        // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
+        this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, { match }, topic]);
+        this._cache.opStatus = { ...SUCCESS, reqId: reqId || 0 };
+
         return callbacks.promise;
     }
 
