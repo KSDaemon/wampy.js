@@ -1944,16 +1944,13 @@ class Wampy {
             throw invalidParamError;
         }
 
-        const { progress_callback, timeout, disclose_me } = advancedOptions || {};
+        const { timeout, progress_callback, disclose_me } = advancedOptions || {};
+        const isTimeoutInvalid = (timeout && typeof timeout !== 'number');
+        const isProgressCallbackInvalid = (progress_callback && typeof progress_callback !== 'function');
 
-        if (progress_callback && typeof progress_callback !== 'function') {
-            const invalidParamError = new Errors.InvalidParamError('progress_callback');
-            this._fillOpStatusByError(invalidParamError);
-            throw invalidParamError;
-        }
-
-        if (timeout && typeof timeout !== 'number') {
-            const invalidParamError = new Errors.InvalidParamError('timeout');
+        if (isTimeoutInvalid || isProgressCallbackInvalid) {
+            const paramName = isTimeoutInvalid ? 'timeout' : 'progress_callback';
+            const invalidParamError = new Errors.InvalidParamError(paramName);
             this._fillOpStatusByError(invalidParamError);
             throw invalidParamError;
         }
@@ -1972,13 +1969,13 @@ class Wampy {
         } while (reqId in this._calls);
 
         const options = {
-            receive_progress: Boolean(progress_callback),
-            disclose_me: (disclose_me === true),
-            timeout,
-            ppt_scheme,
-            ppt_serializer,
-            ppt_cipher,
-            ppt_keyid
+            ...(progress_callback ? { receive_progress: true } : null),
+            ...(disclose_me ? { disclose_me: true } : null),
+            ...(timeout ? { timeout } : null),
+            ...(ppt_scheme ? { ppt_scheme } : null),
+            ...(ppt_serializer ? { ppt_serializer } : null),
+            ...(ppt_cipher ? { ppt_cipher } : null),
+            ...(ppt_keyid ? { ppt_keyid } : null),
         };
 
         // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
@@ -1997,7 +1994,10 @@ class Wampy {
         this._send(message);
         this._cache.opStatus = { ...SUCCESS, reqId };
         this._calls[reqId] = getNewPromise();
-        this._calls[reqId].onProgress = progress_callback;
+
+        if (progress_callback) {
+            this._calls[reqId].onProgress = progress_callback;
+        }
 
         return this._calls[reqId].promise;
     }
