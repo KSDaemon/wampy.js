@@ -379,11 +379,11 @@ class Wampy {
             }
         };
 
-        this._options = {
-            ...this._options,
-            ...(this._isPlainObject(options) ? options : {}),
-            ...(this._isPlainObject(url) ? url : {}),
-        };
+        if (this._isPlainObject(options)) {
+            this.options = { ...this.options, ...options };
+        } else if (this._isPlainObject(url)) {
+            this.options = { ...this.options, ...url };
+        }
     }
 
     /* Internal utils methods */
