@@ -380,9 +380,9 @@ class Wampy {
         };
 
         if (this._isPlainObject(options)) {
-            this.options = { ...this.options, ...options };
+            this._options = { ...this._options, ...options };
         } else if (this._isPlainObject(url)) {
-            this.options = { ...this.options, ...url };
+            this._options = { ...this._options, ...url };
         }
     }
 
