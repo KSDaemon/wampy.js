@@ -1912,7 +1912,7 @@ class Wampy {
 
     /**
      * Remote Procedure Call
-     * @param {string} topicURI
+     * @param {string} topic - a topic URI to be called
      * @param {string|number|Array|object} [payload] - can be either a value of any type or null. Also, it
      *                          is possible to pass array and object-like data simultaneously.
      *                          In this case pass a hash-table with next attributes:
@@ -1933,89 +1933,73 @@ class Wampy {
      *                          }
      * @returns {Promise}
      */
-    async call (topicURI, payload, advancedOptions) {
-        let reqId, msg;
-        const options = {}, callbacks = getNewPromise();
-
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: true }, 'dealer')) {
+    async call (topic, payload, advancedOptions) {
+        if (!this._preReqChecks({ topic, patternBased: false, allowWAMP: true }, 'dealer')) {
             throw this._cache.opStatus.error;
         }
 
-        if (this._isPlainObject(advancedOptions)) {
-            if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
-                options.disclose_me = advancedOptions.disclose_me === true;
-            }
-
-            if (Object.hasOwnProperty.call(advancedOptions, 'progress_callback')) {
-                if (typeof advancedOptions.progress_callback === 'function') {
-                    options.receive_progress = true;
-                    callbacks.onProgress = advancedOptions.progress_callback;
-                } else {
-                    const error = new Errors.InvalidParamError('progress_callback');
-                    this._fillOpStatusByError(error);
-                    throw error;
-                }
-            }
-
-            if (Object.hasOwnProperty.call(advancedOptions, 'timeout')) {
-                if (typeof advancedOptions.timeout === 'number') {
-                    options.timeout = advancedOptions.timeout;
-                } else {
-                    const error = new Errors.InvalidParamError('timeout');
-                    this._fillOpStatusByError(error);
-                    throw error;
-                }
-            }
-
-            // Check and handle Payload PassThru Mode
-            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-            const pptScheme = advancedOptions.ppt_scheme;
-
-            if (pptScheme) {
-                if (!this._checkPPTOptions('dealer', advancedOptions)) {
-                    throw this._cache.opStatus.error;
-                }
-
-                options.ppt_scheme = pptScheme;
-
-                if (advancedOptions.ppt_serializer) {
-                    options.ppt_serializer = advancedOptions.ppt_serializer;
-                }
-                if (advancedOptions.ppt_cipher) {
-                    options.ppt_cipher = advancedOptions.ppt_cipher;
-                }
-                if (advancedOptions.ppt_keyid) {
-                    options.ppt_keyid = advancedOptions.ppt_keyid;
-                }
-            }
-        } else if (typeof (advancedOptions) !== 'undefined') {
-            const error = new Errors.InvalidParamError('advancedOptions');
-            this._fillOpStatusByError(error);
-            throw error;
+        if (advancedOptions && !this._isPlainObject(advancedOptions)) {
+            const invalidParamError = new Errors.InvalidParamError('advancedOptions');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
         }
 
+        const { progress_callback, timeout, disclose_me } = advancedOptions || {};
+
+        if (progress_callback && typeof progress_callback !== 'function') {
+            const invalidParamError = new Errors.InvalidParamError('progress_callback');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
+        }
+
+        if (timeout && typeof timeout !== 'number') {
+            const invalidParamError = new Errors.InvalidParamError('timeout');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
+        }
+
+        const { ppt_scheme, ppt_serializer, ppt_cipher, ppt_keyid } = advancedOptions || {};
+
+        // Check and handle Payload PassThru Mode
+        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+        if (ppt_scheme && !this._checkPPTOptions('dealer', advancedOptions)) {
+            throw this._cache.opStatus.error;
+        }
+
+        let reqId;
         do {
             reqId = this._getReqId();
         } while (reqId in this._calls);
 
-        this._calls[reqId] = callbacks;
+        const options = {
+            receive_progress: Boolean(progress_callback),
+            disclose_me: (disclose_me === true),
+            timeout,
+            ppt_scheme,
+            ppt_serializer,
+            ppt_cipher,
+            ppt_keyid
+        };
 
         // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
-        msg = [WAMP_MSG_SPEC.CALL, reqId, options, topicURI];
+        let message = [WAMP_MSG_SPEC.CALL, reqId, options, topic];
 
-        if (payload !== null && typeof (payload) !== 'undefined') {
-            const res = this._packPPTPayload(payload, options);
+        const { err, payloadItems } = payload ? this._packPPTPayload(payload, options) : {};
 
-            if (res.err) {
-                throw this._cache.opStatus.error;
-            }
-            msg = msg.concat(res.payloadItems);
+        if (err) {
+            throw this._cache.opStatus.error;
         }
 
-        this._send(msg);
-        this._cache.opStatus = SUCCESS;
-        this._cache.opStatus.reqId = reqId;
-        return callbacks.promise;
+        if (payloadItems) {
+            message = message.concat(payloadItems);
+        }
+
+        this._send(message);
+        this._cache.opStatus = { ...SUCCESS, reqId };
+        this._calls[reqId] = getNewPromise();
+        this._calls[reqId].onProgress = progress_callback;
+
+        return this._calls[reqId].promise;
     }
 
     /**
