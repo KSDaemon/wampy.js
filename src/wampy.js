@@ -2048,7 +2048,7 @@ class Wampy {
 
     /**
      * RPC registration for invocation
-     * @param {string} topicURI
+     * @param {string} topic
      * @param {function} rpc - rpc that will receive invocations
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          {
@@ -2057,71 +2057,49 @@ class Wampy {
      *                          }
      * @returns {Promise}
      */
-    async register (topicURI, rpc, advancedOptions) {
-        let reqId, patternBased = false;
-        const options = {}, callbacks = getNewPromise();
-
-        if (this._isPlainObject(advancedOptions)) {
-            if (Object.hasOwnProperty.call(advancedOptions, 'match')) {
-                if (/prefix|wildcard/.test(advancedOptions.match)) {
-                    options.match = advancedOptions.match;
-                    patternBased = true;
-                } else {
-                    const error = new Errors.InvalidParamError('match');
-                    this._fillOpStatusByError(error);
-                    throw error;
-                }
-            }
-
-            if (Object.hasOwnProperty.call(advancedOptions, 'invoke')) {
-                if (/single|roundrobin|random|first|last/.test(advancedOptions.invoke)) {
-                    options.invoke = advancedOptions.invoke;
-                } else {
-                    const error = new Errors.InvalidParamError('invoke');
-                    this._fillOpStatusByError(error);
-                    throw error;
-                }
-            }
-
-        } else if (typeof (advancedOptions) !== 'undefined') {
-            const error = new Errors.InvalidParamError('advancedOptions');
-            this._fillOpStatusByError(error);
-            throw error;
+    async register (topic, rpc, advancedOptions) {
+        if (this._rpcRegs[topic]?.callbacks?.length) {
+            const rpcAlreadyRegisteredError = new Errors.RPCAlreadyRegisteredError();
+            this._fillOpStatusByError(rpcAlreadyRegisteredError);
+            throw rpcAlreadyRegisteredError;
         }
 
-        // Need to be placed here as patternBased flag is determined above
-        if (!this._preReqChecks({ topic: topicURI, patternBased: patternBased, allowWAMP: false },
-            'dealer')) {
+        if (typeof rpc !== 'function') {
+            const noCallbackError = new Errors.NoCallbackError();
+            this._fillOpStatusByError(noCallbackError);
+            throw noCallbackError;
+        }
+
+        if (advancedOptions && !this._isPlainObject(advancedOptions)) {
+            const invalidParamError = new Errors.InvalidParamError('advancedOptions');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
+        }
+
+        const { match, invoke } = advancedOptions || {};
+        const isMatchInvalid = match && !['prefix', 'wildcard'].includes(match);
+        const isInvokeInvalid = invoke && !['single', 'roundrobin', 'random', 'first', 'last'].includes(invoke);
+
+        if (isMatchInvalid || isInvokeInvalid) {
+            const parameter = isMatchInvalid ? 'match' : 'invoke';
+            const invalidParamError = new Errors.InvalidParamError(parameter);
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
+        }
+
+        if (!this._preReqChecks({ topic, patternBased: Boolean(match), allowWAMP: false }, 'dealer')) {
             throw this._cache.opStatus.error;
         }
 
-        if (typeof rpc === 'function') {
-            callbacks.rpc = rpc;
-        } else {
-            const error = new Errors.NoCallbackError();
-            this._fillOpStatusByError(error);
-            throw error;
-        }
+        const reqId = this._getReqId();
+        const callbacks = getNewPromise();
 
-        if (!this._rpcRegs[topicURI] || !this._rpcRegs[topicURI].callbacks.length) {
-            // no such registration or processing unregistering
+        callbacks.rpc = rpc;
+        this._requests[reqId] = { topic, callbacks };
 
-            reqId = this._getReqId();
-
-            this._requests[reqId] = {
-                topic: topicURI,
-                callbacks
-            };
-
-            // WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
-            this._send([WAMP_MSG_SPEC.REGISTER, reqId, options, topicURI]);
-            this._cache.opStatus = SUCCESS;
-            this._cache.opStatus.reqId = reqId;
-        } else {    // already have registration with such topicURI
-            const error = new Errors.RPCAlreadyRegisteredError();
-            this._fillOpStatusByError(error);
-            throw error;
-        }
+        // WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
+        this._send([WAMP_MSG_SPEC.REGISTER, reqId, { match, invoke }, topic]);
+        this._cache.opStatus = { ...SUCCESS, reqId };
 
         return callbacks.promise;
     }
