@@ -2093,12 +2093,19 @@ class Wampy {
 
         const reqId = this._getReqId();
         const callbacks = getNewPromise();
+        const options = {
+            ... (match ? { match } : {}),
+            ... (invoke ? { invoke } : {}),
+        };
 
-        callbacks.rpc = rpc;
+        if (rpc) {
+            callbacks.rpc = rpc;
+        }
+
         this._requests[reqId] = { topic, callbacks };
 
         // WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
-        this._send([WAMP_MSG_SPEC.REGISTER, reqId, { match, invoke }, topic]);
+        this._send([WAMP_MSG_SPEC.REGISTER, reqId, options, topic]);
         this._cache.opStatus = { ...SUCCESS, reqId };
 
         return callbacks.promise;
