@@ -2202,34 +2202,28 @@ class Wampy {
 
     /**
      * RPC unregistration for invocation
-     * @param {string} topicURI
+     * @param {string} topic - a topic URI to unregister
      * @returns {Promise}
      */
-    async unregister (topicURI) {
-        let reqId;
+    async unregister (topic) {
+        if (!this._preReqChecks({ topic, patternBased: false, allowWAMP: false }, 'dealer')) {
+            throw this._cache.opStatus.error;
+        }
+
+        if (!this._rpcRegs[topic]) {
+            const nonExistRpcUnregistrationError = new Errors.NonExistRPCUnregistrationError();
+            this._fillOpStatusByError(nonExistRpcUnregistrationError);
+            throw nonExistRpcUnregistrationError;
+        }
+
+        const reqId = this._getReqId();
         const callbacks = getNewPromise();
 
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'dealer')) {
-            throw this._cache.opStatus.error;        }
+        this._requests[reqId] = { topic, callbacks };
 
-        if (this._rpcRegs[topicURI]) {   // there is such registration
-
-            reqId = this._getReqId();
-
-            this._requests[reqId] = {
-                topic: topicURI,
-                callbacks
-            };
-
-            // WAMP SPEC: [UNREGISTER, Request|id, REGISTERED.Registration|id]
-            this._send([WAMP_MSG_SPEC.UNREGISTER, reqId, this._rpcRegs[topicURI].id]);
-            this._cache.opStatus = SUCCESS;
-            this._cache.opStatus.reqId = reqId;
-        } else {    // there is no registration with such topicURI
-            const error = new Errors.NonExistRPCUnregistrationError();
-            this._fillOpStatusByError(error);
-            throw error;
-        }
+        // WAMP SPEC: [UNREGISTER, Request|id, REGISTERED.Registration|id]
+        this._send([WAMP_MSG_SPEC.UNREGISTER, reqId, this._rpcRegs[topic].id]);
+        this._cache.opStatus = { ...SUCCESS, reqId };
 
         return callbacks.promise;
     }
