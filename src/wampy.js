@@ -559,81 +559,73 @@ class Wampy {
      * @private
      */
     _packPPTPayload (payload, options) {
-        const payloadItems = [];
-        let err = false, argsList, argsDict;
+        const isArgsListInvalid = payload?.argsList && !Array.isArray(payload.argsList);
+        const isArgsDictInvalid = payload?.argsDict && !this._isPlainObject(payload.argsDict);
 
-        if (Array.isArray(payload)) {
-            argsList = payload;
-        } else if (this._isPlainObject(payload)) {
-            // It's a wampy unified form of payload passing
-            if (payload.argsList || payload.argsDict) {
-                const isArgsListInvalid = payload.argsList && !Array.isArray(payload.argsList);
-                const isArgsDictInvalid = payload.argsDict && !this._isPlainObject(payload.argsDict);
-
-                if (isArgsListInvalid || isArgsDictInvalid) {
-                    const invalidParameter = isArgsListInvalid ? payload.argsList : payload.argsDict;
-                    err = true;
-                    this._fillOpStatusByError(new Errors.InvalidParamError(invalidParameter));
-                    return { err, payloadItems };
-                }
-
-                argsList = payload.argsList;
-                argsDict = payload.argsDict;
-            } else {
-                argsDict = payload;
-            }
-        } else {    // assume it's a single value
-            argsList = [payload];
+        if (isArgsListInvalid || isArgsDictInvalid) {
+            const invalidParameter = isArgsListInvalid ? payload.argsList : payload.argsDict;
+            this._fillOpStatusByError(new Errors.InvalidParamError(invalidParameter));
+            return { err: true, payloadItems: [] };
         }
+
+        const isPayloadAnObject = this._isPlainObject(payload);
+        const { argsList, argsDict } = payload || {};
+        let args, kwargs;
+
+        if (isPayloadAnObject && !argsList && !argsDict) {
+            kwargs = payload;
+        } else if (isPayloadAnObject) {
+            args = argsList;
+            kwargs = argsDict;
+        } else {
+            args = Array.isArray(payload) ? payload : [payload];
+        }
+
+        const payloadItems = [];
+
+        if (!options.ppt_scheme) {
+            if (args) {
+                payloadItems.push(args);
+            }
+            if (kwargs) {
+                if (!args) {
+                    payloadItems.push([]);
+                }
+                payloadItems.push(kwargs);
+            }
+            return { err: false, payloadItems };
+        }
+
+        const pptPayload = { args, kwargs };
+        let binPayload = pptPayload;
 
         // Check and handle Payload PassThru Mode
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-        if (options.ppt_scheme) {
-            const pptPayload = { args: argsList, kwargs: argsDict };
-            let binPayload;
+        if (options.ppt_serializer && options.ppt_serializer !== 'native') {
+            const pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
 
-            if (options.ppt_serializer && options.ppt_serializer !== 'native') {
-                const pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
-
-                if (!pptSerializer) {
-                    err = true;
-                    this._fillOpStatusByError(new Errors.PPTSerializerInvalidError());
-                    return { err, payloadItems };
-                }
-
-                try {
-                    binPayload = pptSerializer.encode(pptPayload);
-                } catch (e) {
-                    err = true;
-                    this._fillOpStatusByError(new Errors.PPTSerializationError());
-                    return { err, payloadItems };
-                }
-            } else {
-                binPayload = pptPayload;
+            if (!pptSerializer) {
+                this._fillOpStatusByError(new Errors.PPTSerializerInvalidError());
+                return { err: true, payloadItems };
             }
 
-            // wamp scheme means Payload End-to-End Encryption
-            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
-            if (options.ppt_scheme === 'wamp') {
-
-                // TODO: implement End-to-End Encryption
-            }
-
-            payloadItems.push([binPayload]);
-
-        } else {
-            if (argsList) {
-                payloadItems.push(argsList);
-            }
-            if (argsDict) {
-                if (!argsList) {
-                    payloadItems.push([]);
-                }
-                payloadItems.push(argsDict);
+            try {
+                binPayload = pptSerializer.encode(pptPayload);
+            } catch (e) {
+                this._fillOpStatusByError(new Errors.PPTSerializationError());
+                return { err: true, payloadItems };
             }
         }
 
-        return { err, payloadItems };
+        // wamp scheme means Payload End-to-End Encryption
+        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
+        if (options.ppt_scheme === 'wamp') {
+            // TODO: implement End-to-End Encryption
+        }
+
+        payloadItems.push([binPayload]);
+
+        return { err: false, payloadItems };
     }
 
     /**
