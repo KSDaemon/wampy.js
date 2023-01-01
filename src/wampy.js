@@ -900,11 +900,22 @@ class Wampy {
             // [WAMP_MSG_SPEC.INTERRUPT]:    () => {},
             // [WAMP_MSG_SPEC.YIELD]:        () => {},
         };
-
         const handler = messageHandlers[messageType];
+        const errorURI = 'wamp.error.protocol_violation';
 
         if (!handler) {
-            this._hardClose('wamp.error.protocol_violation', 'Received non-compliant WAMP message');
+            return this._hardClose(errorURI, `Received non-compliant WAMP message: "${messageType}"`);
+        }
+
+        const needEmptySession = [WAMP_MSG_SPEC.WELCOME, WAMP_MSG_SPEC.CHALLENGE].includes(messageType);
+        const needValidSession = !needEmptySession && messageType !== WAMP_MSG_SPEC.ABORT;
+
+        if (needEmptySession && this._cache.sessionId) {
+            return this._hardClose(errorURI, `Received message "${messageType}" after session was established`);
+        }
+
+        if (needValidSession && !this._cache.sessionId) {
+            return this._hardClose(errorURI, `Received message "${messageType}" before session was established`);
         }
 
         await handler();
@@ -917,11 +928,6 @@ class Wampy {
      * @private
      */
     async _onWelcomeMessage (data) {
-        if (this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received WELCOME message after session was established');
-        }
-
         this._cache.sessionId = data[1];
         this._cache.server_wamp_features = data[2];
 
@@ -968,10 +974,7 @@ class Wampy {
     async _onChallengeMessage (data) {
         let promise;
 
-        if (this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received CHALLENGE message after session was established');
-        } else if (this._options.authid &&
+        if (this._options.authid &&
             this._options.authMode === 'manual' &&
             typeof this._options.onChallenge === 'function') {
 
@@ -1030,11 +1033,6 @@ class Wampy {
      * @private
      */
     async _onGoodbyeMessage () {
-        if (!this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received GOODBYE message before session was established');
-        }
-
         if (!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
             this._cache.isSayingGoodbye = true;
             this._send([WAMP_MSG_SPEC.GOODBYE, {}, 'wamp.close.goodbye_and_out']);
@@ -1051,11 +1049,6 @@ class Wampy {
      * @private
      */
     async _onErrorMessage (data) {
-        if (!this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received ERROR message before session was established');
-        }
-
         const errData = {
             error   : data[4],
             details : data[3],
@@ -1123,11 +1116,6 @@ class Wampy {
      * @private
      */
     async _onSubscribedMessage (data) {
-        if (!this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received SUBSCRIBED message before session was established');
-        }
-
         if (this._requests[data[1]]) {
             const subscriptionKey = this._getSubscriptionKey(
                 this._requests[data[1]].topic,
@@ -1163,11 +1151,6 @@ class Wampy {
      * @private
      */
     async _onUnsubscribedMessage (data) {
-        if (!this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received UNSUBSCRIBED message before session was established');
-        }
-
         if (this._requests[data[1]]) {
             const subscriptionKey = this._getSubscriptionKey(
                 this._requests[data[1]].topic,
@@ -1194,11 +1177,6 @@ class Wampy {
      * @private
      */
     async _onPublishedMessage (data) {
-        if (!this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received PUBLISHED message before session was established');
-        }
-
         if (this._requests[data[1]]) {
             if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
                 await this._requests[data[1]].callbacks.onSuccess({
@@ -1218,11 +1196,6 @@ class Wampy {
      * @private
      */
     async _onEventMessage (data) {
-        if (!this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received EVENT message before session was established');
-        }
-
         const subscription = this._subscriptionsById.get(data[1]);
 
         if (!subscription) {
@@ -1273,11 +1246,6 @@ class Wampy {
      * @private
      */
     async _onResultMessage (data) {
-        if (!this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received RESULT message before session was established');
-        }
-
         if (!this._calls[data[1]]) {
             return;
         }
@@ -1340,11 +1308,6 @@ class Wampy {
      * @private
      */
     async _onRegisteredMessage (data) {
-        if (!this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received REGISTERED message before session was established');
-        }
-
         if (!this._requests[data[1]]) {
             return;
         }
@@ -1374,11 +1337,6 @@ class Wampy {
      * @private
      */
     async _onUnregisteredMessage (data) {
-        if (!this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received UNREGISTERED message before session was established');
-        }
-
         if (!this._requests[data[1]]) {
             return;
         }
@@ -1407,11 +1365,6 @@ class Wampy {
      * @private
      */
     async _onInvocationMessage (data) {
-        if (!this._cache.sessionId) {
-            return this._hardClose('wamp.error.protocol_violation',
-                'Received INVOCATION message before session was established');
-        }
-
         if (!this._rpcRegs[data[2]]) {
             // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
             this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
