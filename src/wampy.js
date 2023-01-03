@@ -907,10 +907,10 @@ class Wampy {
             return this._hardClose(errorURI, `Received non-compliant WAMP message: "${messageType}"`);
         }
 
-        const needEmptySession = [WAMP_MSG_SPEC.WELCOME, WAMP_MSG_SPEC.CHALLENGE].includes(messageType);
-        const needValidSession = !needEmptySession && messageType !== WAMP_MSG_SPEC.ABORT;
+        const needNoSession = [WAMP_MSG_SPEC.WELCOME, WAMP_MSG_SPEC.CHALLENGE].includes(messageType);
+        const needValidSession = !needNoSession && messageType !== WAMP_MSG_SPEC.ABORT;
 
-        if (needEmptySession && this._cache.sessionId) {
+        if (needNoSession && this._cache.sessionId) {
             return this._hardClose(errorURI, `Received message "${messageType}" after session was established`);
         }
 
