@@ -577,8 +577,10 @@ class Wampy {
         } else if (isPayloadAnObject) {
             args = argsList;
             kwargs = argsDict;
-        } else {
-            args = Array.isArray(payload) ? payload : [payload];
+        } else if (Array.isArray(payload)) {
+            args = payload;
+        } else {  // assume it's a single value
+            args = [payload];
         }
 
         const payloadItems = [];
