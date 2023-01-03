@@ -77,14 +77,14 @@
   },
   "homepage": "https://github.com/KSDaemon/wampy.js#readme",
   "scripts": {
-    "build": "node ./node_modules/.bin/grunt",
-    "lint": "node ./node_modules/eslint/bin/eslint src test Gruntfile.cjs",
-    "lint:fix": "node ./node_modules/eslint/bin/eslint --fix src test Gruntfile.cjs",
+    "build": "npx grunt",
+    "lint": "npx eslint src test Gruntfile.cjs",
+    "lint:fix": "npm run lint -- --fix",
     "test": "npm run test:node && npm run test:browser",
-    "test:node": "NODE_ENV=test c8 ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec",
-    "test:node-no-crossbar": "NODE_ENV=test c8 ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec 'test/!(wampy-crossbar)-test.js'",
-    "test:crossbar": "NODE_ENV=test c8 ./node_modules/mocha/bin/mocha --exit --require @babel/register -R spec 'test/wampy-crossbar-test.js'",
-    "test:browser": "node ./node_modules/karma/bin/karma start karma.conf.cjs",
+    "test:node": "NODE_ENV=test c8 mocha --exit --require @babel/register -R spec",
+    "test:node-no-crossbar": "npm run test:node -- -- 'test/!(wampy-crossbar)-test.js'",
+    "test:crossbar": "npm run test:node -- -- 'test/wampy-crossbar-test.js'",
+    "test:browser": "npx karma start karma.conf.cjs",
     "cover": "c8 report"
   }
 }
