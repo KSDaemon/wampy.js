@@ -1112,62 +1112,57 @@ class Wampy {
     /**
      * Handles websocket subscribed message event
      * WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
-     * @param {object} data - decoded event data
+     * @param {Array} [, requestId, subscriptionId] - decoded event data Array, with the
+     * second and third elements of the Array being the requestId and subscriptionId respectively
      * @private
      */
-    async _onSubscribedMessage (data) {
-        if (this._requests[data[1]]) {
-            const subscriptionKey = this._getSubscriptionKey(
-                this._requests[data[1]].topic,
-                this._requests[data[1]].advancedOptions);
-
-            const sub = {
-                id             : data[2],
-                topic          : this._requests[data[1]].topic,
-                callbacks      : [this._requests[data[1]].callbacks.onEvent],
-                advancedOptions: this._requests[data[1]].advancedOptions
-            };
-
-            this._subscriptionsById.set(data[2], sub);
-            this._subscriptionsByKey.set(subscriptionKey, sub);
-
-            if (this._requests[data[1]].callbacks.onSuccess) {
-                await this._requests[data[1]].callbacks.onSuccess({
-                    topic         : this._requests[data[1]].topic,
-                    requestId     : data[1],
-                    subscriptionId: data[2],
-                    subscriptionKey
-                });
-            }
-
-            delete this._requests[data[1]];
+    async _onSubscribedMessage ([, requestId, subscriptionId]) {
+        if (!this._requests[requestId]) {
+            return;
         }
+
+        const { topic, advancedOptions, callbacks } = this._requests[requestId] || {};
+        const subscription = {
+            id: subscriptionId,
+            topic,
+            advancedOptions,
+            callbacks: [callbacks.onEvent]
+        };
+        const subscriptionKey = this._getSubscriptionKey(topic, advancedOptions);
+
+        this._subscriptionsById.set(subscriptionId, subscription);
+        this._subscriptionsByKey.set(subscriptionKey, subscription);
+
+        if (callbacks.onSuccess) {
+            await callbacks.onSuccess({ topic, requestId, subscriptionId, subscriptionKey });
+        }
+
+        delete this._requests[requestId];
     }
 
     /**
      * Handles websocket unsubscribed message event
      * WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
-     * @param {object} data - decoded event data
+     * @param {Array} [, requestId] - decoded event data Array, with the
+     * second element of the Array being the requestId
      * @private
      */
-    async _onUnsubscribedMessage (data) {
-        if (this._requests[data[1]]) {
-            const subscriptionKey = this._getSubscriptionKey(
-                this._requests[data[1]].topic,
-                this._requests[data[1]].advancedOptions);
-            const id = this._subscriptionsByKey.get(subscriptionKey).id;
-            this._subscriptionsByKey.delete(subscriptionKey);
-            this._subscriptionsById.delete(id);
-
-            if (this._requests[data[1]].callbacks.onSuccess) {
-                await this._requests[data[1]].callbacks.onSuccess({
-                    topic    : this._requests[data[1]].topic,
-                    requestId: data[1]
-                });
-            }
-
-            delete this._requests[data[1]];
+    async _onUnsubscribedMessage ([, requestId]) {
+        if (!this._requests[requestId]) {
+            return;
         }
+
+        const { topic, advancedOptions, callbacks } = this._requests[requestId] || {};
+        const subscriptionKey = this._getSubscriptionKey(topic, advancedOptions);
+        const subscriptionId = this._subscriptionsByKey.get(subscriptionKey).id;
+        this._subscriptionsByKey.delete(subscriptionKey);
+        this._subscriptionsById.delete(subscriptionId);
+
+        if (callbacks.onSuccess) {
+            await callbacks.onSuccess({ topic, requestId });
+        }
+
+        delete this._requests[requestId];
     }
 
     /**
