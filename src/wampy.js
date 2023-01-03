@@ -1350,144 +1350,114 @@ class Wampy {
 
     /**
      * Handles websocket invocation message event
-     * @param {object} data - decoded event data
+     * @param {Array} data - decoded event data array
      * @private
      */
-    async _onInvocationMessage (data) {
-        if (!this._rpcRegs[data[2]]) {
-            // WAMP SPEC: [ERROR, INVOCATION, INVOCATION.Request|id, Details|dict, Error|uri]
-            this._send([WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                data[1], {}, 'wamp.error.no_such_procedure']);
-            return this._log(WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION);
+    async _onInvocationMessage ([, requestId, topic, details, argsList, argsDict]) {
+        const self = this;
+        const handleInvocationError = ({ details, error, argsList, argsDict }) => {
+            self._send([
+                WAMP_MSG_SPEC.ERROR,
+                WAMP_MSG_SPEC.INVOCATION,
+                requestId,
+                details || {},
+                error || 'wamp.error.invocation_exception',
+                argsList || [],
+                ...(argsDict ? [argsDict] : [])
+            ]);
+        };
+
+        if (!this._rpcRegs[topic]) {
+            this._log(WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION);
+            return handleInvocationError({ error: 'wamp.error.no_such_procedure' });
         }
 
-        const self = this;
-        const options = data[3];
-        let argsList, argsDict;
-
-        // WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id,
-        //             Details|dict, CALL.Arguments|list, CALL.ArgumentsKw|dict]
-        const invoke_error_handler = ({ details, error, argsList, argsDict }) => {
-                const msg = [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.INVOCATION,
-                    data[1], details || {}, error || 'wamp.error.invocation_exception'];
-
-                if (argsList && Array.isArray(argsList)) {
-                    msg.push(argsList);
-                }
-
-                if (argsDict && self._isPlainObject(argsDict)) {
-                    if (msg.length === 5) {
-                        msg.push([]);
-                    }
-                    msg.push(argsDict);
-                }
-                self._send(msg);
-            },
-            invoke_result_handler = results => {
-                // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, (Arguments|list,
-                // ArgumentsKw|dict)]
-                let msg = [WAMP_MSG_SPEC.YIELD, data[1], {}];
-
-                if (self._isPlainObject(results)) {
-
-                    if (self._isPlainObject(results.options)) {
-                        const options = results.options;
-
-                        // Check and handle Payload PassThru Mode
-                        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-                        const pptScheme = results.options.ppt_scheme;
-
-                        if (pptScheme) {
-                            if (!this._checkPPTOptions('dealer', results.options)) {
-                                if (this._cache.opStatus.error && this._cache.opStatus.error instanceof Errors.PPTNotSupportedError) {
-                                    // This case should not happen at all, but for safety
-                                    this._hardClose('wamp.error.protocol_violation', 'Trying to send YIELD in PPT Mode, while Dealer didn\'t announce it');
-                                } else {
-                                    invoke_error_handler({
-                                        details : results.options,
-                                        error   : 'wamp.error.invalid_option',
-                                        argsList: [this._cache.opStatus.error.message],
-                                        argsDict: null
-                                    });
-                                }
-                                return;
-                            }
-
-                            options.ppt_scheme = pptScheme;
-
-                            if (results.options.ppt_serializer) {
-                                options.ppt_serializer = results.options.ppt_serializer;
-                            }
-                            if (results.options.ppt_cipher) {
-                                options.ppt_cipher = results.options.ppt_cipher;
-                            }
-                            if (results.options.ppt_keyid) {
-                                options.ppt_keyid = results.options.ppt_keyid;
-                            }
-                        }
-
-                        msg[2] = options;
-                    }
-                }
-
-                if (results !== null && typeof (results) !== 'undefined') {
-                    const res = this._packPPTPayload(results, results.options || {});
-
-                    if (res.err) {
-                        invoke_error_handler({
-                            details : results.options,
-                            error   : null, // will be default'ed to invocation_exception
-                            argsList: [this._cache.opStatus.error.message],
-                            argsDict: null
-                        });
-                        return;
-                    }
-                    msg = msg.concat(res.payloadItems);
-                }
-
-                self._send(msg);
-            };
+        let args = argsList;
+        let kwargs = argsDict;
 
         // Check and handle Payload PassThru Mode
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-        if (options.ppt_scheme) {
-            const pptPayload = data[4][0];
-            const decodedPayload = this._unpackPPTPayload('dealer', pptPayload, options);
+        if (details?.ppt_scheme) {
+            const pptPayload = argsList[0];
+            const decodedPayload = this._unpackPPTPayload('dealer', pptPayload, details);
 
             // This case should not happen at all, but for safety
-            if (decodedPayload.err && decodedPayload.err instanceof Errors.PPTNotSupportedError) {
+            if (decodedPayload.err) {
                 this._log(decodedPayload.err.message);
-                return this._hardClose('wamp.error.protocol_violation', 'Received INVOCATION in PPT Mode, while Dealer didn\'t announce it');
-            } else if (decodedPayload.err) {
 
-                this._log(decodedPayload.err.message);
-                return invoke_error_handler({
-                    details : data[3],
-                    error   : null, // will be default'ed to invocation_exception,
+                if (decodedPayload.err instanceof Errors.PPTNotSupportedError) {
+                    // This case should not happen at all, but for safety
+                    return this._hardClose('wamp.error.protocol_violation',
+                        'Received INVOCATION in PPT Mode, while Dealer didn\'t announce it');
+                }
+
+                return handleInvocationError({
+                    details,
+                    error: 'wamp.error.invocation_exception',
                     argsList: [decodedPayload.err.message],
-                    argsDict: null
                 });
             }
 
-            argsList = decodedPayload.args;
-            argsDict = decodedPayload.kwargs;
-
-        } else {
-            argsList = data[4];
-            argsDict = data[5];
+            args = decodedPayload.args;
+            kwargs = decodedPayload.kwargs;
         }
 
+        const handleInvocationResult = (result) => {
+            const options = result?.options;
+            const { ppt_scheme, ppt_serializer, ppt_cipher, ppt_keyid } = options ?? {};
+
+            // Check and handle Payload PassThru Mode
+            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+            if (ppt_scheme && !this._checkPPTOptions('dealer', options)) {
+                if (this._cache.opStatus.error instanceof Errors.PPTNotSupportedError) {
+                    // This case should not happen at all, but for safety
+                    return this._hardClose('wamp.error.protocol_violation', 'Trying to send YIELD in PPT Mode, while Dealer didn\'t announce it');
+                }
+
+                return handleInvocationError({
+                    details: options,
+                    error: 'wamp.error.invalid_option',
+                    argsList: [this._cache.opStatus.error.message],
+                });
+            }
+
+            const { err, payloadItems } = options ? this._packPPTPayload(result, options) : {};
+
+            if (err) {
+                return handleInvocationError({
+                    details: options,
+                    error: 'wamp.error.invocation_exception',
+                    argsList: [this._cache.opStatus.error.message],
+                });
+            }
+
+            const messageOptions = {
+                ...(options || {}),
+                ...(ppt_scheme ? { ppt_scheme } : {}),
+                ...(ppt_serializer ? { ppt_serializer } : {}),
+                ...(ppt_cipher ? { ppt_cipher } : {}),
+                ...(ppt_keyid ? { ppt_keyid } : {}),
+            };
+
+            self._send([
+                WAMP_MSG_SPEC.YIELD,
+                requestId,
+                messageOptions,
+                ...(payloadItems || []),
+            ]);
+        };
+
         try {
-            const results = await this._rpcRegs[data[2]].callbacks[0]({
-                details       : options,
-                argsList      : argsList,
-                argsDict      : argsDict,
-                result_handler: invoke_result_handler,
-                error_handler : invoke_error_handler
+            const result = await this._rpcRegs[topic].callbacks[0]({
+                details,
+                argsList      : args,
+                argsDict      : kwargs,
+                result_handler: handleInvocationResult,
+                error_handler : handleInvocationError
             });
-            invoke_result_handler(results);
+            handleInvocationResult(result);
         } catch (e) {
-            invoke_error_handler(e);
+            handleInvocationError(e);
         }
     }
 
