@@ -1355,7 +1355,7 @@ class Wampy {
      */
     async _onInvocationMessage ([, requestId, topic, details, argsList, argsDict]) {
         const self = this;
-        const handleInvocationError = ({ details, error, argsList, argsDict }) => {
+        const handleInvocationError = ({ error, details, argsList, argsDict }) => {
             self._send([
                 WAMP_MSG_SPEC.ERROR,
                 WAMP_MSG_SPEC.INVOCATION,
