@@ -1411,22 +1411,23 @@ class Wampy {
             if (ppt_scheme && !this._checkPPTOptions('dealer', options)) {
                 if (this._cache.opStatus.error instanceof Errors.PPTNotSupportedError) {
                     // This case should not happen at all, but for safety
-                    return this._hardClose('wamp.error.protocol_violation', 'Trying to send YIELD in PPT Mode, while Dealer didn\'t announce it');
+                    return this._hardClose('wamp.error.protocol_violation',
+                        'Trying to send YIELD in PPT Mode, while Dealer didn\'t announce it');
                 }
 
                 return handleInvocationError({
-                    details: options,
-                    error: 'wamp.error.invalid_option',
+                    details : options,
+                    error   : 'wamp.error.invalid_option',
                     argsList: [this._cache.opStatus.error.message],
                 });
             }
 
-            const { err, payloadItems } = options ? this._packPPTPayload(result, options) : {};
+            const { err, payloadItems } = result ? this._packPPTPayload(result, options || {}) : {};
 
             if (err) {
                 return handleInvocationError({
-                    details: options,
-                    error: 'wamp.error.invocation_exception',
+                    details : options,
+                    error   : 'wamp.error.invocation_exception',
                     argsList: [this._cache.opStatus.error.message],
                 });
             }
