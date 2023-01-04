@@ -1353,21 +1353,32 @@ class Wampy {
      * @param {Array} data - decoded event data array
      * @private
      */
-    async _onInvocationMessage ([, requestId, topic, details, argsList, argsDict]) {
+    async _onInvocationMessage ([, requestId, registrationId, details, argsList, argsDict]) {
         const self = this;
         const handleInvocationError = ({ error, details, argsList, argsDict }) => {
-            self._send([
+            const message = [
                 WAMP_MSG_SPEC.ERROR,
                 WAMP_MSG_SPEC.INVOCATION,
                 requestId,
                 details || {},
                 error || 'wamp.error.invocation_exception',
-                argsList || [],
-                ...(argsDict ? [argsDict] : [])
-            ]);
+            ];
+
+            if (Array.isArray(argsList)) {
+                message.push(argsList);
+            }
+
+            if (self._isPlainObject(argsDict)) {
+                if (Array.isArray(argsList)) {
+                    message.push([]);
+                }
+                message.push(argsDict);
+            }
+
+            self._send(message);
         };
 
-        if (!this._rpcRegs[topic]) {
+        if (!this._rpcRegs[registrationId]) {
             this._log(WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION);
             return handleInvocationError({ error: 'wamp.error.no_such_procedure' });
         }
@@ -1449,7 +1460,7 @@ class Wampy {
         };
 
         try {
-            const result = await this._rpcRegs[topic].callbacks[0]({
+            const result = await this._rpcRegs[registrationId].callbacks[0]({
                 details,
                 argsList      : args,
                 argsDict      : kwargs,
