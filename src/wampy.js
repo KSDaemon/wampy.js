@@ -1369,7 +1369,7 @@ class Wampy {
             }
 
             if (self._isPlainObject(argsDict)) {
-                if (Array.isArray(argsList)) {
+                if (!Array.isArray(argsList)) {
                     message.push([]);
                 }
                 message.push(argsDict);
