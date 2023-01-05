@@ -1325,10 +1325,10 @@ class Wampy {
             return;
         }
 
-        const { topic, id, callbacks } = this._requests[requestId];
+        const { topic, callbacks } = this._requests[requestId];
 
+        delete this._rpcRegs[this._rpcRegs[topic].id];
         delete this._rpcRegs[topic];
-        delete this._rpcRegs[id];
 
         if (this._rpcNames.has(topic)) {
             this._rpcNames.delete(topic);
