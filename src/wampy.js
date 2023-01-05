@@ -1301,19 +1301,14 @@ class Wampy {
             return;
         }
 
-        this._rpcRegs[registrationId] = {
-            id       : registrationId,
-            callbacks: [this._requests[requestId].callbacks.rpc]
-        };
+        const { topic, callbacks } = this._requests[requestId];
 
-        const topic = this._requests[requestId].topic;
-        const onSuccessCallback = this._requests[requestId]?.callbacks?.onSuccess;
-
+        this._rpcRegs[registrationId] = { id: registrationId, callbacks: [callbacks.rpc] };
         this._rpcRegs[topic] = this._rpcRegs[registrationId];
         this._rpcNames.add(topic);
 
-        if (onSuccessCallback) {
-            await onSuccessCallback({ topic, requestId, registrationId });
+        if (callbacks?.onSuccess) {
+            await callbacks.onSuccess({ topic, requestId, registrationId });
         }
 
         delete this._requests[requestId];
@@ -1330,9 +1325,7 @@ class Wampy {
             return;
         }
 
-        const topic = this._requests[requestId].topic;
-        const id = this._rpcRegs[topic].id;
-        const onSuccessCallback = this._requests[requestId]?.callbacks?.onSuccess;
+        const { topic, id, callbacks } = this._requests[requestId];
 
         delete this._rpcRegs[topic];
         delete this._rpcRegs[id];
@@ -1341,8 +1334,8 @@ class Wampy {
             this._rpcNames.delete(topic);
         }
 
-        if (onSuccessCallback) {
-            await onSuccessCallback({ topic, requestId });
+        if (callbacks?.onSuccess) {
+            await callbacks.onSuccess({ topic, requestId });
         }
 
         delete this._requests[requestId];
