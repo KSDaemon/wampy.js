@@ -1162,21 +1162,21 @@ class Wampy {
     /**
      * Handles websocket published message event
      * WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
-     * @param {object} data - decoded event data
+     * @param {Array} [, requestId, publicationId] - decoded event data
      * @private
      */
-    async _onPublishedMessage (data) {
-        if (this._requests[data[1]]) {
-            if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-                await this._requests[data[1]].callbacks.onSuccess({
-                    topic        : this._requests[data[1]].topic,
-                    requestId    : data[1],
-                    publicationId: data[2]
-                });
-            }
-
-            delete this._requests[data[1]];
+    async _onPublishedMessage ([, requestId, publicationId]) {
+        if (!this._requests[requestId]) {
+            return;
         }
+
+        const { topic, callbacks } = this._requests[requestId];
+
+        if (callbacks?.onSuccess) {
+            await callbacks.onSuccess({ topic, requestId, publicationId });
+        }
+
+        delete this._requests[requestId];
     }
 
     /**
