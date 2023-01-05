@@ -1039,67 +1039,36 @@ class Wampy {
      * Handles websocket error message event
      * WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict,
      *             Error|uri, (Arguments|list, ArgumentsKw|dict)]
-     * @param {object} data - decoded event data
+     * @param {Array} [, requestType, requestId, details, error, argsList, argsDict] - decoded event data array
      * @private
      */
-    async _onErrorMessage (data) {
-        const errData = {
-            error   : data[4],
-            details : data[3],
-            argsList: data[5],
-            argsDict: data[6]
+    async _onErrorMessage ([, requestType, requestId, details, error, argsList, argsDict]) {
+        const errorOptions = { error, details, argsList, argsDict };
+        const errorsByRequestType = {
+            [WAMP_MSG_SPEC.SUBSCRIBE]: new Errors.SubscribeError(errorOptions),
+            [WAMP_MSG_SPEC.UNSUBSCRIBE]: new Errors.UnsubscribeError(errorOptions),
+            [WAMP_MSG_SPEC.PUBLISH]: new Errors.PublishError(errorOptions),
+            [WAMP_MSG_SPEC.REGISTER]: new Errors.RegisterError(errorOptions),
+            [WAMP_MSG_SPEC.UNREGISTER]: new Errors.UnregisterError(errorOptions),
+            // [WAMP_MSG_SPEC.INVOCATION]:
+            [WAMP_MSG_SPEC.CALL]: new Errors.CallError(errorOptions),
         };
+        const currentError = errorsByRequestType[requestType];
 
-        switch (data[1]) {
-            case WAMP_MSG_SPEC.SUBSCRIBE:
+        if (!currentError) {
+            return this._hardClose('wamp.error.protocol_violation', 'Received invalid ERROR message');
+        }
 
-                this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                    await this._requests[data[2]].callbacks.onError(new Errors.SubscribeError(errData));
-                delete this._requests[data[2]];
-
-                break;
-            case WAMP_MSG_SPEC.UNSUBSCRIBE:
-
-                this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                    await this._requests[data[2]].callbacks.onError(new Errors.UnsubscribeError(errData));
-                delete this._requests[data[2]];
-
-                break;
-            case WAMP_MSG_SPEC.PUBLISH:
-
-                this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                    await this._requests[data[2]].callbacks.onError(new Errors.PublishError(errData));
-                delete this._requests[data[2]];
-
-                break;
-            case WAMP_MSG_SPEC.REGISTER:
-
-                this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                    await this._requests[data[2]].callbacks.onError(new Errors.RegisterError(errData));
-                delete this._requests[data[2]];
-
-                break;
-            case WAMP_MSG_SPEC.UNREGISTER:
-
-                this._requests[data[2]] && this._requests[data[2]].callbacks.onError &&
-                    await this._requests[data[2]].callbacks.onError(new Errors.UnregisterError(errData));
-                delete this._requests[data[2]];
-
-                break;
-                // case WAMP_MSG_SPEC.INVOCATION:
-                //     break;
-            case WAMP_MSG_SPEC.CALL:
-
-                // WAMP SPEC: [ERROR, CALL, CALL.Request|id, Details|dict,
-                //             Error|uri, Arguments|list, ArgumentsKw|dict]
-                this._calls[data[2]] && this._calls[data[2]].onError &&
-                    await this._calls[data[2]].onError(new Errors.CallError(errData));
-                delete this._calls[data[2]];
-
-                break;
-            default:
-                this._hardClose('wamp.error.protocol_violation', 'Received invalid ERROR message');
-                break;
+        if (requestType === WAMP_MSG_SPEC.CALL) {
+            if (this._calls[requestId]?.onError) {
+                await this._calls[requestId].onError(currentError);
+            }
+            delete this._calls[requestId];
+        } else {
+            if (this._requests[requestId]?.callbacks?.onError) {
+                await this._requests[requestId].callbacks.onError(currentError);
+            }
+            delete this._requests[requestId];
         }
     }
 
