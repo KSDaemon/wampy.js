@@ -2,7 +2,7 @@
   "name": "wampy",
   "version": "7.0.0",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation",
-  "author": "Konstantin Burkalev <KSDaemon@ya.ru> (https://ksdaemon.ru)",
+  "author": "Konstantin Burkalev <KSDaemon@gmail.com> (https://ksdaemon.com)",
   "devDependencies": {
     "@babel/core": "^7.20.7",
     "@babel/preset-env": "^7.20.2",
