@@ -1293,59 +1293,52 @@ class Wampy {
     /**
      * Handles websocket registered message event
      * WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
-     * @param {object} data - decoded event data
+     * @param {Array} [, requestId, registrationId] - decoded event data array
      * @private
      */
-    async _onRegisteredMessage (data) {
-        if (!this._requests[data[1]]) {
+    async _onRegisteredMessage ([, requestId, registrationId]) {
+        if (!this._requests[requestId]) {
             return;
         }
 
-        this._rpcRegs[this._requests[data[1]].topic] = this._rpcRegs[data[2]] = {
-            id       : data[2],
-            callbacks: [this._requests[data[1]].callbacks.rpc]
-        };
+        const { topic, callbacks } = this._requests[requestId];
 
-        this._rpcNames.add(this._requests[data[1]].topic);
+        this._rpcRegs[registrationId] = { id: registrationId, callbacks: [callbacks.rpc] };
+        this._rpcRegs[topic] = this._rpcRegs[registrationId];
+        this._rpcNames.add(topic);
 
-        if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-            await this._requests[data[1]].callbacks.onSuccess({
-                topic         : this._requests[data[1]].topic,
-                requestId     : data[1],
-                registrationId: data[2]
-            });
+        if (callbacks?.onSuccess) {
+            await callbacks.onSuccess({ topic, requestId, registrationId });
         }
 
-        delete this._requests[data[1]];
+        delete this._requests[requestId];
     }
 
     /**
      * Handles websocket unregistered message event
      * WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
-     * @param {object} data - decoded event data
+     * @param {Array} [, requestId] - decoded event data array
      * @private
      */
-    async _onUnregisteredMessage (data) {
-        if (!this._requests[data[1]]) {
+    async _onUnregisteredMessage ([, requestId]) {
+        if (!this._requests[requestId]) {
             return;
         }
 
-        const id = this._rpcRegs[this._requests[data[1]].topic].id;
-        delete this._rpcRegs[this._requests[data[1]].topic];
-        delete this._rpcRegs[id];
+        const { topic, callbacks } = this._requests[requestId];
 
-        if (this._rpcNames.has(this._requests[data[1]].topic)) {
-            this._rpcNames.delete(this._requests[data[1]].topic);
+        delete this._rpcRegs[this._rpcRegs[topic].id];
+        delete this._rpcRegs[topic];
+
+        if (this._rpcNames.has(topic)) {
+            this._rpcNames.delete(topic);
         }
 
-        if (this._requests[data[1]].callbacks && this._requests[data[1]].callbacks.onSuccess) {
-            await this._requests[data[1]].callbacks.onSuccess({
-                topic    : this._requests[data[1]].topic,
-                requestId: data[1]
-            });
+        if (callbacks?.onSuccess) {
+            await callbacks.onSuccess({ topic, requestId });
         }
 
-        delete this._requests[data[1]];
+        delete this._requests[requestId];
     }
 
     /**
