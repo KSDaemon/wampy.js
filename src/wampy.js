@@ -1162,8 +1162,8 @@ class Wampy {
             return;
         }
 
-        const args = argsList;
-        const kwargs = argsDict;
+        let args = argsList;
+        let kwargs = argsDict;
 
         // Check and handle Payload PassThru Mode
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
@@ -1179,18 +1179,17 @@ class Wampy {
                 return this._log(decodedPayload.err.message);
             }
 
-            argsList = decodedPayload.args;
-            argsDict = decodedPayload.kwargs;
+            args = decodedPayload.args;
+            kwargs = decodedPayload.kwargs;
         }
 
-        let i = subscription.callbacks.length;
-        while (i--) {
-            await subscription.callbacks[i]({
-                details,
-                argsList: args,
-                argsDict: kwargs
-            });
+        const callbacksInReverseOrder = [...(subscription.callbacks || [])].reverse();
+        const callbackOptions = { details, argsList: args, argsDict: kwargs };
+
+        for (const callback of callbacksInReverseOrder) {
+            await callback(callbackOptions);
         }
+
     }
 
     /**
