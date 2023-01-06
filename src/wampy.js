@@ -1223,8 +1223,8 @@ class Wampy {
                 this._log(decodedPayload.err.message);
                 this._cache.opStatus = decodedPayload.err;
                 await this._calls[requestId].onError(new Errors.CallError({
+                    details,
                     error     : 'wamp.error.invocation_exception',
-                    details   : details,
                     argsList  : [decodedPayload.err.message],
                     argsDict  : null
                 }));
@@ -1247,6 +1247,7 @@ class Wampy {
             delete this._calls[requestId];
         }
     }
+
     /**
      * Handles websocket registered message event
      * WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
