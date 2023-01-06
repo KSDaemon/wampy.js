@@ -1200,65 +1200,53 @@ class Wampy {
 
     /**
      * Handles websocket result message event
+     * WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
+     *             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
      * @param {object} data - decoded event data
      * @private
      */
-    async _onResultMessage (data) {
-        if (!this._calls[data[1]]) {
+    async _onResultMessage ([, requestId, details, argsList, argsDict]) {
+        if (!this._calls[requestId]) {
             return;
         }
 
-        const options = data[2];
-        let argsList, argsDict;
-
-        // WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
-        //             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
+        let args = argsList;
+        let kwargs = argsDict;
 
         // Check and handle Payload PassThru Mode
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-        if (options.ppt_scheme) {
-            const pptPayload = data[3][0];
-            const decodedPayload = this._unpackPPTPayload('dealer', pptPayload, options);
+        if (details.ppt_scheme) {
+            const pptPayload = argsList[0];
+            const decodedPayload = this._unpackPPTPayload('dealer', pptPayload, details);
 
             if (decodedPayload.err) {
                 this._log(decodedPayload.err.message);
                 this._cache.opStatus = decodedPayload.err;
-                await this._calls[data[1]].onError(new Errors.CallError({
+                await this._calls[requestId].onError(new Errors.CallError({
                     error     : 'wamp.error.invocation_exception',
-                    details   : data[2],
+                    details   : details,
                     argsList  : [decodedPayload.err.message],
                     argsDict  : null
                 }));
-                delete this._calls[data[1]];
+                delete this._calls[requestId];
 
                 return;
             }
 
-            argsList = decodedPayload.args;
-            argsDict = decodedPayload.kwargs;
-
-        } else {
-            argsList = data[3];
-            argsDict = data[4];
+            args = decodedPayload.args;
+            kwargs = decodedPayload.kwargs;
         }
 
-        if (options.progress === true) {
-            await this._calls[data[1]].onProgress({
-                details : options,
-                argsList: argsList,
-                argsDict: argsDict
-            });
+        const callbackOptions = { details, argsList: args, argsDict: kwargs };
+
+        if (details.progress) {
+            await this._calls[requestId].onProgress(callbackOptions);
         } else {
             // We received final result (progressive or not)
-            await this._calls[data[1]].onSuccess({
-                details : options,
-                argsList: argsList,
-                argsDict: argsDict
-            });
-            delete this._calls[data[1]];
+            await this._calls[requestId].onSuccess(callbackOptions);
+            delete this._calls[requestId];
         }
     }
-
     /**
      * Handles websocket registered message event
      * WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
