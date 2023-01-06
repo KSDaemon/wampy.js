@@ -998,7 +998,7 @@ class Wampy {
         try {
             const key = await promise;
 
-            // Sending directly because a challenge message doesn't need a sessionId check
+            // Sending directly 'cause it's a challenge msg and no sessionId check is needed
             this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
         } catch (e) {
             const challengeExceptionError = new Errors.ChallengeExceptionError();
