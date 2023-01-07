@@ -1183,13 +1183,10 @@ class Wampy {
             kwargs = decodedPayload.kwargs;
         }
 
-        const callbacksInReverseOrder = [...(subscription.callbacks || [])].reverse();
         const callbackOptions = { details, argsList: args, argsDict: kwargs };
+        const callbackPromises = subscription.callbacks.map((c) => c(callbackOptions));
 
-        for (const callback of callbacksInReverseOrder) {
-            await callback(callbackOptions);
-        }
-
+        await Promise.all(callbackPromises);
     }
 
     /**
