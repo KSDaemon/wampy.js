@@ -948,13 +948,13 @@ class Wampy {
 
     /**
      * Handles websocket abort message event
-     * WAMP SPEC: [ABORT, Details|dict, Reason|uri]
-     * @param {object} data - decoded event data
+     * WAMP SPEC: [ABORT, Details|dict, Error|uri]
+     * @param {Array} [, details, error] - decoded event data array
      * @private
      */
-    async _onAbortMessage (data) {
+    async _onAbortMessage ([, details, error]) {
         if (this._options.onError) {
-            await this._options.onError(new Errors.AbortError({ error: data[2], details: data[1] }));
+            await this._options.onError(new Errors.AbortError({ error, details }));
         }
         this._ws.close();
     }
