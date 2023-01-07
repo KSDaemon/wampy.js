@@ -962,28 +962,22 @@ class Wampy {
     /**
      * Handles websocket challenge message event
      * WAMP SPEC: [CHALLENGE, AuthMethod|string, Extra|dict]
-     * @param {object} data - decoded event data
+     * @param {Array} [, authMethod, extra] - decoded event data array
      * @private
      */
-    async _onChallengeMessage (data) {
+    async _onChallengeMessage ([, authMethod, extra]) {
         let promise;
 
-        if (this._options.authid &&
-            this._options.authMode === 'manual' &&
-            typeof this._options.onChallenge === 'function') {
+        const { authid, authMode, onChallenge, onError, authPlugins } = this._options;
 
+        if (authid && authMode === 'manual' && typeof onChallenge === 'function') {
             promise = new Promise((resolve) => {
-                resolve(this._options.onChallenge(data[1], data[2]));
+                resolve(onChallenge(authMethod, extra));
             });
-
-        } else if (this._options.authid &&
-            this._options.authMode === 'auto' &&
-            typeof this._options.authPlugins[data[1]] === 'function') {
-
+        } else if (authid && authMode === 'auto' && typeof authPlugins[authMethod] === 'function') {
             promise = new Promise((resolve) => {
-                resolve(this._options.authPlugins[data[1]](data[1], data[2]));
+                resolve(authPlugins[authMethod](authMethod, extra));
             });
-
         } else {
             const noCRACallbackOrIdError = new Errors.NoCRACallbackOrIdError();
 
@@ -993,9 +987,11 @@ class Wampy {
                 { message: noCRACallbackOrIdError.message },
                 'wamp.error.cannot_authenticate'
             ]));
-            if (this._options.onError) {
-                await this._options.onError(noCRACallbackOrIdError);
+
+            if (onError) {
+                await onError(noCRACallbackOrIdError);
             }
+
             return this._ws.close();
         }
 
@@ -1004,7 +1000,6 @@ class Wampy {
 
             // Sending directly 'cause it's a challenge msg and no sessionId check is needed
             this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
-
         } catch (e) {
             const challengeExceptionError = new Errors.ChallengeExceptionError();
 
@@ -1014,9 +1009,11 @@ class Wampy {
                 { message: challengeExceptionError.message },
                 'wamp.error.cannot_authenticate'
             ]));
-            if (this._options.onError) {
-                await this._options.onError(challengeExceptionError);
+
+            if (onError) {
+                await onError(challengeExceptionError);
             }
+
             this._ws.close();
         }
     }
