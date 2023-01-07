@@ -918,18 +918,18 @@ class Wampy {
     /**
      * Handles websocket welcome message event
      * WAMP SPEC: [WELCOME, Session|id, Details|dict]
-     * @param {object} data - decoded event data
+     * @param {Array} [, sessionId, details] - decoded event data
      * @private
      */
-    async _onWelcomeMessage (data) {
-        this._cache.sessionId = data[1];
-        this._cache.server_wamp_features = data[2];
+    async _onWelcomeMessage ([, sessionId, details]) {
+        this._cache.sessionId = sessionId;
+        this._cache.server_wamp_features = details;
 
         if (this._cache.reconnectingAttempts) {
             this._cache.reconnectingAttempts = 0;
 
             if (this._options.onReconnectSuccess) {
-                await this._options.onReconnectSuccess(data[2]);
+                await this._options.onReconnectSuccess(details);
             }
 
             // Renew all previous state
@@ -938,7 +938,7 @@ class Wampy {
 
         } else {
             // Fire onConnect event on real connection to WAMP server
-            this._cache.connectPromise.onSuccess(data[2]);
+            this._cache.connectPromise.onSuccess(details);
             this._cache.connectPromise = null;
         }
 
