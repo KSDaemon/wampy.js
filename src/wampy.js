@@ -530,19 +530,16 @@ class Wampy {
     _validateURI (uri, isPatternBased, isWampAllowed) {
         const isStrictValidation = this._options.uriValidation === 'strict';
         const isLooseValidation = this._options.uriValidation === 'loose';
+        const isValidationTypeUnknown = !isStrictValidation && !isLooseValidation;
+
+        if (isValidationTypeUnknown || (uri.startsWith('wamp.') && !isWampAllowed)) {
+            return false;
+        }
+
         let reBase, rePattern;
-
-        if (!isStrictValidation && !isLooseValidation) {
-            return false;
-        }
-
-        if (uri.startsWith('wamp.') && !isWampAllowed) {
-            return false;
-        }
-
         if (isStrictValidation) {
-            reBase = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
-            rePattern = /^([0-9a-zA-Z_]+\.{1,2})*([0-9a-zA-Z_]+)$/;
+            reBase = /^(\w+\.)*(\w+)$/;
+            rePattern = /^(\w+\.{1,2})*(\w+)$/;
         } else if (isLooseValidation) {
             reBase = /^([^\s.#]+\.)*([^\s.#]+)$/;
             rePattern = /^([^\s.#]+\.{1,2})*([^\s.#]+)$/;
