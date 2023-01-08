@@ -1731,7 +1731,7 @@ class Wampy {
 
     /**
      * Publish an event to the topic
-     * @param {string} topicURI
+     * @param {string} topic
      * @param {string|number|Array|object} [payload] - can be either a value of any type or null or even omitted.
      *                          Also, it is possible to pass array and object-like data simultaneously.
      *                          In this case pass a hash-table with next attributes:
@@ -1763,99 +1763,79 @@ class Wampy {
      *                          }
      * @returns {Promise}
      */
-    async publish (topicURI, payload, advancedOptions) {
-        const options = { acknowledge: true }, callbacks = getNewPromise(),
-            _optionsConvertHelper = (option, sourceType) => {
-                if (advancedOptions[option]) {
-                    if (Array.isArray(advancedOptions[option]) && advancedOptions[option].length) {
-                        options[option] = advancedOptions[option];
-                    } else if (typeof advancedOptions[option] === sourceType) {
-                        options[option] = [advancedOptions[option]];
-                    } else {
-                        return false;
-                    }
-                }
-
-                return true;
-            };
-
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'broker')) {
+    async publish (topic, payload, advancedOptions) {
+        if (!this._preReqChecks({ topic, patternBased: false, allowWAMP: false }, 'broker')) {
             throw this._cache.opStatus.error;
         }
 
-        if (this._isPlainObject(advancedOptions)) {
-            if (!_optionsConvertHelper('exclude', 'number') ||
-                !_optionsConvertHelper('exclude_authid', 'string') ||
-                !_optionsConvertHelper('exclude_authrole', 'string') ||
-                !_optionsConvertHelper('eligible', 'number') ||
-                !_optionsConvertHelper('eligible_authid', 'string') ||
-                !_optionsConvertHelper('eligible_authrole', 'string')) {
+        const isAdvancedOptionsAnObject = this._isPlainObject(advancedOptions);
 
-                const error = new Errors.InvalidParamError('advancedOptions');
-                this._fillOpStatusByError(error);
-                throw error;
-            }
-
-            if (Object.hasOwnProperty.call(advancedOptions, 'exclude_me')) {
-                options.exclude_me = advancedOptions.exclude_me !== false;
-            }
-
-            if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
-                options.disclose_me = advancedOptions.disclose_me === true;
-            }
-
-            // Check and handle Payload PassThru Mode
-            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-            const pptScheme = advancedOptions.ppt_scheme;
-
-            if (pptScheme) {
-                if (!this._checkPPTOptions('broker', advancedOptions)) {
-                    throw this._cache.opStatus.error;
-                }
-
-                options.ppt_scheme = pptScheme;
-
-                if (advancedOptions.ppt_serializer) {
-                    options.ppt_serializer = advancedOptions.ppt_serializer;
-                }
-                if (advancedOptions.ppt_cipher) {
-                    options.ppt_cipher = advancedOptions.ppt_cipher;
-                }
-                if (advancedOptions.ppt_keyid) {
-                    options.ppt_keyid = advancedOptions.ppt_keyid;
-                }
-            }
-
-        } else if (typeof (advancedOptions) !== 'undefined') {
+        if (advancedOptions && !isAdvancedOptionsAnObject) {
             const error = new Errors.InvalidParamError('advancedOptions');
             this._fillOpStatusByError(error);
             throw error;
         }
 
-        const requestId = this._getReqId();
+        let options = {};
+        const _optionsConvertHelper = (option, sourceType) => {
+            if (advancedOptions[option]) {
+                if (Array.isArray(advancedOptions[option]) && advancedOptions[option].length) {
+                    options[option] = advancedOptions[option];
+                } else if (typeof advancedOptions[option] === sourceType) {
+                    options[option] = [advancedOptions[option]];
+                } else {
+                    return false;
+                }
+            }
 
-        this._requests[requestId] = {
-            topic: topicURI,
-            callbacks
+            return true;
         };
 
-        // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
-        let msg = [WAMP_MSG_SPEC.PUBLISH, requestId, options, topicURI];
-
-        if (arguments.length > 1) {
-            // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-            const res = this._packPPTPayload(payload, options);
-
-            if (res.err) {
-                throw this._cache.opStatus.error;
-            }
-            msg = msg.concat(res.payloadItems);
+        if (isAdvancedOptionsAnObject && (
+            !_optionsConvertHelper('exclude', 'number') ||
+            !_optionsConvertHelper('exclude_authid', 'string') ||
+            !_optionsConvertHelper('exclude_authrole', 'string') ||
+            !_optionsConvertHelper('eligible', 'number') ||
+            !_optionsConvertHelper('eligible_authid', 'string') ||
+            !_optionsConvertHelper('eligible_authrole', 'string')
+        )) {
+            const invalidParamError = new Errors.InvalidParamError('advancedOptions');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
         }
 
-        this._send(msg);
-        this._cache.opStatus = SUCCESS;
-        this._cache.opStatus.reqId = requestId;
-        return callbacks.promise;
+        const { ppt_scheme, ppt_serializer, ppt_cipher, ppt_keyid, exclude_me, disclose_me } = advancedOptions || {};
+
+        // Check and handle Payload PassThru Mode
+        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+        if (ppt_scheme && !this._checkPPTOptions('broker', advancedOptions)) {
+            throw this._cache.opStatus.error;
+        }
+
+        options = {
+            acknowledge: true,
+            ...(options || {}),
+            ...(ppt_scheme ? { ppt_scheme } : {}),
+            ...(ppt_scheme ? { ppt_scheme } : {}),
+            ...(ppt_serializer ? { ppt_serializer } : {}),
+            ...(ppt_cipher ? { ppt_cipher } : {}),
+            ...(ppt_keyid ? { ppt_keyid } : {}),
+            ...(exclude_me ? { exclude_me } : {}),
+            ...(disclose_me ? { disclose_me } : {}),
+        };
+
+        const { err, payloadItems } = payload ? this._packPPTPayload(payload, options) : {};
+        const reqId = this._getReqId();
+
+        if (err) {
+            throw this._cache.opStatus.error;
+        }
+
+        this._requests[reqId] = { topic, callbacks: getNewPromise() };
+        this._cache.opStatus = { ...SUCCESS, reqId };
+        this._send([WAMP_MSG_SPEC.PUBLISH, reqId, options, topic, ...(payloadItems || [])]);
+
+        return this._requests[reqId].callbacks.promise;
     }
 
     /**
