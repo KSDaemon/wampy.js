@@ -1147,27 +1147,26 @@ class Wampy {
 
     /**
      * Handles websocket event message event
-     * @param {object} data - decoded event data
+     * WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
+     *            Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
+     * @param {Array} [, subscriptionId, publicationId, details, argsList, argsDict] - decoded event data
      * @private
      */
-    async _onEventMessage (data) {
-        const subscription = this._subscriptionsById.get(data[1]);
+    async _onEventMessage ([, subscriptionId, publicationId, details, argsList, argsDict]) {
+        const subscription = this._subscriptionsById.get(subscriptionId);
 
         if (!subscription) {
             return;
         }
 
-        const options = data[3];
-        let argsList, argsDict;
-
-        // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
-        //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
+        let args = argsList;
+        let kwargs = argsDict;
 
         // Check and handle Payload PassThru Mode
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-        if (options.ppt_scheme) {
-            const pptPayload = data[4][0];
-            const decodedPayload = this._unpackPPTPayload('broker', pptPayload, options);
+        if (details.ppt_scheme) {
+            const pptPayload = argsList[0];
+            const decodedPayload = this._unpackPPTPayload('broker', pptPayload, details);
 
             if (decodedPayload.err) {
                 // Since it is async publication, and no link to
@@ -1177,22 +1176,14 @@ class Wampy {
                 return this._log(decodedPayload.err.message);
             }
 
-            argsList = decodedPayload.args;
-            argsDict = decodedPayload.kwargs;
-
-        } else {
-            argsList = data[4];
-            argsDict = data[5];
+            args = decodedPayload.args;
+            kwargs = decodedPayload.kwargs;
         }
 
-        let i = subscription.callbacks.length;
-        while (i--) {
-            await subscription.callbacks[i]({
-                details : options,
-                argsList: argsList,
-                argsDict: argsDict
-            });
-        }
+        const callbackOptions = { details, argsList: args, argsDict: kwargs };
+        const callbackPromises = subscription.callbacks.map((c) => c(callbackOptions));
+
+        await Promise.all(callbackPromises);
     }
 
     /**
