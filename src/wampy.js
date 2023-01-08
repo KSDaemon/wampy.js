@@ -785,22 +785,13 @@ class Wampy {
      * @private
      */
     _wsOnOpen () {
-        const options = { ...this._options.helloCustomDetails, ...this._wamp_features },
-            serverProtocol = this._ws.protocol ? this._ws.protocol.split('.')[2] : '';
-        if (this._options.authid) {
-            options.authmethods = this._options.authmethods;
-            options.authid = this._options.authid;
-            options.authextra = this._options.authextra;
-        }
+        const { helloCustomDetails, authmethods, authid, authextra, serializer, onError, realm } = this._options;
+        const serverProtocol = this._ws.protocol?.split('.')?.[2];
+        const hasServerChosenOurPreferredProtocol = serverProtocol === serializer.protocol;
 
-        this._log('websocket connected. Server has chosen ', serverProtocol);
+        this._log(`Websocket connected. Server has chosen protocol: "${serverProtocol}"`);
 
-        if (this._options.serializer.protocol !== serverProtocol) {
-            // Server have chosen not our preferred protocol
-
-            // Falling back to json if possible
-            // Temp hack for React Native Environment is removed as
-            // (facebook/react-native#24796) was resolved
+        if (!hasServerChosenOurPreferredProtocol) {
             if (serverProtocol === 'json') {
                 this._options.serializer = new JsonSerializer();
             } else {
@@ -812,21 +803,26 @@ class Wampy {
                     this._cache.connectPromise = null;
                 }
 
-                if (this._options.onError) {
-                    this._options.onError(noSerializerAvailableError);
+                if (onError) {
+                    onError(noSerializerAvailableError);
                 }
             }
         }
 
-        if (this._options.serializer.isBinary) {
+        if (serializer.isBinary) {
             this._ws.binaryType = 'arraybuffer';
         }
 
-        // WAMP SPEC: [HELLO, Realm|uri, Details|dict]
-        // Sending directly 'cause it's a hello msg and no sessionId check is needed
-        const encMsg = this._encode([WAMP_MSG_SPEC.HELLO, this._options.realm, options]);
-        if (encMsg) {
-            this._ws.send(encMsg);
+        const messageOptions = {
+            ...helloCustomDetails,
+            ...this._wamp_features,
+            ...(authid ? { authid, authmethods, authextra } : {}),
+        };
+        const encodedMessage = this._encode([WAMP_MSG_SPEC.HELLO, realm, messageOptions]);
+
+        if (encodedMessage) {
+            // Sending directly 'cause it's a hello message and no sessionId check is needed
+            this._ws.send(encodedMessage);
         }
     }
 
