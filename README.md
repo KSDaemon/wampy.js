@@ -22,7 +22,8 @@ Javascript implementation (for browser and node.js)
   - [Migrating or Updating versions](#migrating-or-updating-versions)
   - [API](#api)
     - [Constructor(\[url\[, options\]\])](#constructorurl-options)
-    - [options(\[opts\])](#optionsopts)
+    - [getOptions()](#getoptions)
+    - [setOptions(\[options\])](#setoptionsoptions)
     - [getOpStatus()](#getopstatus)
     - [getSessionId()](#getsessionid)
     - [connect(\[url\])](#connecturl)
@@ -232,12 +233,17 @@ wampy = new Wampy({
 
 [Back to Table of Contents](#table-of-contents)
 
-### options([opts])
+### getOptions()
 
-.options() method can be called in two forms:
+Returns Wampy configuration options. See setOptions() down below for the full list of available options.
 
-- without parameters it will return the current options
-- with one parameter as a hash-table it will set new options and return a Wampy instance back
+```javascript
+wampy.getOptions();
+```
+
+### setOptions([options])
+
+Receives an options object as a parameter, where each property is a new option to be set and returns a Wampy instance.
 
 Options attributes description:
 
@@ -263,7 +269,7 @@ You can provide your own sign functions or use existing helpers. Functions may b
 const wampyCra = require('wampy-cra');
 const wampyCryptosign = require('wampy-cryptosign');
 
-wampy.options({
+wampy.setOptions({
     authPlugins: {
         // No need to process challenge data in ticket flow, as it is empty
         ticket: ((userPassword) => (() => userPassword ))(),
@@ -300,9 +306,7 @@ instead of default `json`.
 using in Payload Passthru Mode. Allows to specify a few serializers and use them on per message/call basis.
 
 ```javascript
-wampy.options();
-
-wampy.options({
+wampy.setOptions({
     reconnectInterval: 1000,
     maxRetries: 999,
     onClose: () => { console.log('See you next time!'); },

@@ -1510,19 +1510,45 @@ class Wampy {
      *************************************************************************/
 
     /**
+     * DEPRECATED
+     *
      * Get or set Wampy options
      *
      * To get options - call without parameters
      * To set options - pass hash-table with options values
      *
-     * @param {object} [opts]
+     * @param {object} [newOptions]
      * @returns {*}
      */
-    options (opts) {
-        if (typeof (opts) === 'undefined') {
+    options (newOptions) {
+        console.warn('Wampy.options() is deprecated, please use Wampy.getOptions() or Wampy.setOptions() instead');
+
+        if (typeof (newOptions) === 'undefined') {
             return this._options;
-        } else if (this._isPlainObject(opts)) {
-            this._options = { ...this._options, ...opts };
+        } else if (this._isPlainObject(newOptions)) {
+            this._options = { ...this._options, ...newOptions };
+            return this;
+        }
+    }
+
+    /**
+     * Wampy options getter
+     *
+     * @returns {object}
+     */
+    getOptions () {
+        return this._options;
+    }
+
+    /**
+     * Wampy options setter
+     *
+     * @param {object} newOptions
+     * @returns {*}
+     */
+    setOptions (newOptions) {
+        if (this._isPlainObject(newOptions)) {
+            this._options = { ...this._options, ...newOptions };
             return this;
         }
     }

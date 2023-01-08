@@ -170,7 +170,7 @@ serializers.forEach(function (item) {
                     serializer: new serializer()
                 };
                 let wampy = new Wampy(setoptions);
-                let options = wampy.options();
+                let options = wampy.getOptions();
 
                 expect(options.autoReconnect).to.be.true;
                 expect(options.reconnectInterval).to.be.equal(10000);
@@ -189,7 +189,7 @@ serializers.forEach(function (item) {
 
                 wampy = new Wampy(routerUrl, setoptions);
                 await wampy.connect();
-                options = wampy.options();
+                options = wampy.getOptions();
 
                 expect(options.autoReconnect).to.be.true;
                 expect(options.reconnectInterval).to.be.equal(10000);
@@ -543,7 +543,7 @@ serializers.forEach(function (item) {
                         customFiled2: 'string',
                         customFiled3: [1, 2, 3, 4, 5]
                     },
-                    options = wampy.options({
+                    options = wampy.setOptions({
                         realm             : 'AppRealm',
                         autoReconnect     : true,
                         reconnectInterval : 1000,
@@ -557,7 +557,7 @@ serializers.forEach(function (item) {
                         onReconnectSuccess: function () {},
                         authid            : 'userid',
                         authmethods       : ['wampcra'],
-                    }).options();
+                    }).getOptions();
 
                 expect(options.autoReconnect).to.be.true;
                 expect(options.reconnectInterval).to.be.equal(1000);
@@ -587,25 +587,25 @@ serializers.forEach(function (item) {
             });
 
             it('allows to disconnect from connected server', function (done) {
-                wampy.options({ onConnect: null, onClose: done })
+                wampy.setOptions({ onConnect: null, onClose: done })
                     .disconnect();
             });
 
             it('disallows to connect without specifying all of [onChallenge, authid, authmethods]', async function () {
                 try {
-                    wampy.options({ authid: 'userid', authmethods: ['wampcra'], onChallenge: null }).connect();
+                    wampy.setOptions({ authid: 'userid', authmethods: ['wampcra'], onChallenge: null }).connect();
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
                 }
 
                 try {
-                    wampy.options({ authid: null, authmethods: ['wampcra'], onChallenge: null }).connect();
+                    wampy.setOptions({ authid: null, authmethods: ['wampcra'], onChallenge: null }).connect();
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
                 }
 
                 try {
-                    wampy.options({
+                    wampy.setOptions({
                         authid: null, onChallenge: function () {
                         }
                     }).connect();
@@ -614,7 +614,7 @@ serializers.forEach(function (item) {
                 }
 
                 try {
-                    wampy.options({
+                    wampy.setOptions({
                         authid: null, authmethods: [], onChallenge: function () {
                         }
                     }).connect();
@@ -623,7 +623,7 @@ serializers.forEach(function (item) {
                 }
 
                 try {
-                    wampy.options({
+                    wampy.setOptions({
                         authid: 'userid', authmethods: 'string', onChallenge: function () {
                         }
                     }).connect();
@@ -631,11 +631,11 @@ serializers.forEach(function (item) {
                     expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
                 }
 
-                wampy.options({ authid: null, onChallenge: null });
+                wampy.setOptions({ authid: null, onChallenge: null });
             });
 
             it('calls onError handler if authentication using CRA fails', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     authid: 'user1',
                     authmethods: ['wampcra'],
                     onChallenge: function (method, info) {
@@ -651,7 +651,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls onError handler if server requests authentication, but no credentials were provided', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     onError: function (e) {
                         done();
                     },
@@ -665,14 +665,14 @@ serializers.forEach(function (item) {
             });
 
             it('automatically sends goodbye message on server initiated disconnect', function (done) {
-                wampy.options({ onConnect: null, onClose: done })
+                wampy.setOptions({ onConnect: null, onClose: done })
                     .connect();
             });
 
             it('allows to disconnect while connecting to server', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     onClose: function () {
-                        wampy.options({ onClose: null });
+                        wampy.setOptions({ onClose: null });
                         done();
                     }
                 }).connect();
@@ -692,10 +692,10 @@ serializers.forEach(function (item) {
             });
 
             it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     onClose: function () {
                         setTimeout(function () {
-                            wampy.options({ onClose: done })
+                            wampy.setOptions({ onClose: done })
                                 .connect(anotherRouterUrl);
 
                             setTimeout(function () {
@@ -710,14 +710,14 @@ serializers.forEach(function (item) {
             it('auto-reconnects to WAMP server on network errors', function (done) {
                 let onReconnect = false;
 
-                wampy.options({
+                wampy.setOptions({
                     autoReconnect     : true,
                     reconnectInterval : 10,
                     onClose           : null,
                     onError           : null,
                     onReconnect       : function () {
                         onReconnect = true;
-                        wampy.options({ onReconnect: null });
+                        wampy.setOptions({ onReconnect: null });
                     },
                     onReconnectSuccess: null
                 }).connect().then(async () => {
@@ -773,7 +773,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls error handler if server sends abort message', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     onClose: null,
                     onError: function (e) {
                         done();
@@ -787,7 +787,7 @@ serializers.forEach(function (item) {
         describe('PubSub module', function () {
 
             before(async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     uriValidation: 'strict',
                     onClose      : null,
                     onReconnect  : null,
@@ -820,9 +820,9 @@ serializers.forEach(function (item) {
             });
 
             it('disallows to subscribe to topic with invalid URI', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     onClose: function () {
-                        wampy.options({ onClose: null });
+                        wampy.setOptions({ onClose: null });
                         setTimeout(async function () {
                             await wampy.connect();
 
@@ -864,7 +864,7 @@ serializers.forEach(function (item) {
             });
 
             it('disallows to publish/subscribe to topic if uri validation mode is specified incorrectly', async function () {
-                wampy.options({ uriValidation: 'invalid' });
+                wampy.setOptions({ uriValidation: 'invalid' });
                 try {
                     await wampy.subscribe('qwe.asd.zxc.', function (e) {});
                 } catch (e) {
@@ -888,7 +888,7 @@ serializers.forEach(function (item) {
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
-                wampy.options({ uriValidation: 'strict' });
+                wampy.setOptions({ uriValidation: 'strict' });
             });
 
             it('checks for valid advanced options during subscribing to topic', async function () {
@@ -949,10 +949,10 @@ serializers.forEach(function (item) {
             });
 
             it('allows to subscribe to topic lax URI (with loose check option)', async function () {
-                wampy.options({ uriValidation: 'loose' });
+                wampy.setOptions({ uriValidation: 'loose' });
 
                 await wampy.subscribe('qwe//adsa//dfff', function (e) {});
-                wampy.options({ uriValidation: 'strict' });
+                wampy.setOptions({ uriValidation: 'strict' });
             });
 
 
@@ -1397,7 +1397,7 @@ serializers.forEach(function (item) {
         describe('RPC module', function () {
 
             before(async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     onReconnect  : null,
                     onError      : null
                 }).disconnect();
@@ -1437,7 +1437,7 @@ serializers.forEach(function (item) {
             });
 
             it('disallows to register RPC with invalid URI', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     onClose: function () {
                         setTimeout(async function () {
                             await wampy.connect();
@@ -1480,7 +1480,7 @@ serializers.forEach(function (item) {
             });
 
             it('disallows to call/register an RPC if uri validation mode is specified incorrectly', async function () {
-                wampy.options({ uriValidation: 'invalid' });
+                wampy.setOptions({ uriValidation: 'invalid' });
                 try {
                     await wampy.register('qwe.asd.zxc.', function (e) {});
                 } catch (e) {
@@ -1504,7 +1504,7 @@ serializers.forEach(function (item) {
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
-                wampy.options({ uriValidation: 'strict' });
+                wampy.setOptions({ uriValidation: 'strict' });
             });
 
             it('checks for valid advanced options during RPC registration', function () {
@@ -1549,7 +1549,7 @@ serializers.forEach(function (item) {
             });
 
             it('disallows to cancel RPC invocation if dealer does not support call cancelling', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     onClose: function () {
                         setTimeout(async function () {
                             await wampy.connect();
@@ -1568,7 +1568,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to register RPC', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     onClose: function () {
                         setTimeout(async function () {
                             await wampy.connect();
@@ -2223,7 +2223,7 @@ serializers.forEach(function (item) {
             }
 
             before(async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                         msgpack: new MsgpackSerializer(),
@@ -2878,7 +2878,7 @@ serializers.forEach(function (item) {
             });
 
             it('doesn\'t fail if event in ppt mode was received, while ppt serializer is not supported', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                     }
@@ -2889,7 +2889,7 @@ serializers.forEach(function (item) {
             });
 
             it('doesn\'t fail if event in ppt mode was received, while payload decode fails', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                         cbor: new CborSerializer()
@@ -2901,7 +2901,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls error handler if RPC Result is in ppt mode, while ppt serializer is not supported', async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer()
                     }
@@ -2916,7 +2916,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls error handler if RPC Result is in ppt mode, while ppt decoding fails', async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                         cbor: new CborSerializer()
@@ -2932,7 +2932,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls error handler if RPC Invocation is in ppt mode, while ppt serializer is not supported', async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer()
                     }
@@ -2947,7 +2947,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls error handler if RPC Invocation is in ppt mode, while ppt decoding fails', async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                         cbor: new CborSerializer()
@@ -2963,7 +2963,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls error handler if RPC YIELD is sent with wrong ppt_scheme', async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                         cbor: new CborSerializer(),
@@ -2985,7 +2985,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls error handler if RPC YIELD results PPT packing fails', async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                         cbor: new CborSerializer(),
@@ -3012,7 +3012,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls error handler if RPC YIELD results PPT serializer is not supported', async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                         cbor: new CborSerializer()
@@ -3033,7 +3033,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to receive RPC Invocation in ppt mode', async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                         msgpack: new MsgpackSerializer(),
@@ -3050,7 +3050,7 @@ serializers.forEach(function (item) {
             });
 
             it('doesn\'t fail if event in ppt mode was received, while broker didn\'t announce it', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                         msgpack: new MsgpackSerializer(),
@@ -3069,7 +3069,7 @@ serializers.forEach(function (item) {
             });
 
             it('calls error handler if RPC Result in ppt mode was received, while dealer didn\'t announce it', async function () {
-                await wampy.options({
+                await wampy.setOptions({
                     payloadSerializers: {
                         json: new JsonSerializer(),
                         msgpack: new MsgpackSerializer(),
@@ -3087,7 +3087,7 @@ serializers.forEach(function (item) {
 
             it('aborts connection when receiving invocation in ppt mode, while dealer didn\'t announce it', function (done) {
                 // This case should not happen at all, but for safety
-                wampy.options({
+                wampy.setOptions({
                     autoReconnect: false,
                     payloadSerializers: {
                         json: new JsonSerializer(),
@@ -3104,7 +3104,7 @@ serializers.forEach(function (item) {
             });
 
             it('aborts connection if RPC YIELD is in ppt mode, while dealer didn\'t announce it', function (done) {
-                wampy.options({
+                wampy.setOptions({
                     autoReconnect: false,
                     payloadSerializers: {
                         json: new JsonSerializer(),

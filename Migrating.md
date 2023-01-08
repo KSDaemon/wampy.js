@@ -1,6 +1,12 @@
 Migrating from previous versions
 ================================
 
+Migrating from 7.x to 8.x versions
+==================================
+
+The `.options()` method has been marked as deprecated. We are still keeping backwards
+compatibility, but we recommend to switch to `.getOptions()` and `.setOptions()` instead.
+
 Migrating from 6.x to 7.x versions
 ==================================
 
