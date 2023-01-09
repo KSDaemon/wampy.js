@@ -62,6 +62,16 @@ const WAMP_MSG_SPEC = {
             ],
             ruinMessage: true
         },
+        // reject connection promise if receives ABORT message
+        {
+            data: [
+                WAMP_MSG_SPEC.ABORT,
+                {
+                    info: 'Just testing abort connection',
+                },
+                'wamp.error.not_authorized'
+            ]
+        },
         // passes welcome details to onConnect() callback
         {
             data: [

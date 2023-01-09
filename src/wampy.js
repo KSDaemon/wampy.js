@@ -946,8 +946,13 @@ class Wampy {
      * @private
      */
     async _onAbortMessage ([, details, error]) {
+        const err = new Errors.AbortError({ error, details });
+        if (this._cache.connectPromise) {
+            this._cache.connectPromise.onError(err);
+            this._cache.connectPromise = null;
+        }
         if (this._options.onError) {
-            await this._options.onError(new Errors.AbortError({ error, details }));
+            await this._options.onError(err);
         }
         this._ws.close();
     }
