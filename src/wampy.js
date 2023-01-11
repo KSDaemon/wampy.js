@@ -1499,7 +1499,7 @@ class Wampy {
      *************************************************************************/
 
     /**
-     * DEPRECATED
+     * @deprecated since version 7.0.1
      *
      * Get or set Wampy options
      *

@@ -22,8 +22,9 @@ Javascript implementation (for browser and node.js)
   - [Migrating or Updating versions](#migrating-or-updating-versions)
   - [API](#api)
     - [Constructor(\[url\[, options\]\])](#constructorurl-options)
+    - [options(\[opts\])](#optionsopts)
     - [getOptions()](#getoptions)
-    - [setOptions(\[options\])](#setoptionsoptions)
+    - [setOptions(\[newOptions\])](#setoptionsnewoptions)
     - [getOpStatus()](#getopstatus)
     - [getSessionId()](#getsessionid)
     - [connect(\[url\])](#connecturl)
@@ -233,6 +234,27 @@ wampy = new Wampy({
 
 [Back to Table of Contents](#table-of-contents)
 
+### options([opts])
+
+⚠️ .options() method is now deprecated, so this is here only for documentation purposes.
+
+.options() can be called in two forms:
+-- without parameters it will behave the same as new method [getOptions()](#getoptions)
+-- with one parameter as a hash-table it will behave the same as new method [setOptions()](#setoptionsnewoptions)
+
+```javascript
+wampy.options(); // same as wampy.getOptions
+
+wampy.options({ // same as wampy.setOptions
+    authPlugins: {
+        ticket: ((userPassword) => (() => userPassword ))(),
+        wampcra: wampyCra.sign(secret),
+        cryptosign: wampyCryptosign.sign(privateKey)
+    },
+    authMode: 'auto'
+});
+```
+
 ### getOptions()
 
 Returns Wampy configuration options. See setOptions() down below for the full list of available options.
@@ -241,9 +263,9 @@ Returns Wampy configuration options. See setOptions() down below for the full li
 wampy.getOptions();
 ```
 
-### setOptions([options])
+### setOptions([newOptions])
 
-Receives an options object as a parameter, where each property is a new option to be set and returns a Wampy instance.
+Receives a newOptions object as a parameter, where each property is a new option to be set and returns a Wampy instance.
 
 Options attributes description:
 
