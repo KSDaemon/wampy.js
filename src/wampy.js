@@ -37,7 +37,7 @@ class Wampy {
          * @type {string}
          * @private
          */
-        this.version = 'v7.0.0';
+        this.version = 'v7.0.1';
 
         /**
          * WS Url
@@ -530,19 +530,16 @@ class Wampy {
     _validateURI (uri, isPatternBased, isWampAllowed) {
         const isStrictValidation = this._options.uriValidation === 'strict';
         const isLooseValidation = this._options.uriValidation === 'loose';
+        const isValidationTypeUnknown = !isStrictValidation && !isLooseValidation;
+
+        if (isValidationTypeUnknown || (uri.startsWith('wamp.') && !isWampAllowed)) {
+            return false;
+        }
+
         let reBase, rePattern;
-
-        if (!isStrictValidation && !isLooseValidation) {
-            return false;
-        }
-
-        if (uri.startsWith('wamp.') && !isWampAllowed) {
-            return false;
-        }
-
         if (isStrictValidation) {
-            reBase = /^([0-9a-zA-Z_]+\.)*([0-9a-zA-Z_]+)$/;
-            rePattern = /^([0-9a-zA-Z_]+\.{1,2})*([0-9a-zA-Z_]+)$/;
+            reBase = /^(\w+\.)*(\w+)$/;
+            rePattern = /^(\w+\.{1,2})*(\w+)$/;
         } else if (isLooseValidation) {
             reBase = /^([^\s.#]+\.)*([^\s.#]+)$/;
             rePattern = /^([^\s.#]+\.{1,2})*([^\s.#]+)$/;
@@ -788,22 +785,13 @@ class Wampy {
      * @private
      */
     _wsOnOpen () {
-        const options = { ...this._options.helloCustomDetails, ...this._wamp_features },
-            serverProtocol = this._ws.protocol ? this._ws.protocol.split('.')[2] : '';
-        if (this._options.authid) {
-            options.authmethods = this._options.authmethods;
-            options.authid = this._options.authid;
-            options.authextra = this._options.authextra;
-        }
+        const { helloCustomDetails, authmethods, authid, authextra, serializer, onError, realm } = this._options;
+        const serverProtocol = this._ws.protocol?.split('.')?.[2];
+        const hasServerChosenOurPreferredProtocol = serverProtocol === serializer.protocol;
 
-        this._log('websocket connected. Server has chosen ', serverProtocol);
+        this._log(`Websocket connected. Server has chosen protocol: "${serverProtocol}"`);
 
-        if (this._options.serializer.protocol !== serverProtocol) {
-            // Server have chosen not our preferred protocol
-
-            // Falling back to json if possible
-            // Temp hack for React Native Environment is removed as
-            // (facebook/react-native#24796) was resolved
+        if (!hasServerChosenOurPreferredProtocol) {
             if (serverProtocol === 'json') {
                 this._options.serializer = new JsonSerializer();
             } else {
@@ -815,21 +803,26 @@ class Wampy {
                     this._cache.connectPromise = null;
                 }
 
-                if (this._options.onError) {
-                    this._options.onError(noSerializerAvailableError);
+                if (onError) {
+                    onError(noSerializerAvailableError);
                 }
             }
         }
 
-        if (this._options.serializer.isBinary) {
+        if (serializer.isBinary) {
             this._ws.binaryType = 'arraybuffer';
         }
 
-        // WAMP SPEC: [HELLO, Realm|uri, Details|dict]
-        // Sending directly 'cause it's a hello msg and no sessionId check is needed
-        const encMsg = this._encode([WAMP_MSG_SPEC.HELLO, this._options.realm, options]);
-        if (encMsg) {
-            this._ws.send(encMsg);
+        const messageOptions = {
+            ...helloCustomDetails,
+            ...this._wamp_features,
+            ...(authid ? { authid, authmethods, authextra } : {}),
+        };
+        const encodedMessage = this._encode([WAMP_MSG_SPEC.HELLO, realm, messageOptions]);
+
+        if (encodedMessage) {
+            // Sending directly 'cause it's a hello message and no sessionId check is needed
+            this._ws.send(encodedMessage);
         }
     }
 
@@ -953,8 +946,13 @@ class Wampy {
      * @private
      */
     async _onAbortMessage ([, details, error]) {
+        const err = new Errors.AbortError({ error, details });
+        if (this._cache.connectPromise) {
+            this._cache.connectPromise.onError(err);
+            this._cache.connectPromise = null;
+        }
         if (this._options.onError) {
-            await this._options.onError(new Errors.AbortError({ error, details }));
+            await this._options.onError(err);
         }
         this._ws.close();
     }
@@ -1147,27 +1145,26 @@ class Wampy {
 
     /**
      * Handles websocket event message event
-     * @param {object} data - decoded event data
+     * WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
+     *            Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
+     * @param {Array} [, subscriptionId, publicationId, details, argsList, argsDict] - decoded event data
      * @private
      */
-    async _onEventMessage (data) {
-        const subscription = this._subscriptionsById.get(data[1]);
+    async _onEventMessage ([, subscriptionId, publicationId, details, argsList, argsDict]) {
+        const subscription = this._subscriptionsById.get(subscriptionId);
 
         if (!subscription) {
             return;
         }
 
-        const options = data[3];
-        let argsList, argsDict;
-
-        // WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
-        //             Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
+        let args = argsList;
+        let kwargs = argsDict;
 
         // Check and handle Payload PassThru Mode
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-        if (options.ppt_scheme) {
-            const pptPayload = data[4][0];
-            const decodedPayload = this._unpackPPTPayload('broker', pptPayload, options);
+        if (details.ppt_scheme) {
+            const pptPayload = argsList[0];
+            const decodedPayload = this._unpackPPTPayload('broker', pptPayload, details);
 
             if (decodedPayload.err) {
                 // Since it is async publication, and no link to
@@ -1177,22 +1174,14 @@ class Wampy {
                 return this._log(decodedPayload.err.message);
             }
 
-            argsList = decodedPayload.args;
-            argsDict = decodedPayload.kwargs;
-
-        } else {
-            argsList = data[4];
-            argsDict = data[5];
+            args = decodedPayload.args;
+            kwargs = decodedPayload.kwargs;
         }
 
-        let i = subscription.callbacks.length;
-        while (i--) {
-            await subscription.callbacks[i]({
-                details : options,
-                argsList: argsList,
-                argsDict: argsDict
-            });
-        }
+        const callbackOptions = { details, argsList: args, argsDict: kwargs };
+        const callbackPromises = subscription.callbacks.map((c) => c(callbackOptions));
+
+        await Promise.all(callbackPromises);
     }
 
     /**
@@ -1769,7 +1758,7 @@ class Wampy {
 
     /**
      * Publish an event to the topic
-     * @param {string} topicURI
+     * @param {string} topic
      * @param {string|number|Array|object} [payload] - can be either a value of any type or null or even omitted.
      *                          Also, it is possible to pass array and object-like data simultaneously.
      *                          In this case pass a hash-table with next attributes:
@@ -1801,99 +1790,79 @@ class Wampy {
      *                          }
      * @returns {Promise}
      */
-    async publish (topicURI, payload, advancedOptions) {
-        const options = { acknowledge: true }, callbacks = getNewPromise(),
-            _optionsConvertHelper = (option, sourceType) => {
-                if (advancedOptions[option]) {
-                    if (Array.isArray(advancedOptions[option]) && advancedOptions[option].length) {
-                        options[option] = advancedOptions[option];
-                    } else if (typeof advancedOptions[option] === sourceType) {
-                        options[option] = [advancedOptions[option]];
-                    } else {
-                        return false;
-                    }
-                }
-
-                return true;
-            };
-
-        if (!this._preReqChecks({ topic: topicURI, patternBased: false, allowWAMP: false }, 'broker')) {
+    async publish (topic, payload, advancedOptions) {
+        if (!this._preReqChecks({ topic, patternBased: false, allowWAMP: false }, 'broker')) {
             throw this._cache.opStatus.error;
         }
 
-        if (this._isPlainObject(advancedOptions)) {
-            if (!_optionsConvertHelper('exclude', 'number') ||
-                !_optionsConvertHelper('exclude_authid', 'string') ||
-                !_optionsConvertHelper('exclude_authrole', 'string') ||
-                !_optionsConvertHelper('eligible', 'number') ||
-                !_optionsConvertHelper('eligible_authid', 'string') ||
-                !_optionsConvertHelper('eligible_authrole', 'string')) {
+        const isAdvancedOptionsAnObject = this._isPlainObject(advancedOptions);
 
-                const error = new Errors.InvalidParamError('advancedOptions');
-                this._fillOpStatusByError(error);
-                throw error;
-            }
-
-            if (Object.hasOwnProperty.call(advancedOptions, 'exclude_me')) {
-                options.exclude_me = advancedOptions.exclude_me !== false;
-            }
-
-            if (Object.hasOwnProperty.call(advancedOptions, 'disclose_me')) {
-                options.disclose_me = advancedOptions.disclose_me === true;
-            }
-
-            // Check and handle Payload PassThru Mode
-            // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-            const pptScheme = advancedOptions.ppt_scheme;
-
-            if (pptScheme) {
-                if (!this._checkPPTOptions('broker', advancedOptions)) {
-                    throw this._cache.opStatus.error;
-                }
-
-                options.ppt_scheme = pptScheme;
-
-                if (advancedOptions.ppt_serializer) {
-                    options.ppt_serializer = advancedOptions.ppt_serializer;
-                }
-                if (advancedOptions.ppt_cipher) {
-                    options.ppt_cipher = advancedOptions.ppt_cipher;
-                }
-                if (advancedOptions.ppt_keyid) {
-                    options.ppt_keyid = advancedOptions.ppt_keyid;
-                }
-            }
-
-        } else if (typeof (advancedOptions) !== 'undefined') {
+        if (advancedOptions && !isAdvancedOptionsAnObject) {
             const error = new Errors.InvalidParamError('advancedOptions');
             this._fillOpStatusByError(error);
             throw error;
         }
 
-        const requestId = this._getReqId();
+        let options = {};
+        const _optionsConvertHelper = (option, sourceType) => {
+            if (advancedOptions[option]) {
+                if (Array.isArray(advancedOptions[option]) && advancedOptions[option].length) {
+                    options[option] = advancedOptions[option];
+                } else if (typeof advancedOptions[option] === sourceType) {
+                    options[option] = [advancedOptions[option]];
+                } else {
+                    return false;
+                }
+            }
 
-        this._requests[requestId] = {
-            topic: topicURI,
-            callbacks
+            return true;
         };
 
-        // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri]
-        let msg = [WAMP_MSG_SPEC.PUBLISH, requestId, options, topicURI];
-
-        if (arguments.length > 1) {
-            // WAMP_SPEC: [PUBLISH, Request|id, Options|dict, Topic|uri, Arguments|list (, ArgumentsKw|dict)]
-            const res = this._packPPTPayload(payload, options);
-
-            if (res.err) {
-                throw this._cache.opStatus.error;
-            }
-            msg = msg.concat(res.payloadItems);
+        if (isAdvancedOptionsAnObject && (
+            !_optionsConvertHelper('exclude', 'number') ||
+            !_optionsConvertHelper('exclude_authid', 'string') ||
+            !_optionsConvertHelper('exclude_authrole', 'string') ||
+            !_optionsConvertHelper('eligible', 'number') ||
+            !_optionsConvertHelper('eligible_authid', 'string') ||
+            !_optionsConvertHelper('eligible_authrole', 'string')
+        )) {
+            const invalidParamError = new Errors.InvalidParamError('advancedOptions');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
         }
 
-        this._send(msg);
-        this._cache.opStatus = SUCCESS;
-        this._cache.opStatus.reqId = requestId;
-        return callbacks.promise;
+        const { ppt_scheme, ppt_serializer, ppt_cipher, ppt_keyid, exclude_me, disclose_me } = advancedOptions || {};
+
+        // Check and handle Payload PassThru Mode
+        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+        if (ppt_scheme && !this._checkPPTOptions('broker', advancedOptions)) {
+            throw this._cache.opStatus.error;
+        }
+
+        options = {
+            acknowledge: true,
+            ...(options || {}),
+            ...(ppt_scheme ? { ppt_scheme } : {}),
+            ...(ppt_scheme ? { ppt_scheme } : {}),
+            ...(ppt_serializer ? { ppt_serializer } : {}),
+            ...(ppt_cipher ? { ppt_cipher } : {}),
+            ...(ppt_keyid ? { ppt_keyid } : {}),
+            ...(exclude_me ? { exclude_me } : {}),
+            ...(disclose_me ? { disclose_me } : {}),
+        };
+
+        const { err, payloadItems } = payload ? this._packPPTPayload(payload, options) : {};
+        const reqId = this._getReqId();
+
+        if (err) {
+            throw this._cache.opStatus.error;
+        }
+
+        this._requests[reqId] = { topic, callbacks: getNewPromise() };
+        this._cache.opStatus = { ...SUCCESS, reqId };
+        this._send([WAMP_MSG_SPEC.PUBLISH, reqId, options, topic, ...(payloadItems || [])]);
+
+        return this._requests[reqId].callbacks.promise;
     }
 
     /**

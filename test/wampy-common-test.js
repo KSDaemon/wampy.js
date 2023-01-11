@@ -107,6 +107,19 @@ serializers.forEach(function (item) {
                 });
             });
 
+            it('reject connection promise if receives ABORT message', async function () {
+                const wampy = new Wampy(routerUrl, {
+                    realm     : 'AppRealm',
+                    ws,
+                    serializer: new serializer()
+                });
+                try {
+                    await wampy.connect();
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.AbortError);
+                }
+            });
+
             it('passes welcome details to onConnect() callback', async function () {
                 const wampy = new Wampy(routerUrl, {
                     realm     : 'AppRealm',

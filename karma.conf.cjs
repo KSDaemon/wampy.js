@@ -1,5 +1,3 @@
-// process.env.CHROME_BIN = require('puppeteer').executablePath();
-
 module.exports = function (config) {
 
     config.set({
@@ -20,12 +18,12 @@ module.exports = function (config) {
         coverageReporter: {
             dir: 'coverage/',
             reporters: [
-                {type: 'text-summary'},
-                {type: 'json'},
-                {type: 'html'}
+                { type: 'text-summary' },
+                { type: 'json' },
+                { type: 'html' }
             ]
         },
-        webpackServer: {noInfo: true},
+        webpackServer: { noInfo: true },
         reporters: ['mocha', 'coverage'],
         port: 9876,
         colors: true,
