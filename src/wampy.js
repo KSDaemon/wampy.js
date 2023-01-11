@@ -863,27 +863,26 @@ class Wampy {
      * @private
      */
     async _wsOnMessage (event) {
-        const data = this._decode(event.data);
+        const [messageType, ...dataArray] = this._decode(event.data);
 
-        this._log('websocket message received: ', data);
+        this._log('websocket message received: ', messageType, dataArray);
 
-        const messageType = data[0];
         const messageHandlers = {
-            [WAMP_MSG_SPEC.WELCOME]:      () => this._onWelcomeMessage(data),
-            [WAMP_MSG_SPEC.ABORT]:        () => this._onAbortMessage(data),
-            [WAMP_MSG_SPEC.CHALLENGE]:    () => this._onChallengeMessage(data),
-            [WAMP_MSG_SPEC.GOODBYE]:      () => this._onGoodbyeMessage(data),
-            [WAMP_MSG_SPEC.ERROR]:        () => this._onErrorMessage(data),
-            [WAMP_MSG_SPEC.SUBSCRIBED]:   () => this._onSubscribedMessage(data),
-            [WAMP_MSG_SPEC.UNSUBSCRIBED]: () => this._onUnsubscribedMessage(data),
-            [WAMP_MSG_SPEC.PUBLISHED]:    () => this._onPublishedMessage(data),
-            [WAMP_MSG_SPEC.EVENT]:        () => this._onEventMessage(data),
-            [WAMP_MSG_SPEC.RESULT]:       () => this._onResultMessage(data),
+            [WAMP_MSG_SPEC.WELCOME]:      () => this._onWelcomeMessage(dataArray),
+            [WAMP_MSG_SPEC.ABORT]:        () => this._onAbortMessage(dataArray),
+            [WAMP_MSG_SPEC.CHALLENGE]:    () => this._onChallengeMessage(dataArray),
+            [WAMP_MSG_SPEC.GOODBYE]:      () => this._onGoodbyeMessage(dataArray),
+            [WAMP_MSG_SPEC.ERROR]:        () => this._onErrorMessage(dataArray),
+            [WAMP_MSG_SPEC.SUBSCRIBED]:   () => this._onSubscribedMessage(dataArray),
+            [WAMP_MSG_SPEC.UNSUBSCRIBED]: () => this._onUnsubscribedMessage(dataArray),
+            [WAMP_MSG_SPEC.PUBLISHED]:    () => this._onPublishedMessage(dataArray),
+            [WAMP_MSG_SPEC.EVENT]:        () => this._onEventMessage(dataArray),
+            [WAMP_MSG_SPEC.RESULT]:       () => this._onResultMessage(dataArray),
             // [WAMP_MSG_SPEC.REGISTER]:     () => {},
-            [WAMP_MSG_SPEC.REGISTERED]:   () => this._onRegisteredMessage(data),
+            [WAMP_MSG_SPEC.REGISTERED]:   () => this._onRegisteredMessage(dataArray),
             // [WAMP_MSG_SPEC.UNREGISTER]:  () => {},
-            [WAMP_MSG_SPEC.UNREGISTERED]: () => this._onUnregisteredMessage(data),
-            [WAMP_MSG_SPEC.INVOCATION]:   () => this._onInvocationMessage(data),
+            [WAMP_MSG_SPEC.UNREGISTERED]: () => this._onUnregisteredMessage(dataArray),
+            [WAMP_MSG_SPEC.INVOCATION]:   () => this._onInvocationMessage(dataArray),
             // [WAMP_MSG_SPEC.INTERRUPT]:    () => {},
             // [WAMP_MSG_SPEC.YIELD]:        () => {},
         };
@@ -897,12 +896,9 @@ class Wampy {
         const needNoSession = [WAMP_MSG_SPEC.WELCOME, WAMP_MSG_SPEC.CHALLENGE].includes(messageType);
         const needValidSession = !needNoSession && messageType !== WAMP_MSG_SPEC.ABORT;
 
-        if (needNoSession && this._cache.sessionId) {
-            return this._hardClose(errorURI, `Received message "${messageType}" after session was established`);
-        }
-
-        if (needValidSession && !this._cache.sessionId) {
-            return this._hardClose(errorURI, `Received message "${messageType}" before session was established`);
+        if (needNoSession && this._cache.sessionId || needValidSession && !this._cache.sessionId) {
+            const relativeTime = needNoSession ? 'after' : 'before';
+            return this._hardClose(errorURI, `Received message "${messageType}" ${relativeTime} session was established`);
         }
 
         await handler();
@@ -910,11 +906,12 @@ class Wampy {
 
     /**
      * Handles websocket welcome message event
-     * WAMP SPEC: [WELCOME, Session|id, Details|dict]
-     * @param {Array} [, sessionId, details] - decoded event data
+     *
+     * WAMP SPEC: [Session|id, Details|dict]
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onWelcomeMessage ([, sessionId, details]) {
+    async _onWelcomeMessage ([sessionId, details]) {
         this._cache.sessionId = sessionId;
         this._cache.server_wamp_features = details;
 
@@ -941,11 +938,12 @@ class Wampy {
 
     /**
      * Handles websocket abort message event
-     * WAMP SPEC: [ABORT, Details|dict, Error|uri]
-     * @param {Array} [, details, error] - decoded event data array
+     *
+     * WAMP SPEC: [Details|dict, Error|uri]
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onAbortMessage ([, details, error]) {
+    async _onAbortMessage ([details, error]) {
         const err = new Errors.AbortError({ error, details });
         if (this._cache.connectPromise) {
             this._cache.connectPromise.onError(err);
@@ -959,11 +957,12 @@ class Wampy {
 
     /**
      * Handles websocket challenge message event
-     * WAMP SPEC: [CHALLENGE, AuthMethod|string, Extra|dict]
-     * @param {Array} [, authMethod, extra] - decoded event data array
+     *
+     * WAMP SPEC: [AuthMethod|string, Extra|dict]
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onChallengeMessage ([, authMethod, extra]) {
+    async _onChallengeMessage ([authMethod, extra]) {
         let promise;
 
         const { authid, authMode, onChallenge, onError, authPlugins } = this._options;
@@ -1018,6 +1017,7 @@ class Wampy {
 
     /**
      * Handles websocket goodbye message event
+     *
      * WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
      * @private
      */
@@ -1032,12 +1032,13 @@ class Wampy {
 
     /**
      * Handles websocket error message event
-     * WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict,
+     *
+     * WAMP SPEC: [REQUEST.Type|int, REQUEST.Request|id, Details|dict,
      *             Error|uri, (Arguments|list, ArgumentsKw|dict)]
-     * @param {Array} [, requestType, requestId, details, error, argsList, argsDict] - decoded event data array
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onErrorMessage ([, requestType, requestId, details, error, argsList, argsDict]) {
+    async _onErrorMessage ([requestType, requestId, details, error, argsList, argsDict]) {
         const errorOptions = { error, details, argsList, argsDict };
         const errorsByRequestType = {
             [WAMP_MSG_SPEC.SUBSCRIBE]: new Errors.SubscribeError(errorOptions),
@@ -1069,12 +1070,12 @@ class Wampy {
 
     /**
      * Handles websocket subscribed message event
-     * WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
-     * @param {Array} [, requestId, subscriptionId] - decoded event data Array, with the
-     * second and third elements of the Array being the requestId and subscriptionId respectively
+     *
+     * WAMP SPEC: [SUBSCRIBE.Request|id, Subscription|id]
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onSubscribedMessage ([, requestId, subscriptionId]) {
+    async _onSubscribedMessage ([requestId, subscriptionId]) {
         if (!this._requests[requestId]) {
             return;
         }
@@ -1100,12 +1101,12 @@ class Wampy {
 
     /**
      * Handles websocket unsubscribed message event
-     * WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
-     * @param {Array} [, requestId] - decoded event data Array, with the
-     * second element of the Array being the requestId
+     *
+     * WAMP SPEC: [UNSUBSCRIBE.Request|id]
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onUnsubscribedMessage ([, requestId]) {
+    async _onUnsubscribedMessage ([requestId]) {
         if (!this._requests[requestId]) {
             return;
         }
@@ -1125,11 +1126,12 @@ class Wampy {
 
     /**
      * Handles websocket published message event
-     * WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
-     * @param {Array} [, requestId, publicationId] - decoded event data
+     *
+     * WAMP SPEC: [PUBLISH.Request|id, Publication|id]
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onPublishedMessage ([, requestId, publicationId]) {
+    async _onPublishedMessage ([requestId, publicationId]) {
         if (!this._requests[requestId]) {
             return;
         }
@@ -1145,12 +1147,13 @@ class Wampy {
 
     /**
      * Handles websocket event message event
-     * WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
+     *
+     * WAMP SPEC: [SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
      *            Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
-     * @param {Array} [, subscriptionId, publicationId, details, argsList, argsDict] - decoded event data
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onEventMessage ([, subscriptionId, publicationId, details, argsList, argsDict]) {
+    async _onEventMessage ([subscriptionId, publicationId, details, argsList, argsDict]) {
         const subscription = this._subscriptionsById.get(subscriptionId);
 
         if (!subscription) {
@@ -1186,12 +1189,12 @@ class Wampy {
 
     /**
      * Handles websocket result message event
-     * WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
-     *             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
-     * @param {object} data - decoded event data
+     *
+     * WAMP SPEC: [CALL.Request|id, Details|dict, YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onResultMessage ([, requestId, details, argsList, argsDict]) {
+    async _onResultMessage ([requestId, details, argsList, argsDict]) {
         if (!this._calls[requestId]) {
             return;
         }
@@ -1236,11 +1239,12 @@ class Wampy {
 
     /**
      * Handles websocket registered message event
-     * WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
-     * @param {Array} [, requestId, registrationId] - decoded event data array
+     *
+     * WAMP SPEC: [REGISTER.Request|id, Registration|id]
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onRegisteredMessage ([, requestId, registrationId]) {
+    async _onRegisteredMessage ([requestId, registrationId]) {
         if (!this._requests[requestId]) {
             return;
         }
@@ -1260,11 +1264,12 @@ class Wampy {
 
     /**
      * Handles websocket unregistered message event
-     * WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
-     * @param {Array} [, requestId] - decoded event data array
+     *
+     * WAMP SPEC: [UNREGISTER.Request|id]
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onUnregisteredMessage ([, requestId]) {
+    async _onUnregisteredMessage ([requestId]) {
         if (!this._requests[requestId]) {
             return;
         }
@@ -1287,10 +1292,11 @@ class Wampy {
 
     /**
      * Handles websocket invocation message event
-     * @param {Array} data - decoded event data array
+     *
+     * @param {Array} array - decoded event data array
      * @private
      */
-    async _onInvocationMessage ([, requestId, registrationId, details, argsList, argsDict]) {
+    async _onInvocationMessage ([requestId, registrationId, details, argsList, argsDict]) {
         const self = this;
         const handleInvocationError = ({ error, details, argsList, argsDict }) => {
             const message = [
