@@ -236,7 +236,7 @@ wampy = new Wampy({
 
 ### options([opts])
 
-⚠️ .options() method is now deprecated, so this is here only for documentation purposes.
+.options() method is now deprecated, so this is here only for documentation purposes. Please use `getOptions()/setOptions()` instead.
 
 .options() can be called in two forms:
 -- without parameters it will behave the same as new method [getOptions()](#getoptions)
