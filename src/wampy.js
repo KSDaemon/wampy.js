@@ -1442,13 +1442,7 @@ class Wampy {
 
         this._cache.reconnectingAttempts++;
 
-        this._ws = getWebSocket({
-            url: this._url,
-            protocols: this._protocols,
-            ws: this._options.ws,
-            headers: this._options.additionalHeaders,
-            requestOptions: this._options.wsRequestOptions,
-        });
+        this._ws = getWebSocket(this);
         this._initWsCallbacks();
     }
 
@@ -1572,13 +1566,7 @@ class Wampy {
         }
 
         this._setWsProtocols();
-        this._ws = getWebSocket({
-            url: this._url,
-            protocols: this._protocols,
-            ws: this._options.ws,
-            headers: this._options.additionalHeaders,
-            requestOptions: this._options.wsRequestOptions,
-        });
+        this._ws = getWebSocket(this);
 
         if (!this._ws) {
             const noWsOrUrlError = new Errors.NoWsOrUrlError();

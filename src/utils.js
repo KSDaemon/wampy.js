@@ -29,22 +29,24 @@ export function getServerUrlForBrowser (url) {
     return `${scheme}${url}`;
 }
 
-export function getWebSocket (options = {}) {
-    const { url, protocols, ws, headers, requestOptions, isBrowserMock } = options;
-    const parsedUrl = (isNode && !isBrowserMock) ? getServerUrlForNode(url) : getServerUrlForBrowser(url);
+export function getWebSocket (wampy = {}) {
+    const { _url, _protocols, _options, isBrowserMock } = wampy;
+    const parsedUrl = (isNode && !isBrowserMock) ? getServerUrlForNode(_url) : getServerUrlForBrowser(_url);
 
     if (!parsedUrl) {
         return null;
     }
 
-    if (ws) {   // User provided webSocket class
-        return new ws(parsedUrl, protocols, null, headers, requestOptions);
+    if (_options?.ws) { // User provided webSocket class
+        const { ws, additionalHeaders, wsRequestOptions } = _options;
+
+        return new ws(parsedUrl, _protocols, null, additionalHeaders, wsRequestOptions);
     } else if (isNode && !isBrowserMock) { // we're in node, but no webSocket class was provided
         return null;
     } else if (window?.WebSocket) { // Chrome, MSIE, newer Firefox
-        return new window.WebSocket(parsedUrl, protocols);
+        return new window.WebSocket(parsedUrl, _protocols);
     } else if (window?.MozWebSocket) { // older versions of Firefox
-        return new window.MozWebSocket(parsedUrl, protocols);
+        return new window.MozWebSocket(parsedUrl, _protocols);
     }
 
     return null;
