@@ -4,11 +4,23 @@ function isWebSocketSchemeSpecified (url) {
     return /^ws(s)?:\/\//.test(url);
 }
 
-export function getServerUrlForNode (url) {
+function getServerUrlForNode (url) {
     return isWebSocketSchemeSpecified(url) ? url : null;
 }
 
-export function getServerUrlForBrowser (url) {
+function getWebSocketForNode ({ _url, _protocols, _options }) {
+    const parsedUrl = getServerUrlForNode(_url);
+
+    if (!parsedUrl || !_options?.ws) {
+        return null;
+    }
+
+    const { ws, additionalHeaders, wsRequestOptions } = _options;
+
+    return new ws(_url, _protocols, null, additionalHeaders, wsRequestOptions);
+}
+
+function getServerUrlForBrowser (url) {
     if (isWebSocketSchemeSpecified(url)) {
         return url;
     }
@@ -21,7 +33,7 @@ export function getServerUrlForBrowser (url) {
         return `${scheme}${window.location.hostname}${port}/ws`;
     }
 
-    if (url.startsWith('/')) {    // just path on current server
+    if (url.startsWith('/')) { // just path on current server
         return `${scheme}${window.location.hostname}${port}${url}`;
     }
 
@@ -29,27 +41,26 @@ export function getServerUrlForBrowser (url) {
     return `${scheme}${url}`;
 }
 
-export function getWebSocket (wampy = {}) {
-    const { _url, _protocols, _options, isBrowserMock } = wampy;
-    const parsedUrl = (isNode && !isBrowserMock) ? getServerUrlForNode(_url) : getServerUrlForBrowser(_url);
+function getWebSocketForBrowser ({ _url, _protocols }) {
+    const parsedUrl = getServerUrlForBrowser(_url);
 
-    if (!parsedUrl) {
-        return null;
+    if (window?.WebSocket) { // Chrome, MSIE, newer Firefox
+        return new window.WebSocket(parsedUrl, _protocols);
     }
 
-    if (_options?.ws) { // User provided webSocket class
-        const { ws, additionalHeaders, wsRequestOptions } = _options;
-
-        return new ws(parsedUrl, _protocols, null, additionalHeaders, wsRequestOptions);
-    } else if (isNode && !isBrowserMock) { // we're in node, but no webSocket class was provided
-        return null;
-    } else if (window?.WebSocket) { // Chrome, MSIE, newer Firefox
-        return new window.WebSocket(parsedUrl, _protocols);
-    } else if (window?.MozWebSocket) { // older versions of Firefox
+    if (window?.MozWebSocket) { // older versions of Firefox
         return new window.MozWebSocket(parsedUrl, _protocols);
     }
 
     return null;
+}
+
+export function getWebSocket (wampy = {}) {
+    if (isNode && !wampy?.isBrowserMock) {
+        return getWebSocketForNode(wampy);
+    }
+
+    return getWebSocketForBrowser(wampy);
 }
 
 export function getNewPromise () {
