@@ -1075,10 +1075,6 @@ class Wampy {
      * @private
      */
     async _onSubscribedMessage ([, requestId, subscriptionId]) {
-        if (!this._requests[requestId]) {
-            return;
-        }
-
         const { topic, advancedOptions, callbacks } = this._requests[requestId] || {};
         const subscription = {
             id: subscriptionId,
@@ -1106,10 +1102,6 @@ class Wampy {
      * @private
      */
     async _onUnsubscribedMessage ([, requestId]) {
-        if (!this._requests[requestId]) {
-            return;
-        }
-
         const { topic, advancedOptions, callbacks } = this._requests[requestId] || {};
         const subscriptionKey = this._getSubscriptionKey(topic, advancedOptions);
         const subscriptionId = this._subscriptionsByKey.get(subscriptionKey).id;
@@ -1130,10 +1122,6 @@ class Wampy {
      * @private
      */
     async _onPublishedMessage ([, requestId, publicationId]) {
-        if (!this._requests[requestId]) {
-            return;
-        }
-
         const { topic, callbacks } = this._requests[requestId];
 
         if (callbacks?.onSuccess) {
@@ -1192,10 +1180,6 @@ class Wampy {
      * @private
      */
     async _onResultMessage ([, requestId, details, argsList, argsDict]) {
-        if (!this._calls[requestId]) {
-            return;
-        }
-
         let args = argsList;
         let kwargs = argsDict;
 
@@ -1241,10 +1225,6 @@ class Wampy {
      * @private
      */
     async _onRegisteredMessage ([, requestId, registrationId]) {
-        if (!this._requests[requestId]) {
-            return;
-        }
-
         const { topic, callbacks } = this._requests[requestId];
 
         this._rpcRegs[registrationId] = { id: registrationId, callbacks: [callbacks.rpc] };
@@ -1265,10 +1245,6 @@ class Wampy {
      * @private
      */
     async _onUnregisteredMessage ([, requestId]) {
-        if (!this._requests[requestId]) {
-            return;
-        }
-
         const { topic, callbacks } = this._requests[requestId];
 
         delete this._rpcRegs[this._rpcRegs[topic].id];
