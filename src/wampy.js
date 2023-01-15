@@ -1388,12 +1388,7 @@ class Wampy {
                 ...(ppt_keyid ? { ppt_keyid } : {}),
             };
 
-            self._send([
-                WAMP_MSG_SPEC.YIELD,
-                requestId,
-                messageOptions,
-                ...(payloadItems || []),
-            ]);
+            self._send([WAMP_MSG_SPEC.YIELD, requestId, messageOptions, ...(payloadItems || [])]);
         };
 
         try {
@@ -1777,13 +1772,13 @@ class Wampy {
             throw error;
         }
 
-        let options = {};
+        let messageOptions = {};
         const _optionsConvertHelper = (option, sourceType) => {
             if (advancedOptions[option]) {
                 if (Array.isArray(advancedOptions[option]) && advancedOptions[option].length) {
-                    options[option] = advancedOptions[option];
+                    messageOptions[option] = advancedOptions[option];
                 } else if (typeof advancedOptions[option] === sourceType) {
-                    options[option] = [advancedOptions[option]];
+                    messageOptions[option] = [advancedOptions[option]];
                 } else {
                     return false;
                 }
@@ -1813,9 +1808,9 @@ class Wampy {
             throw this._cache.opStatus.error;
         }
 
-        options = {
+        messageOptions = {
             acknowledge: true,
-            ...(options || {}),
+            ...(messageOptions || {}),
             ...(ppt_scheme ? { ppt_scheme } : {}),
             ...(ppt_scheme ? { ppt_scheme } : {}),
             ...(ppt_serializer ? { ppt_serializer } : {}),
@@ -1825,7 +1820,7 @@ class Wampy {
             ...(disclose_me ? { disclose_me } : {}),
         };
 
-        const { err, payloadItems } = payload ? this._packPPTPayload(payload, options) : {};
+        const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {};
         const reqId = this._getReqId();
 
         if (err) {
@@ -1834,7 +1829,7 @@ class Wampy {
 
         this._requests[reqId] = { topic, callbacks: getNewPromise() };
         this._cache.opStatus = { ...SUCCESS, reqId };
-        this._send([WAMP_MSG_SPEC.PUBLISH, reqId, options, topic, ...(payloadItems || [])]);
+        this._send([WAMP_MSG_SPEC.PUBLISH, reqId, messageOptions, topic, ...(payloadItems || [])]);
 
         return this._requests[reqId].callbacks.promise;
     }
@@ -1897,30 +1892,24 @@ class Wampy {
             reqId = this._getReqId();
         } while (reqId in this._calls);
 
-        const options = {
-            ...(progress_callback ? { receive_progress: true } : null),
-            ...(disclose_me ? { disclose_me: true } : null),
-            ...(timeout ? { timeout } : null),
-            ...(ppt_scheme ? { ppt_scheme } : null),
-            ...(ppt_serializer ? { ppt_serializer } : null),
-            ...(ppt_cipher ? { ppt_cipher } : null),
-            ...(ppt_keyid ? { ppt_keyid } : null),
+        const messageOptions = {
+            ...(progress_callback ? { receive_progress: true } : {}),
+            ...(disclose_me ? { disclose_me: true } : {}),
+            ...(timeout ? { timeout } : {}),
+            ...(ppt_scheme ? { ppt_scheme } : {}),
+            ...(ppt_serializer ? { ppt_serializer } : {}),
+            ...(ppt_cipher ? { ppt_cipher } : {}),
+            ...(ppt_keyid ? { ppt_keyid } : {}),
         };
 
-        // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
-        let message = [WAMP_MSG_SPEC.CALL, reqId, options, topic];
-
-        const { err, payloadItems } = payload ? this._packPPTPayload(payload, options) : {};
+        const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {};
 
         if (err) {
             throw this._cache.opStatus.error;
         }
 
-        if (payloadItems) {
-            message = message.concat(payloadItems);
-        }
-
-        this._send(message);
+        // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
+        this._send([WAMP_MSG_SPEC.CALL, reqId, messageOptions, topic, ...(payloadItems || [])]);
         this._cache.opStatus = { ...SUCCESS, reqId };
         this._calls[reqId] = getNewPromise();
 
