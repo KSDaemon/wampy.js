@@ -155,7 +155,6 @@ serializers.forEach(function (item) {
                 };
                 const setoptions = {
                     debug: true,
-                    logger: function () {},
                     autoReconnect: true,
                     reconnectInterval: 10000,
                     maxRetries: 50,
@@ -182,6 +181,7 @@ serializers.forEach(function (item) {
                     ws,
                     serializer: new serializer()
                 };
+
                 let wampy = new Wampy(setoptions);
                 let options = wampy.options();
 
@@ -200,7 +200,9 @@ serializers.forEach(function (item) {
                 expect(options.onReconnect).to.be.a('function');
                 expect(options.onReconnectSuccess).to.be.a('function');
 
-                wampy = new Wampy(routerUrl, setoptions);
+                const setoptionsWithCustomLogger = { ...setoptions, logger: () => {} };
+
+                wampy = new Wampy(routerUrl, setoptionsWithCustomLogger);
                 await wampy.connect();
                 options = wampy.options();
 
