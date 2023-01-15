@@ -772,8 +772,6 @@ class Wampy {
      * @private
      */
     _initWsCallbacks () {
-        if (!this._ws) { return; }
-
         this._ws.onopen = () => this._wsOnOpen();
         this._ws.onclose = (event) => this._wsOnClose(event);
         this._ws.onmessage = (event) => this._wsOnMessage(event);
