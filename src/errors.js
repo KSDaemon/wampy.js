@@ -73,13 +73,14 @@ export class NonExistRPCUnregistrationError extends Error {
     }
 }
 
-export class NonExistRPCInvocationError extends Error {
-    constructor () {
-        super(WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION);
-        this.name = 'NonExistRPCInvocationError';
-        this.code = 19;
-    }
-}
+// Not being used at the moment, but left commented here in case we need it
+// export class NonExistRPCInvocationError extends Error {
+//     constructor () {
+//         super(WAMP_ERROR_MSG.NON_EXIST_RPC_INVOCATION);
+//         this.name = 'NonExistRPCInvocationError';
+//         this.code = 19;
+//     }
+// }
 
 export class NonExistRPCReqIdError extends Error {
     constructor () {

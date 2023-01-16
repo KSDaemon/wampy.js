@@ -23,6 +23,8 @@ Javascript implementation (for browser and node.js)
   - [API](#api)
     - [Constructor(\[url\[, options\]\])](#constructorurl-options)
     - [options(\[opts\])](#optionsopts)
+    - [getOptions()](#getoptions)
+    - [setOptions(\[newOptions\])](#setoptionsnewoptions)
     - [getOpStatus()](#getopstatus)
     - [getSessionId()](#getsessionid)
     - [connect(\[url\])](#connecturl)
@@ -234,10 +236,36 @@ wampy = new Wampy({
 
 ### options([opts])
 
-.options() method can be called in two forms:
+.options() method is now deprecated, so this is here only for documentation purposes. Please use `getOptions()/setOptions()` instead.
 
-- without parameters it will return the current options
-- with one parameter as a hash-table it will set new options and return a Wampy instance back
+.options() can be called in two forms:
+-- without parameters it will behave the same as new method [getOptions()](#getoptions)
+-- with one parameter as a hash-table it will behave the same as new method [setOptions()](#setoptionsnewoptions)
+
+```javascript
+wampy.options(); // same as wampy.getOptions
+
+wampy.options({ // same as wampy.setOptions
+    authPlugins: {
+        ticket: ((userPassword) => (() => userPassword ))(),
+        wampcra: wampyCra.sign(secret),
+        cryptosign: wampyCryptosign.sign(privateKey)
+    },
+    authMode: 'auto'
+});
+```
+
+### getOptions()
+
+Returns Wampy configuration options. See setOptions() down below for the full list of available options.
+
+```javascript
+wampy.getOptions();
+```
+
+### setOptions([newOptions])
+
+Receives a newOptions object as a parameter, where each property is a new option to be set and returns a Wampy instance.
 
 Options attributes description:
 
@@ -263,7 +291,7 @@ You can provide your own sign functions or use existing helpers. Functions may b
 const wampyCra = require('wampy-cra');
 const wampyCryptosign = require('wampy-cryptosign');
 
-wampy.options({
+wampy.setOptions({
     authPlugins: {
         // No need to process challenge data in ticket flow, as it is empty
         ticket: ((userPassword) => (() => userPassword ))(),
@@ -300,9 +328,7 @@ instead of default `json`.
 using in Payload Passthru Mode. Allows to specify a few serializers and use them on per message/call basis.
 
 ```javascript
-wampy.options();
-
-wampy.options({
+wampy.setOptions({
     reconnectInterval: 1000,
     maxRetries: 999,
     onClose: () => { console.log('See you next time!'); },

@@ -20,6 +20,8 @@
     "grunt-contrib-concat": "^2.1.0",
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-uglify": "^5.2.2",
+    "jsdom": "^21.0.0",
+    "jsdom-global": "^3.0.2",
     "karma": "^6.4.1",
     "karma-browserify": "^8.1.0",
     "karma-chrome-launcher": "^3.1.1",
@@ -58,7 +60,7 @@
     "wampy-cra": "^0.2.0",
     "wampy-cryptosign": "^0.1.0",
     "websocket": "^1.0.34",
-    "ws": "^8.11.0"
+    "ws": "^8.12.0"
   },
   "repository": {
     "type": "git",
@@ -80,9 +82,10 @@
     "lint": "npx eslint src test Gruntfile.cjs",
     "lint:fix": "npm run lint -- --fix",
     "test": "npm run test:node && npm run test:browser",
-    "test:node": "NODE_ENV=test c8 mocha --exit --require @babel/register -R spec",
+    "test:node": "NODE_ENV=test c8 mocha --exit -r @babel/register -r jsdom-global/register -R spec",
     "test:node-no-crossbar": "npm run test:node -- -- 'test/!(wampy-crossbar)-test.js'",
     "test:crossbar": "npm run test:node -- -- 'test/wampy-crossbar-test.js'",
+    "test:browser-wrappers": "npm run test:node -- -- 'test/wampy-browser-wrappers-test.js'",
     "test:browser": "npx karma start karma.conf.cjs",
     "cover": "c8 report"
   }
