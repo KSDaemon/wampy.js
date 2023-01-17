@@ -29,7 +29,18 @@ function getServerUrlForBrowser (url) {
     return `${scheme}${url}`;
 }
 
-
+/** Get a WebSocket object according to the user's current environment
+ *
+ * @param {Object} wampy an optional wampy instance
+ * @param {string} wampy._url The WebSocket URL
+ * @param {Object} wampy._options An options hash-table.
+ * @param {string[]} wampy._protocols The WebSocket protocols
+ * @param {boolean} wampy.isBrowserMock a flag indicating if the
+ * function is being called from a simulated browser environment
+ * (such as NodeJS tests that use jsdom).
+ *
+ * @returns {Object} a WebSocket Object, or null if none is found
+ */
 export function getWebSocket (wampy = {}) {
     const { _url, _options, _protocols, isBrowserMock } = wampy;
     const isActualNode = isNode && !isBrowserMock;
