@@ -29,12 +29,12 @@ function getServerUrlForBrowser (url) {
     return `${scheme}${url}`;
 }
 
-/** Get a WebSocket object from the browsers's "window" global variable
+/** Get a WebSocket object from the browsers's window global variable
  *
  * @param {string} parsedUrl The server URL
  * @param {string[]} protocols The WebSocket protocols
  *
- * @returns {Object} a WebSocket Object, or null if none is found
+ * @returns {Object} A WebSocket Object, or null if none is found
  */
 function getWebSocketFromWindowObject (parsedUrl, protocols) {
     if (window?.WebSocket) { // Chrome, MSIE, newer Firefox
@@ -48,18 +48,19 @@ function getWebSocketFromWindowObject (parsedUrl, protocols) {
 
 /** Get a WebSocket object according to the user's current environment
  *
- * @param {Object} wampy an optional wampy instance
- * @param {string} wampy._url The WebSocket URL
- * @param {Object} wampy._options An options hash-table.
- * @param {string[]} wampy._protocols The WebSocket protocols
- * @param {boolean} wampy.isBrowserMock a flag indicating if the
- * function is being called from a simulated browser environment
- * (such as NodeJS tests that use jsdom).
+ * @param {Object} configObject A configuration object containing multiple properties
+ * @param {string} configObject.url The WebSocket URL
+ * @param {string[]} configObject.protocols The WebSocket protocols
+ * @param {Object} configObject.options An options hash-table
+ * @param {WebSocket} configObject.options.ws A user-provided WebSocket class
+ * @param {Object} configObject.options.additionalHeaders User provided extra HTTP headers for Node.js
+ * @param {Object} configObject.options.wsRequestOptions User provided WS Client Config Options for Node.js
+ * @param {boolean} configObject.isBrowserMock A flag indicating if the environment is a simulated browser
+ * environment inside Node.js, such as jsdom.
  *
  * @returns {Object} a WebSocket Object, or null if none is found
  */
-export function getWebSocket (wampy = {}) {
-    const { url, protocols, options, isBrowserMock } = wampy;
+export function getWebSocket ({ url, protocols, options, isBrowserMock } = {}) {
     const { ws, additionalHeaders, wsRequestOptions } = options || {};
     const isActualNode = isNode && !isBrowserMock;
 
@@ -73,7 +74,7 @@ export function getWebSocket (wampy = {}) {
         return null;
     }
 
-    if (ws) { // User provided webSocket class
+    if (ws) {    // User-provided WebSocket class
         return new ws(parsedUrl, protocols, null, additionalHeaders, wsRequestOptions);
     }
 

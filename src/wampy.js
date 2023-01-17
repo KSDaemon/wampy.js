@@ -566,7 +566,7 @@ class Wampy {
         }
 
         const isPayloadAnObject = this._isPlainObject(payload);
-        const { argsList, argsDict } = payload;
+        const { argsList, argsDict } = payload || {};
         let args, kwargs;
 
         if (isPayloadAnObject && !argsList && !argsDict) {
@@ -616,12 +616,11 @@ class Wampy {
             }
         }
 
-        // TODO: implement End-to-End Encryption
         // wamp scheme means Payload End-to-End Encryption
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
-        // if (options.ppt_scheme === 'wamp') {
-        //
-        // }
+        if (options.ppt_scheme === 'wamp') {
+            // TODO: implement End-to-End Encryption
+        }
 
         payloadItems.push([binPayload]);
 
@@ -643,12 +642,13 @@ class Wampy {
             return { err: this._cache.opStatus.error };
         }
 
-        // TODO: implement End-to-End Encryption
         // wamp scheme means Payload End-to-End Encryption
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-end-to-end-encrypti
-        // if (options.ppt_scheme === 'wamp') {
-        //
-        // }
+        if (options.ppt_scheme === 'wamp') {
+
+            // TODO: implement End-to-End Encryption
+
+        }
 
         if (options.ppt_serializer && options.ppt_serializer !== 'native') {
             const pptSerializer = this._options.payloadSerializers[options.ppt_serializer];
@@ -1077,7 +1077,7 @@ class Wampy {
             return;
         }
 
-        const { topic, advancedOptions, callbacks } = this._requests[requestId];
+        const { topic, advancedOptions, callbacks } = this._requests[requestId] || {};
         const subscription = {
             id: subscriptionId,
             topic,
@@ -1108,7 +1108,7 @@ class Wampy {
             return;
         }
 
-        const { topic, advancedOptions, callbacks } = this._requests[requestId];
+        const { topic, advancedOptions, callbacks } = this._requests[requestId] || {};
         const subscriptionKey = this._getSubscriptionKey(topic, advancedOptions);
         const subscriptionId = this._subscriptionsByKey.get(subscriptionKey).id;
         this._subscriptionsByKey.delete(subscriptionKey);
@@ -1349,8 +1349,8 @@ class Wampy {
         }
 
         const handleInvocationResult = (result) => {
-            const options = result?.options || {};
-            const { ppt_scheme, ppt_serializer, ppt_cipher, ppt_keyid } = options;
+            const options = result?.options;
+            const { ppt_scheme, ppt_serializer, ppt_cipher, ppt_keyid } = options ?? {};
 
             // Check and handle Payload PassThru Mode
             // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
@@ -1368,7 +1368,7 @@ class Wampy {
                 });
             }
 
-            const { err, payloadItems } = result ? this._packPPTPayload(result, options) : {};
+            const { err, payloadItems } = result ? this._packPPTPayload(result, options || {}) : {};
 
             if (err) {
                 return handleInvocationError({
@@ -1379,7 +1379,7 @@ class Wampy {
             }
 
             const messageOptions = {
-                ...options,
+                ...(options || {}),
                 ...(ppt_scheme ? { ppt_scheme } : {}),
                 ...(ppt_serializer ? { ppt_serializer } : {}),
                 ...(ppt_cipher ? { ppt_cipher } : {}),
@@ -1434,11 +1434,10 @@ class Wampy {
         }
 
         this._cache.reconnectingAttempts++;
-
         this._ws = getWebSocket({
             url: this._url,
             protocols: this._protocols,
-            options: this._options,
+            options: this._options
         });
         this._initWsCallbacks();
     }
@@ -1592,7 +1591,7 @@ class Wampy {
         this._ws = getWebSocket({
             url: this._url,
             protocols: this._protocols,
-            options: this._options,
+            options: this._options
         });
 
         if (!this._ws) {
@@ -1841,7 +1840,7 @@ class Wampy {
 
         messageOptions = {
             acknowledge: true,
-            ...messageOptions,
+            ...(messageOptions || {}),
             ...(ppt_scheme ? { ppt_scheme } : {}),
             ...(ppt_scheme ? { ppt_scheme } : {}),
             ...(ppt_serializer ? { ppt_serializer } : {}),

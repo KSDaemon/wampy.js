@@ -4,15 +4,14 @@
  * Date: 22.06.17
  */
 
-const isNode = typeof process === 'object' &&
-    Object.prototype.toString.call(process) === '[object process]';
-
 import { expect } from 'chai';
 import * as utils  from './../src/utils.js';
+
+const isNode = Object.prototype.toString.call(process) === '[object process]';
 let getWebSocket = utils.getWebSocket;
 
-function getPseudoBrowserWebSocket (wampy = {}) {
-    return utils.getWebSocket({ ...wampy, isBrowserMock: true });
+function getPseudoBrowserWebSocket (configObject = {}) {
+    return utils.getWebSocket({ ...configObject, isBrowserMock: true });
 }
 
 describe('Wampy.js Utils submodule', function () {
@@ -34,14 +33,14 @@ describe('Wampy.js Utils submodule', function () {
         });
 
         it('disallows to create websocket instance without providing websocket class object', function () {
-            const optionsWithoutWsClass = { url:'ws://example.com/ws/path', protocols: ['wamp.2.json'] };
+            const configWithoutWsClass = { url:'ws://example.com/ws/path', protocols: ['wamp.2.json'] };
 
-            expect(getWebSocket(optionsWithoutWsClass)).to.be.null;
+            expect(getWebSocket(configWithoutWsClass)).to.be.null;
 
             const wsClass = function (url) { this.name = 'UserWebSocket'; this.url = url; };
-            const optionsWithWsClass = { ...optionsWithoutWsClass, options: { ws: wsClass } };
+            const configWithWsClass = { ...configWithoutWsClass, options: { ws: wsClass } };
 
-            expect(getWebSocket(optionsWithWsClass)).to.be.instanceOf(wsClass);
+            expect(getWebSocket(configWithWsClass)).to.be.instanceOf(wsClass);
         });
     });
 
