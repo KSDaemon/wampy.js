@@ -4,11 +4,11 @@ function isWebSocketSchemeSpecified (url) {
     return /^ws(s)?:\/\//.test(url);
 }
 
-export function getServerUrlForNode (url) {
+function getServerUrlForNode (url) {
     return isWebSocketSchemeSpecified(url) ? url : null;
 }
 
-export function getServerUrlForBrowser (url) {
+function getServerUrlForBrowser (url) {
     if (isWebSocketSchemeSpecified(url)) {
         return url;
     }
@@ -29,24 +29,56 @@ export function getServerUrlForBrowser (url) {
     return `${scheme}${url}`;
 }
 
-export function getWebSocket (url, protocols, ws, headers, requestOptions) {
-    const parsedUrl = isNode ? getServerUrlForNode(url) : getServerUrlForBrowser(url);
+/** Get a WebSocket object from the browsers's window global variable
+ *
+ * @param {string} parsedUrl The server URL
+ * @param {string[]} protocols The WebSocket protocols
+ *
+ * @returns {Object} A WebSocket Object, or null if none is found
+ */
+function getWebSocketFromWindowObject (parsedUrl, protocols) {
+    if (window?.WebSocket) { // Chrome, MSIE, newer Firefox
+        return new window.WebSocket(parsedUrl, protocols);
+    } else if (window?.MozWebSocket) { // older versions of Firefox
+        return new window.MozWebSocket(parsedUrl, protocols);
+    }
+
+    return null;
+}
+
+/** Get a WebSocket object according to the user's current environment
+ *
+ * @param {Object} configObject A configuration object containing multiple properties
+ * @param {string} configObject.url The WebSocket URL
+ * @param {string[]} configObject.protocols The WebSocket protocols
+ * @param {Object} configObject.options An options hash-table
+ * @param {WebSocket} configObject.options.ws A user-provided WebSocket class
+ * @param {Object} configObject.options.additionalHeaders User provided extra HTTP headers for Node.js
+ * @param {Object} configObject.options.wsRequestOptions User provided WS Client Config Options for Node.js
+ * @param {boolean} configObject.isBrowserMock A flag indicating if the environment is a simulated browser
+ * environment inside Node.js, such as jsdom.
+ *
+ * @returns {Object} a WebSocket Object, or null if none is found
+ */
+export function getWebSocket ({ url, protocols, options, isBrowserMock } = {}) {
+    const { ws, additionalHeaders, wsRequestOptions } = options || {};
+    const isActualNode = isNode && !isBrowserMock;
+
+    if (!ws && isActualNode) {
+        return null;
+    }
+
+    const parsedUrl = isActualNode ? getServerUrlForNode(url) : getServerUrlForBrowser(url);
 
     if (!parsedUrl) {
         return null;
     }
 
-    if (ws) {   // User provided webSocket class
-        return new ws(parsedUrl, protocols, null, headers, requestOptions);
-    } else if (isNode) {    // we're in node, but no webSocket provided
-        return null;
-    } else if ('WebSocket' in window) { // Chrome, MSIE, newer Firefox
-        return new window.WebSocket(parsedUrl, protocols);
-    } else if ('MozWebSocket' in window) { // older versions of Firefox
-        return new window.MozWebSocket(parsedUrl, protocols);
+    if (ws) {    // User-provided WebSocket class
+        return new ws(parsedUrl, protocols, null, additionalHeaders, wsRequestOptions);
     }
 
-    return null;
+    return getWebSocketFromWindowObject(parsedUrl, protocols);
 }
 
 export function getNewPromise () {
