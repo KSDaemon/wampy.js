@@ -1,6 +1,6 @@
 {
   "name": "wampy",
-  "version": "7.0.1",
+  "version": "7.0.2",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation",
   "author": "Konstantin Burkalev <KSDaemon@gmail.com> (https://ksdaemon.com)",
   "devDependencies": {
@@ -87,6 +87,7 @@
     "test:crossbar": "npm run test:node -- -- 'test/wampy-crossbar-test.js'",
     "test:browser-wrappers": "npm run test:node -- -- 'test/wampy-browser-wrappers-test.js'",
     "test:browser": "npx karma start karma.conf.cjs",
-    "cover": "c8 report"
+    "cover": "c8 report",
+    "publish": "npm run build && npm publish"
   }
 }
