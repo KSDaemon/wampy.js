@@ -21,12 +21,29 @@ function getServerUrlForBrowser (url) {
         return `${scheme}${window.location.hostname}${port}/ws`;
     }
 
-    if (url.startsWith('/')) { // just path on current server
+    if (url.startsWith('/')) {    // just path on current server
         return `${scheme}${window.location.hostname}${port}${url}`;
     }
 
     // assuming just domain + path
     return `${scheme}${url}`;
+}
+
+/** Get a WebSocket object from the browsers's "window" global variable
+ *
+ * @param {string} parsedUrl The server URL
+ * @param {string[]} protocols The WebSocket protocols
+ *
+ * @returns {Object} a WebSocket Object, or null if none is found
+ */
+function getWebSocketFromWindowObject (parsedUrl, protocols) {
+    if (window?.WebSocket) { // Chrome, MSIE, newer Firefox
+        return new window.WebSocket(parsedUrl, protocols);
+    } else if (window?.MozWebSocket) { // older versions of Firefox
+        return new window.MozWebSocket(parsedUrl, protocols);
+    }
+
+    return null;
 }
 
 /** Get a WebSocket object according to the user's current environment
@@ -42,27 +59,25 @@ function getServerUrlForBrowser (url) {
  * @returns {Object} a WebSocket Object, or null if none is found
  */
 export function getWebSocket (wampy = {}) {
-    const { _url, _options, _protocols, isBrowserMock } = wampy;
+    const { url, protocols, options, isBrowserMock } = wampy;
+    const { ws, additionalHeaders, wsRequestOptions } = options || {};
     const isActualNode = isNode && !isBrowserMock;
-    const parsedUrl = isActualNode ? getServerUrlForNode(_url) : getServerUrlForBrowser(_url);
+
+    if (!ws && isActualNode) {
+        return null;
+    }
+
+    const parsedUrl = isActualNode ? getServerUrlForNode(url) : getServerUrlForBrowser(url);
 
     if (!parsedUrl) {
         return null;
     }
 
-    if (_options?.ws) {
-        const { ws, additionalHeaders, wsRequestOptions } = _options;
-
-        return new ws(parsedUrl, _protocols, null, additionalHeaders, wsRequestOptions);
-    } else if (isActualNode) {
-        return null;
-    } else if (window?.WebSocket) { // Chrome, MSIE, newer Firefox
-        return new window.WebSocket(parsedUrl, _protocols);
-    } else if (window?.MozWebSocket) { // older versions of Firefox
-        return new window.MozWebSocket(parsedUrl, _protocols);
+    if (ws) { // User provided webSocket class
+        return new ws(parsedUrl, protocols, null, additionalHeaders, wsRequestOptions);
     }
 
-    return null;
+    return getWebSocketFromWindowObject(parsedUrl, protocols);
 }
 
 export function getNewPromise () {
