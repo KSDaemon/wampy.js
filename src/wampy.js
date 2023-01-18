@@ -927,7 +927,7 @@ class Wampy {
             this._renewSubscriptions();
             this._renewRegistrations();
 
-        } else {
+        } else if (this._cache.connectPromise?.onSuccess) {
             // Fire onConnect event on real connection to WAMP server
             this._cache.connectPromise.onSuccess(details);
             this._cache.connectPromise = null;
