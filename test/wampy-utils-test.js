@@ -22,25 +22,28 @@ describe('Wampy.js Utils submodule', function () {
             return;
         }
 
-        it('disallows to create websocket object without providing url', function () {
+        const protocols = ['wamp.2.json'];
+        const qualifiedUrl = 'ws://example.com/ws/path';
+        const ws = function (url) { this.name = 'UserWebSocket'; this.url = url; };
+
+        it('disallows to create websocket object without providing a websocket class object', function () {
             expect(getWebSocket()).to.be.null;
+            expect(getWebSocket({})).to.be.null;
+            expect(getWebSocket({ protocols })).to.be.null;
+            expect(getWebSocket({ protocols, url: qualifiedUrl })).to.be.null;
         });
 
-        it('disallows to create websocket object without providing full qualified url', function () {
-            expect(getWebSocket({ url: '/just/path' })).to.be.null;
-            expect(getWebSocket({ url: 'example.com/' })).to.be.null;
-            expect(getWebSocket({ url: 'example.com:3128/just/path' })).to.be.null;
+        it('disallows to create websocket object without providing a fully qualified url', function () {
+            expect(getWebSocket({ options: { ws } })).to.be.null;
+            expect(getWebSocket({ options: { ws }, protocols })).to.be.null;
+            expect(getWebSocket({ options: { ws }, protocols, url: '/just/path' })).to.be.null;
+            expect(getWebSocket({ options: { ws }, protocols, url: 'example.com/' })).to.be.null;
+            expect(getWebSocket({ options: { ws }, protocols, url: 'example.com:3128/just/path' })).to.be.null;
         });
 
-        it('disallows to create websocket instance without providing websocket class object', function () {
-            const configWithoutWsClass = { url:'ws://example.com/ws/path', protocols: ['wamp.2.json'] };
-
-            expect(getWebSocket(configWithoutWsClass)).to.be.null;
-
-            const wsClass = function (url) { this.name = 'UserWebSocket'; this.url = url; };
-            const configWithWsClass = { ...configWithoutWsClass, options: { ws: wsClass } };
-
-            expect(getWebSocket(configWithWsClass)).to.be.instanceOf(wsClass);
+        it('allows to create websocket object when ws class and fully qualified url are provided', function () {
+            expect(getWebSocket({ options: { ws }, url: qualifiedUrl  })).to.be.instanceOf(ws);
+            expect(getWebSocket({ options: { ws }, protocols, url: qualifiedUrl })).to.be.instanceOf(ws);
         });
     });
 
