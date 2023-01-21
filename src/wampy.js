@@ -903,7 +903,7 @@ class Wampy {
             return this._hardClose(errorURI, `Received message "${messageType}" before session was established`);
         }
 
-        if (this._isRequestIdValid) {
+        if (this._isRequestIdValid(data)) {
             await handler();
         }
     }
