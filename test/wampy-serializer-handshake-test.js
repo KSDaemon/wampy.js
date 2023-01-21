@@ -28,7 +28,7 @@ describe('Wampy.js Serializer Handshake', function () {
         try {
             const wampy = new Wampy(testUrl, {
                 ...wampyOptionsWithJsonSerializer,
-                onError: (e) => { expect(e).to.be.instanceOf(NoSerializerAvailableError); }
+                onError: (e) => { expect(e).to.be.instanceOf(Error); }
             });
 
             wsSetProtocol('cbor');

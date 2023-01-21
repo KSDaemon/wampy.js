@@ -783,16 +783,13 @@ class Wampy {
      * @private
      */
     _wsOnOpen () {
-        const { helloCustomDetails, authmethods, authid, authextra, serializer, onError, realm } = this._options;
         const serverProtocol = this._ws.protocol?.split('.')?.[2];
-        const hasServerChosenOurPreferredProtocol = serverProtocol === serializer.protocol;
+        const hasServerChosenOurPreferredProtocol = serverProtocol === this._options.serializer.protocol;
 
         this._log(`Websocket connected. Server has chosen protocol: "${serverProtocol}"`);
 
         if (!hasServerChosenOurPreferredProtocol) {
-            if (serverProtocol === 'json') {
-                this._options.serializer = new JsonSerializer();
-            } else {
+            if (serverProtocol !== 'json') {
                 const noSerializerAvailableError = new Errors.NoSerializerAvailableError();
                 this._fillOpStatusByError(noSerializerAvailableError);
 
@@ -801,25 +798,29 @@ class Wampy {
                     this._cache.connectPromise = null;
                 }
 
-                if (onError) {
-                    onError(noSerializerAvailableError);
+                if (this._options.onError) {
+                    this._options.onError(noSerializerAvailableError);
                 }
+
+                return this._hardClose('wamp.error.protocol_violation', noSerializerAvailableError.message);
             }
+
+            this._options.serializer = new JsonSerializer();
         }
 
-        if (serializer.isBinary) {
+        if (this._options.serializer.isBinary) {
             this._ws.binaryType = 'arraybuffer';
         }
 
+        const { helloCustomDetails, authid, authmethods, authextra, realm } = this._options;
         const messageOptions = {
-            ...helloCustomDetails,
             ...this._wamp_features,
+            ...helloCustomDetails,
             ...(authid ? { authid, authmethods, authextra } : {}),
         };
         const encodedMessage = this._encode([WAMP_MSG_SPEC.HELLO, realm, messageOptions]);
 
-        if (encodedMessage) {
-            // Sending directly 'cause it's a hello message and no sessionId check is needed
+        if (encodedMessage) { // Sending directly 'cause it's a hello message and no sessionId check is needed
             this._ws.send(encodedMessage);
         }
     }
