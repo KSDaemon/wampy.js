@@ -910,7 +910,7 @@ class Wampy {
 
     /**
      * Validates the requestId for message types that need this kind of validation
-     * @param {string[]} data - [messageType, requestId]
+     * @param {Array} data - [messageType, requestId]
      * @return {boolean} true if it's a valid request and false if it isn't
      * @private
      */
