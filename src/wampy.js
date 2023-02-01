@@ -1285,6 +1285,8 @@ class Wampy {
 
     /**
      * Handles websocket invocation message event
+     * WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict,
+     *             CALL.Arguments|list, CALL.ArgumentsKw|dict]
      * @param {Array} data - decoded event data array
      * @private
      */
@@ -1386,6 +1388,7 @@ class Wampy {
                 ...(ppt_keyid ? { ppt_keyid } : {}),
             };
 
+            // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
             self._send([WAMP_MSG_SPEC.YIELD, requestId, messageOptions, ...(payloadItems || [])]);
         };
 
