@@ -652,7 +652,7 @@ serializers.forEach(function (item) {
                     authid: 'user1',
                     authmethods: ['wampcra'],
                     onChallenge: function (method, info) {
-                        throw new Error('Error occured in authentication');
+                        throw new Error('Error occurred in authentication');
                     },
                     onError: function (e) {
                         done();
@@ -678,7 +678,7 @@ serializers.forEach(function (item) {
             });
 
             it('automatically sends goodbye message on server initiated disconnect', function (done) {
-                wampy.setOptions({ onConnect: null, onClose: done })
+                wampy.setOptions({ onConnect: null, onError: null, onClose: done })
                     .connect();
             });
 
@@ -704,20 +704,24 @@ serializers.forEach(function (item) {
                 return wampy.connect(anotherRouterUrl);
             });
 
-            it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
+            it('calls onClose callback alongside with promise resolving', async function () {
+                let onCloseFired = false;
                 wampy.setOptions({
                     onClose: function () {
-                        setTimeout(function () {
-                            wampy.setOptions({ onClose: done })
-                                .connect(anotherRouterUrl);
+                        onCloseFired = true;
+                    }
+                });
+                await wampy.disconnect();
+                expect(onCloseFired).to.be.true;
+            });
 
-                            setTimeout(function () {
-                                wampy.abort();
-                            }, 1);
+            it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
+                wampy.setOptions({ onClose: done })
+                    .connect(anotherRouterUrl);
 
-                        }, 1);
-                    },
-                }).disconnect();
+                setTimeout(function () {
+                    wampy.abort();
+                }, 1);
             });
 
             it('auto-reconnects to WAMP server on network errors', function (done) {

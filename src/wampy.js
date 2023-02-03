@@ -846,7 +846,8 @@ class Wampy {
             // No reconnection needed or reached max retries count
             if (this._options.onClose) {
                 this._options.onClose();
-            } else if (this._cache.closePromise) {
+            }
+            if (this._cache.closePromise) {
                 this._cache.closePromise.onSuccess();
                 this._cache.closePromise = null;
             }
