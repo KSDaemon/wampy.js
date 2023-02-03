@@ -545,14 +545,14 @@ const WAMP_MSG_SPEC = {
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
-                475,
+                4,
                 {
                     agent: 'Wampy.js test suite',
                     roles: routerRoles
                 }
             ]
         },
-        // allows to abort WebSocket/WAMP session establishment
+        // calls onClose callback alongside with promise resolving
         {
             data: [
                 WAMP_MSG_SPEC.GOODBYE,
@@ -560,6 +560,8 @@ const WAMP_MSG_SPEC = {
                 'wamp.error.goodbye_and_out'
             ]
         },
+        // allows to abort WebSocket/WAMP session establishment
+        // No messages been received/sent
         // auto-reconnects to WAMP server on network errors
         {
             data: [
