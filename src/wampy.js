@@ -904,7 +904,40 @@ class Wampy {
             return this._hardClose(errorURI, `Received message "${messageType}" before session was established`);
         }
 
-        await handler();
+        if (this._isRequestIdValid(data)) {
+            await handler();
+        }
+    }
+
+    /**
+     * Validates the requestId for message types that need this kind of validation
+     * @param {Array} data - [messageType, requestId]
+     * @return {boolean} true if it's a valid request and false if it isn't
+     * @private
+     */
+    _isRequestIdValid ([messageType, requestId]) {
+        const isRequestIdValidationNeeded = [
+            WAMP_MSG_SPEC.SUBSCRIBED,
+            WAMP_MSG_SPEC.UNSUBSCRIBED,
+            WAMP_MSG_SPEC.PUBLISHED,
+            WAMP_MSG_SPEC.RESULT,
+            WAMP_MSG_SPEC.REGISTERED,
+            WAMP_MSG_SPEC.UNREGISTERED
+        ].includes(messageType);
+
+        if (!isRequestIdValidationNeeded) {
+            return true;
+        }
+
+        if (messageType === WAMP_MSG_SPEC.RESULT && this._calls[requestId]) {
+            return true;
+        }
+
+        if (this._requests[requestId]) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -1074,10 +1107,6 @@ class Wampy {
      * @private
      */
     async _onSubscribedMessage ([, requestId, subscriptionId]) {
-        if (!this._requests[requestId]) {
-            return;
-        }
-
         const { topic, advancedOptions, callbacks } = this._requests[requestId];
         const subscription = {
             id: subscriptionId,
@@ -1105,10 +1134,6 @@ class Wampy {
      * @private
      */
     async _onUnsubscribedMessage ([, requestId]) {
-        if (!this._requests[requestId]) {
-            return;
-        }
-
         const { topic, advancedOptions, callbacks } = this._requests[requestId];
         const subscriptionKey = this._getSubscriptionKey(topic, advancedOptions);
         const subscriptionId = this._subscriptionsByKey.get(subscriptionKey).id;
@@ -1129,10 +1154,6 @@ class Wampy {
      * @private
      */
     async _onPublishedMessage ([, requestId, publicationId]) {
-        if (!this._requests[requestId]) {
-            return;
-        }
-
         const { topic, callbacks } = this._requests[requestId];
 
         if (callbacks?.onSuccess) {
@@ -1191,10 +1212,6 @@ class Wampy {
      * @private
      */
     async _onResultMessage ([, requestId, details, argsList, argsDict]) {
-        if (!this._calls[requestId]) {
-            return;
-        }
-
         let args = argsList;
         let kwargs = argsDict;
 
@@ -1240,10 +1257,6 @@ class Wampy {
      * @private
      */
     async _onRegisteredMessage ([, requestId, registrationId]) {
-        if (!this._requests[requestId]) {
-            return;
-        }
-
         const { topic, callbacks } = this._requests[requestId];
 
         this._rpcRegs[registrationId] = { id: registrationId, callbacks: [callbacks.rpc] };
@@ -1264,10 +1277,6 @@ class Wampy {
      * @private
      */
     async _onUnregisteredMessage ([, requestId]) {
-        if (!this._requests[requestId]) {
-            return;
-        }
-
         const { topic, callbacks } = this._requests[requestId];
 
         delete this._rpcRegs[this._rpcRegs[topic].id];
