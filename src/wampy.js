@@ -923,15 +923,20 @@ class Wampy {
             WAMP_MSG_SPEC.REGISTERED,
             WAMP_MSG_SPEC.UNREGISTERED
         ].includes(messageType);
-        const isResultMessage = messageType === WAMP_MSG_SPEC.RESULT;
 
-        if (isRequestIdValidationNeeded
-            && (isResultMessage && !this._calls[requestId]
-                || !isResultMessage && !this._requests[requestId])) {
-            return false;
+        if (!isRequestIdValidationNeeded) {
+            return true;
         }
 
-        return true;
+        if (messageType === WAMP_MSG_SPEC.RESULT && this._calls[requestId]) {
+            return true;
+        }
+
+        if (this._requests[requestId]) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
