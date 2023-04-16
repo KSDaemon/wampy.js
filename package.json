@@ -60,7 +60,8 @@
     "wampy-cra": "^0.2.0",
     "wampy-cryptosign": "^0.1.0",
     "websocket": "^1.0.34",
-    "ws": "^8.13.0"
+    "ws": "^8.13.0",
+    "yargs": "^17.7.1"
   },
   "repository": {
     "type": "git",
@@ -75,6 +76,9 @@
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/KSDaemon/wampy.js/issues"
+  },
+  "bin": {
+    "wampy": "cmd/cli.js"
   },
   "homepage": "https://github.com/KSDaemon/wampy.js#readme",
   "scripts": {
