@@ -5,10 +5,7 @@ import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
 import * as wampyCra from 'wampy-cra';
 import * as wampyCS from 'wampy-cryptosign';
 import WebSocket from 'ws';
-
-function logger () {
-    console.log(arguments);
-}
+import { logger } from './logger.js';
 
 function prepareOptions (argv) {
     const options = {

@@ -26,7 +26,7 @@ const builder = function (yargs) {
         ]);
 };
 
-const handler = function (argv) {
+const handler = async function (argv) {
     console.log(argv);
 };
 
