@@ -7,8 +7,9 @@ import callCmd from './commands/call.js';
 import publishCmd from './commands/publish.js';
 import registerCmd from './commands/register.js';
 import subscribeCmd from './commands/subscribe.js';
+import { connOptions } from './commonOptions.js';
 
-const argv = yargs(hideBin(process.argv))
+const argv = connOptions(yargs(hideBin(process.argv)))
     .env('WAMPY')
     .completion('completion', 'Generate shell completion script')
     .version()
@@ -25,9 +26,10 @@ const argv = yargs(hideBin(process.argv))
     .config('config', 'Populate all parameters from JSON file')
     .alias('config', 'c')
     .option('verbose', {
-        alias      : 'vvv',
+        alias      : ['vvv', 'debug'],
         describe: 'Enable verbose logging',
-        type    : 'boolean'
+        type    : 'boolean',
+        default : false
     })
     .option('serializer', {
         alias      : 's',
@@ -35,6 +37,13 @@ const argv = yargs(hideBin(process.argv))
         type       : 'string',
         choices    : ['json', 'cbor', 'msgpack'],
         default    : 'json'
+    })
+    .option('uriValidation', {
+        alias      : 'uv',
+        description: 'URI Validation Mode',
+        type       : 'string',
+        choices    : ['strict', 'loose'],
+        default    : 'strict'
     })
     .option('strbool', {
         alias      : 'b',

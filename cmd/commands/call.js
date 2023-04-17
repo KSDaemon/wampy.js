@@ -1,4 +1,4 @@
-import { helpOptions, payloadArgs, pptArgs } from '../common_options.js';
+import { helpOptions, payloadArgs, pptArgs } from '../commonOptions.js';
 
 const command = 'call <rpcURI> [options] [payload]';
 const description = 'Make a WAMP Remote Procedure Call';

@@ -1,4 +1,4 @@
-import { helpOptions } from '../common_options.js';
+import { helpOptions } from '../commonOptions.js';
 
 const command = 'register <rpcURI> [options] [payload]';
 const description = 'Register a WAMP Procedure';
@@ -22,7 +22,7 @@ const builder = function (yargs) {
             default    : 'single'
         })
         .option('mirror', {
-            alias: 'r',
+            alias: 'o',
             description : 'Return the invocation payload back to caller as result',
             type        : 'boolean'
         })

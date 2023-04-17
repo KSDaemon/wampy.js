@@ -1,4 +1,4 @@
-import { helpOptions } from '../common_options.js';
+import { helpOptions } from '../commonOptions.js';
 
 const command = 'subscribe <topicURI> [options] [payload]';
 const description = 'Subscribe to a WAMP Events topic';

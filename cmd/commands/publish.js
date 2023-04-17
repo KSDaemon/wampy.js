@@ -1,4 +1,4 @@
-import { helpOptions, payloadArgs, pptArgs } from '../common_options.js';
+import { helpOptions, payloadArgs, pptArgs } from '../commonOptions.js';
 
 const command = 'publish <topicURI> [options] [payload]';
 const description = 'Publish a WAMP Event to topic';
