@@ -1,15 +1,15 @@
 export const payloadArgs = function (yargs) {
     return yargs
         .option('argsList', {
-            alias      : ['a'],
+            alias      : ['a', 'args'],
             description: 'Message positional (list) payload\n' +
                 'You can pass multiple values after key:\n' +
-                '--args 1 2 3 ==> [1, 2, 3]\n' +
+                '--argsList 1 2 3 ==> [1, 2, 3]\n' +
                 '-a 100 string ==> [100, "string"]',
             type       : 'array'
         })
         .option('argsDict', {
-            alias      : ['k'],
+            alias      : ['k', 'kwargs'],
             description: 'Message Key-value (dictionary) payload\n' +
                 'To specify values use dot notation (any level deep):\n' +
                 '--argsDict.key1 125 ==> { key1: 125}\n' +

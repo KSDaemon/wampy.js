@@ -9,6 +9,21 @@ import registerCmd from './commands/register.js';
 import subscribeCmd from './commands/subscribe.js';
 import { connOptions } from './commonOptions.js';
 
+function convertStringToBoolean(obj) {
+    for (let key in obj) {
+        if (typeof obj[key] === 'object') {
+            obj[key] = convertStringToBoolean(obj[key]);
+        } else if (typeof obj[key] === 'string' || obj[key] instanceof String) {
+            if (obj[key].toUpperCase() === 'TRUE') {
+                obj[key] = true;
+            } else if (obj[key].toUpperCase() === 'FALSE') {
+                obj[key] = false;
+            }
+        }
+    }
+    return obj;
+}
+
 const argv = connOptions(yargs(hideBin(process.argv)))
     .env('WAMPY')
     .completion('completion', 'Generate shell completion script')
@@ -50,6 +65,33 @@ const argv = connOptions(yargs(hideBin(process.argv)))
         description: 'Treat payload strings "true", "false" as boolean',
         type       : 'boolean',
         default    : false
+    })
+    // Convert all strings "true"/"false" to boolean in payload if `strbool` flag is present
+    .middleware(argv => {
+        if (!argv.strbool) {
+            return argv;
+        }
+
+        if (argv.argsList) {
+            argv.argsList = argv.argsList.map(v => {
+                if (typeof v === 'string' || v instanceof String) {
+                    if (v.toUpperCase() === 'TRUE') {
+                        return true;
+                    } else if (v.toUpperCase() === 'FALSE') {
+                        return false;
+                    }
+
+                    return v;
+                }
+                return v;
+            });
+        }
+
+        if (argv.argsDict) {
+            argv.argsDict = convertStringToBoolean(argv.argsDict);
+        }
+
+        return argv;
     })
     .global(['serializer', 'strbool'])
     .group(['serializer', 'strbool'], 'Global options:')
