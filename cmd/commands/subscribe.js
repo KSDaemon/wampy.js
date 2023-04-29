@@ -1,8 +1,8 @@
 import { helpOptions } from '../commonOptions.js';
-import { getWampyInstance } from '../wampyHelpers.js';
+import { getWampySession } from '../wampyHelpers.js';
 import { logger } from '../logger.js';
 
-const command = 'subscribe <topicURI> [options] [payload]';
+const command = 'subscribe <topicURI> [options]';
 const description = 'Subscribe to a WAMP Events topic';
 const aliases = ['sub'];
 
@@ -24,10 +24,9 @@ const builder = function (yargs) {
 };
 
 const handler = async function (argv) {
+    const wampy = await getWampySession(argv);
+
     console.log(argv);
-
-    const wampy = getWampyInstance(argv);
-
     try {
         const res = await wampy.subscribe(argv.topicURI,
             function (eventData) {
@@ -38,7 +37,7 @@ const handler = async function (argv) {
         logger('Successfully subscribed to topic: ' + res.topic);
 
     } catch (e) {
-        logger('Subscription error:' + e.error);
+        logger('Subscription error:' + e);
     }
 
     process.on('SIGTERM', async () => {

@@ -1,3 +1,3 @@
 export function logger () {
-    console.log(arguments);
+    console.log(...arguments);
 }

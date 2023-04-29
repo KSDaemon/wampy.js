@@ -86,6 +86,16 @@ function prepareOptions (argv) {
     return options;
 }
 
-export const getWampyInstance = function (argv) {
-    return new Wampy(argv.url, prepareOptions(argv));
+export const getWampySession = async function (argv) {
+    const wampy = new Wampy(argv.url, prepareOptions(argv));
+
+    try {
+        await wampy.connect();
+    } catch (error) {
+        logger('connection failed', error);
+        throw new Error('Can\'t connect to server!');
+    }
+    logger(`Connected to router at ${argv.url}`);
+
+    return wampy;
 };

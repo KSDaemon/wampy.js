@@ -1681,7 +1681,7 @@ class Wampy {
 
         let match, patternBased = false;
         if (isAdvancedOptionsAnObject && Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
-            if (!['prefix', 'wildcard'].includes(advancedOptions.match)) {
+            if (!['exact', 'prefix', 'wildcard'].includes(advancedOptions.match)) {
                 const invalidParamError = new Errors.InvalidParamError('match');
                 this._fillOpStatusByError(invalidParamError);
                 throw invalidParamError;
