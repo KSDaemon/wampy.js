@@ -97,5 +97,31 @@ export const getWampySession = async function (argv) {
     }
     logger(`Connected to router at ${argv.url}`);
 
+    process.on('SIGTERM', async () => {
+        await wampy.disconnect();
+        logger('Disconnected from router. Exiting...');
+    });
+    process.on('SIGINT', async () => {
+        await wampy.disconnect();
+        logger('Disconnected from router. Exiting...');
+    });
+
     return wampy;
+};
+
+export const fillPPTOptions = function (options, argv) {
+    if (argv.ppt_scheme) {
+        options.ppt_scheme = argv.ppt_scheme;
+    }
+    if (argv.ppt_serializer) {
+        options.ppt_serializer = argv.ppt_serializer;
+    }
+    if (argv.ppt_cipher) {
+        options.ppt_cipher = argv.ppt_cipher;
+    }
+    if (argv.ppt_keyid) {
+        options.ppt_keyid = argv.ppt_keyid;
+    }
+
+    return options;
 };

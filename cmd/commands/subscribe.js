@@ -2,13 +2,18 @@ import { helpOptions } from '../commonOptions.js';
 import { getWampySession } from '../wampyHelpers.js';
 import { logger } from '../logger.js';
 
-const command = 'subscribe <topicURI> [options]';
+const command = 'subscribe <topicURI>';
 const description = 'Subscribe to a WAMP Events topic';
 const aliases = ['sub'];
 
 const builder = function (yargs) {
     helpOptions(yargs);
     return yargs
+        .positional('topicURI', {
+            description: 'WAMP Topic URI to subscribe to',
+            required: true,
+            type: 'string'
+        })
         .option('match', {
             alias      : 'm',
             description: 'Topic URI Matching policy',
@@ -26,7 +31,6 @@ const builder = function (yargs) {
 const handler = async function (argv) {
     const wampy = await getWampySession(argv);
 
-    console.log(argv);
     try {
         const res = await wampy.subscribe(argv.topicURI,
             function (eventData) {
@@ -34,20 +38,11 @@ const handler = async function (argv) {
             },
             { match: argv.match }
         );
-        logger('Successfully subscribed to topic: ' + res.topic);
+        logger('Successfully subscribed to topic: \n', JSON.stringify(res));
 
     } catch (e) {
         logger('Subscription error:' + e);
     }
-
-    process.on('SIGTERM', async () => {
-        await wampy.disconnect();
-        logger('Disconnected from router. Exiting...');
-    });
-    process.on('SIGINT', async () => {
-        await wampy.disconnect();
-        logger('Disconnected from router. Exiting...');
-    });
 };
 
 export default { command, description, aliases, builder, handler };
