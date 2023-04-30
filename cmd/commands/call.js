@@ -1,6 +1,8 @@
 import { helpOptions, payloadArgs, pptArgs } from '../commonOptions.js';
+import { fillPPTOptions, getWampySession } from '../wampyHelpers.js';
+import { logger } from '../logger.js';
 
-const command = 'call <rpcURI> [options] [payload]';
+const command = 'call <rpcURI>';
 const description = 'Make a WAMP Remote Procedure Call';
 
 const builder = function (yargs) {
@@ -8,9 +10,19 @@ const builder = function (yargs) {
     payloadArgs(yargs);
     helpOptions(yargs);
     return yargs
+        .positional('rpcURI', {
+            description: 'WAMP Procedure URI to call',
+            required: true,
+            type: 'string'
+        })
         .option('disclose_me', {
             alias: 'd',
             description : 'Flag of disclosure of Caller identity (WAMP session ID)',
+            type        : 'boolean'
+        })
+        .option('progress', {
+            alias: 'p',
+            description : 'Flag of marking a call as progressive invocation',
             type        : 'boolean'
         })
         .option('timeout', {
@@ -27,7 +39,43 @@ const builder = function (yargs) {
 };
 
 const handler = async function (argv) {
-    console.log(argv);
+    const wampy = await getWampySession(argv);
+
+    try {
+        const payload = {};
+        let hasPayload = false;
+        if (argv.argsList) {
+            payload.argsList = argv.argsList;
+            hasPayload = true;
+        }
+        if (argv.argsDict) {
+            payload.argsDict = argv.argsDict;
+            hasPayload = true;
+        }
+
+        const advanceOpts = fillPPTOptions({}, argv);
+        if (argv.timeout) {
+            advanceOpts.timeout = argv.timeout;
+        }
+        if (argv.disclose_me) {
+            advanceOpts.disclose_me = argv.disclose_me;
+        }
+        if (argv.progress) {
+            advanceOpts.progress_callback = function (res) {
+                logger('Received intermediate call results: \n' + JSON.stringify(res));
+            };
+        }
+
+        const res = await wampy.call(argv.rpcURI,
+            hasPayload ? payload : null,
+            advanceOpts
+        );
+        logger(`Received ${argv.progress ? 'final ' : ''}call results: \n` + JSON.stringify(res));
+    } catch (e) {
+        logger('Call error:' + e);
+    }
+
+    await wampy.disconnect();
 };
 
 export default { command, description, builder, handler };

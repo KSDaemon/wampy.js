@@ -1,12 +1,19 @@
 import { helpOptions } from '../commonOptions.js';
+import { getWampySession } from '../wampyHelpers.js';
+import { logger } from '../logger.js';
 
-const command = 'register <rpcURI> [options] [payload]';
+const command = 'register <rpcURI>';
 const description = 'Register a WAMP Procedure';
 const aliases = ['reg'];
 
 const builder = function (yargs) {
     helpOptions(yargs);
     return yargs
+        .positional('rpcURI', {
+            description: 'WAMP Procedure URI to register',
+            required: true,
+            type: 'string'
+        })
         .option('match', {
             alias: 'm',
             description : 'URI Matching policy',
@@ -34,7 +41,27 @@ const builder = function (yargs) {
 };
 
 const handler = async function (argv) {
-    console.log(argv);
+    const wampy = await getWampySession(argv);
+
+    try {
+        const res = await wampy.register(argv.rpcURI,
+            function (eventData) {
+                logger('Received call invocation', eventData);
+
+                if (argv.mirror) {
+                    return {
+                        argsList: eventData.argsList,
+                        argsDict: eventData.argsDict
+                    };
+                }
+            },
+            { match: argv.match, invoke: argv.invoke }
+        );
+        logger('Successfully registered procedure: \n', JSON.stringify(res));
+
+    } catch (e) {
+        logger('Registration error:' + e);
+    }
 };
 
 export default { command, description, aliases, builder, handler };

@@ -63,7 +63,7 @@ const handler = async function (argv) {
 
     console.log(argv);
     try {
-        let payload = {};
+        const payload = {};
         let hasPayload = false;
         if (argv.argsList) {
             payload.argsList = argv.argsList;
