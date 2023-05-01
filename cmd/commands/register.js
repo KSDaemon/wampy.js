@@ -11,27 +11,27 @@ const builder = function (yargs) {
     return yargs
         .positional('rpcURI', {
             description: 'WAMP Procedure URI to register',
-            required: true,
-            type: 'string'
+            required   : true,
+            type       : 'string'
         })
         .option('match', {
-            alias: 'm',
-            description : 'URI Matching policy',
-            type        : 'string',
+            alias      : 'm',
+            description: 'URI Matching policy',
+            type       : 'string',
             choices    : ['exact', 'prefix', 'wildcard'],
             default    : 'exact'
         })
         .option('invoke', {
-            alias: 'i',
-            description : 'Invocation policy',
-            type        : 'string',
+            alias      : 'i',
+            description: 'Invocation policy',
+            type       : 'string',
             choices    : ['single', 'roundrobin', 'random', 'first', 'last'],
             default    : 'single'
         })
         .option('mirror', {
-            alias: 'o',
-            description : 'Return the invocation payload back to caller as result',
-            type        : 'boolean'
+            alias      : 'o',
+            description: 'Return the invocation payload back to caller as result',
+            type       : 'boolean'
         })
         .example([
             ['$0 register get.system.updates'],
@@ -46,7 +46,12 @@ const handler = async function (argv) {
     try {
         const res = await wampy.register(argv.rpcURI,
             function (eventData) {
-                logger('Received call invocation', eventData);
+                logger('Received call invocation',
+                    {
+                        details : eventData.details,
+                        argsList: eventData.argsList,
+                        argsDict: eventData.argsDict
+                    });
 
                 if (argv.mirror) {
                     return {
