@@ -40,7 +40,7 @@ Javascript implementation (for browser and node.js)
     * [unsubscribe(subscriptionIdKey[, onEvent])](#unsubscribesubscriptionidkey-onevent)
     * [publish(topicURI[, payload[, advancedOptions]])](#publishtopicuri-payload-advancedoptions)
     * [call(topicURI[, payload[, advancedOptions]])](#calltopicuri-payload-advancedoptions)
-    * [cancel(reqId[, advancedOptions]])](#cancelreqid-advancedoptions)
+    * [cancel(reqId[, advancedOptions])](#cancelreqid-advancedoptions)
     * [register(topicURI, rpc[, advancedOptions])](#registertopicuri-rpc-advancedoptions)
     * [unregister(topicURI)](#unregistertopicuri)
     * [Error handling](#error-handling)
@@ -864,7 +864,7 @@ try {
 
 [Back to Table of Contents](#table-of-contents)
 
-### cancel(reqId[, advancedOptions]])
+### cancel(reqId[, advancedOptions])
 
 RPC invocation cancelling.
 
