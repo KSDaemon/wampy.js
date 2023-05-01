@@ -26,7 +26,7 @@ function convertStringToBoolean (obj) {
 
 const argv = connOptions(yargs(hideBin(process.argv)))
     .env('WAMPY')
-    .completion('completion', 'Generate shell completion script')
+    .completion('completion', false)
     .version()
     .command(callCmd)
     .command(publishCmd)

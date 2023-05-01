@@ -196,6 +196,9 @@ wampy completion > ~/.zshrc
 wampy completion > ~/.bashrc
 ```
 
+The `completion` command is hidden from the `wampy -h` output to not pollute the main use flow as it is only needed
+once.
+
 ## Migrating or Updating versions
 
 Please refer to [Migrating.md](Migrating.md) for instructions on upgrading major versions.
