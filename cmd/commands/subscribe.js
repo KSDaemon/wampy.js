@@ -1,3 +1,4 @@
+import cj from 'color-json';
 import { helpOptions } from '../commonOptions.js';
 import { getWampySession } from '../wampyHelpers.js';
 import { logger } from '../logger.js';
@@ -34,11 +35,11 @@ const handler = async function (argv) {
     try {
         const res = await wampy.subscribe(argv.topicURI,
             function (eventData) {
-                logger('Received topic event', eventData);
+                logger('Received topic event:\n', cj(eventData));
             },
             { match: argv.match }
         );
-        logger('Successfully subscribed to topic: \n', JSON.stringify(res));
+        logger('Successfully subscribed to topic: \n', cj(res));
 
     } catch (e) {
         logger('Subscription error:' + e);

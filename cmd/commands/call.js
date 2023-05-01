@@ -1,3 +1,4 @@
+import cj from 'color-json';
 import { helpOptions, payloadArgs, pptArgs } from '../commonOptions.js';
 import { fillPPTOptions, getWampySession } from '../wampyHelpers.js';
 import { logger } from '../logger.js';
@@ -62,7 +63,7 @@ const handler = async function (argv) {
         }
         if (argv.progress) {
             advanceOpts.progress_callback = function (res) {
-                logger('Received intermediate call results: \n' + JSON.stringify(res));
+                logger('Received intermediate call results: \n' + cj(res));
             };
         }
 
@@ -70,7 +71,7 @@ const handler = async function (argv) {
             hasPayload ? payload : null,
             advanceOpts
         );
-        logger(`Received ${argv.progress ? 'final ' : ''}call results: \n` + JSON.stringify(res));
+        logger(`Received ${argv.progress ? 'final ' : ''}call results: \n` + cj(res));
     } catch (e) {
         logger('Call error:' + e);
     }

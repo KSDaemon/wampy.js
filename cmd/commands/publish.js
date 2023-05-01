@@ -1,3 +1,4 @@
+import cj from 'color-json';
 import { helpOptions, payloadArgs, pptArgs } from '../commonOptions.js';
 import { fillPPTOptions, getWampySession } from '../wampyHelpers.js';
 import { logger } from '../logger.js';
@@ -101,7 +102,7 @@ const handler = async function (argv) {
             hasPayload ? payload : null,
             advanceOpts
         );
-        logger('Successfully published to topic: \n' + JSON.stringify(res));
+        logger('Successfully published to topic: \n' + cj(res));
 
     } catch (e) {
         logger('Subscription error:' + e);

@@ -1,3 +1,4 @@
+import cj from 'color-json';
 import { helpOptions } from '../commonOptions.js';
 import { getWampySession } from '../wampyHelpers.js';
 import { logger } from '../logger.js';
@@ -46,12 +47,12 @@ const handler = async function (argv) {
     try {
         const res = await wampy.register(argv.rpcURI,
             function (eventData) {
-                logger('Received call invocation',
-                    {
+                logger('Received call invocation: \n',
+                    cj({
                         details : eventData.details,
                         argsList: eventData.argsList,
                         argsDict: eventData.argsDict
-                    });
+                    }));
 
                 if (argv.mirror) {
                     return {
@@ -62,7 +63,7 @@ const handler = async function (argv) {
             },
             { match: argv.match, invoke: argv.invoke }
         );
-        logger('Successfully registered procedure: \n', JSON.stringify(res));
+        logger('Successfully registered procedure: \n', cj(res));
 
     } catch (e) {
         logger('Registration error:' + e);
