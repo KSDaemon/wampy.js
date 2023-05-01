@@ -9,8 +9,8 @@ import registerCmd from './commands/register.js';
 import subscribeCmd from './commands/subscribe.js';
 import { connOptions } from './commonOptions.js';
 
-function convertStringToBoolean(obj) {
-    for (let key in obj) {
+function convertStringToBoolean (obj) {
+    for (const key in obj) {
         if (typeof obj[key] === 'object') {
             obj[key] = convertStringToBoolean(obj[key]);
         } else if (typeof obj[key] === 'string' || obj[key] instanceof String) {
@@ -102,11 +102,12 @@ Following example are the same:
 wampy -s cbor
 wampy -s=cbor
 
-wampy call uri --args 1 2 3    ==> [1, 2, 3]
-wampy call uri -a 1 2 3        ==> [1, 2, 3]
-wampy call uri -a=1 2 3        ==> [1, 2, 3]
-wampy call uri -a 1 -a 2 -a 3  ==> [1, 2, 3]
-wampy call uri -a=1 -a=2 -a=3  ==> [1, 2, 3]
+wampy call uri --argsList 1 2 3 ==> [1, 2, 3]
+wampy call uri --args 1 2 3     ==> [1, 2, 3]
+wampy call uri -a 1 2 3         ==> [1, 2, 3]
+wampy call uri -a=1 2 3         ==> [1, 2, 3]
+wampy call uri -a 1 -a 2 -a 3   ==> [1, 2, 3]
+wampy call uri -a=1 -a=2 -a=3   ==> [1, 2, 3]
 
 Wampy also supports reading arguments from environment variables prefixed with "WAMPY_"
 For example, serializer may be read from ENV like this:
