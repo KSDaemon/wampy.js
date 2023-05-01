@@ -13,46 +13,51 @@ Javascript implementation (for browser and node.js)
 
 ## Table of Contents
 
-- [Wampy.js](#wampyjs)
-  - [About](#about)
-  - [Table of Contents](#table-of-contents)
-  - [Description](#description)
-  - [Usage example](#usage-example)
-  - [Installation](#installation)
-  - [Migrating or Updating versions](#migrating-or-updating-versions)
-  - [API](#api)
-    - [Constructor(\[url\[, options\]\])](#constructorurl-options)
-    - [options(\[opts\])](#optionsopts)
-    - [getOptions()](#getoptions)
-    - [setOptions(\[newOptions\])](#setoptionsnewoptions)
-    - [getOpStatus()](#getopstatus)
-    - [getSessionId()](#getsessionid)
-    - [connect(\[url\])](#connecturl)
-    - [disconnect()](#disconnect)
-    - [abort()](#abort)
-    - [Ticket-based Authentication](#ticket-based-authentication)
-    - [Challenge Response Authentication](#challenge-response-authentication)
-    - [Cryptosign-based Authentication](#cryptosign-based-authentication)
-    - [Automatically chosen Authentication](#automatically-chosen-authentication)
-    - [subscribe(topicURI, onEvent\[, advancedOptions\])](#subscribetopicuri-onevent-advancedoptions)
-    - [unsubscribe(subscriptionIdKey\[, onEvent\])](#unsubscribesubscriptionidkey-onevent)
-    - [publish(topicURI\[, payload\[, advancedOptions\]\])](#publishtopicuri-payload-advancedoptions)
-    - [call(topicURI\[, payload\[, advancedOptions\]\])](#calltopicuri-payload-advancedoptions)
-    - [cancel(reqId\[, advancedOptions\]\])](#cancelreqid-advancedoptions)
-    - [register(topicURI, rpc\[, advancedOptions\])](#registertopicuri-rpc-advancedoptions)
-    - [unregister(topicURI)](#unregistertopicuri)
-    - [Error handling](#error-handling)
-  - [Using custom serializer](#using-custom-serializer)
-  - [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
-  - [Tests and code coverage](#tests-and-code-coverage)
-  - [Copyright and License](#copyright-and-license)
-  - [See Also](#see-also)
+<!-- TOC -->
+* [Wampy.js](#wampyjs)
+  * [About](#about)
+  * [Table of Contents](#table-of-contents)
+  * [Description](#description)
+  * [Usage example](#usage-example)
+  * [Installation](#installation)
+  * [CLI tool](#cli-tool)
+  * [Migrating or Updating versions](#migrating-or-updating-versions)
+  * [API](#api)
+    * [Constructor([url[, options]])](#constructorurl-options)
+    * [options([opts])](#optionsopts)
+    * [getOptions()](#getoptions)
+    * [setOptions([newOptions])](#setoptionsnewoptions)
+    * [getOpStatus()](#getopstatus)
+    * [getSessionId()](#getsessionid)
+    * [connect([url])](#connecturl)
+    * [disconnect()](#disconnect)
+    * [abort()](#abort)
+    * [Ticket-based Authentication](#ticket-based-authentication)
+    * [Challenge Response Authentication](#challenge-response-authentication)
+    * [Cryptosign-based Authentication](#cryptosign-based-authentication)
+    * [Automatically chosen Authentication](#automatically-chosen-authentication)
+    * [subscribe(topicURI, onEvent[, advancedOptions])](#subscribetopicuri-onevent-advancedoptions)
+    * [unsubscribe(subscriptionIdKey[, onEvent])](#unsubscribesubscriptionidkey-onevent)
+    * [publish(topicURI[, payload[, advancedOptions]])](#publishtopicuri-payload-advancedoptions)
+    * [call(topicURI[, payload[, advancedOptions]])](#calltopicuri-payload-advancedoptions)
+    * [cancel(reqId[, advancedOptions]])](#cancelreqid-advancedoptions)
+    * [register(topicURI, rpc[, advancedOptions])](#registertopicuri-rpc-advancedoptions)
+    * [unregister(topicURI)](#unregistertopicuri)
+    * [Error handling](#error-handling)
+  * [Using custom serializer](#using-custom-serializer)
+  * [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
+  * [Tests and code coverage](#tests-and-code-coverage)
+  * [Copyright and License](#copyright-and-license)
+  * [See Also](#see-also)
+<!-- TOC -->
 
 ## Description
 
 Wampy.js is javascript library, that runs both in browser and node.js environments, and even in react native
 environment. It implements [WAMP][] v2 specification on top of WebSocket object, also provides additional
-features like auto-reconnecting. It has no external dependencies (by default) and is easy to use.
+features like auto-reconnecting. It has no external dependencies (by default) and is easy to use. Also, it
+provides (starting from v7.1) command line wamp client which can be extremely helpful in quick check/debug
+existing WAMP-based APIs.
 
 Wampy.js supports the following WAMP roles and features:
 
@@ -138,8 +143,8 @@ wampy.publish('client.message', 'Hi guys!');
 
 Wampy.js can be installed using npm:
 
-```bash
-> npm install wampy
+```shell
+npm install -S wampy
 ```
 
 For browser usage download the latest [browser.zip](../../releases/latest) archive and
@@ -159,6 +164,37 @@ In case you are using build tools or bundlers like grunt/gulp/webpack/rollup/vit
 entry point) which is already transpiled to "env" preset, which means it works out of the box, just bundle modules.
 
 [Back to Table of Contents](#table-of-contents)
+
+## CLI tool
+
+Wampy cli tool exposes almost the same API options to the command line interface. You can use all types of
+authorization, publish, subscribe, register and call any URI. Some WAMP Actions provides additional helper options
+(e.g. `mirror` option in register command that allows to return back the invocation payload to the caller).
+
+Cli tool is charged with rich help descriptions, examples and even shell auto-completion script. All parameters
+may be passed as cmd args or via related ENV Vars for convenience. So you can for example export WAMP Router URI
+and realm to the environment and provide only wamp action parameters via cmd.
+
+You can install wampy cli tool globally or call it by npx:
+
+```shell
+npm install -g wampy
+# After this you can invoke wampy
+wampy -h
+# or just run wampy with npx
+npx wampy -h
+```
+
+Check the `wampy -h` or `wampy --help` for the available commands and global options and check the help for a specific
+command by issuing `wampy <call|register|publish|subscribe> -h`.
+
+To make use of shell auto-completion features just add output of `wampy completion` to your shell config:
+
+```shell
+wampy completion > ~/.zshrc
+# or
+wampy completion > ~/.bashrc
+```
 
 ## Migrating or Updating versions
 
