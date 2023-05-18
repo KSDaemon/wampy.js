@@ -68,7 +68,7 @@ export const connOptions = function (yargs) {
             type        : 'string'
         })
         .option('ticket', {
-            alias: ['t', 'p', 'password'],
+            alias: ['password'],
             description : 'Ticket (Password) for the Ticket Authentication methods',
             type        : 'string'
         })
@@ -78,15 +78,13 @@ export const connOptions = function (yargs) {
             type        : 'string'
         })
         .option('privateKey', {
-            alias: 'pk',
+            alias: ['pk'],
             description : 'Hex-encoded Private Key for Cryptosign Authentication method',
             type        : 'string'
         })
         .implies('ticket', 'authid')
         .implies('secret', 'authid')
         .implies('privateKey', 'authid')
-        .conflicts('ticket', 'privateKey')
-        .conflicts('privateKey', 'ticket')
         .option('noReconnect', {
             alias      : 'nr',
             description: 'Disable auto reconnecting',

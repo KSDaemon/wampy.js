@@ -2,7 +2,8 @@
     "all": true,
     "sourceMap": false,
     "include": [
-        "src/**/*.js"
+        "src/**/*.js",
+        "cmd/**/*.js"
     ],
     "report-dir": "./coverage",
     "temp-dir": "./coverage",

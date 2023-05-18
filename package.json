@@ -32,7 +32,8 @@
     "load-grunt-tasks": "^5.1.0",
     "lodash": "^4.17.21",
     "mocha": "^9.2.2",
-    "mocha-lcov-reporter": "^1.3.0"
+    "mocha-lcov-reporter": "^1.3.0",
+    "sinon": "^15.0.4"
   },
   "main": "dist/wampy.js",
   "exports": {
@@ -90,6 +91,7 @@
     "test": "npm run test:node && npm run test:browser",
     "test:node": "NODE_ENV=test c8 mocha --exit -r @babel/register -r jsdom-global/register -R spec",
     "test:node-no-crossbar": "npm run test:node -- -- 'test/!(wampy-crossbar)-test.js'",
+    "test:node-cli": "npm run test:node -- -- 'test/wampy-cli-*.js'",
     "test:crossbar": "npm run test:node -- -- 'test/wampy-crossbar-test.js'",
     "test:browser-wrappers": "npm run test:node -- -- 'test/wampy-browser-wrappers-test.js'",
     "test:browser": "npx karma start karma.conf.cjs",

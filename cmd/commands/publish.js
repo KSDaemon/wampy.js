@@ -62,7 +62,6 @@ const builder = function (yargs) {
 const handler = async function (argv) {
     const wampy = await getWampySession(argv);
 
-    console.log(argv);
     try {
         const payload = {};
         let hasPayload = false;
