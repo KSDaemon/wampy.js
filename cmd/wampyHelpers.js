@@ -4,6 +4,7 @@ import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
 import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
 import * as wampyCra from 'wampy-cra';
 import * as wampyCS from 'wampy-cryptosign';
+import nacl from 'tweetnacl';
 import WebSocket from 'ws';
 import { logger } from './logger.js';
 
@@ -59,10 +60,14 @@ function prepareOptions (argv) {
         }
 
         if (argv.privateKey) {
+            const privateKey = wampyCS.hex2bytes(argv.privateKey);
+            const keyPair = nacl.sign.keyPair.fromSeed(privateKey);
+            const publicKey = keyPair.publicKey;
+            const publicKeyHex = wampyCS.bytes2hex(publicKey);
             options.authmethods.push('cryptosign');
             options.authPlugins.cryptosign = wampyCS.sign(argv.privateKey);
             options.authextra = {
-                pubkey: '' //TODO Derive public key from private
+                pubkey: publicKeyHex
             };
         }
         options.authMode = 'auto';

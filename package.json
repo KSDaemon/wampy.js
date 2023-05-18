@@ -58,6 +58,7 @@
     "cbor-x": "^1.5.2",
     "color-json": "^3.0.5",
     "msgpackr": "^1.8.5",
+    "tweetnacl": "^1.0.3",
     "wampy-cra": "^0.2.0",
     "wampy-cryptosign": "^0.1.0",
     "websocket": "^1.0.34",
