@@ -1,5 +1,32 @@
+function convertStringToBoolean (obj) {
+    for (const key in obj) {
+        if (typeof obj[key] === 'object') {
+            obj[key] = convertStringToBoolean(obj[key]);
+        } else if (typeof obj[key] === 'string' || obj[key] instanceof String) {
+            if (obj[key].toUpperCase() === 'TRUE') {
+                obj[key] = true;
+            } else if (obj[key].toUpperCase() === 'FALSE') {
+                obj[key] = false;
+            }
+        }
+    }
+    return obj;
+}
+
 export const payloadArgs = function (yargs) {
     return yargs
+        .option('strbool', {
+            alias      : 'b',
+            description: 'Treat payload strings "true", "false" as boolean',
+            type       : 'boolean',
+            default    : false
+        })
+        .option('json', {
+            alias      : 'j',
+            description: 'Treat payload as json-encoded strings and decode them before sending',
+            type       : 'boolean',
+            default    : false
+        })
         .option('argsList', {
             alias      : ['a', 'args'],
             description: 'Message positional (list) payload\n' +
@@ -15,7 +42,58 @@ export const payloadArgs = function (yargs) {
                 '--argsDict.key1 125 ==> { key1: 125}\n' +
                 '-k.key1 250 -k.key2 my-string ==>\n{ key1: 250, key2: "my-string" }\n' +
                 '-k.rootKey true -k.innerObj.key1 cool ==>\n{ rootKey: true, innerObj: { key1: "cool" }}\n'
-        });
+        })
+        // Convert all strings "true"/"false" to boolean in payload if `strbool` flag is present
+        .middleware(argv => {
+            if (!argv.strbool) {
+                return argv;
+            }
+
+            if (argv.argsList) {
+                argv.argsList = argv.argsList.map(v => {
+                    if (typeof v === 'string' || v instanceof String) {
+                        if (v.toUpperCase() === 'TRUE') {
+                            return true;
+                        } else if (v.toUpperCase() === 'FALSE') {
+                            return false;
+                        }
+
+                        return v;
+                    }
+                    return v;
+                });
+            }
+
+            if (argv.argsDict) {
+                argv.argsDict = convertStringToBoolean(argv.argsDict);
+            }
+
+            return argv;
+        })
+        // Convert all payload from json-strings into JS objects if -jso-json flag is present
+        .middleware(argv => {
+            if (!argv.json) {
+                return argv;
+            }
+
+            if (argv.argsList) {
+                argv.argsList = argv.argsList.map(v => {
+                    if (typeof v === 'string' || v instanceof String) {
+                        return JSON.parse(v);
+                    }
+                    return v;
+                });
+            }
+
+            if (argv.argsDict) {
+                if (typeof argv.argsDict === 'string' || argv.argsDict instanceof String) {
+                    argv.argsDict = JSON.parse(argv.argsDict);
+                }
+            }
+
+            return argv;
+        })
+        .group(['strbool', 'json', 'argsList', 'argsDict'], 'Payload options:');
 };
 
 export const pptArgs = function (yargs) {
