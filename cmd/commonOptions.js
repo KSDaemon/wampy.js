@@ -113,7 +113,8 @@ export const pptArgs = function (yargs) {
         .option('ppt_keyid', {
             description: 'Contains the encryption key id that was used to encrypt the payload',
             type       : 'string'
-        });
+        })
+        .group(['ppt_scheme', 'ppt_serializer', 'ppt_cipher', 'ppt_keyid'], 'Payload Passthru Mode options:');
 };
 
 export const helpOptions = function (yargs) {
