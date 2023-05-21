@@ -56,7 +56,7 @@
   "type": "module",
   "dependencies": {
     "cbor-x": "^1.5.3",
-    "msgpackr": "^1.9.1",
+    "msgpackr": "^1.9.2",
     "wampy-cra": "^0.2.0",
     "wampy-cryptosign": "^0.1.0",
     "websocket": "^1.0.34",
