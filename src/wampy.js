@@ -37,7 +37,7 @@ class Wampy {
          * @type {string}
          * @private
          */
-        this.version = 'v7.0.2';
+        this.version = 'v7.1.0';
 
         /**
          * WS Url
@@ -1666,7 +1666,7 @@ class Wampy {
      * @param {string} topic - a URI to subscribe to
      * @param {function} onEvent - received event callback
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
-     *                          { match: string matching policy ("prefix"|"wildcard") }
+     *                          { match: string matching policy ("exact"|"prefix"|"wildcard") }
      *
      * @returns {Promise}
      */
@@ -1681,7 +1681,7 @@ class Wampy {
 
         let match, patternBased = false;
         if (isAdvancedOptionsAnObject && Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
-            if (!['prefix', 'wildcard'].includes(advancedOptions.match)) {
+            if (!['exact', 'prefix', 'wildcard'].includes(advancedOptions.match)) {
                 const invalidParamError = new Errors.InvalidParamError('match');
                 this._fillOpStatusByError(invalidParamError);
                 throw invalidParamError;
@@ -2014,7 +2014,7 @@ class Wampy {
      * @param {function} rpc - rpc that will receive invocations
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
      *                          {
-     *                              match: string matching policy ("prefix"|"wildcard")
+     *                              match: string matching policy ("exact"|"prefix"|"wildcard")
      *                              invoke: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
      *                          }
      * @returns {Promise}
@@ -2039,7 +2039,7 @@ class Wampy {
         }
 
         const { match, invoke } = advancedOptions || {};
-        const isMatchInvalid = match && !['prefix', 'wildcard'].includes(match);
+        const isMatchInvalid = match && !['exact', 'prefix', 'wildcard'].includes(match);
         const isInvokeInvalid = invoke && !['single', 'roundrobin', 'random', 'first', 'last'].includes(invoke);
 
         if (isMatchInvalid || isInvokeInvalid) {
