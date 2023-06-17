@@ -160,7 +160,8 @@ If you don't plan to use msgpack, just include wampy.min.js.
 <script src="browser/wampy.min.js"></script>
 ```
 
-In case you are using build tools or bundlers like grunt/gulp/webpack/rollup/vite/etc, your entry point can be **src/wampy.js** if you transpile you code, or **dist/wampy.js** (default package
+In case you are using build tools or bundlers like grunt/gulp/webpack/rollup/vite/etc, your entry point can be *
+*src/wampy.js** if you transpile you code, or **dist/wampy.js** (default package
 entry point) which is already transpiled to "env" preset, which means it works out of the box, just bundle modules.
 
 [Back to Table of Contents](#table-of-contents)
