@@ -4,14 +4,14 @@
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation",
   "author": "Konstantin Burkalev <KSDaemon@gmail.com> (https://ksdaemon.com)",
   "devDependencies": {
-    "@babel/core": "^7.22.1",
-    "@babel/preset-env": "^7.22.4",
-    "@babel/register": "^7.18.9",
+    "@babel/core": "^7.22.6",
+    "@babel/preset-env": "^7.22.6",
+    "@babel/register": "^7.22.5",
     "babelify": "^10.0.0",
     "c8": "^8.0.0",
     "chai": "^4.3.7",
     "coveralls": "^3.1.1",
-    "eslint": "^8.41.0",
+    "eslint": "^8.44.0",
     "grunt": "^1.5.3",
     "grunt-babel": "^8.0.0",
     "grunt-browserify": "^6.0.0",
@@ -25,7 +25,7 @@
     "karma": "^6.4.2",
     "karma-browserify": "^8.1.0",
     "karma-chrome-launcher": "^3.2.0",
-    "karma-coverage": "^2.2.0",
+    "karma-coverage": "^2.2.1",
     "karma-mocha": "^2.0.1",
     "karma-mocha-reporter": "^2.2.5",
     "karma-sourcemap-loader": "^0.4.0",
@@ -33,7 +33,7 @@
     "lodash": "^4.17.21",
     "mocha": "^9.2.2",
     "mocha-lcov-reporter": "^1.3.0",
-    "sinon": "^15.1.0"
+    "sinon": "^15.2.0"
   },
   "main": "dist/wampy.js",
   "exports": {
