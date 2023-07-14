@@ -1372,7 +1372,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to unsubscribe all handlers from topic', async function () {
-                await wampy.unsubscribe('subscribe.topic9-undefined');
+                await wampy.unsubscribe('subscribe.topic9');
                 expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
             });
 
@@ -1395,7 +1395,7 @@ serializers.forEach(function (item) {
 
             it('fires error callback if error occurred during unsubscribing', async function () {
                 try {
-                    await wampy.unsubscribe('subscribe.topic3-undefined');
+                    await wampy.unsubscribe('subscribe.topic3');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UnsubscribeError);
                 }

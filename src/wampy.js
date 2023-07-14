@@ -1500,7 +1500,7 @@ class Wampy {
      * @private
      */
     _getSubscriptionKey (topic, options) {
-        return `${topic}-${JSON.stringify(options)}`;
+        return `${topic}${options ? `-${JSON.stringify(options)}` : ''}`;
     }
 
     /*************************************************************************
