@@ -18,6 +18,7 @@ import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS, SUCCESS } from './cons
 import * as Errors from './errors.js';
 import { getWebSocket, getNewPromise } from './utils.js';
 import { JsonSerializer } from './serializers/JsonSerializer.js';
+import { WebsocketError } from './errors.js';
 const jsonSerializer = new JsonSerializer();
 
 /**
@@ -745,6 +746,26 @@ class Wampy {
     }
 
     /**
+     * Reject (fail) all ongoing promises on connection closing
+     * @private
+     * @param {Error} error
+     */
+    async _reject_ongoing_promises (error) {
+        for (const [requestId, call] of Object.entries(this._calls)) {
+            if (call.onError) {
+                await call.onError(error);
+            }
+            delete this._calls[requestId];
+        }
+        for (const [requestId, req] of Object.entries(this._requests)) {
+            if (req.callbacks?.onError) {
+                await req.callbacks.onError(error);
+            }
+            delete this._requests[requestId];
+        }
+    }
+
+    /**
      * Reset internal state and cache
      * @private
      */
@@ -773,9 +794,9 @@ class Wampy {
      */
     _initWsCallbacks () {
         this._ws.onopen = () => this._wsOnOpen();
-        this._ws.onclose = (event) => this._wsOnClose(event);
+        this._ws.onclose = async (event) => this._wsOnClose(event);
         this._ws.onmessage = (event) => this._wsOnMessage(event);
-        this._ws.onerror = (error) => this._wsOnError(error);
+        this._ws.onerror = async (error) => this._wsOnError(error);
     }
 
     /**
@@ -829,8 +850,10 @@ class Wampy {
      * @param {object} event
      * @private
      */
-    _wsOnClose (event) {
+    async _wsOnClose (event) {
         this._log('websocket disconnected. Info: ', event);
+
+        await this._reject_ongoing_promises(new WebsocketError('Connection closed'));
 
         // Automatic reconnection
         if ((this._cache.sessionId || this._cache.reconnectingAttempts) &&
@@ -1421,9 +1444,11 @@ class Wampy {
      * @param {object} error
      * @private
      */
-    _wsOnError (error) {
+    async _wsOnError (error) {
         this._log('websocket error');
         const websocketError = new Errors.WebsocketError(error);
+
+        await this._reject_ongoing_promises(websocketError);
 
         if (this._cache.connectPromise) {
             this._cache.connectPromise.onError(websocketError);

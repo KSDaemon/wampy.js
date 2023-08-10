@@ -1571,7 +1571,7 @@ serializers.forEach(function (item) {
                         setTimeout(async function () {
                             await wampy.connect();
 
-                            wampy.call('call.rpc9', 'payload').catch((e) => { done(e); });
+                            wampy.call('call.rpc9', 'payload');
                             const reqId = wampy.getOpStatus().reqId;
                             try {
                                 wampy.cancel(reqId, { mode: 'kill' });
