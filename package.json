@@ -4,8 +4,8 @@
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation",
   "author": "Konstantin Burkalev <KSDaemon@gmail.com> (https://ksdaemon.com)",
   "devDependencies": {
-    "@babel/core": "^7.22.9",
-    "@babel/preset-env": "^7.22.9",
+    "@babel/core": "^7.22.10",
+    "@babel/preset-env": "^7.22.10",
     "@babel/register": "^7.22.5",
     "babelify": "^10.0.0",
     "c8": "^8.0.1",
@@ -58,7 +58,7 @@
   "dependencies": {
     "cbor-x": "^1.5.3",
     "color-json": "^3.0.5",
-    "msgpackr": "^1.9.6",
+    "msgpackr": "^1.9.7",
     "tweetnacl": "^1.0.3",
     "wampy-cra": "^0.2.0",
     "wampy-cryptosign": "^0.1.0",
