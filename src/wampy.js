@@ -751,18 +751,22 @@ class Wampy {
      * @param {Error} error
      */
     async _reject_ongoing_promises (error) {
-        for (const [requestId, call] of Object.entries(this._calls)) {
+        const promises = [];
+
+        for (const call of Object.values(this._calls)) {
             if (call.onError) {
-                await call.onError(error);
+                promises.push(call.onError(error));
             }
-            delete this._calls[requestId];
         }
-        for (const [requestId, req] of Object.entries(this._requests)) {
+        for (const req of Object.values(this._requests)) {
             if (req.callbacks?.onError) {
-                await req.callbacks.onError(error);
+                promises.push(req.callbacks.onError(error));
             }
-            delete this._requests[requestId];
         }
+
+        await Promise.all(promises);
+        this._requests = {};
+        this._calls = {};
     }
 
     /**
