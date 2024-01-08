@@ -20,7 +20,7 @@
     "grunt-contrib-concat": "^2.1.0",
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-uglify": "^5.2.2",
-    "jsdom": "^21.0.0",
+    "jsdom": "^23.2.0",
     "jsdom-global": "^3.0.2",
     "karma": "^6.4.2",
     "karma-browserify": "^8.1.0",
