@@ -764,7 +764,7 @@ class Wampy {
             }
         }
 
-        await Promise.all(promises);
+        await Promise.allSettled(promises);
         this._requests = {};
         this._calls = {};
     }
