@@ -192,9 +192,9 @@ command by issuing `wampy <call|register|publish|subscribe> -h`.
 To make use of shell auto-completion features just add output of `wampy completion` to your shell config:
 
 ```shell
-wampy completion > ~/.zshrc
+wampy completion >> ~/.zshrc
 # or
-wampy completion > ~/.bashrc
+wampy completion >> ~/.bashrc
 ```
 
 The `completion` command is hidden from the `wampy -h` output to not pollute the main use flow as it is only needed
@@ -354,7 +354,8 @@ See [Challenge Response Authentication](#challenge-response-authentication) sect
 [Cryptosign-based Authentication](#cryptosign-based-authentication) section and [WAMP Spec CS][] for more info.
 This function receives welcome details as an argument.
 - **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
-- **onError**. Default value: null. Callback function. Fired on error in websocket communication.
+- **onError**. Default value: null. Callback function. Fired on error in websocket communication or if error happens
+  during auto reconnection flow (as it can not be bound to explicit API calls).
 - **onReconnect**. Default value: null. Callback function. Fired every time on reconnection attempt.
 - **onReconnectSuccess**. Default value: null. Callback function. Fired every time when reconnection succeeded.
 This function receives welcome details as an argument.
