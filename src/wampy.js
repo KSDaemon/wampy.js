@@ -1284,9 +1284,9 @@ class Wampy {
      * @private
      */
     async _onRegisteredMessage ([, requestId, registrationId]) {
-        const { topic, callbacks } = this._requests[requestId];
+        const { topic, callbacks, options } = this._requests[requestId];
 
-        this._rpcRegs[registrationId] = { id: registrationId, callbacks: [callbacks.rpc] };
+        this._rpcRegs[registrationId] = { id: registrationId, callbacks: [callbacks.rpc], options };
         this._rpcRegs[topic] = this._rpcRegs[registrationId];
         this._rpcNames.add(topic);
 
@@ -1515,7 +1515,7 @@ class Wampy {
         this._rpcNames = new Set();
 
         for (const rpcName of rn) {
-            this.register(rpcName, rpcs[rpcName].callbacks[0]);
+            this.register(rpcName, rpcs[rpcName].callbacks[0], rpcs[rpcName].options);
         }
     }
 
@@ -2093,7 +2093,7 @@ class Wampy {
             callbacks.rpc = rpc;
         }
 
-        this._requests[reqId] = { topic, callbacks };
+        this._requests[reqId] = { topic, callbacks, options };
 
         // WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
         this._send([WAMP_MSG_SPEC.REGISTER, reqId, options, topic]);
