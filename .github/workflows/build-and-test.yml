@@ -1,6 +1,9 @@
 name: Build and Test
 on:
   push:
+    branches:
+      - dev
+      - master
     paths-ignore:
       - 'README.md'
   pull_request:
