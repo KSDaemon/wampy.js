@@ -985,9 +985,7 @@ class Wampy {
             }
 
             // Renew all previous state
-            this._renewSubscriptions();
-            this._renewRegistrations();
-
+            await Promise.allSettled([this._renewSubscriptions(), this._renewRegistrations()]);
         } else {
             // Fire onConnect event on real connection to WAMP server
             this._cache.connectPromise.onSuccess(details);
@@ -1488,26 +1486,34 @@ class Wampy {
      * Resubscribe to topics in case of communication error
      * @private
      */
-    _renewSubscriptions () {
+    async _renewSubscriptions () {
         let i;
         const subs = new Map(this._subscriptionsById);
 
         this._subscriptionsById.clear();
         this._subscriptionsByKey.clear();
 
-        subs.forEach((sub) => {
+        for (const sub of subs.values()) {
             i = sub.callbacks.length;
             while (i--) {
-                this.subscribe(sub.topic, sub.callbacks[i], sub.advancedOptions);
+                try {
+                    await this.subscribe(sub.topic, sub.callbacks[i], sub.advancedOptions);
+                } catch (err) {
+                    this._log(`cannot resubscribe to topic: ${sub.topic}`, err);
+
+                    if (this._options.onError) {
+                        this._options.onError(err);
+                    }
+                }
             }
-        });
+        }
     }
 
     /**
-     * Reregister RPCs in case of communication error
+     * ReRegister RPCs in case of communication error
      * @private
      */
-    _renewRegistrations () {
+    async _renewRegistrations () {
         const rpcs = this._rpcRegs,
             rn = this._rpcNames;
 
@@ -1515,7 +1521,15 @@ class Wampy {
         this._rpcNames = new Set();
 
         for (const rpcName of rn) {
-            this.register(rpcName, rpcs[rpcName].callbacks[0], rpcs[rpcName].options);
+            try {
+                await this.register(rpcName, rpcs[rpcName].callbacks[0], rpcs[rpcName].options);
+            } catch (err) {
+                this._log(`cannot renew registration of rpc: ${rpcName}`, err);
+
+                if (this._options.onError) {
+                    this._options.onError(err);
+                }
+            }
         }
     }
 
