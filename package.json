@@ -1,6 +1,6 @@
 {
   "name": "wampy",
-  "version": "7.1.0",
+  "version": "7.1.1",
   "description": "Simple WAMP (WebSocket Application Messaging Protocol) Javascript implementation",
   "author": "Konstantin Burkalev <KSDaemon@gmail.com> (https://ksdaemon.com)",
   "devDependencies": {
@@ -20,7 +20,7 @@
     "grunt-contrib-concat": "^2.1.0",
     "grunt-contrib-copy": "^1.0.0",
     "grunt-contrib-uglify": "^5.2.2",
-    "jsdom": "^21.0.0",
+    "jsdom": "^24.0.0",
     "jsdom-global": "^3.0.2",
     "karma": "^6.4.2",
     "karma-browserify": "^8.1.0",
