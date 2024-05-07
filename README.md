@@ -1135,8 +1135,8 @@ Custom serializer instance must meet a few requirements:
 "wamp.2." string and is then passed as websocket subprotocol http header.
 - Have a `isBinary` boolean property, that indicates, is this a binary protocol or not.
 
-Take a look at [JsonSerializer.js](src/serializers/JsonSerializer.js) or
-[MsgpackSerializer.js](src/serializers/MsgpackSerializer.js) as examples.
+Take a look at [json-serializer.js](src/serializers/json-serializer.js) or
+[msgpack-serializer.js](src/serializers/msgpack-serializer.js) as examples.
 
 [Back to Table of Contents](#table-of-contents)
 

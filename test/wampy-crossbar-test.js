@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import websocket from 'websocket';
-import { JsonSerializer } from './../src/serializers/JsonSerializer.js';
-import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer.js';
+import { JsonSerializer } from '../src/serializers/json-serializer.js';
+import { MsgpackSerializer } from '../src/serializers/msgpack-serializer.js';
 import { Wampy } from './../src/wampy.js';
 
 const defaultOptions = { realm: 'realm1', ws: websocket.w3cwebsocket };

@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { WebSocket, setProtocol as wsSetProtocol } from './fake-ws-set-protocol.js';
 import { Wampy } from './../src/wampy.js';
-import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
-import { CborSerializer } from '../src/serializers/CborSerializer.js';
+import { JsonSerializer } from '../src/serializers/json-serializer.js';
+import { CborSerializer } from '../src/serializers/cbor-serializer.js';
 import { NoSerializerAvailableError } from '../src/errors.js';
 
 describe('Wampy.js Serializer Handshake', function () {

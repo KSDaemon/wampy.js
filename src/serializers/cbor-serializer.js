@@ -11,7 +11,7 @@ export class CborSerializer {
     constructor (options) {
         this.protocol = 'cbor';
         this.isBinary = true;
-        const initOptions = options ? options : cborxOptions;
+        const initOptions = options ?? cborxOptions;
         this.encoder = new Encoder(initOptions);
     }
 
