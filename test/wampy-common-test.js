@@ -599,8 +599,8 @@ serializers.forEach(function (item) {
                 expect(s).to.be.above(0);
             });
 
-            it('allows to disconnect from connected server', function (done) {
-                wampy.setOptions({ onConnect: null, onClose: done })
+            it('allows to disconnect from connected server', async function () {
+                await wampy.setOptions({ onConnect: null, onClose: null })
                     .disconnect();
             });
 
@@ -677,8 +677,8 @@ serializers.forEach(function (item) {
                     .connect();
             });
 
-            it('automatically sends goodbye message on server initiated disconnect', function (done) {
-                wampy.setOptions({ onConnect: null, onError: null, onClose: done })
+            it('automatically sends goodbye message on server initiated disconnect', async function () {
+                await wampy.setOptions({ onConnect: null, onError: null, onClose: null })
                     .connect();
             });
 
@@ -715,6 +715,8 @@ serializers.forEach(function (item) {
                 expect(onCloseFired).to.be.true;
             });
 
+            // mocha eslint plugin is not smart enough to detect that done is passed as parameter and will be called later
+            // eslint-disable-next-line mocha/handle-done-callback
             it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
                 wampy.setOptions({ onClose: done })
                     .connect(anotherRouterUrl);
@@ -743,27 +745,27 @@ serializers.forEach(function (item) {
                             expect(onReconnect).to.be.true;
                             done();
                         });
-                    } catch (e) {
+                    } catch {
                         done('Expect subscribe to work');
                     }
                     try {
                         await wampy.subscribe('subscribe.reconnect2', () => {});
-                    } catch (e) {
+                    } catch {
                         done('Expect subscribe to work');
                     }
                     try {
                         await wampy.register('register.reconnect1', () => {});
-                    } catch (e) {
+                    } catch {
                         done('Expect register to work');
                     }
                     try {
                         await wampy.register('register.reconnect2', () => {});
-                    } catch (e) {
+                    } catch {
                         done('Expect register to work');
                     }
                     try {
                         await wampy.register('register.reconnect3', () => {});
-                    } catch (e) {
+                    } catch {
                         done('Expect register to work');
                     }
                 });

@@ -611,7 +611,7 @@ class Wampy {
 
             try {
                 binPayload = pptSerializer.encode(pptPayload);
-            } catch (e) {
+            } catch {
                 this._fillOpStatusByError(new Errors.PPTSerializationError());
                 return { err: true, payloadItems };
             }
@@ -660,7 +660,7 @@ class Wampy {
 
             try {
                 decodedPayload = pptSerializer.decode(pptPayload);
-            } catch (e) {
+            } catch {
                 return { err: new Errors.PPTSerializationError() };
             }
         } else {
@@ -678,7 +678,7 @@ class Wampy {
     _encode (msg) {
         try {
             return this._options.serializer.encode(msg);
-        } catch (e) {
+        } catch {
             this._hardClose('wamp.error.protocol_violation', 'Can not encode message', true);
         }
     }
@@ -692,7 +692,7 @@ class Wampy {
     _decode (msg) {
         try {
             return this._options.serializer.decode(msg);
-        } catch (e) {
+        } catch {
             this._hardClose('wamp.error.protocol_violation', 'Can not decode received message');
         }
     }
@@ -1055,7 +1055,7 @@ class Wampy {
 
             // Sending directly 'cause it's a challenge msg and no sessionId check is needed
             this._ws.send(this._encode([WAMP_MSG_SPEC.AUTHENTICATE, key, {}]));
-        } catch (e) {
+        } catch {
             const challengeExceptionError = new Errors.ChallengeExceptionError();
 
             this._fillOpStatusByError(challengeExceptionError);

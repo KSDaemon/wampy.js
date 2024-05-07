@@ -17,36 +17,36 @@ function commonArgs () {
 }
 
 describe('Wampy CLI test suite', function () {
-    before(() => {
+    before(function () {
         // Dirty hack 'cause there is no legal way of mocking external dependency
         let data = readFileSync(replaceFileName, { encoding: 'utf8' });
         data = data.replace('import { Wampy } from \'../src/wampy.js\';', 'import { FakeWampyMock as Wampy } from \'../test/fakeWampyMock.js\';');
         writeFileSync(replaceFileName, data, { encoding: 'utf8' });
     });
 
-    after(() => {
+    after(function () {
         // Dirty hack 'cause there is no legal way of mocking external dependency
         let data = readFileSync(replaceFileName, { encoding: 'utf8' });
         data = data.replace('import { FakeWampyMock as Wampy } from \'../test/fakeWampyMock.js\';', 'import { Wampy } from \'../src/wampy.js\';');
         writeFileSync(replaceFileName, data, { encoding: 'utf8' });
     });
 
-    beforeEach(() => {
+    beforeEach(function () {
         consoleLogSpy = sinon.spy(console, 'log');
     });
 
-    afterEach(() => {
+    afterEach(function () {
         consoleLogSpy.restore();
     });
 
-    it('should show general help', async () => {
+    it('should show general help', async function () {
         const argv = await getArgvInstance();
         await argv.parse(['-h'], function (err, argv, output) {
             expect(output).to.contain('To get information about command options just type: wampy <command> -h');
         });
     });
 
-    it('should show a subscribe command help', async () => {
+    it('should show a subscribe command help', async function () {
         const argv = await getArgvInstance();
         await argv.parse(['subscribe', '-h'], function (err, argv, output) {
             expect(output).to.contain('Subscribe to a WAMP Events topic');
@@ -54,14 +54,14 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should subscribe to a topic', async () => {
+    it('should subscribe to a topic', async function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'subscribe', 'topic.uri'], function (err, argv, output) {
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Successfully subscribed to topic');
         });
     });
 
-    it('should show a publish command help', async () => {
+    it('should show a publish command help', async function () {
         const argv = await getArgvInstance();
         await argv.parse(['publish', '-h'], function (err, argv, output) {
             expect(output).to.contain('Publish a WAMP Event to topic');
@@ -69,7 +69,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should publish to a topic', async () => {
+    it('should publish to a topic', async function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'publish', 'topic.uri', '-e', '123', '--ea', '234', '--er', 'role',
             '-l', '654', '--la', '2355', '--lr', 'exrole', '-d',
@@ -79,7 +79,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should show a register command help', async () => {
+    it('should show a register command help', async function () {
         const argv = await getArgvInstance();
         await argv.parse(['register', '-h'], function (err, argv, output) {
             expect(output).to.contain('Register a WAMP Procedure');
@@ -87,7 +87,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should register an RPC handler', async () => {
+    it('should register an RPC handler', async function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'register', 'topic.uri', '--mirror'], function (err, argv, output) {
             expect(consoleLogSpy.secondCall.args[0]).to.contain('Received call invocation');
@@ -95,7 +95,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should show a call command help', async () => {
+    it('should show a call command help', async function () {
         const argv = await getArgvInstance();
         await argv.parse(['call', '-h'], function (err, argv, output) {
             expect(output).to.contain('Make a WAMP Remote Procedure Call');
@@ -103,7 +103,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should call an RPC', async () => {
+    it('should call an RPC', async function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '-b', '-d', '-p', '-t', '1000',
             '-a', '100', '-a', 'false', '-a', 'True', '-a', 'notTrueorFalse', '-k.nickname', 'KSDaemon', '-k.email="email@example.com"',
@@ -114,7 +114,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should call an RPC with json-decoded payload', async () => {
+    it('should call an RPC with json-decoded payload', async function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '-j',
             '-a', '{"kety": 100}',
@@ -124,7 +124,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should call an RPC with PPT options', async () => {
+    it('should call an RPC with PPT options', async function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '--ppt_scheme', 'ppt_scheme',
             '--ppt_serializer', 'ppt_serializer', '--ppt_cipher', 'ppt_cipher',
@@ -136,7 +136,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should call an RPC with cbor serializer', async () => {
+    it('should call an RPC with cbor serializer', async function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '--serializer', 'cbor',
             '-j', '-a', '{"kety": 100}',
@@ -146,7 +146,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should call an RPC with msgpack serializer', async () => {
+    it('should call an RPC with msgpack serializer', async function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '--serializer', 'msgpack',
             '-j', '-a', '{"kety": 100}',
@@ -156,7 +156,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should call an RPC with custom details connect options', async () => {
+    it('should call an RPC with custom details connect options', async function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'call', 'topic.uri',
             '--hello.key1', '250', '--hello.key2', 'my-string'],
@@ -165,7 +165,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should call an RPC with auth provided connect options', async () => {
+    it('should call an RPC with auth provided connect options', async function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'call', 'topic.uri',
             '--authid', 'authid', '--ticket', 'ticket', '--secret', 'user-secret',
@@ -176,7 +176,7 @@ describe('Wampy CLI test suite', function () {
         });
     });
 
-    it('should print various debug messages if debug is enabled', async () => {
+    it('should print various debug messages if debug is enabled', async function () {
         emitter.setMaxListeners(15);
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '--debug'],
