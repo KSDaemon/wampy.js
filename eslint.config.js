@@ -2,10 +2,28 @@ import js from '@eslint/js';
 import globals from 'globals';
 import mochaPlugin from 'eslint-plugin-mocha';
 import pluginSecurity from 'eslint-plugin-security';
+import eslintPluginUnicorn from 'eslint-plugin-unicorn';
 
-const files = ['src/**/*.js', 'test/**/*.js', 'Gruntfile.cjs', 'karma.conf.cjs', 'eslint.config.js'];
+const files = ['cmd/**/*.js', 'src/**/*.js', 'test/**/*.js', 'gruntfile.cjs', 'karma.conf.cjs', 'eslint.config.js'];
 
 export default [
+    {
+        ...eslintPluginUnicorn.configs['flat/recommended'],
+        files,
+    },
+    {
+        name: 'unicorn plugin overrides',
+        files,
+        rules: {
+            'unicorn/prevent-abbreviations'    : 'off',
+            'unicorn/switch-case-braces'       : ['error', 'avoid'],
+            'unicorn/no-null'                  : 'off',
+            'unicorn/no-this-assignment'       : 'off',
+            'unicorn/catch-error-name'         : 'off',
+            'unicorn/prefer-add-event-listener': 'off',
+            'unicorn/numeric-separators-style' : ['warn', { onlyIfContainsSeparator: true }]
+        }
+    },
     {
         ...pluginSecurity.configs.recommended,
         files,

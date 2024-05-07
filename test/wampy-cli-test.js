@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { readFileSync, writeFileSync } from 'fs';
-import emitter from 'events';
+import { readFileSync, writeFileSync } from 'node:fs';
+import emitter from 'node:events';
 
-const replaceFileName = './cmd/wampyHelpers.js';
+const replaceFileName = './cmd/wampy-helpers.js';
 let consoleLogSpy;
 
 async function getArgvInstance () {
@@ -20,7 +20,7 @@ describe('Wampy CLI test suite', function () {
     before(function () {
         // Dirty hack 'cause there is no legal way of mocking external dependency
         let data = readFileSync(replaceFileName, { encoding: 'utf8' });
-        data = data.replace('import { Wampy } from \'../src/wampy.js\';', 'import { FakeWampyMock as Wampy } from \'../test/fakeWampyMock.js\';');
+        data = data.replace('import { Wampy } from \'../src/wampy.js\';', 'import { FakeWampyMock as Wampy } from \'../test/fake-wampy-mock.js\';');
         writeFileSync(replaceFileName, data, { encoding: 'utf8' });
     });
 

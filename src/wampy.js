@@ -17,7 +17,7 @@
 import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS, SUCCESS } from './constants.js';
 import * as Errors from './errors.js';
 import { getWebSocket, getNewPromise } from './utils.js';
-import { JsonSerializer } from './serializers/JsonSerializer.js';
+import { JsonSerializer } from './serializers/json-serializer.js';
 import { WebsocketError } from './errors.js';
 const jsonSerializer = new JsonSerializer();
 
@@ -542,8 +542,8 @@ class Wampy {
             reBase = /^(\w+\.)*(\w+)$/;
             rePattern = /^(\w+\.{1,2})*(\w+)$/;
         } else if (isLooseValidation) {
-            reBase = /^([^\s.#]+\.)*([^\s.#]+)$/;
-            rePattern = /^([^\s.#]+\.{1,2})*([^\s.#]+)$/;
+            reBase = /^([^\s#.]+\.)*([^\s#.]+)$/;
+            rePattern = /^([^\s#.]+\.{1,2})*([^\s#.]+)$/;
         }
 
         return (isPatternBased ? rePattern : reBase).test(uri);
@@ -739,7 +739,7 @@ class Wampy {
         }
 
         if (this._ws && this._ws.readyState === 1 && this._cache.sessionId) {
-            while (this._wsQueue.length) {
+            while (this._wsQueue.length > 0) {
                 this._ws.send(this._wsQueue.shift());
             }
         }
@@ -1564,7 +1564,7 @@ class Wampy {
     options (newOptions) {
         console.warn('Wampy.options() is deprecated, please use Wampy.getOptions() or Wampy.setOptions() instead');
 
-        if (typeof (newOptions) === 'undefined') {
+        if ((newOptions) === undefined) {
             return this._options;
         } else if (this._isPlainObject(newOptions)) {
             this._options = { ...this._options, ...newOptions };
@@ -1633,9 +1633,9 @@ class Wampy {
         }
 
         const numberOfAuthOptions = (this._options.authid ? 1 : 0) +
-                ((Array.isArray(this._options.authmethods) && this._options.authmethods.length) ? 1 : 0) +
+                ((Array.isArray(this._options.authmethods) && this._options.authmethods.length > 0) ? 1 : 0) +
                 (typeof this._options.onChallenge === 'function' ||
-                 Object.keys(this._options.authPlugins).length ? 1 : 0);
+                 Object.keys(this._options.authPlugins).length > 0 ? 1 : 0);
 
         if (numberOfAuthOptions > 0 && numberOfAuthOptions < 3) {
             const noCRACallbackOrIdError = new Errors.NoCRACallbackOrIdError();
@@ -1716,7 +1716,7 @@ class Wampy {
     async subscribe (topic, onEvent, advancedOptions) {
         const isAdvancedOptionsAnObject = this._isPlainObject(advancedOptions);
 
-        if (!isAdvancedOptionsAnObject && (typeof (advancedOptions) !== 'undefined')) {
+        if (!isAdvancedOptionsAnObject && ((advancedOptions) !== undefined)) {
             const invalidParamError = new Errors.InvalidParamError('advancedOptions');
             this._fillOpStatusByError(invalidParamError);
             throw invalidParamError;
@@ -1861,7 +1861,7 @@ class Wampy {
         let messageOptions = {};
         const _optionsConvertHelper = (option, sourceType) => {
             if (advancedOptions[option]) {
-                if (Array.isArray(advancedOptions[option]) && advancedOptions[option].length) {
+                if (Array.isArray(advancedOptions[option]) && advancedOptions[option].length > 0) {
                     messageOptions[option] = advancedOptions[option];
                 } else if (typeof advancedOptions[option] === sourceType) {
                     messageOptions[option] = [advancedOptions[option]];
@@ -2028,7 +2028,7 @@ class Wampy {
             throw nonExistRPCReqIdError;
         }
 
-        if (!this._isPlainObject(advancedOptions) && typeof (advancedOptions) !== 'undefined') {
+        if (!this._isPlainObject(advancedOptions) && (advancedOptions) !== undefined) {
             const invalidParamError = new Errors.InvalidParamError('advancedOptions');
             this._fillOpStatusByError(invalidParamError);
             throw invalidParamError;
@@ -2146,4 +2146,5 @@ class Wampy {
 }
 
 export default Wampy;
-export { Wampy, Errors };
+export { Wampy };
+export * as Errors from './errors.js';

@@ -1,6 +1,6 @@
 import cj from 'color-json';
-import { helpOptions } from '../commonOptions.js';
-import { getWampySession } from '../wampyHelpers.js';
+import { helpOptions } from '../common-options.js';
+import { getWampySession } from '../wampy-helpers.js';
 import { logger } from '../logger.js';
 
 const command = 'subscribe <topicURI>';

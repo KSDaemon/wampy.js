@@ -6,9 +6,9 @@
 
 import lodash from 'lodash';
 import sendData from './send-data.js';
-import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
-import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
-import { CborSerializer } from '../src/serializers/CborSerializer.js';
+import { MsgpackSerializer } from '../src/serializers/msgpack-serializer.js';
+import { JsonSerializer } from '../src/serializers/json-serializer.js';
+import { CborSerializer } from '../src/serializers/cbor-serializer.js';
 import { WAMP_MSG_SPEC } from '../src/constants.js';
 
 const TIMEOUT = 15;
@@ -73,7 +73,7 @@ function resetCursor () {
 function processQueue () {
     let currentHandler;
 
-    while (clientMessageHandlersQueue.length) {
+    while (clientMessageHandlersQueue.length > 0) {
         currentHandler = clientMessageHandlersQueue.shift();
         currentHandler();
     }
@@ -106,7 +106,7 @@ WebSocket.prototype.send = function (data) {
     const send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
     let options;
 
-    if (isDebugMode) { console.log('Server received a message: ', rec_data); }
+    if (isDebugMode) { console.log('Server received a message:', rec_data); }
 
     if (
         ([WAMP_MSG_SPEC.CALL, WAMP_MSG_SPEC.PUBLISH, WAMP_MSG_SPEC.YIELD].includes(rec_data?.[0])) &&
@@ -138,13 +138,13 @@ WebSocket.prototype.send = function (data) {
         }
     }
 
-    if (isDebugMode) { console.log('Is silent answer? ', Boolean(send_data.silent)); }
+    if (isDebugMode) { console.log('Is silent answer?', Boolean(send_data.silent)); }
 
     if (send_data.silent) {
         return;
     }
 
-    if (isDebugMode) { console.log('Data to send to client:', send_data.data, ' sendDataCursor: ', sendDataCursor); }
+    if (isDebugMode) { console.log('Data to send to client:', send_data.data, 'sendDataCursor:', sendDataCursor); }
 
     let enc_data;
 
@@ -169,10 +169,10 @@ WebSocket.prototype.send = function (data) {
         }
 
         if (isDebugMode) { console.log('Processing message:',
-            ' data? ', Boolean(send_data.data),
-            ' next? ', Boolean(send_data.next),
-            ' abort? ', Boolean(send_data.abort),
-            ' close? ', Boolean(send_data.close)); }
+            'data?', Boolean(send_data.data),
+            'next?', Boolean(send_data.next),
+            'abort?', Boolean(send_data.abort),
+            'close?', Boolean(send_data.close)); }
 
         if (send_data.next) {           // Send next message to client
             setTimeout(() => { this.send(data); }, TIMEOUT);

@@ -121,7 +121,7 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.CHALLENGE,
                 'ticket',
-                { }
+                {}
             ]
 
         },
@@ -175,7 +175,7 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.CHALLENGE,
                 'ticket',
-                { }
+                {}
             ]
 
         },
@@ -1652,7 +1652,7 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                { }
+                {}
             ],
             from: [1, 2],
             to: [1, 2]
@@ -1681,7 +1681,7 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                { }
+                {}
             ],
             from: [1, 2],
             to: [1, 2]
@@ -3072,7 +3072,7 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
-                { },
+                {},
                 []
             ],
             from: [1, 2, 3],
@@ -3206,7 +3206,7 @@ const WAMP_MSG_SPEC = {
                 WAMP_MSG_SPEC.INVOCATION,
                 'RequestId',
                 528555, // Registration ID
-                { },
+                {},
                 [100]
             ],
             from: [1],

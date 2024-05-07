@@ -15,6 +15,7 @@
     "eslint": "^9.2.0",
     "eslint-plugin-mocha": "^10.4.3",
     "eslint-plugin-security": "^3.0.0",
+    "eslint-plugin-unicorn": "^52.0.0",
     "grunt": "^1.5.3",
     "grunt-babel": "^8.0.0",
     "grunt-browserify": "^6.0.0",
@@ -45,16 +46,16 @@
       "require": "./dist/wampy.js"
     },
     "./JsonSerializer.js": {
-      "import": "./src/serializers/JsonSerializer.js",
-      "require": "./dist/serializers/JsonSerializer.js"
+      "import": "./src/serializers/json-serializer.js",
+      "require": "./dist/serializers/json-serializer.js"
     },
     "./CborSerializer.js": {
-      "import": "./src/serializers/CborSerializer.js",
-      "require": "./dist/serializers/CborSerializer.js"
+      "import": "./src/serializers/cbor-serializer.js",
+      "require": "./dist/serializers/cbor-serializer.js"
     },
     "./MsgpackSerializer.js": {
-      "import": "./src/serializers/MsgpackSerializer.js",
-      "require": "./dist/serializers/MsgpackSerializer.js"
+      "import": "./src/serializers/msgpack-serializer.js",
+      "require": "./dist/serializers/msgpack-serializer.js"
     }
   },
   "type": "module",

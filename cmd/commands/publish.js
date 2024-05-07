@@ -1,6 +1,6 @@
 import cj from 'color-json';
-import { helpOptions, payloadArgs, pptArgs } from '../commonOptions.js';
-import { fillPPTOptions, getWampySession } from '../wampyHelpers.js';
+import { helpOptions, payloadArgs, pptArgs } from '../common-options.js';
+import { fillPPTOptions, getWampySession } from '../wampy-helpers.js';
 import { logger } from '../logger.js';
 
 const command = 'publish <topicURI>';

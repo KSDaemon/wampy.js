@@ -1,4 +1,4 @@
-module.exports = function (config) {
+module.exports = function karmaConfig(config) {
 
     config.set({
         basePath: '',
