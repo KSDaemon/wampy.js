@@ -674,8 +674,15 @@ for (const item of serializers) {
                     .connect();
             });
 
-            it('automatically sends goodbye message on server initiated disconnect', async function () {
-                await wampy.setOptions({ onConnect: null, onError: null, onClose: null })
+            it('automatically sends goodbye message on server initiated disconnect', function (done) {
+                wampy.setOptions({
+                    onConnect: null,
+                    onError: null,
+                    onClose: function () {
+                        wampy.setOptions({ onClose: null });
+                        done();
+                    }
+                })
                     .connect();
             });
 
@@ -687,8 +694,8 @@ for (const item of serializers) {
                     }
                 }).connect();
 
-                setTimeout(function () {
-                    wampy.disconnect();
+                setTimeout(async function () {
+                    await wampy.disconnect();
                 }, 10);
             });
 

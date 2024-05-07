@@ -514,20 +514,20 @@ const WAMP_MSG_SPEC = {
                 'wamp.error.goodbye_and_out'
             ]
         },
-        {
-            data: null,
-            silent: true
-        },
+        // {
+        //     data: null,
+        //     silent: true
+        // },
         // allows to disconnect while connecting to server
-        //{
-        //    data: null,
-        //    silent: true
-        //},
+        {
+           data: null,
+           silent: true
+        },
         // allows to connect to same WAMP server
         {
             data: [
                 WAMP_MSG_SPEC.WELCOME,
-                4,
+                657,
                 {
                     agent: 'Wampy.js test suite',
                     roles: routerRoles
