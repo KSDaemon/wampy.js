@@ -1,8 +1,10 @@
 # Wampy.js
 
+![Wampy logo](./misc/wampy-logo.png)
+
 ## About
 
-Feature-rich, lightweight and zero dependency (by default) WAMP (WebSocket Application Messaging Protocol)
+Feature-rich, lightweight and zero dependency (by default) WAMP (Web Application Messaging Protocol)
 Javascript implementation (for browser and node.js)
 
 [![NPM version][npm-image]][npm-url]
