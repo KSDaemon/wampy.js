@@ -13,7 +13,7 @@ describe('Wampy.js Serializer Handshake', function () {
     const wampyOptionsWithJsonSerializer = { ...wampyCommonOptions, serializer: new JsonSerializer() };
     const wampyOptionsWithCborSerializer = { ...wampyCommonOptions, serializer: new CborSerializer() };
 
-    it('disallows to connect when server choose not available serializer', async () => {
+    it('disallows to connect when server choose not available serializer', async function () {
         try {
             const wampy = new Wampy(testUrl, wampyOptionsWithJsonSerializer);
 
@@ -24,7 +24,7 @@ describe('Wampy.js Serializer Handshake', function () {
         }
     });
 
-    it('calls onError if provided when server choose not available serializer',  async () => {
+    it('calls onError if provided when server choose not available serializer',  async function () {
         try {
             const wampy = new Wampy(testUrl, {
                 ...wampyOptionsWithJsonSerializer,
@@ -38,7 +38,7 @@ describe('Wampy.js Serializer Handshake', function () {
         }
     });
 
-    it('falls back to Json serializer if server supports only that', async () => {
+    it('falls back to Json serializer if server supports only that', async function () {
         const wampy = new Wampy(testUrl, wampyOptionsWithCborSerializer);
 
         wsSetProtocol('json');

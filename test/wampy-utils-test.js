@@ -185,7 +185,7 @@ describe('Wampy.js Utils submodule', function () {
         });
     });
 
-    describe('In browser environment (real)', () => {
+    describe('In browser environment (real)', function () {
         if (isNode) {
             return;
         }
