@@ -1,10 +1,23 @@
 import js from '@eslint/js';
 import globals from 'globals';
 import mochaPlugin from 'eslint-plugin-mocha';
+import pluginSecurity from 'eslint-plugin-security';
 
 const files = ['src/**/*.js', 'test/**/*.js', 'Gruntfile.cjs', 'karma.conf.cjs', 'eslint.config.js'];
 
 export default [
+    {
+        ...pluginSecurity.configs.recommended,
+        files,
+    },
+    {
+        name: 'security plugin overrides',
+        files,
+        rules: {
+            'security/detect-object-injection': 'off',
+            'security/detect-unsafe-regex'    : 'off'
+        }
+    },
     {
         ...js.configs.recommended,
         files,
