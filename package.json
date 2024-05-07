@@ -7,11 +7,15 @@
     "@babel/core": "^7.22.10",
     "@babel/preset-env": "^7.22.10",
     "@babel/register": "^7.22.5",
+    "@eslint/js": "^9.2.0",
     "babelify": "^10.0.0",
     "c8": "^9.0.0",
     "chai": "^5.0.0",
     "coveralls": "^3.1.1",
-    "eslint": "^8.46.0",
+    "eslint": "^9.2.0",
+    "eslint-plugin-mocha": "^10.4.3",
+    "eslint-plugin-security": "^3.0.0",
+    "eslint-plugin-unicorn": "^52.0.0",
     "grunt": "^1.5.3",
     "grunt-babel": "^8.0.0",
     "grunt-browserify": "^6.0.0",
@@ -42,22 +46,23 @@
       "require": "./dist/wampy.js"
     },
     "./JsonSerializer.js": {
-      "import": "./src/serializers/JsonSerializer.js",
-      "require": "./dist/serializers/JsonSerializer.js"
+      "import": "./src/serializers/json-serializer.js",
+      "require": "./dist/serializers/json-serializer.js"
     },
     "./CborSerializer.js": {
-      "import": "./src/serializers/CborSerializer.js",
-      "require": "./dist/serializers/CborSerializer.js"
+      "import": "./src/serializers/cbor-serializer.js",
+      "require": "./dist/serializers/cbor-serializer.js"
     },
     "./MsgpackSerializer.js": {
-      "import": "./src/serializers/MsgpackSerializer.js",
-      "require": "./dist/serializers/MsgpackSerializer.js"
+      "import": "./src/serializers/msgpack-serializer.js",
+      "require": "./dist/serializers/msgpack-serializer.js"
     }
   },
   "type": "module",
   "dependencies": {
     "cbor-x": "^1.5.3",
     "color-json": "^3.0.5",
+    "globals": "^15.1.0",
     "msgpackr": "^1.9.7",
     "tweetnacl": "^1.0.3",
     "wampy-cra": "^0.2.0",
@@ -86,7 +91,7 @@
   "homepage": "https://github.com/KSDaemon/wampy.js#readme",
   "scripts": {
     "build": "npx grunt",
-    "lint": "npx eslint src test Gruntfile.cjs",
+    "lint": "npx eslint",
     "lint:fix": "npm run lint -- --fix",
     "test": "npm run test:node && npm run test:browser",
     "test:node": "NODE_ENV=test c8 mocha --exit -r @babel/register -r jsdom-global/register -R spec",

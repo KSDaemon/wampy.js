@@ -14,6 +14,8 @@ function getPseudoBrowserWebSocket (configObject = {}) {
     return utils.getWebSocket({ ...configObject, isBrowserMock: true });
 }
 
+function ws(url) { this.name = 'UserWebSocket'; this.url = url; }
+
 describe('Wampy.js Utils submodule', function () {
     this.timeout(0);
 
@@ -24,7 +26,6 @@ describe('Wampy.js Utils submodule', function () {
 
         const protocols = ['wamp.2.json'];
         const qualifiedUrl = 'ws://example.com/ws/path';
-        const ws = function (url) { this.name = 'UserWebSocket'; this.url = url; };
 
         it('disallows to create websocket object without providing a websocket class object', function () {
             expect(getWebSocket()).to.be.null;
@@ -185,7 +186,7 @@ describe('Wampy.js Utils submodule', function () {
         });
     });
 
-    describe('In browser environment (real)', () => {
+    describe('In browser environment (real)', function () {
         if (isNode) {
             return;
         }

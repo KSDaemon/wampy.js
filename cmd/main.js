@@ -5,7 +5,7 @@ import callCmd from './commands/call.js';
 import publishCmd from './commands/publish.js';
 import registerCmd from './commands/register.js';
 import subscribeCmd from './commands/subscribe.js';
-import { connOptions } from './commonOptions.js';
+import { connOptions } from './common-options.js';
 
 const argv = connOptions(yargs(hideBin(process.argv)))
     .env('WAMPY')

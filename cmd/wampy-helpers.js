@@ -1,7 +1,7 @@
-import { Wampy } from '../src/wampy.js';
-import { CborSerializer } from '../src/serializers/CborSerializer.js';
-import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
-import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
+import { FakeWampyMock as Wampy } from '../test/fake-wampy-mock.js';
+import { CborSerializer } from '../src/serializers/cbor-serializer.js';
+import { MsgpackSerializer } from '../src/serializers/msgpack-serializer.js';
+import { JsonSerializer } from '../src/serializers/json-serializer.js';
 import * as wampyCra from 'wampy-cra';
 import * as wampyCS from 'wampy-cryptosign';
 import nacl from 'tweetnacl';

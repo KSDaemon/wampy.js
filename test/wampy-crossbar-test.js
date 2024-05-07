@@ -1,18 +1,20 @@
 import { expect } from 'chai';
 import websocket from 'websocket';
-import { JsonSerializer } from './../src/serializers/JsonSerializer.js';
-import { MsgpackSerializer } from './../src/serializers/MsgpackSerializer.js';
+import { JsonSerializer } from '../src/serializers/json-serializer.js';
+import { MsgpackSerializer } from '../src/serializers/msgpack-serializer.js';
 import { Wampy } from './../src/wampy.js';
+
+const defaultOptions = { realm: 'realm1', ws: websocket.w3cwebsocket };
 
 describe('Wampy.js with Crossbar', function () {
     this.timeout(10000);
 
     const testUrl = 'ws://localhost:8888/test';
-    const defaultOptions = { realm: 'realm1', ws: websocket.w3cwebsocket };
+
     const jsonSerializerOptions = { ...defaultOptions, serializer: new JsonSerializer() };
     const msgpackSerializerOptions = { ...defaultOptions, serializer: new MsgpackSerializer() };
 
-    it('Works with Json serializer', async () => {
+    it('Works with Json serializer', async function () {
         const wampy = new Wampy(testUrl, jsonSerializerOptions);
 
         await wampy.connect();
@@ -26,7 +28,7 @@ describe('Wampy.js with Crossbar', function () {
         expect(result.argsList.shift()).to.equal('hello');
     });
 
-    it('works with Msgpack serialization', async () => {
+    it('works with Msgpack serialization', async function () {
         const wampy = new Wampy(testUrl, msgpackSerializerOptions);
 
         await wampy.connect();

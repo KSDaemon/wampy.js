@@ -4,7 +4,7 @@
  * Date: 16.06.17
  */
 
-import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
+import { JsonSerializer } from '../src/serializers/json-serializer.js';
 import { WAMP_MSG_SPEC } from '../src/constants.js';
 
 const TIMEOUT = 15,

@@ -13,9 +13,9 @@ import { expect } from 'chai';
 import * as WebSocketModule from './fake-ws.js';
 import { Wampy } from '../src/wampy.js';
 import * as Errors from '../src/errors.js';
-import { JsonSerializer } from '../src/serializers/JsonSerializer.js';
-import { MsgpackSerializer } from '../src/serializers/MsgpackSerializer.js';
-import { CborSerializer } from '../src/serializers/CborSerializer.js';
+import { JsonSerializer } from '../src/serializers/json-serializer.js';
+import { MsgpackSerializer } from '../src/serializers/msgpack-serializer.js';
+import { CborSerializer } from '../src/serializers/cbor-serializer.js';
 import { WAMP_ERROR_MSG, SUCCESS } from '../src/constants.js';
 
 const serializers = [
@@ -24,7 +24,7 @@ const serializers = [
     { serializer: CborSerializer, ws: WebSocketModule.WebSocket, name: 'CBOR Serializer' }
 ];
 
-serializers.forEach(function (item) {
+for (const item of serializers) {
 
     const { serializer, ws, name } = item;
 
@@ -599,8 +599,8 @@ serializers.forEach(function (item) {
                 expect(s).to.be.above(0);
             });
 
-            it('allows to disconnect from connected server', function (done) {
-                wampy.setOptions({ onConnect: null, onClose: done })
+            it('allows to disconnect from connected server', async function () {
+                await wampy.setOptions({ onConnect: null, onClose: null })
                     .disconnect();
             });
 
@@ -619,8 +619,7 @@ serializers.forEach(function (item) {
 
                 try {
                     wampy.setOptions({
-                        authid: null, onChallenge: function () {
-                        }
+                        authid: null, onChallenge: function () {}
                     }).connect();
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
@@ -628,8 +627,7 @@ serializers.forEach(function (item) {
 
                 try {
                     wampy.setOptions({
-                        authid: null, authmethods: [], onChallenge: function () {
-                        }
+                        authid: null, authmethods: [], onChallenge: function () {}
                     }).connect();
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
@@ -637,8 +635,7 @@ serializers.forEach(function (item) {
 
                 try {
                     wampy.setOptions({
-                        authid: 'userid', authmethods: 'string', onChallenge: function () {
-                        }
+                        authid: 'userid', authmethods: 'string', onChallenge: function () {}
                     }).connect();
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
@@ -677,8 +674,8 @@ serializers.forEach(function (item) {
                     .connect();
             });
 
-            it('automatically sends goodbye message on server initiated disconnect', function (done) {
-                wampy.setOptions({ onConnect: null, onError: null, onClose: done })
+            it('automatically sends goodbye message on server initiated disconnect', async function () {
+                await wampy.setOptions({ onConnect: null, onError: null, onClose: null })
                     .connect();
             });
 
@@ -715,6 +712,8 @@ serializers.forEach(function (item) {
                 expect(onCloseFired).to.be.true;
             });
 
+            // mocha eslint plugin is not smart enough to detect that done is passed as parameter and will be called later
+            // eslint-disable-next-line mocha/handle-done-callback
             it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
                 wampy.setOptions({ onClose: done })
                     .connect(anotherRouterUrl);
@@ -743,27 +742,27 @@ serializers.forEach(function (item) {
                             expect(onReconnect).to.be.true;
                             done();
                         });
-                    } catch (e) {
+                    } catch {
                         done('Expect subscribe to work');
                     }
                     try {
                         await wampy.subscribe('subscribe.reconnect2', () => {});
-                    } catch (e) {
+                    } catch {
                         done('Expect subscribe to work');
                     }
                     try {
                         await wampy.register('register.reconnect1', () => {});
-                    } catch (e) {
+                    } catch {
                         done('Expect register to work');
                     }
                     try {
                         await wampy.register('register.reconnect2', () => {});
-                    } catch (e) {
+                    } catch {
                         done('Expect register to work');
                     }
                     try {
                         await wampy.register('register.reconnect3', () => {});
-                    } catch (e) {
+                    } catch {
                         done('Expect register to work');
                     }
                 });
@@ -962,7 +961,7 @@ serializers.forEach(function (item) {
             });
 
             it('allows to subscribe to topic with notification on subscribing', async function () {
-                return wampy.subscribe('subscribe.topic2', function (e) { });
+                return wampy.subscribe('subscribe.topic2', function (e) {});
             });
 
             it('allows to subscribe to topic lax URI (with loose check option)', async function () {
@@ -1240,8 +1239,7 @@ serializers.forEach(function (item) {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        function () {
-                        }
+                        function () {}
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1387,7 +1385,7 @@ serializers.forEach(function (item) {
 
             it('fires error callback if error occurred during subscribing', async function () {
                 try {
-                    await wampy.subscribe('subscribe.topic10', function (e) { });
+                    await wampy.subscribe('subscribe.topic10', function (e) {});
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.SubscribeError);
                 }
@@ -1439,7 +1437,7 @@ serializers.forEach(function (item) {
 
             it('disallows to register rpc if server does not provide DEALER role', async function () {
                 try {
-                    await wampy.register('call.rpc2', function (e) { });
+                    await wampy.register('call.rpc2', function (e) {});
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoDealerError);
                 }
@@ -1447,7 +1445,7 @@ serializers.forEach(function (item) {
 
             it('disallows to unregister rpc if server does not provide DEALER role', async function () {
                 try {
-                    await wampy.unregister('call.rpc3', function (e) { });
+                    await wampy.unregister('call.rpc3', function (e) {});
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoDealerError);
                 }
@@ -1668,8 +1666,7 @@ serializers.forEach(function (item) {
                     await wampy.call(
                         'qqq.www.eee',
                         'payload',
-                        function () {
-                        }
+                        function () {}
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -2090,15 +2087,22 @@ serializers.forEach(function (item) {
                     definedArgsList = [1, 2, 3, 4, 5],
                     definedArgsDict = { key1: 'key1', key2: true, key3: 25 };
 
-                await wampy.register('register.rpc88', function (e) {
-                    const UserException = function () {
-                        this.error = definedUri;
-                        this.details = definedDetails;
-                        this.argsList = definedArgsList;
-                        this.argsDict = definedArgsDict;
-                    };
+                const UserException1 = function () {
+                    this.error = definedUri;
+                    this.details = definedDetails;
+                    this.argsList = definedArgsList;
+                    this.argsDict = definedArgsDict;
+                };
 
-                    throw new UserException();
+                const UserException2 = function () {
+                    this.error = definedUri;
+                    // no details
+                    // no args list, only args dict
+                    this.argsDict = definedArgsDict;
+                };
+
+                await wampy.register('register.rpc88', function (e) {
+                    throw new UserException1();
                 });
 
                 try {
@@ -2113,14 +2117,7 @@ serializers.forEach(function (item) {
                 }
 
                 await wampy.register('register.rpc99', function (e) {
-                    const UserException = function () {
-                        this.error = definedUri;
-                        // no details
-                        // no args list, only args dict
-                        this.argsDict = definedArgsDict;
-                    };
-
-                    throw new UserException();
+                    throw new UserException2();
                 });
 
                 try {
@@ -3145,4 +3142,4 @@ serializers.forEach(function (item) {
             });
         });
     });
-});
+}

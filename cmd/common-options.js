@@ -85,10 +85,8 @@ export const payloadArgs = function (yargs) {
                 });
             }
 
-            if (argv.argsDict) {
-                if (typeof argv.argsDict === 'string' || argv.argsDict instanceof String) {
-                    argv.argsDict = JSON.parse(argv.argsDict);
-                }
+            if (argv.argsDict && (typeof argv.argsDict === 'string' || argv.argsDict instanceof String)) {
+                argv.argsDict = JSON.parse(argv.argsDict);
             }
 
             return argv;
