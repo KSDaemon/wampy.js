@@ -331,7 +331,7 @@ You can provide your own sign functions or use existing helpers. Functions may b
 
 ```javascript
 const wampyCra = require('wampy-cra');
-const wampyCryptosign = require('wampy-cryptosign');
+const wampyCryptosign = require('wampy/cryptosign');
 
 wampy.setOptions({
     authPlugins: {
@@ -566,7 +566,7 @@ wampy = new Wampy('wss://wamp.router.url', {
 
 Wampy.js supports cryptosign-based authentication. To use it you need to provide `authid`, `onChallenge` callback
 and `authextra` as wampy instance options. Also, Wampy.js supports `cryptosign` authentication method
-with a little helper plugin "[wampy-cryptosign][]". Just add "wampy-cryptosign" package and use provided methods
+with a little helper plugin "[wampy/cryptosign][]". Just import `wampy/cryptosign` and use provided methods
 as shown below.
 
 The `authextra` option may contain the following properties for WAMP-Cryptosign:
@@ -584,9 +584,9 @@ The `authextra` option may contain the following properties for WAMP-Cryptosign:
 'use strict';
 
 import { Wampy } from 'wampy';
-import * as wampyCS from 'wampy-cryptosign';
+import * as wampyCS from 'wampy/cryptosign';
 // or you can import only the "sign" method
-// import { sign } from 'wampy-cryptosign';
+// import { sign } from 'wampy/cryptosign';
 
 // Manual authentication using signed message
 wampy = new Wampy('wss://wamp.router.url', {
@@ -650,7 +650,7 @@ For this flow you need to configure the following options:
 ```javascript
 import { Wampy } from 'wampy';
 import * as wampyCra from 'wampy-cra';
-import * as wampyCS from 'wampy-cryptosign';
+import * as wampyCS from 'wampy/cryptosign';
 
 wampy = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
@@ -1230,7 +1230,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 - [WAMP specification][]
 - [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
-- [wampy-cryptosign][] - WAMP Cryptosign-based Authentication plugin for Wampy.js
+- [wampy/cryptosign][] - WAMP Cryptosign-based Authentication plugin for Wampy.js
 - [Wiola][] - WAMP Router in Lua on top of nginx/openresty
 - [Loowy][] - LUA WAMP client
 - [msgpackr][] - Ultra-fast MessagePack implementation with extension for record and structural cloning.
@@ -1255,7 +1255,7 @@ Thanks JetBrains for support! Best IDEs for every language!
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
 [tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
 [wampy-cra]: https://github.com/KSDaemon/wampy-cra
-[wampy-cryptosign]: https://github.com/KSDaemon/wampy-cryptosign
+[wampy/cryptosign]: ./src/auth/cryptosign/README.md
 
 [npm-url]: https://www.npmjs.com/package/wampy
 [npm-image]: https://img.shields.io/npm/v/wampy.svg?style=flat
