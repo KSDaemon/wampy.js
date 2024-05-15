@@ -58,6 +58,10 @@
     "./MsgpackSerializer.js": {
       "import": "./src/serializers/msgpack-serializer.js",
       "require": "./dist/serializers/msgpack-serializer.js"
+    },
+    "./cryptosign.js": {
+      "import": "./src/auth/cryptosign/wampy-cryptosign.js",
+      "require": "./dist/auth/cryptosign/wampy-cryptosign.js"
     }
   },
   "type": "module",
