@@ -3,7 +3,7 @@ import { CborSerializer } from '../src/serializers/cbor-serializer.js';
 import { MsgpackSerializer } from '../src/serializers/msgpack-serializer.js';
 import { JsonSerializer } from '../src/serializers/json-serializer.js';
 import * as wampyCra from 'wampy-cra';
-import * as wampyCS from 'wampy-cryptosign';
+import * as wampyCS from '../src/auth/cryptosign/wampy-cryptosign.js';
 import nacl from 'tweetnacl';
 import WebSocket from 'ws';
 import { logger } from './logger.js';
