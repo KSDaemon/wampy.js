@@ -4,8 +4,8 @@
 
 ## About
 
-Feature-rich, lightweight and zero dependency (by default) WAMP (Web Application Messaging Protocol)
-Javascript implementation (for browser and node.js)
+Amazingly fast, feature-rich, lightweight and zero dependency (by default) WAMP (Web Application Messaging Protocol)
+Javascript client (for browser and node.js)
 
 [![NPM version][npm-image]][npm-url]
 [![Build Status][gh-build-test-image]][gh-build-test-url]
@@ -22,6 +22,7 @@ Javascript implementation (for browser and node.js)
   * [Description](#description)
   * [Usage example](#usage-example)
   * [Installation](#installation)
+  * [Exported components](#exported-components)
   * [CLI tool](#cli-tool)
   * [Migrating or Updating versions](#migrating-or-updating-versions)
   * [API](#api)
@@ -68,7 +69,7 @@ Wampy.js supports the following WAMP roles and features:
   - Challenge Response Authentication (wampcra method)
   - Cryptosign-based Authentication (cryptosign method)
 - publisher:
-  - subscriber blackwhite listing
+  - subscriber black-white listing
   - publisher exclusion
   - publisher identification
   - payload passthru mode
@@ -99,7 +100,7 @@ Wampy supports the following serializers:
 
 In node.js environment Wampy is compatible with the following websocket clients:
 
-- [WebSocket-Node][]. A WebSocket Implementation for Node.JS (Draft -08 through the final RFC 6455)
+- [WebSocket-Node][]. A WebSocket Implementation for Node.js (Draft-08 through the final RFC 6455)
 - [ws][]. Simple to use, blazing fast and thoroughly tested WebSocket client and server for Node.js
 
 For convenience, all API documentation is also available as a [GitBook here](https://ksdaemon.gitbook.io/wampy.js/).
@@ -162,9 +163,42 @@ If you don't plan to use msgpack, just include wampy.min.js.
 <script src="browser/wampy.min.js"></script>
 ```
 
-In case you are using build tools or bundlers like grunt/gulp/webpack/rollup/vite/etc, your entry point can be *
-*src/wampy.js** if you transpile you code, or **dist/wampy.js** (default package
-entry point) which is already transpiled to "env" preset, which means it works out of the box, just bundle modules.
+[Back to Table of Contents](#table-of-contents)
+
+## Exported components
+
+Wampy.js exports next components that you can import at your needs:
+
+```json5
+{
+    "exports": {
+        ".": {  // Main Wampy class
+            "import": "./src/wampy.js",
+            "require": "./dist/wampy.js"
+        },
+        "./JsonSerializer.js": {
+            "import": "./src/serializers/json-serializer.js",
+            "require": "./dist/serializers/json-serializer.js"
+        },
+        "./CborSerializer.js": {
+            "import": "./src/serializers/cbor-serializer.js",
+            "require": "./dist/serializers/cbor-serializer.js"
+        },
+        "./MsgpackSerializer.js": {
+            "import": "./src/serializers/msgpack-serializer.js",
+            "require": "./dist/serializers/msgpack-serializer.js"
+        },
+        "./cryptosign.js": {    // Cryptosign authentication plugin
+            "import": "./src/auth/cryptosign/wampy-cryptosign.js",
+            "require": "./dist/auth/cryptosign/wampy-cryptosign.js"
+        },
+        "./wampcra.js": {       // WAMP-CRA authentication plugin
+            "import": "./src/auth/wampcra/wampy-cra.js",
+            "require": "./dist/auth/wampcra/wampy-cra.js"
+        }
+    }
+}
+```
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -178,11 +212,11 @@ Cli tool is charged with rich help descriptions, examples and even shell auto-co
 may be passed as cmd args or via related ENV Vars for convenience. So you can for example export WAMP Router URI
 and realm to the environment and provide only wamp action parameters via cmd.
 
-You can install wampy cli tool globally or call it by npx:
+You can install wampy cli tool globally or call it by using npx:
 
 ```shell
 npm install -g wampy
-# After this you can invoke wampy
+# After that you can invoke wampy
 wampy -h
 # or just run wampy with npx
 npx wampy -h
@@ -232,7 +266,7 @@ wampy = new Wampy('wss://socket.server.com:5000/ws', { autoReconnect: false });
 wampy = new Wampy({ reconnectInterval: 1*1000 });
 
 // in node.js
-w3cws = require('websocket').w3cwebsocket;
+import { w3cwebsocket as w3cws } from 'websocket';
 wampy = new Wampy(null, { ws: w3cws });
 wampy = new Wampy('/my-socket-path', { ws: w3cws });
 wampy = new Wampy('wss://socket.server.com:5000/ws', { autoReconnect: false, ws: w3cws });
@@ -299,7 +333,7 @@ wampy.options({ // same as wampy.setOptions
 
 ### getOptions()
 
-Returns Wampy configuration options. See setOptions() down below for the full list of available options.
+Returns Wampy configuration options. See `setOptions()` down below for the full list of available options.
 
 ```javascript
 wampy.getOptions();
@@ -311,23 +345,23 @@ Receives a newOptions object as a parameter, where each property is a new option
 
 Options attributes description:
 
-- **debug**. Default value: false. Enable debug logging.
-- **logger**. Default value: null. User-provided logging function. If `debug=true` and no `logger` specified, `console.log` will be used.
-- **autoReconnect**. Default value: true. Enable auto reconnecting. In case of connection failure, Wampy will try to reconnect to WAMP server, and if you were subscribed to any topics, or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.
-- **reconnectInterval**. Default value: 2000 (ms). Reconnection Interval in ms.
-- **maxRetries**. Default value: 25. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
+- **debug**. Default value: `false`. Enable debug logging.
+- **logger**. Default value: `null`. User-provided logging function. If `debug=true` and no `logger` specified, `console.log` will be used.
+- **autoReconnect**. Default value: `true`. Enable auto reconnecting. In case of connection failure, Wampy will try to reconnect to WAMP server, and if you were subscribed to any topics, or had registered some procedures, Wampy will resubscribe to that topics and reregister procedures.
+- **reconnectInterval**. Default `value`: 2000 (ms). Reconnection Interval in ms.
+- **maxRetries**. Default value: `25`. Max reconnection attempts. After reaching this value [.disconnect()](#disconnect)
 will be called. Set to 0 to disable limit.
-- **realm**. Default value: null. WAMP Realm to join on server. See WAMP spec for additional info.
-- **helloCustomDetails**. Default value: null. Custom attributes to send to router on hello.
-- **uriValidation**. Default value: strict. Can be changed to `loose` for less strict URI validation.
-- **authid**. Default value: null. Authentication (user) id to use in challenge.
-- **authmethods**. Default value: []. Array of strings of supported authentication methods.
-- **authextra**. Default value: {}. Additional authentication options for Cryptosign-based authentication.
+- **realm**. Default value: `null`. WAMP Realm to join on server. See WAMP spec for additional info.
+- **helloCustomDetails**. Default value: `null`. Custom attributes to send to router on hello.
+- **uriValidation**. Default value: `strict`. Can be changed to `loose` for less strict URI validation.
+- **authid**. Default value: `null`. Authentication (user) id to use in challenge.
+- **authmethods**. Default value: `[]`. Array of strings of supported authentication methods.
+- **authextra**. Default value: `{}`. Additional authentication options for Cryptosign-based authentication.
 See [Cryptosign-based Authentication](#cryptosign-based-authentication) section and [WAMP Spec CS][] for more info.
-- **authPlugins**. Default value: {}. Authentication helpers for processing different authmethods flows.
+- **authPlugins**. Default value: `{}`. Authentication helpers for processing different authmethods flows.
 It's a hash-map, where key is an authentication method and value is a function, that takes the necessary user
-secrets/keys and returns a function which accepts authmethod and challenge info and returns signed challenge answer.
-You can provide your own sign functions or use existing helpers. Functions may be asynchronous.
+secrets/keys and returns a function which accepts `authmethod` and `challenge` info and returns signed challenge answer.
+You can provide your own signing functions or use existing helpers. Functions may be asynchronous.
 
 ```javascript
 import * as wampyCra from 'wampy/wampcra';
@@ -348,24 +382,24 @@ wampy.setOptions({
 to `manual` - you also need to provide **onChallenge** callback, which will process authorization challenge. Or you
 can set it to `auto` and provide **authPlugins** (described above). In this case the necessary authorization flow
 will be chosen automatically. This allows to support few authorization methods simultaneously.
-- **onChallenge**. Default value: null. Callback function.
+- **onChallenge**. Default value: `null`. Callback function.
 It is fired when wamp server requests authentication during session establishment.
 This function receives two arguments: auth method and challenge details.
 Function should return computed signature, based on challenge details.
 See [Challenge Response Authentication](#challenge-response-authentication) section, [WAMP Spec CRA][],
 [Cryptosign-based Authentication](#cryptosign-based-authentication) section and [WAMP Spec CS][] for more info.
 This function receives welcome details as an argument.
-- **onClose**. Default value: null. Callback function. Fired on closing connection to wamp server.
-- **onError**. Default value: null. Callback function. Fired on error in websocket communication or if error happens
+- **onClose**. Default value: `null`. Callback function. Fired on closing connection to wamp server.
+- **onError**. Default value: `null`. Callback function. Fired on error in websocket communication or if error happens
   during auto reconnection flow (as it can not be bound to explicit API calls).
-- **onReconnect**. Default value: null. Callback function. Fired every time on reconnection attempt.
-- **onReconnectSuccess**. Default value: null. Callback function. Fired every time when reconnection succeeded.
+- **onReconnect**. Default value: `null`. Callback function. Fired every time on reconnection attempt.
+- **onReconnectSuccess**. Default value: `null`. Callback function. Fired every time when reconnection succeeded.
 This function receives welcome details as an argument.
-- **ws**. Default value: null. User provided WebSocket class. Useful in node environment.
-- **additionalHeaders**. Default value: null. User provided additional HTTP headers (for use in Node.js environment)
-- **wsRequestOptions**. Default value: null. User provided WS Client Config Options (for use in Node.js environment).
+- **ws**. Default value: `null`. User provided WebSocket class. Useful in node environment.
+- **additionalHeaders**. Default value: `null`. User provided additional HTTP headers (for use in Node.js environment)
+- **wsRequestOptions**. Default value: `null`. User provided WS Client Config Options (for use in Node.js environment).
 See docs for [WebSocketClient][], [tls.connect options][].
-- **serializer**. Default value: JsonSerializer. User provided serializer class. Useful if you plan to use other encoders
+- **serializer**. Default value: `JsonSerializer`. User provided serializer class. Useful if you plan to use other encoders
 instead of default `json`.
 - **payloadSerializers**. Default value: `{ json: jsonSerializer }`. User provided hashmap of serializer instances for
 using in Payload Passthru Mode. Allows to specify a few serializers and use them on per message/call basis.
@@ -461,7 +495,7 @@ ws.abort();
 
 ### Ticket-based Authentication
 
-With Ticket-based authentication, the client needs to present the server an authentication "ticket" -
+With Ticket-based authentication, the client needs to present the server an authentication `ticket` -
 some magic value to authenticate itself to the server. It could be a user password, an authentication token or
 any other kind of client secret. To use it you need to provide "ticket" in "authmethods", "authid" and
 the "onChallenge" callback as wampy instance options.
@@ -500,13 +534,13 @@ wampy = new Wampy('wss://wamp.router.url', {
 
 Wampy.js supports challenge response authentication. To use it you need to provide the "authid" and the "onChallenge"
 callback as wampy instance options. Also, Wampy.js supports `wampcra` authentication method with a little helper
-plugin "[wampy/cra][]". Just import `wampy/wampcra` and use provided methods as shown below.
+plugin "[wampy/wampcra][]". Just import `wampy/wampcra` and use provided methods as shown below.
 
 ```javascript
 'use strict';
 
 import { Wampy } from 'wampy';
-import * as wampyCra from 'wampy/wampcra';
+import * as wampyCra from 'wampy/wampcra';  // or import exact functions
 import { w3cwebsocket as w3cws } from 'websocket';
 
 // Manual authentication using signed message
@@ -649,8 +683,8 @@ For this flow you need to configure the following options:
 
 ```javascript
 import { Wampy } from 'wampy';
-import * as wampyCra from 'wampy/wampcra';
-import * as wampyCS from 'wampy/cryptosign';
+import { sign as CraSign } from 'wampy/wampcra';
+import { sign as CryptoSign } from 'wampy/cryptosign';
 
 wampy = new Wampy('wss://wamp.router.url', {
     realm: 'realm1',
@@ -661,8 +695,8 @@ wampy = new Wampy('wss://wamp.router.url', {
     },
     authPlugins: {
         ticket: ((userPassword) => (() => userPassword ))(),
-        wampcra: wampyCra.sign(userSecret),
-        cryptosign: wampyCS.sign(userPrivateKey)
+        wampcra: CraSign(userSecret),
+        cryptosign: CryptoSign(userPrivateKey)
     },
     authMode: 'auto',
     onChallenge: null
@@ -1229,7 +1263,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ## See Also
 
 - [WAMP specification][]
-- [wampy/cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
+- [wampy/wampcra][] - WAMP Challenge Response Authentication plugin for Wampy.js
 - [wampy/cryptosign][] - WAMP Cryptosign-based Authentication plugin for Wampy.js
 - [Wiola][] - WAMP Router in Lua on top of nginx/openresty
 - [Loowy][] - LUA WAMP client
@@ -1254,7 +1288,7 @@ Thanks JetBrains for support! Best IDEs for every language!
 [WAMP Spec CS]: https://wamp-proto.org/wamp_latest_ietf.html#name-cryptosign-based-authentica
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
 [tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
-[wampy/cra]: ./src/auth/wampcra/README.md
+[wampy/wampcra]: ./src/auth/wampcra/README.md
 [wampy/cryptosign]: ./src/auth/cryptosign/README.md
 
 [npm-url]: https://www.npmjs.com/package/wampy
