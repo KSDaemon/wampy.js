@@ -170,6 +170,32 @@ const WAMP_MSG_SPEC = {
                 }
             ]
         },
+        // allows to use Cryptosign Authentication while connecting to server
+        {
+            data: [
+                WAMP_MSG_SPEC.CHALLENGE,
+                'cryptosign',
+                {
+                    challenge: 'b05e6b8ad4d69abf74aa3be3c0ee40ae07d66e1895b9ab09285a2f1192d562d2'
+                }
+            ]
+
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                821924,
+                {
+                    agent       : 'Wampy.js test suite',
+                    authid      : 'user1',
+                    authrole    : 'user',
+                    authmethod  : 'cryptosign',
+                    authprovider: 'userdb',
+                    roles: routerRoles
+                }
+            ]
+        },
+
         // allows to use Automatically chosen Authentication while connecting to server
         {
             data: [
