@@ -9,6 +9,14 @@
 const isNode = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]');
 const crypto = isNode ? await import('node:crypto') : window.crypto;
 
+/**
+ * Derives a key using PBKDF2 algorithm.
+ * @param {string} secret - The secret key.
+ * @param {string} salt - The salt value.
+ * @param {number} [iterations=1000] - The number of iterations.
+ * @param {number} [keylen=32] - The length of the key.
+ * @returns {Promise<string>} The derived key as a base64-encoded string.
+ */
 export async function deriveKey(secret, salt, iterations = 1000, keylen = 32) {
     let key;
 
@@ -32,6 +40,12 @@ export async function deriveKey(secret, salt, iterations = 1000, keylen = 32) {
     }
 }
 
+/**
+ * Signs a challenge using the manual method.
+ * @param {string} key - The key used for signing.
+ * @param {string} challenge - The challenge to sign.
+ * @returns {Promise<string>} The signature as a base64-encoded string.
+ */
 export async function signManual(key, challenge) {
     if (isNode) {
         const hmac = crypto.createHmac('sha256', key);
@@ -53,6 +67,11 @@ export async function signManual(key, challenge) {
     }
 }
 
+/**
+ * Creates a signing function using the specified secret.
+ * @param {string} secret - The secret key.
+ * @returns {function(string, object): Promise<string>} A signing function.
+ */
 export function sign(secret) {
     return async function (method, info) {
         if (method === 'wampcra') {
