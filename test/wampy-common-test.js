@@ -247,6 +247,34 @@ for (const item of serializers) {
                 return wampy.connect();
             });
 
+            it('allows to use Ticket-based Authentication while connecting to server (async onChallenge)', async function () {
+                const wampy = new Wampy(routerUrl, {
+                    realm: 'AppRealm',
+                    onChallenge: async function () {
+                        return new Promise((resolve, reject) => {
+                            setTimeout(() => resolve('secretKey'), 1);
+                        })
+                    },
+                    authid: 'user1',
+                    authmethods: ['ticket'],
+                    onClose: function () {
+                        throw new Error('Reached onClose');
+                    },
+                    onError: function () {
+                        throw new Error('Reached onError');
+                    },
+                    onReconnect: function () {
+                        throw new Error('Reached onReconnect');
+                    },
+                    onReconnectSuccess: function () {
+                        throw new Error('Reached onReconnectSuccess');
+                    },
+                    ws,
+                    serializer: new serializer()
+                });
+                expect(wampy).to.be.an('object');
+                return wampy.connect();
+            });
 
             it('allows to use Challenge Response Authentication while connecting to server', async function () {
                 const wampy = new Wampy(routerUrl, {
@@ -275,11 +303,72 @@ for (const item of serializers) {
                 return wampy.connect();
             });
 
+            it('allows to use Challenge Response Authentication while connecting to server (async onChallenge)', async function () {
+                const wampy = new Wampy(routerUrl, {
+                    realm: 'AppRealm',
+                    onChallenge: async function () {
+                        return new Promise((resolve, reject) => {
+                            setTimeout(() => resolve('secretKey'), 1);
+                        })
+                    },
+                    authid: 'user1',
+                    authmethods: ['wampcra'],
+                    onClose: function () {
+                        throw new Error('Reached onClose');
+                    },
+                    onError: function () {
+                        throw new Error('Reached onError');
+                    },
+                    onReconnect: function () {
+                        throw new Error('Reached onReconnect');
+                    },
+                    onReconnectSuccess: function () {
+                        throw new Error('Reached onReconnectSuccess');
+                    },
+                    ws,
+                    serializer: new serializer()
+                });
+                expect(wampy).to.be.an('object');
+                return wampy.connect();
+            });
+
             it('allows to use Cryptosign Authentication while connecting to server', async function () {
                 const wampy = new Wampy(routerUrl, {
                     realm: 'AppRealm',
                     onChallenge: function (method, info) {
                         return 'privateKey';
+                    },
+                    authid: 'user1',
+                    authmethods: ['cryptosign'],
+                    authextra: {    // User public key for Cryptosign-based Authentication
+                        pubkey: '545efb0a2192db8d43f118e9bf9aee081466e1ef36c708b96ee6f62dddad9122'
+                    },
+                    onClose: function () {
+                        throw new Error('Reached onClose');
+                    },
+                    onError: function () {
+                        throw new Error('Reached onError');
+                    },
+                    onReconnect: function () {
+                        throw new Error('Reached onReconnect');
+                    },
+                    onReconnectSuccess: function () {
+                        throw new Error('Reached onReconnectSuccess');
+                    },
+                    ws,
+                    serializer: new serializer()
+                });
+                expect(wampy).to.be.an('object');
+                return wampy.connect();
+            });
+
+            it('allows to use Cryptosign Authentication while connecting to server (async onChallenge)', async function () {
+                const wampy = new Wampy(routerUrl, {
+                    realm: 'AppRealm',
+                    onChallenge: async function () {
+                        return new Promise((resolve, reject) => {
+                            setTimeout(() => resolve('privateKey'), 1);
+                        })
                     },
                     authid: 'user1',
                     authmethods: ['cryptosign'],
