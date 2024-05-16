@@ -330,15 +330,15 @@ secrets/keys and returns a function which accepts authmethod and challenge info 
 You can provide your own sign functions or use existing helpers. Functions may be asynchronous.
 
 ```javascript
-const wampyCra = require('wampy-cra');
-const wampyCryptosign = require('wampy/cryptosign');
+import * as wampyCra from 'wampy/wampcra';
+import * as wampyCS from 'wampy/cryptosign';
 
 wampy.setOptions({
     authPlugins: {
         // No need to process challenge data in ticket flow, as it is empty
         ticket: ((userPassword) => (() => userPassword ))(),
         wampcra: wampyCra.sign(secret),
-        cryptosign: wampyCryptosign.sign(privateKey)
+        cryptosign: wampyCS.sign(privateKey)
     },
     authMode: 'auto'
 });
@@ -498,16 +498,16 @@ wampy = new Wampy('wss://wamp.router.url', {
 
 ### Challenge Response Authentication
 
-Wampy.js supports challenge response authentication. To use it you need to provide the "authid" and the "onChallenge" callback
-as wampy instance options. Also, Wampy.js supports `wampcra` authentication method with a little helper
-plugin "[wampy-cra][]". Just add "wampy-cra" package and use provided methods as shown below.
+Wampy.js supports challenge response authentication. To use it you need to provide the "authid" and the "onChallenge"
+callback as wampy instance options. Also, Wampy.js supports `wampcra` authentication method with a little helper
+plugin "[wampy/cra][]". Just import `wampy/wampcra` and use provided methods as shown below.
 
 ```javascript
 'use strict';
 
-const Wampy = require('wampy').Wampy;
-const wampyCra = require('wampy-cra');
-const w3cws = require('websocket').w3cwebsocket;
+import { Wampy } from 'wampy';
+import * as wampyCra from 'wampy/wampcra';
+import { w3cwebsocket as w3cws } from 'websocket';
 
 // Manual authentication using signed message
 wampy = new Wampy('wss://wamp.router.url', {
@@ -649,7 +649,7 @@ For this flow you need to configure the following options:
 
 ```javascript
 import { Wampy } from 'wampy';
-import * as wampyCra from 'wampy-cra';
+import * as wampyCra from 'wampy/wampcra';
 import * as wampyCS from 'wampy/cryptosign';
 
 wampy = new Wampy('wss://wamp.router.url', {
@@ -1229,7 +1229,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ## See Also
 
 - [WAMP specification][]
-- [wampy-cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
+- [wampy/cra][] - WAMP Challenge Response Authentication plugin for Wampy.js
 - [wampy/cryptosign][] - WAMP Cryptosign-based Authentication plugin for Wampy.js
 - [Wiola][] - WAMP Router in Lua on top of nginx/openresty
 - [Loowy][] - LUA WAMP client
@@ -1254,7 +1254,7 @@ Thanks JetBrains for support! Best IDEs for every language!
 [WAMP Spec CS]: https://wamp-proto.org/wamp_latest_ietf.html#name-cryptosign-based-authentica
 [WebSocketClient]: https://github.com/theturtle32/WebSocket-Node/blob/master/docs/WebSocketClient.md
 [tls.connect options]: https://nodejs.org/api/tls.html#tls_tls_connect_options_callback
-[wampy-cra]: https://github.com/KSDaemon/wampy-cra
+[wampy/cra]: ./src/auth/wampcra/README.md
 [wampy/cryptosign]: ./src/auth/cryptosign/README.md
 
 [npm-url]: https://www.npmjs.com/package/wampy

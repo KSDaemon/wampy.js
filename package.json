@@ -62,6 +62,10 @@
     "./cryptosign.js": {
       "import": "./src/auth/cryptosign/wampy-cryptosign.js",
       "require": "./dist/auth/cryptosign/wampy-cryptosign.js"
+    },
+    "./wampcra.js": {
+      "import": "./src/auth/wampcra/wampy-cra.js",
+      "require": "./dist/auth/wampcra/wampy-cra.js"
     }
   },
   "type": "module",
