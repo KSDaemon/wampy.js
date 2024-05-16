@@ -73,11 +73,18 @@ export async function signManual(key, challenge) {
  * @returns {function(string, object): Promise<string>} A signing function.
  */
 export function sign(secret) {
+    /**
+     * Signs a challenge using the wampcra method.
+     * @param {string} method - The authentication method.
+     * @param {object} info - Information required for signing.
+     * @param {string} info.challenge - The challenge to sign.
+     * @returns {string} The signed challenge.
+     * @throws {Error} If the provided authentication method is unknown or no challenge is provided.
+     */
     return async function (method, info) {
         if (method === 'wampcra') {
-
-            return info.salt ? signManual(await deriveKey(secret, info.salt, info.iterations, info.keylen), info.challenge) : signManual(secret, info.challenge);
-
+            return info.salt ? signManual(await deriveKey(secret, info.salt, info.iterations, info.keylen),
+                info.challenge) : signManual(secret, info.challenge);
         } else {
             throw new Error('Unknown authentication method requested!');
         }
