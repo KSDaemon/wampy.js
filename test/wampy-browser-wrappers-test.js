@@ -10,7 +10,7 @@ describe('Wampy.js with browser distribution wrappers', function () {
     });
 
     describe('Browser submodule', function () {
-        before(async function () { await import('../src/browser.js'); });
+        before(async function () { await import('../src/wampy-single-4-browser.js'); });
 
         it('should contain Wampy property in the global window object', function () {
             expect(window.Wampy).to.be.a('function');
@@ -18,7 +18,7 @@ describe('Wampy.js with browser distribution wrappers', function () {
     });
 
     describe('Serializers4browser submodule', function () {
-        before(async function () { await import('../src/serializers4browser.js'); });
+        before(async function () { await import('../src/wampy-all-4-browser.js'); });
 
         it('should contain MsgpackSerializer property in the global window object', function () {
             expect(window.MsgpackSerializer).to.be.a('function');

@@ -24,8 +24,8 @@ module.exports = function gruntConfig(grunt) {
                     transform: [['babelify', { 'presets': ['@babel/preset-env'] }]]
                 },
                 files  : {
-                    'dist/browser/wampy.js': 'src/browser.js',
-                    'dist/browser/serializers4browser.js': 'src/serializers4browser.js'
+                    'dist/browser/wampy.js': 'src/wampy-single-4-browser.js',
+                    'dist/browser/wampy-all.js': 'src/wampy-all-4-browser.js'
                 }
             }
         },
