@@ -150,13 +150,24 @@ npm install -S wampy
 ```
 
 For browser usage download the latest [browser.zip](../../releases/latest) archive and
-add wampy-all.min.js file to your page. It contains msgpack encoder plus wampy itself.
+add wampy-all.min.js file to your page. It contains all auth plugins and serializers.
+They are available as global objects:
+
+```javascript
+window.JsonSerializer = JsonSerializer;
+window.MsgpackSerializer = MsgpackSerializer;
+window.CborSerializer = CborSerializer;
+// this is not available due to problem with browserify transforming await import('node:crypto')
+// if someone really needs it - I would appreciate a PR with fix :)
+//window.WampyCra = wampyCra;
+window.WampyCryptosign = wampyCryptosign;
+```
 
 ```html
 <script src="browser/wampy-all.min.js"></script>
 ```
 
-If you don't plan to use msgpack, just include wampy.min.js.
+If you don't plan to use other serializers then JSON or any auth plugins, just include wampy.min.js.
 
 ```html
 <script src="browser/wampy.min.js"></script>
