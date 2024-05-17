@@ -18,12 +18,11 @@ const crypto = isNode ? await import('node:crypto') : window.crypto;
  * @returns {Promise<string>} The derived key as a base64-encoded string.
  */
 export async function deriveKey(secret, salt, iterations = 1000, keylen = 32) {
-    let key;
-
-    if (isNode) {
-        key = crypto.pbkdf2Sync(secret, salt, iterations, keylen, 'sha256');
-        return key.toString('base64');
-    } else {
+    // This is how it can be done shorter using node specific API
+    // if (isNode) {
+    //     const key = crypto.pbkdf2Sync(secret, salt, iterations, keylen, 'sha256');
+    //     return key.toString('base64');
+    // } else {
         const encoder = new TextEncoder();
         const secretBuffer = encoder.encode(secret);
         const saltBuffer = encoder.encode(salt);
@@ -37,7 +36,7 @@ export async function deriveKey(secret, salt, iterations = 1000, keylen = 32) {
         );
         const keyArray = [...new Uint8Array(keyBuffer)];
         return btoa(String.fromCodePoint(...keyArray));
-    }
+    // }
 }
 
 /**
@@ -47,12 +46,12 @@ export async function deriveKey(secret, salt, iterations = 1000, keylen = 32) {
  * @returns {Promise<string>} The signature as a base64-encoded string.
  */
 export async function signManual(key, challenge) {
-    if (isNode) {
-        const hmac = crypto.createHmac('sha256', key);
-        hmac.update(challenge);
-        return hmac.digest('base64');
-    } else {
-        // return crypto.HmacSHA256(challenge, key).toString(crypto.enc.Base64);
+    // This is how it can be done shorter using node specific API
+    // if (isNode) {
+    //     const hmac = crypto.createHmac('sha256', key);
+    //     hmac.update(challenge);
+    //     return hmac.digest('base64');
+    // } else {
         const encoder = new TextEncoder();
         const keyBuffer = encoder.encode(key);
         const challengeBuffer = encoder.encode(challenge);
@@ -64,7 +63,7 @@ export async function signManual(key, challenge) {
         const signature = await crypto.subtle.sign('HMAC', keyData, challengeBuffer);
         const signatureArray = [...new Uint8Array(signature)];
         return btoa(String.fromCodePoint(...signatureArray));
-    }
+    // }
 }
 
 /**
