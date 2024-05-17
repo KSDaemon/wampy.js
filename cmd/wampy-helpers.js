@@ -1,4 +1,4 @@
-import { FakeWampyMock as Wampy } from '../test/fake-wampy-mock.js';
+import { Wampy } from '../src/wampy.js';
 import { CborSerializer } from '../src/serializers/cbor-serializer.js';
 import { MsgpackSerializer } from '../src/serializers/msgpack-serializer.js';
 import { JsonSerializer } from '../src/serializers/json-serializer.js';
