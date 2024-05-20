@@ -1709,7 +1709,10 @@ class Wampy {
      * @param {string} topic - a URI to subscribe to
      * @param {function} onEvent - received event callback
      * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
-     *                          { match: string matching policy ("exact"|"prefix"|"wildcard") }
+     *                          {
+     *                              match: string matching policy ("exact"|"prefix"|"wildcard")
+     *                              get_retained: bool request access to the Retained Event
+     *                          }
      *
      * @returns {Promise}
      */
@@ -1722,17 +1725,32 @@ class Wampy {
             throw invalidParamError;
         }
 
-        let match, patternBased = false;
-        if (isAdvancedOptionsAnObject && Object.prototype.hasOwnProperty.call(advancedOptions, 'match')) {
-            if (!['exact', 'prefix', 'wildcard'].includes(advancedOptions.match)) {
+        const { match, get_retained } = advancedOptions || {};
+        let patternBased = false;
+        if (match) {
+            if (!['exact', 'prefix', 'wildcard'].includes(match)) {
                 const invalidParamError = new Errors.InvalidParamError('match');
                 this._fillOpStatusByError(invalidParamError);
                 throw invalidParamError;
             }
 
-            match = advancedOptions.match;
-            patternBased = true;
+            patternBased = match !== 'exact';
         }
+
+        if (get_retained && typeof get_retained !== 'boolean') {
+            const invalidParamError = new Errors.InvalidParamError('get_retained');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
+        }
+
+        // What if broker doesn't support event_retention feature?
+        // The spec doesn't define exact behaviour: should it fail or not
+        // It seems that we should not fail the subscribe request and give it up to broker
+        // in worst case no event will be received - and that seems to be right.
+        // So commenting this out, but keeping with note.
+        // if (!this._checkRouterFeature('broker', 'event_retention')) {
+        //     throw this._cache.opStatus.error;
+        // }
 
         if (!this._preReqChecks({ topic, patternBased, allowWAMP: true }, 'broker')) {
             throw this._cache.opStatus.error;
@@ -1762,7 +1780,7 @@ class Wampy {
         this._requests[reqId] = { topic, callbacks, advancedOptions };
 
         // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
-        this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, { match }, topic]);
+        this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, { match, get_retained }, topic]);
         this._cache.opStatus = { ...SUCCESS, reqId: reqId || 0 };
 
         return callbacks.promise;
@@ -1842,6 +1860,8 @@ class Wampy {
      *                            ppt_cipher: string Specifies the cryptographic algorithm that was used to encrypt
      *                                      the payload
      *                            ppt_keyid: string Contains the encryption key id that was used to encrypt the payload
+     *                            retain: bool Ask broker to mark this event as retained
+     *                                    (see Event Retention WAMP Feature)
      *                          }
      * @returns {Promise}
      */
@@ -1886,7 +1906,13 @@ class Wampy {
             throw invalidParamError;
         }
 
-        const { ppt_scheme, ppt_serializer, ppt_cipher, ppt_keyid, exclude_me, disclose_me } = advancedOptions || {};
+        const { ppt_scheme, ppt_serializer, ppt_cipher, ppt_keyid, exclude_me, disclose_me, retain } = advancedOptions || {};
+
+        if (retain && typeof retain !== 'boolean') {
+            const invalidParamError = new Errors.InvalidParamError('retain');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
+        }
 
         // Check and handle Payload PassThru Mode
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
