@@ -73,11 +73,13 @@ Wampy.js supports the following WAMP roles and features:
   - publisher exclusion
   - publisher identification
   - payload passthru mode
+  - event retention
 - subscriber:
   - pattern-based subscription
   - publication trust levels
   - publisher identification
   - payload passthru mode
+  - event retention
 - caller:
   - caller identification
   - progressive call results
@@ -731,6 +733,7 @@ parameter with following attributes:
   - **details**: some publication options object.
 - **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
   - **match**: string matching policy ("prefix"|"wildcard")
+  - **get_retained**: bool request access to the Retained Event
 
 Returns a `Promise` that's either:
 
@@ -823,6 +826,7 @@ Must meet a WAMP Spec URI requirements.
   - **ppt_serializer**: string Specifies what serializer was used to encode the payload
   - **ppt_cipher**: string Specifies the cryptographic algorithm that was used to encrypt the payload
   - **ppt_keyid**: string Contains the encryption key id that was used to encrypt the payload
+  - **retain**: bool Ask broker to mark this event as retained
 
 Returns a `Promise` that's either:
 

@@ -1070,6 +1070,13 @@ for (const item of serializers) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
                 expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+
+                try {
+                    await wampy.subscribe('qqq.www.eee', function () {}, { 'get_retained': 'invalid' });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
             });
 
             it('disallows to subscribe to topic without specifying callback', async function () {
@@ -1468,6 +1475,18 @@ for (const item of serializers) {
                         {
                             exclude: 'invalid string',
                             eligible: 'invalid string'
+                        }
+                    );
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+
+                try {
+                    wampy.publish(
+                        'qqq.www.eee',
+                        'payload',
+                        {
+                            retain: 'invalid',
                         }
                     );
                 } catch (e) {
