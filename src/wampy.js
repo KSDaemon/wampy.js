@@ -1947,29 +1947,13 @@ class Wampy {
     }
 
     /**
-     * Remote Procedure Call
-     * @param {string} topic - a topic URI to be called
-     * @param {string|number|Array|object} [payload] - can be either a value of any type or null. Also, it
-     *                          is possible to pass array and object-like data simultaneously.
-     *                          In this case pass a hash-table with next attributes:
-     *                          {
-     *                             argsList: array payload (may be omitted)
-     *                             argsDict: object payload (may be omitted)
-     *                          }
-     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
-     *                          { disclose_me:      bool flag of disclosure of Caller identity (WAMP session ID)
-     *                                              to endpoints of a routed call
-     *                            progress_callback: function for handling progressive call results
-     *                            timeout:          integer timeout (in ms) for the call to finish
-     *                            ppt_scheme: string Identifies the Payload Schema
-     *                            ppt_serializer: string Specifies what serializer was used to encode the payload
-     *                            ppt_cipher: string Specifies the cryptographic algorithm that was used to encrypt
-     *                                the payload
-     *                            ppt_keyid: string Contains the encryption key id that was used to encrypt the payload
-     *                          }
-     * @returns {Promise}
+     * Remote Procedure Call Internal Implementation
+     * @param {string} topic - same as in call method
+     * @param {string|number|Array|object} [payload] - same as in call method
+     * @param {object} [advancedOptions] - same as in call method
+     * @returns {number} Request ID
      */
-    async call (topic, payload, advancedOptions) {
+    _callInternal(topic, payload, advancedOptions) {
         if (!this._preReqChecks({ topic, patternBased: false, allowWAMP: true }, 'dealer')) {
             throw this._cache.opStatus.error;
         }
@@ -2029,7 +2013,145 @@ class Wampy {
             this._calls[reqId].onProgress = progress_callback;
         }
 
+        return reqId;
+    }
+
+    /**
+     * Remote Procedure Call
+     * @param {string} topic - a topic URI to be called
+     * @param {string|number|Array|object} [payload] - can be either a value of any type or null. Also, it
+     *                          is possible to pass array and object-like data simultaneously.
+     *                          In this case pass a hash-table with next attributes:
+     *                          {
+     *                             argsList: array payload (may be omitted)
+     *                             argsDict: object payload (may be omitted)
+     *                          }
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
+     *                          { disclose_me:      bool flag of disclosure of Caller identity (WAMP session ID)
+     *                                              to endpoints of a routed call
+     *                            progress_callback: function for handling progressive call results
+     *                            timeout:          integer timeout (in ms) for the call to finish
+     *                            ppt_scheme: string Identifies the Payload Schema
+     *                            ppt_serializer: string Specifies what serializer was used to encode the payload
+     *                            ppt_cipher: string Specifies the cryptographic algorithm that was used to encrypt
+     *                                the payload
+     *                            ppt_keyid: string Contains the encryption key id that was used to encrypt the payload
+     *                          }
+     * @returns {Promise}
+     */
+    async call (topic, payload, advancedOptions) {
+        const reqId = this._callInternal(topic, payload, advancedOptions);
         return this._calls[reqId].promise;
+    }
+
+    /**
+     * @typedef {function} ProgressiveCallSendData
+     * @param {string|number|Array|object} [payload] - can be either a value of any type or null. Also, it
+     *                           is possible to pass array and object-like data simultaneously.
+     *                           In this case pass a hash-table with next attributes:
+     *                           {
+     *                              argsList: array payload (maybe omitted)
+     *                              argsDict: object payload (maybe omitted)
+     *                           }
+     * @param {object} [advancedOptions] - optional parameter - Must include next options:
+     *                           {
+     *                              progress: bool flag, indicating the ongoing (true) or final (false) call invocation.
+     *                                        If this parameter is omitted - it is treated as TRUE, meaning the
+     *                                        intermediate ongoing call invocation. For the final call invocation
+     *                                        this flag should be passed and set to FALSE. In other case the call
+     *                                        invocation wil never end.
+     *                           }
+     */
+    /**
+     * @typedef {Object} ProgressiveCallReturn
+     * @property {Promise} result - A promise that resolves to the result of the RPC call.
+     * @property {ProgressiveCallSendData} sendData - A function to send additional data to the ongoing RPC call.
+     */
+    /**
+     * Remote Procedure Progressive Call
+     *
+     * You can send additional input data which won't be treated as a new independent but instead
+     * will be transferred as another input data chunk to the same remote procedure call. Of course
+     * Callee and Dealer should support the "progressive_call_invocations" feature as well.
+     *
+     * @param {string} topic - a topic URI to be called
+     * @param {string|number|Array|object} [payload] - can be either a value of any type or null. Also, it
+     *                          is possible to pass array and object-like data simultaneously.
+     *                          In this case pass a hash-table with next attributes:
+     *                          {
+     *                             argsList: array payload (maybe omitted)
+     *                             argsDict: object payload (maybe omitted)
+     *                          }
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
+     *                          { disclose_me:      bool flag of disclosure of Caller identity (WAMP session ID)
+     *                                              to endpoints of a routed call
+     *                            progress_callback: function for handling progressive call results
+     *                            timeout:          integer timeout (in ms) for the call to finish
+     *                            ppt_scheme: string Identifies the Payload Schema
+     *                            ppt_serializer: string Specifies what serializer was used to encode the payload
+     *                            ppt_cipher: string Specifies the cryptographic algorithm that was used to encrypt
+     *                                the payload
+     *                            ppt_keyid: string Contains the encryption key id that was used to encrypt the payload
+     *                          }
+     * @returns {ProgressiveCallReturn} - An object containing the result promise and the sendData function.
+     */
+    async progressiveCall (topic, payload, advancedOptions) {
+        if (!this._checkRouterFeature('dealer', 'progressive_call_invocations')) {
+            throw this._cache.opStatus.error;
+        }
+
+        const reqId = this._callInternal(topic, payload, advancedOptions);
+
+        const {
+            timeout,
+            progress_callback,
+            disclose_me,
+            ppt_scheme,
+            ppt_serializer,
+            ppt_cipher,
+            ppt_keyid
+        } = advancedOptions || {};
+
+        const messageOptions = {
+            ...(progress_callback ? { receive_progress: true } : {}),
+            ...(disclose_me ? { disclose_me: true } : {}),
+            ...(timeout ? { timeout } : {}),
+            ...(ppt_scheme ? { ppt_scheme } : {}),
+            ...(ppt_serializer ? { ppt_serializer } : {}),
+            ...(ppt_cipher ? { ppt_cipher } : {}),
+            ...(ppt_keyid ? { ppt_keyid } : {}),
+        };
+
+        // Now we need to construct the function tha client may call to pass another input data chunk
+        const cb = (payload, advancedOptions) => {
+            if (advancedOptions && !this._isPlainObject(advancedOptions)) {
+                const invalidParamError = new Errors.InvalidParamError('advancedOptions');
+                this._fillOpStatusByError(invalidParamError);
+                throw invalidParamError;
+            }
+
+            const { progress } = advancedOptions || {};
+            if (progress !== undefined || typeof progress !== 'boolean') {
+                const invalidParamError = new Errors.InvalidParamError('progress');
+                this._fillOpStatusByError(invalidParamError);
+                throw invalidParamError;
+            }
+
+            const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {};
+
+            if (err) {
+                throw this._cache.opStatus.error;
+            }
+
+            // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
+            this._send([WAMP_MSG_SPEC.CALL, reqId, messageOptions, topic, ...(payloadItems || [])]);
+            this._cache.opStatus = { ...SUCCESS, reqId };
+        }
+
+        return {
+            result: this._calls[reqId].promise,
+            sendData: cb
+        };
     }
 
     /**
