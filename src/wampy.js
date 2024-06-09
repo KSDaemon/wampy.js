@@ -14,11 +14,12 @@
  *
  */
 
-import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS, SUCCESS } from './constants.js';
+import { E2EE_SERIALIZERS, SUCCESS, WAMP_ERROR_MSG, WAMP_MSG_SPEC } from './constants.js';
 import * as Errors from './errors.js';
-import { getWebSocket, getNewPromise } from './utils.js';
-import { JsonSerializer } from './serializers/json-serializer.js';
 import { WebsocketError } from './errors.js';
+import { getNewPromise, getWebSocket } from './utils.js';
+import { JsonSerializer } from './serializers/json-serializer.js';
+
 const jsonSerializer = new JsonSerializer();
 
 /**
@@ -1947,6 +1948,35 @@ class Wampy {
     }
 
     /**
+     * Process CALL advanced options and transform them for the WAMP CALL message Options
+     *
+     * @param {object} advancedOptions
+     * @private
+     * @returns {object}
+     */
+    _getCallMessageOptionsFromAdvancedOptions(advancedOptions) {
+        const {
+            timeout,
+            progress_callback,
+            disclose_me,
+            ppt_scheme,
+            ppt_serializer,
+            ppt_cipher,
+            ppt_keyid
+        } = advancedOptions || {};
+
+        return {
+            ...(progress_callback ? { receive_progress: true } : {}),
+            ...(disclose_me ? { disclose_me: true } : {}),
+            ...(timeout ? { timeout } : {}),
+            ...(ppt_scheme ? { ppt_scheme } : {}),
+            ...(ppt_serializer ? { ppt_serializer } : {}),
+            ...(ppt_cipher ? { ppt_cipher } : {}),
+            ...(ppt_keyid ? { ppt_keyid } : {}),
+        };
+    }
+
+    /**
      * Remote Procedure Call Internal Implementation
      * @param {string} topic - same as in call method
      * @param {string|number|Array|object} [payload] - same as in call method
@@ -1964,7 +1994,7 @@ class Wampy {
             throw invalidParamError;
         }
 
-        const { timeout, progress_callback, disclose_me } = advancedOptions || {};
+        const { timeout, progress_callback, ppt_scheme } = advancedOptions || {};
         const isTimeoutInvalid = (timeout && typeof timeout !== 'number');
         const isProgressCallbackInvalid = (progress_callback && typeof progress_callback !== 'function');
 
@@ -1974,8 +2004,6 @@ class Wampy {
             this._fillOpStatusByError(invalidParamError);
             throw invalidParamError;
         }
-
-        const { ppt_scheme, ppt_serializer, ppt_cipher, ppt_keyid } = advancedOptions || {};
 
         // Check and handle Payload PassThru Mode
         // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
@@ -1988,15 +2016,7 @@ class Wampy {
             reqId = this._getReqId();
         } while (reqId in this._calls);
 
-        const messageOptions = {
-            ...(progress_callback ? { receive_progress: true } : {}),
-            ...(disclose_me ? { disclose_me: true } : {}),
-            ...(timeout ? { timeout } : {}),
-            ...(ppt_scheme ? { ppt_scheme } : {}),
-            ...(ppt_serializer ? { ppt_serializer } : {}),
-            ...(ppt_cipher ? { ppt_cipher } : {}),
-            ...(ppt_keyid ? { ppt_keyid } : {}),
-        };
+        const messageOptions = this._getCallMessageOptionsFromAdvancedOptions(advancedOptions);
 
         const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {};
 
@@ -2102,25 +2122,7 @@ class Wampy {
 
         const reqId = this._callInternal(topic, payload, advancedOptions);
 
-        const {
-            timeout,
-            progress_callback,
-            disclose_me,
-            ppt_scheme,
-            ppt_serializer,
-            ppt_cipher,
-            ppt_keyid
-        } = advancedOptions || {};
-
-        const messageOptions = {
-            ...(progress_callback ? { receive_progress: true } : {}),
-            ...(disclose_me ? { disclose_me: true } : {}),
-            ...(timeout ? { timeout } : {}),
-            ...(ppt_scheme ? { ppt_scheme } : {}),
-            ...(ppt_serializer ? { ppt_serializer } : {}),
-            ...(ppt_cipher ? { ppt_cipher } : {}),
-            ...(ppt_keyid ? { ppt_keyid } : {}),
-        };
+        const messageOptions = this._getCallMessageOptionsFromAdvancedOptions(advancedOptions);
 
         // Now we need to construct the function tha client may call to pass another input data chunk
         const cb = (payload, advancedOptions) => {
