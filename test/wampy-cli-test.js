@@ -27,7 +27,7 @@ describe('Wampy CLI test suite', function () {
     after(function () {
         // Dirty hack 'cause there is no legal way of mocking external dependency
         let data = readFileSync(replaceFileName, { encoding: 'utf8' });
-        data = data.replace('import { FakeWampyMock as Wampy } from \'../test/fakeWampyMock.js\';', 'import { Wampy } from \'../src/wampy.js\';');
+        data = data.replace('import { FakeWampyMock as Wampy } from \'../test/fake-wampy-mock.js\';', 'import { Wampy } from \'../src/wampy.js\';');
         writeFileSync(replaceFileName, data, { encoding: 'utf8' });
     });
 
