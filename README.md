@@ -16,42 +16,42 @@ Javascript client (for browser and node.js)
 ## Table of Contents
 
 <!-- TOC -->
-* [Wampy.js](#wampyjs)
-  * [About](#about)
-  * [Table of Contents](#table-of-contents)
-  * [Description](#description)
-  * [Usage example](#usage-example)
-  * [Installation](#installation)
-  * [Exported components](#exported-components)
-  * [CLI tool](#cli-tool)
-  * [Migrating or Updating versions](#migrating-or-updating-versions)
-  * [API](#api)
-    * [Constructor([url[, options]])](#constructorurl-options)
-    * [options([opts])](#optionsopts)
-    * [getOptions()](#getoptions)
-    * [setOptions([newOptions])](#setoptionsnewoptions)
-    * [getOpStatus()](#getopstatus)
-    * [getSessionId()](#getsessionid)
-    * [connect([url])](#connecturl)
-    * [disconnect()](#disconnect)
-    * [abort()](#abort)
-    * [Ticket-based Authentication](#ticket-based-authentication)
-    * [Challenge Response Authentication](#challenge-response-authentication)
-    * [Cryptosign-based Authentication](#cryptosign-based-authentication)
-    * [Automatically chosen Authentication](#automatically-chosen-authentication)
-    * [subscribe(topicURI, onEvent[, advancedOptions])](#subscribetopicuri-onevent-advancedoptions)
-    * [unsubscribe(subscriptionIdKey[, onEvent])](#unsubscribesubscriptionidkey-onevent)
-    * [publish(topicURI[, payload[, advancedOptions]])](#publishtopicuri-payload-advancedoptions)
-    * [call(topicURI[, payload[, advancedOptions]])](#calltopicuri-payload-advancedoptions)
-    * [cancel(reqId[, advancedOptions])](#cancelreqid-advancedoptions)
-    * [register(topicURI, rpc[, advancedOptions])](#registertopicuri-rpc-advancedoptions)
-    * [unregister(topicURI)](#unregistertopicuri)
-    * [Error handling](#error-handling)
-  * [Using custom serializer](#using-custom-serializer)
-  * [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
-  * [Tests and code coverage](#tests-and-code-coverage)
-  * [Copyright and License](#copyright-and-license)
-  * [See Also](#see-also)
+- [Wampy.js](#wampyjs)
+  - [About](#about)
+  - [Table of Contents](#table-of-contents)
+  - [Description](#description)
+  - [Usage example](#usage-example)
+  - [Installation](#installation)
+  - [Exported components](#exported-components)
+  - [CLI tool](#cli-tool)
+  - [Migrating or Updating versions](#migrating-or-updating-versions)
+  - [API](#api)
+    - [Constructor(\[url\[, options\]\])](#constructorurl-options)
+    - [options(\[opts\])](#optionsopts)
+    - [getOptions()](#getoptions)
+    - [setOptions(\[newOptions\])](#setoptionsnewoptions)
+    - [getOpStatus()](#getopstatus)
+    - [getSessionId()](#getsessionid)
+    - [connect(\[url\])](#connecturl)
+    - [disconnect()](#disconnect)
+    - [abort()](#abort)
+    - [Ticket-based Authentication](#ticket-based-authentication)
+    - [Challenge Response Authentication](#challenge-response-authentication)
+    - [Cryptosign-based Authentication](#cryptosign-based-authentication)
+    - [Automatically chosen Authentication](#automatically-chosen-authentication)
+    - [subscribe(topicURI, onEvent\[, advancedOptions\])](#subscribetopicuri-onevent-advancedoptions)
+    - [unsubscribe(subscriptionIdKey\[, onEvent\])](#unsubscribesubscriptionidkey-onevent)
+    - [publish(topicURI\[, payload\[, advancedOptions\]\])](#publishtopicuri-payload-advancedoptions)
+    - [call(topicURI\[, payload\[, advancedOptions\]\])](#calltopicuri-payload-advancedoptions)
+    - [cancel(reqId\[, advancedOptions\])](#cancelreqid-advancedoptions)
+    - [register(topicURI, rpc\[, advancedOptions\])](#registertopicuri-rpc-advancedoptions)
+    - [unregister(topicURI)](#unregistertopicuri)
+    - [Error handling](#error-handling)
+  - [Using custom serializer](#using-custom-serializer)
+  - [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
+  - [Tests and code coverage](#tests-and-code-coverage)
+  - [Copyright and License](#copyright-and-license)
+  - [See Also](#see-also)
 <!-- TOC -->
 
 ## Description
@@ -439,8 +439,8 @@ Returns the status of last operation. This method returns an object with attribu
 - `reqId` is a Request ID of last successful operation. It is useful in some cases (call canceling for example).
 
 ```javascript
-const defer = ws.publish('system.monitor.update');
-console.log(ws.getOpStatus());
+const defer = wampy.publish('system.monitor.update');
+console.log(wampy.getOpStatus());
 // may return
 //    { code: 1, error: UriError instance }
 // or { code: 2, error: NoBrokerError instance }
@@ -454,7 +454,7 @@ console.log(ws.getOpStatus());
 Returns the WAMP Session ID.
 
 ```javascript
-ws.getSessionId();
+wampy.getSessionId();
 ```
 
 [Back to Table of Contents](#table-of-contents)
@@ -474,9 +474,9 @@ try {
     console.log('connection failed', e);
 }
 
-await ws.connect('/my-socket-path');
+await wampy.connect('/my-socket-path');
 
-const defer = ws.connect('wss://socket.server.com:5000/ws');
+const defer = wampy.connect('wss://socket.server.com:5000/ws');
 ```
 
 [Back to Table of Contents](#table-of-contents)
@@ -489,7 +489,7 @@ Disconnects from wamp server. Clears all queues, subscription, calls. Returns a 
 - Rejected with the thrown [error](#error-handling) (it probably never throws)
 
 ```javascript
-await ws.disconnect();
+await wampy.disconnect();
 ```
 
 [Back to Table of Contents](#table-of-contents)
@@ -501,7 +501,7 @@ If it is called on handshake stage - it sends the `abort` message to wamp server
 Also clears all queues, subscription, calls. Returns wampy instance back.
 
 ```javascript
-ws.abort();
+wampy.abort();
 ```
 
 [Back to Table of Contents](#table-of-contents)
@@ -745,15 +745,15 @@ Returns a `Promise` that's either:
 - Rejected with one of the [Error instances](#error-handling)
 
 ```javascript
-await ws.subscribe('chat.message.received', (eventData) => { console.log('Received new chat message!', eventData); });
+await wampy.subscribe('chat.message.received', (eventData) => { console.log('Received new chat message!', eventData); });
 
 try {
-    const res = await ws.subscribe('some.another.topic',
+    const response = await wampy.subscribe('some.another.topic',
         (eventData) => {
             console.log('Received topic event', eventData);
         }
     );
-    console.log('Successfully subscribed to topic: ' + res.topic);
+    console.log('Successfully subscribed to topic: ' + response.topic);
 
 } catch (e) {
     console.log('Subscription error:' + e.error);
@@ -781,9 +781,9 @@ Returns a `Promise` that's either:
 
 ```javascript
 const f1 = (data) => { console.log('this was event handler for topic') };
-await ws.unsubscribe('subscribed.topic', f1);
+await wampy.unsubscribe('subscribed.topic', f1);
 
-const defer = ws.unsubscribe('chat.message.received');
+const defer = wampy.unsubscribe('chat.message.received');
 ```
 
 [Back to Table of Contents](#table-of-contents)
@@ -837,14 +837,14 @@ Returns a `Promise` that's either:
 - Rejected with one of the [Error instances](#error-handling)
 
 ```javascript
-await ws.publish('user.logged.in');
-await ws.publish('chat.message.received', 'user message');  // will be sent as ['user message1']
-await ws.publish('chat.message.received', ['user message1', 'user message2']);
-await ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
-await ws.publish('chat.message.received', ['Private message'], { eligible: 123456789 });
+await wampy.publish('user.logged.in');
+await wampy.publish('chat.message.received', 'user message');  // will be sent as ['user message1']
+await wampy.publish('chat.message.received', ['user message1', 'user message2']);
+await wampy.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
+await wampy.publish('chat.message.received', ['Private message'], { eligible: 123456789 });
 
 try {
-    await ws.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
+    await wampy.publish('user.modified', { field1: 'field1', field2: true, field3: 123 });
     console.log('User successfully modified');
 } catch (e) {
     console.log('User modification failed', e.error, e.details);
@@ -900,18 +900,18 @@ will be processed on promise returned from the `.call()`. That means that final 
 will be received by call promise `resolve` handler.
 
 ```javascript
-const result = await ws.call('server.time');
+const result = await wampy.call('server.time');
 console.log('Server time is ' + result.argsList[0]);
 
 try {
-    await ws.call('start.migration');
+    await wampy.call('start.migration');
     console.log('RPC successfully called');
 } catch (e) {
     console.log('RPC call failed!', e.error);
 }
 
 try {
-    await ws.call('restore.backup', { backupFile: 'backup.zip' });
+    await wampy.call('restore.backup', { backupFile: 'backup.zip' });
     console.log('Backup successfully restored');
 } catch (e) {
     console.log('Restore failed!', e.error, e.details);
@@ -936,14 +936,14 @@ Returns a `Boolean` or throws an `Error`:
 - `Error` if some error occurred
 
 ```javascript
-const defer = ws.call('start.migration');
+const defer = wampy.call('start.migration');
 defer
     .then((result) => console.log('RPC successfully called'))
     .catch((e) => console.log('RPC call failed!', e));
 
-status = ws.getOpStatus();
+status = wampy.getOpStatus();
 
-ws.cancel(status.reqId);
+wampy.cancel(status.reqId);
 ```
 
 [Back to Table of Contents](#table-of-contents)
@@ -1001,10 +1001,10 @@ next attributes:
 ```javascript
 const sqrt_f = function (data) { return { result: data.argsList[0]*data.argsList[0] } };
 
-await ws.register('sqrt.value', sqrt_f);
+await wampy.register('sqrt.value', sqrt_f);
 
 try {
-    await ws.register('sqrt.value', sqrt_f);
+    await wampy.register('sqrt.value', sqrt_f);
     console.log('RPC successfully registered');
 } catch (e) {
     console.log('RPC registration failed!', e);
@@ -1025,7 +1025,7 @@ const getUserName = () => {
     });
 };
 
-ws.register('get.user.name', getUserName);
+wampy.register('get.user.name', getUserName);
 ```
 
 Also, it is possible to abort rpc processing and throw error with custom application specific data.
@@ -1098,10 +1098,10 @@ Returns a `Promise` that's either:
 - Rejected with one of the [Error instances](#error-handling)
 
 ```javascript
-await ws.unregister('sqrt.value');
+await wampy.unregister('sqrt.value');
 
 try {
-    ws.unregister('sqrt.value');
+    wampy.unregister('sqrt.value');
     console.log('RPC successfully unregistered');
 } catch (e) {
     console.log('RPC unregistration failed!', e);
