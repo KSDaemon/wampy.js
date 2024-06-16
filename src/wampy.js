@@ -1957,6 +1957,7 @@ class Wampy {
     _getCallMessageOptionsFromAdvancedOptions(advancedOptions) {
         const {
             timeout,
+            progress,
             progress_callback,
             disclose_me,
             ppt_scheme,
@@ -1967,6 +1968,7 @@ class Wampy {
 
         return {
             ...(progress_callback ? { receive_progress: true } : {}),
+            ...(progress ? { progress: true } : {}),
             ...(disclose_me ? { disclose_me: true } : {}),
             ...(timeout ? { timeout } : {}),
             ...(ppt_scheme ? { ppt_scheme } : {}),
@@ -2120,6 +2122,8 @@ class Wampy {
             throw this._cache.opStatus.error;
         }
 
+        advancedOptions = advancedOptions || {};
+        advancedOptions.progress = true;    // Implicitly set the progress flag before making the first call
         const reqId = this._callInternal(topic, payload, advancedOptions);
 
         const messageOptions = this._getCallMessageOptionsFromAdvancedOptions(advancedOptions);
@@ -2132,11 +2136,16 @@ class Wampy {
                 throw invalidParamError;
             }
 
+            const msgOpt = messageOptions;
             const { progress } = advancedOptions || {};
-            if (progress !== undefined || typeof progress !== 'boolean') {
-                const invalidParamError = new Errors.InvalidParamError('progress');
-                this._fillOpStatusByError(invalidParamError);
-                throw invalidParamError;
+            if (progress !== undefined) {
+                if (typeof progress === 'boolean') {
+                    msgOpt.progress = progress;
+                } else {
+                    const invalidParamError = new Errors.InvalidParamError('progress');
+                    this._fillOpStatusByError(invalidParamError);
+                    throw invalidParamError;
+                }
             }
 
             const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {};
