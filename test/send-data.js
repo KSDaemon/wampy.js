@@ -1678,7 +1678,7 @@ const WAMP_MSG_SPEC = {
                 WAMP_MSG_SPEC.RESULT,
                 'RequestId',
                 { progress: true },
-                [50]
+                [555]
             ],
             from: [1],
             to: [1]
@@ -1699,6 +1699,126 @@ const WAMP_MSG_SPEC = {
             data: [
                 WAMP_MSG_SPEC.UNREGISTERED,
                 'RequestId'
+            ],
+            from: [1],
+            to: [1]
+        },
+        // disallows progressive call invocations if dealer does not support it
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                7,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        dealer: {
+                            features: {
+                                caller_identification   : true,
+                                progressive_call_results: true,
+                                call_timeout            : true,
+                                payload_passthru_mode   : true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        // allows progressive call invocations
+        {
+            data: [
+                WAMP_MSG_SPEC.GOODBYE,
+                {},
+                'wamp.error.goodbye_and_out'
+            ]
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.WELCOME,
+                7,
+                {
+                    agent: 'Wampy.js test suite',
+                    roles: {
+                        dealer: {
+                            features: {
+                                caller_identification       : true,
+                                progressive_call_results    : true,
+                                progressive_call_invocations: true,
+                                call_canceling              : true,
+                                call_timeout                : true,
+                                payload_passthru_mode       : true
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            data: null,
+            silent: true
+        },
+        {
+            data: null,
+            silent: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [100]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows progressive call invocations with progressive result receiving
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { progress: true },
+                [1]
+            ],
+            from: [1],
+            to: [1],
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                { progress: true },
+                [2]
+            ],
+            from: [1],
+            to: [1],
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [3]
+            ],
+            from: [1],
+            to: [1]
+        },
+        // checks for advanced options during progressive call invocations
+        {
+            data: null,
+            silent: true
+        },
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                [100]
             ],
             from: [1],
             to: [1]
