@@ -17,7 +17,7 @@
     "eslint-plugin-mocha": "^10.4.3",
     "eslint-plugin-security": "^3.0.0",
     "eslint-plugin-unicorn": "^53.0.0",
-    "globals": "^15.4.0",
+    "globals": "^15.6.0",
     "grunt": "^1.5.3",
     "grunt-babel": "^8.0.0",
     "grunt-browserify": "^6.0.0",
