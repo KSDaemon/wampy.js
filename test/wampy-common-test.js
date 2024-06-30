@@ -2059,7 +2059,7 @@ for (const item of serializers) {
                             await wampy.connect();
 
                             try {
-                                await wampy.progressiveCall('call.rpc9', 'payload');
+                                wampy.progressiveCall('call.rpc9', 'payload');
                             } catch (e) {
                                 expect(e).to.be.instanceOf(Errors.FeatureNotSupportedError);
                                 done();
@@ -2076,7 +2076,7 @@ for (const item of serializers) {
                         setTimeout(async function () {
                             await wampy.connect();
 
-                            const { sendData, result } = await wampy.progressiveCall('call.rpc.progressive', 1);
+                            const { sendData, result } = wampy.progressiveCall('call.rpc.progressive', 1);
 
                             try {
                                 sendData(50);
@@ -2101,7 +2101,7 @@ for (const item of serializers) {
                 let resArg = 1;
 
                 const { sendData, result } =
-                    await wampy.progressiveCall('call.rpc.progressive', 1, {
+                    wampy.progressiveCall('call.rpc.progressive', 1, {
                         progress_callback: function (e) {
                             expect(e).to.be.an('object');
                             expect(e.argsList).to.be.an('array');
@@ -2123,7 +2123,7 @@ for (const item of serializers) {
             it('checks for advanced options during progressive call invocations', async function () {
                 let resArg = 1;
 
-                const { sendData, result } = await wampy.progressiveCall('call.rpc.progressive', 1);
+                const { sendData, result } = wampy.progressiveCall('call.rpc.progressive', 1);
 
                 try {
                     sendData(2, 'invalid_options');
