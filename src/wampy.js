@@ -2080,7 +2080,7 @@ class Wampy {
      *                              progress: bool flag, indicating the ongoing (true) or final (false) call invocation.
      *                                        If this parameter is omitted - it is treated as TRUE, meaning the
      *                                        intermediate ongoing call invocation. For the final call invocation
-     *                                        this flag should be passed and set to FALSE. In other case the call
+     *                                        this flag must be passed and set to FALSE. In other case the call
      *                                        invocation wil never end.
      *                           }
      */
@@ -2117,7 +2117,7 @@ class Wampy {
      *                          }
      * @returns {ProgressiveCallReturn} - An object containing the result promise and the sendData function.
      */
-    async progressiveCall (topic, payload, advancedOptions) {
+    progressiveCall (topic, payload, advancedOptions) {
         if (!this._checkRouterFeature('dealer', 'progressive_call_invocations')) {
             throw this._cache.opStatus.error;
         }
