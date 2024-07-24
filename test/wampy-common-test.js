@@ -1999,6 +1999,7 @@ for (const item of serializers) {
                 expect(progress).to.be.true;
             });
 
+
             it('checks options during canceling RPC invocation', function (done) {
                 let reqId;  // eslint-disable-line prefer-const
 
@@ -2049,6 +2050,100 @@ for (const item of serializers) {
 
             it('allows to unregister RPC', async function () {
                 return wampy.unregister('register.rpc1');
+            });
+
+            it('disallows progressive call invocations if dealer does not support it', function(done) {
+                wampy.setOptions({
+                    onClose: function () {
+                        setTimeout(async function () {
+                            await wampy.connect();
+
+                            try {
+                                wampy.progressiveCall('call.rpc9', 'payload');
+                            } catch (e) {
+                                expect(e).to.be.instanceOf(Errors.FeatureNotSupportedError);
+                                done();
+                            }
+                        }, 1);
+                    }
+                }).disconnect();
+            });
+
+            it('allows progressive call invocations', function(done) {
+                wampy.setOptions({
+                    onClose: function () {
+                        wampy.setOptions({ onClose: null });
+                        setTimeout(async function () {
+                            await wampy.connect();
+
+                            const { sendData, result } = wampy.progressiveCall('call.rpc.progressive', 1);
+
+                            try {
+                                sendData(50);
+                                sendData(100, { progress: false });
+                            } catch (e) {
+                                done(e);
+                            }
+
+                            const res = await result;
+                            expect(res).to.be.an('object');
+                            expect(res.argsList).to.be.an('array');
+                            expect(res.argsDict).to.be.undefined;
+                            expect(res.argsList[0]).to.be.equal(100);
+                            done();
+
+                        }, 1);
+                    }
+                }).disconnect();
+            });
+
+            it('allows progressive call invocations with progressive result receiving', async function () {
+                let resArg = 1;
+
+                const { sendData, result } =
+                    wampy.progressiveCall('call.rpc.progressive', 1, {
+                        progress_callback: function (e) {
+                            expect(e).to.be.an('object');
+                            expect(e.argsList).to.be.an('array');
+                            expect(e.argsDict).to.be.undefined;
+                            expect(e.argsList[0]).to.be.equal(resArg++);
+                        }
+                    });
+
+                sendData(50);
+                sendData(100, { progress: false });
+
+                const res = await result;
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(3);
+            });
+
+            it('checks for advanced options during progressive call invocations', async function () {
+                let resArg = 1;
+
+                const { sendData, result } = wampy.progressiveCall('call.rpc.progressive', 1);
+
+                try {
+                    sendData(2, 'invalid_options');
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+
+                try {
+                    sendData(2, { progress: 'string instead of boolean'});
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.InvalidParamError);
+                }
+
+                sendData(100, { progress: false });
+
+                const res = await result;
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList[0]).to.be.equal(100);
             });
 
             it('allows to invoke asynchronous RPC without value', async function () {

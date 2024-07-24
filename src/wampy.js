@@ -14,11 +14,12 @@
  *
  */
 
-import { WAMP_MSG_SPEC, WAMP_ERROR_MSG, E2EE_SERIALIZERS, SUCCESS } from './constants.js';
+import { E2EE_SERIALIZERS, SUCCESS, WAMP_ERROR_MSG, WAMP_MSG_SPEC } from './constants.js';
 import * as Errors from './errors.js';
-import { getWebSocket, getNewPromise } from './utils.js';
-import { JsonSerializer } from './serializers/json-serializer.js';
 import { WebsocketError } from './errors.js';
+import { getNewPromise, getWebSocket } from './utils.js';
+import { JsonSerializer } from './serializers/json-serializer.js';
+
 const jsonSerializer = new JsonSerializer();
 
 /**
@@ -1947,6 +1948,97 @@ class Wampy {
     }
 
     /**
+     * Process CALL advanced options and transform them for the WAMP CALL message Options
+     *
+     * @param {object} advancedOptions
+     * @private
+     * @returns {object}
+     */
+    _getCallMessageOptionsFromAdvancedOptions(advancedOptions) {
+        const {
+            timeout,
+            progress,
+            progress_callback,
+            disclose_me,
+            ppt_scheme,
+            ppt_serializer,
+            ppt_cipher,
+            ppt_keyid
+        } = advancedOptions || {};
+
+        return {
+            ...(progress_callback ? { receive_progress: true } : {}),
+            ...(progress ? { progress: true } : {}),
+            ...(disclose_me ? { disclose_me: true } : {}),
+            ...(timeout ? { timeout } : {}),
+            ...(ppt_scheme ? { ppt_scheme } : {}),
+            ...(ppt_serializer ? { ppt_serializer } : {}),
+            ...(ppt_cipher ? { ppt_cipher } : {}),
+            ...(ppt_keyid ? { ppt_keyid } : {}),
+        };
+    }
+
+    /**
+     * Remote Procedure Call Internal Implementation
+     * @param {string} topic - same as in call method
+     * @param {string|number|Array|object} [payload] - same as in call method
+     * @param {object} [advancedOptions] - same as in call method
+     * @returns {number} Request ID
+     */
+    _callInternal(topic, payload, advancedOptions) {
+        if (!this._preReqChecks({ topic, patternBased: false, allowWAMP: true }, 'dealer')) {
+            throw this._cache.opStatus.error;
+        }
+
+        if (advancedOptions && !this._isPlainObject(advancedOptions)) {
+            const invalidParamError = new Errors.InvalidParamError('advancedOptions');
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
+        }
+
+        const { timeout, progress_callback, ppt_scheme } = advancedOptions || {};
+        const isTimeoutInvalid = (timeout && typeof timeout !== 'number');
+        const isProgressCallbackInvalid = (progress_callback && typeof progress_callback !== 'function');
+
+        if (isTimeoutInvalid || isProgressCallbackInvalid) {
+            const paramName = isTimeoutInvalid ? 'timeout' : 'progress_callback';
+            const invalidParamError = new Errors.InvalidParamError(paramName);
+            this._fillOpStatusByError(invalidParamError);
+            throw invalidParamError;
+        }
+
+        // Check and handle Payload PassThru Mode
+        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
+        if (ppt_scheme && !this._checkPPTOptions('dealer', advancedOptions)) {
+            throw this._cache.opStatus.error;
+        }
+
+        let reqId;
+        do {
+            reqId = this._getReqId();
+        } while (reqId in this._calls);
+
+        const messageOptions = this._getCallMessageOptionsFromAdvancedOptions(advancedOptions);
+
+        const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {};
+
+        if (err) {
+            throw this._cache.opStatus.error;
+        }
+
+        // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
+        this._send([WAMP_MSG_SPEC.CALL, reqId, messageOptions, topic, ...(payloadItems || [])]);
+        this._cache.opStatus = { ...SUCCESS, reqId };
+        this._calls[reqId] = getNewPromise();
+
+        if (progress_callback) {
+            this._calls[reqId].onProgress = progress_callback;
+        }
+
+        return reqId;
+    }
+
+    /**
      * Remote Procedure Call
      * @param {string} topic - a topic URI to be called
      * @param {string|number|Array|object} [payload] - can be either a value of any type or null. Also, it
@@ -1970,66 +2062,107 @@ class Wampy {
      * @returns {Promise}
      */
     async call (topic, payload, advancedOptions) {
-        if (!this._preReqChecks({ topic, patternBased: false, allowWAMP: true }, 'dealer')) {
-            throw this._cache.opStatus.error;
-        }
-
-        if (advancedOptions && !this._isPlainObject(advancedOptions)) {
-            const invalidParamError = new Errors.InvalidParamError('advancedOptions');
-            this._fillOpStatusByError(invalidParamError);
-            throw invalidParamError;
-        }
-
-        const { timeout, progress_callback, disclose_me } = advancedOptions || {};
-        const isTimeoutInvalid = (timeout && typeof timeout !== 'number');
-        const isProgressCallbackInvalid = (progress_callback && typeof progress_callback !== 'function');
-
-        if (isTimeoutInvalid || isProgressCallbackInvalid) {
-            const paramName = isTimeoutInvalid ? 'timeout' : 'progress_callback';
-            const invalidParamError = new Errors.InvalidParamError(paramName);
-            this._fillOpStatusByError(invalidParamError);
-            throw invalidParamError;
-        }
-
-        const { ppt_scheme, ppt_serializer, ppt_cipher, ppt_keyid } = advancedOptions || {};
-
-        // Check and handle Payload PassThru Mode
-        // @see https://wamp-proto.org/wamp_latest_ietf.html#name-payload-passthru-mode
-        if (ppt_scheme && !this._checkPPTOptions('dealer', advancedOptions)) {
-            throw this._cache.opStatus.error;
-        }
-
-        let reqId;
-        do {
-            reqId = this._getReqId();
-        } while (reqId in this._calls);
-
-        const messageOptions = {
-            ...(progress_callback ? { receive_progress: true } : {}),
-            ...(disclose_me ? { disclose_me: true } : {}),
-            ...(timeout ? { timeout } : {}),
-            ...(ppt_scheme ? { ppt_scheme } : {}),
-            ...(ppt_serializer ? { ppt_serializer } : {}),
-            ...(ppt_cipher ? { ppt_cipher } : {}),
-            ...(ppt_keyid ? { ppt_keyid } : {}),
-        };
-
-        const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {};
-
-        if (err) {
-            throw this._cache.opStatus.error;
-        }
-
-        // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
-        this._send([WAMP_MSG_SPEC.CALL, reqId, messageOptions, topic, ...(payloadItems || [])]);
-        this._cache.opStatus = { ...SUCCESS, reqId };
-        this._calls[reqId] = getNewPromise();
-
-        if (progress_callback) {
-            this._calls[reqId].onProgress = progress_callback;
-        }
-
+        const reqId = this._callInternal(topic, payload, advancedOptions);
         return this._calls[reqId].promise;
+    }
+
+    /**
+     * @typedef {function} ProgressiveCallSendData
+     * @param {string|number|Array|object} [payload] - can be either a value of any type or null. Also, it
+     *                           is possible to pass array and object-like data simultaneously.
+     *                           In this case pass a hash-table with next attributes:
+     *                           {
+     *                              argsList: array payload (maybe omitted)
+     *                              argsDict: object payload (maybe omitted)
+     *                           }
+     * @param {object} [advancedOptions] - optional parameter - Must include next options:
+     *                           {
+     *                              progress: bool flag, indicating the ongoing (true) or final (false) call invocation.
+     *                                        If this parameter is omitted - it is treated as TRUE, meaning the
+     *                                        intermediate ongoing call invocation. For the final call invocation
+     *                                        this flag must be passed and set to FALSE. In other case the call
+     *                                        invocation wil never end.
+     *                           }
+     */
+    /**
+     * @typedef {Object} ProgressiveCallReturn
+     * @property {Promise} result - A promise that resolves to the result of the RPC call.
+     * @property {ProgressiveCallSendData} sendData - A function to send additional data to the ongoing RPC call.
+     */
+    /**
+     * Remote Procedure Progressive Call
+     *
+     * You can send additional input data which won't be treated as a new independent but instead
+     * will be transferred as another input data chunk to the same remote procedure call. Of course
+     * Callee and Dealer should support the "progressive_call_invocations" feature as well.
+     *
+     * @param {string} topic - a topic URI to be called
+     * @param {string|number|Array|object} [payload] - can be either a value of any type or null. Also, it
+     *                          is possible to pass array and object-like data simultaneously.
+     *                          In this case pass a hash-table with next attributes:
+     *                          {
+     *                             argsList: array payload (maybe omitted)
+     *                             argsDict: object payload (maybe omitted)
+     *                          }
+     * @param {object} [advancedOptions] - optional parameter. Must include any or all of the options:
+     *                          { disclose_me:      bool flag of disclosure of Caller identity (WAMP session ID)
+     *                                              to endpoints of a routed call
+     *                            progress_callback: function for handling progressive call results
+     *                            timeout:          integer timeout (in ms) for the call to finish
+     *                            ppt_scheme: string Identifies the Payload Schema
+     *                            ppt_serializer: string Specifies what serializer was used to encode the payload
+     *                            ppt_cipher: string Specifies the cryptographic algorithm that was used to encrypt
+     *                                the payload
+     *                            ppt_keyid: string Contains the encryption key id that was used to encrypt the payload
+     *                          }
+     * @returns {ProgressiveCallReturn} - An object containing the result promise and the sendData function.
+     */
+    progressiveCall (topic, payload, advancedOptions) {
+        if (!this._checkRouterFeature('dealer', 'progressive_call_invocations')) {
+            throw this._cache.opStatus.error;
+        }
+
+        advancedOptions = advancedOptions || {};
+        advancedOptions.progress = true;    // Implicitly set the progress flag before making the first call
+        const reqId = this._callInternal(topic, payload, advancedOptions);
+
+        const messageOptions = this._getCallMessageOptionsFromAdvancedOptions(advancedOptions);
+
+        // Now we need to construct the function tha client may call to pass another input data chunk
+        const cb = (payload, advancedOptions) => {
+            if (advancedOptions && !this._isPlainObject(advancedOptions)) {
+                const invalidParamError = new Errors.InvalidParamError('advancedOptions');
+                this._fillOpStatusByError(invalidParamError);
+                throw invalidParamError;
+            }
+
+            const msgOpt = messageOptions;
+            const { progress } = advancedOptions || {};
+            if (progress !== undefined) {
+                if (typeof progress === 'boolean') {
+                    msgOpt.progress = progress;
+                } else {
+                    const invalidParamError = new Errors.InvalidParamError('progress');
+                    this._fillOpStatusByError(invalidParamError);
+                    throw invalidParamError;
+                }
+            }
+
+            const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {};
+
+            if (err) {
+                throw this._cache.opStatus.error;
+            }
+
+            // WAMP SPEC: [CALL, Request|id, Options|dict, Procedure|uri, (Arguments|list, ArgumentsKw|dict)]
+            this._send([WAMP_MSG_SPEC.CALL, reqId, messageOptions, topic, ...(payloadItems || [])]);
+            this._cache.opStatus = { ...SUCCESS, reqId };
+        }
+
+        return {
+            result: this._calls[reqId].promise,
+            sendData: cb
+        };
     }
 
     /**

@@ -16,42 +16,43 @@ Javascript client (for browser and node.js)
 ## Table of Contents
 
 <!-- TOC -->
-- [Wampy.js](#wampyjs)
-  - [About](#about)
-  - [Table of Contents](#table-of-contents)
-  - [Description](#description)
-  - [Usage example](#usage-example)
-  - [Installation](#installation)
-  - [Exported components](#exported-components)
-  - [CLI tool](#cli-tool)
-  - [Migrating or Updating versions](#migrating-or-updating-versions)
-  - [API](#api)
-    - [Constructor(\[url\[, options\]\])](#constructorurl-options)
-    - [options(\[opts\])](#optionsopts)
-    - [getOptions()](#getoptions)
-    - [setOptions(\[newOptions\])](#setoptionsnewoptions)
-    - [getOpStatus()](#getopstatus)
-    - [getSessionId()](#getsessionid)
-    - [connect(\[url\])](#connecturl)
-    - [disconnect()](#disconnect)
-    - [abort()](#abort)
-    - [Ticket-based Authentication](#ticket-based-authentication)
-    - [Challenge Response Authentication](#challenge-response-authentication)
-    - [Cryptosign-based Authentication](#cryptosign-based-authentication)
-    - [Automatically chosen Authentication](#automatically-chosen-authentication)
-    - [subscribe(topicURI, onEvent\[, advancedOptions\])](#subscribetopicuri-onevent-advancedoptions)
-    - [unsubscribe(subscriptionIdKey\[, onEvent\])](#unsubscribesubscriptionidkey-onevent)
-    - [publish(topicURI\[, payload\[, advancedOptions\]\])](#publishtopicuri-payload-advancedoptions)
-    - [call(topicURI\[, payload\[, advancedOptions\]\])](#calltopicuri-payload-advancedoptions)
-    - [cancel(reqId\[, advancedOptions\])](#cancelreqid-advancedoptions)
-    - [register(topicURI, rpc\[, advancedOptions\])](#registertopicuri-rpc-advancedoptions)
-    - [unregister(topicURI)](#unregistertopicuri)
-    - [Error handling](#error-handling)
-  - [Using custom serializer](#using-custom-serializer)
-  - [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
-  - [Tests and code coverage](#tests-and-code-coverage)
-  - [Copyright and License](#copyright-and-license)
-  - [See Also](#see-also)
+* [Wampy.js](#wampyjs)
+  * [About](#about)
+  * [Table of Contents](#table-of-contents)
+  * [Description](#description)
+  * [Usage example](#usage-example)
+  * [Installation](#installation)
+  * [Exported components](#exported-components)
+  * [CLI tool](#cli-tool)
+  * [Migrating or Updating versions](#migrating-or-updating-versions)
+  * [API](#api)
+    * [Constructor([url[, options]])](#constructorurl-options)
+    * [options([opts])](#optionsopts)
+    * [getOptions()](#getoptions)
+    * [setOptions([newOptions])](#setoptionsnewoptions)
+    * [getOpStatus()](#getopstatus)
+    * [getSessionId()](#getsessionid)
+    * [connect([url])](#connecturl)
+    * [disconnect()](#disconnect)
+    * [abort()](#abort)
+    * [Ticket-based Authentication](#ticket-based-authentication)
+    * [Challenge Response Authentication](#challenge-response-authentication)
+    * [Cryptosign-based Authentication](#cryptosign-based-authentication)
+    * [Automatically chosen Authentication](#automatically-chosen-authentication)
+    * [subscribe(topicURI, onEvent[, advancedOptions])](#subscribetopicuri-onevent-advancedoptions)
+    * [unsubscribe(subscriptionIdKey[, onEvent])](#unsubscribesubscriptionidkey-onevent)
+    * [publish(topicURI[, payload[, advancedOptions]])](#publishtopicuri-payload-advancedoptions)
+    * [call(topicURI[, payload[, advancedOptions]])](#calltopicuri-payload-advancedoptions)
+    * [progressiveCall(topicURI[, payload[, advancedOptions]])](#progressivecalltopicuri-payload-advancedoptions)
+    * [cancel(reqId[, advancedOptions])](#cancelreqid-advancedoptions)
+    * [register(topicURI, rpc[, advancedOptions])](#registertopicuri-rpc-advancedoptions)
+    * [unregister(topicURI)](#unregistertopicuri)
+    * [Error handling](#error-handling)
+  * [Using custom serializer](#using-custom-serializer)
+  * [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
+  * [Tests and code coverage](#tests-and-code-coverage)
+  * [Copyright and License](#copyright-and-license)
+  * [See Also](#see-also)
 <!-- TOC -->
 
 ## Description
@@ -82,12 +83,15 @@ Wampy.js supports the following WAMP roles and features:
   - event retention
 - caller:
   - caller identification
+  - progressive call invocations
   - progressive call results
   - call canceling
   - call timeout
   - payload passthru mode
 - callee:
   - caller identification
+  - progressive call invocations
+  - progressive call results
   - call trust levels
   - pattern-based registration
   - shared registration
@@ -98,7 +102,7 @@ Wampy supports the following serializers:
 - JSON (default, native)
 - MsgPack (See [MessagePack][] Site for more info)
 - CBOR (See [CBOR][] Site for more info)
-- Any new serializer can be added easily
+- Any new serializer can be easily added
 
 In node.js environment Wampy is compatible with the following websocket clients:
 
@@ -325,7 +329,8 @@ wampy = new Wampy({
 
 ### options([opts])
 
-.options() method is now deprecated, so this is here only for documentation purposes. Please use `getOptions()/setOptions()` instead.
+.options() method is now deprecated, so this is here only for documentation purposes. Please
+use `getOptions()/setOptions()` instead.
 
 .options() can be called in two forms:
 -- without parameters it will behave the same as new method [getOptions()](#getoptions)
@@ -916,6 +921,60 @@ try {
 } catch (e) {
     console.log('Restore failed!', e.error, e.details);
 }
+```
+
+[Back to Table of Contents](#table-of-contents)
+
+### progressiveCall(topicURI[, payload[, advancedOptions]])
+
+Make an RPC progressive invocation call to topicURI.
+
+Input parameters to this function are the same as described in the [call()](#calltopicuri-payload-advancedoptions)
+above. The difference is in the result.
+
+Returns an object containing the result promise and the `sendData` function
+which is supposed to be used to send additional data chunks in bounds of the
+initiated remote procedure call:
+
+- **result**. A promise that resolves to the result of the RPC call.
+- **sendData**. A function to send additional data to the ongoing RPC call.
+  This function has signature: `([payload], [advancedOptions])`:
+  - **payload**. RPC data. Optional. Same as in [call()](#calltopicuri-payload-advancedoptions).
+  - **advancedOptions**. Optional parameters hash table with properties:
+      - **progress**. Bool. Flag, indicating the ongoing (true) or final (false) call invocation.
+        If this parameter is omitted - it is treated as TRUE, meaning the
+        intermediate ongoing call invocation. For the final call invocation
+        this flag must be passed and set to FALSE. In other case the call
+        invocation wil never end.
+  - function returns nothing, but exception maybe thrown in case of error.
+
+```javascript
+let pc;
+try {
+    pc = ws.progressiveCall('sum.numbers', 1);
+} catch (e) {
+    console.log('RPC call failed!', e.error);
+}
+
+// Somewhere where you have additional data to be send to the procedure
+try {
+    pc.sendData(2);
+    pc.sendData(3);
+    pc.sendData(4);
+    // This is final data chunk, so the Callee can understand that
+    // no more input data will be send and it can finish its
+    // calculations and send the result.
+    // Note that nothing stops the Callee to send the
+    // intermediate results if that makes sense.
+    pc.sendData(5, { progress: false });
+} catch (e) {
+    console.log('RPC call send data failed!', e.error);
+}
+
+
+// And here we are waiting for the final call result
+const res = await pc.result
+console.log("Res:", res); // Res: 15
 ```
 
 [Back to Table of Contents](#table-of-contents)
