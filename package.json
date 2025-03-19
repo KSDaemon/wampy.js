@@ -70,7 +70,7 @@
   },
   "type": "module",
   "dependencies": {
-    "cbor-x": "^1.5.3",
+    "cbor-x": "^1.6.0",
     "color-json": "^3.0.5",
     "msgpackr": "^1.11.0",
     "tweetnacl": "^1.0.3",
