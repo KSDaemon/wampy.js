@@ -75,7 +75,7 @@
     "msgpackr": "^1.11.2",
     "tweetnacl": "^1.0.3",
     "websocket": "^1.0.34",
-    "ws": "^8.18.0",
+    "ws": "^8.18.1",
     "yargs": "^17.7.2"
   },
   "repository": {
