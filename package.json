@@ -72,7 +72,7 @@
   "dependencies": {
     "cbor-x": "^1.6.0",
     "color-json": "^3.0.5",
-    "msgpackr": "^1.11.0",
+    "msgpackr": "^1.11.2",
     "tweetnacl": "^1.0.3",
     "websocket": "^1.0.34",
     "ws": "^8.18.0",
