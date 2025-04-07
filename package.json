@@ -4,7 +4,7 @@
   "description": "Amazingly fast, feature-rich, lightweight WAMP Javascript client (for browser and node.js)",
   "author": "Konstantin Burkalev <KSDaemon@gmail.com> (https://ksdaemon.com)",
   "devDependencies": {
-    "@babel/core": "^7.24.9",
+    "@babel/core": "^7.26.10",
     "@babel/preset-env": "^7.26.9",
     "@babel/register": "^7.24.6",
     "@eslint/js": "^9.7.0",
