@@ -76,7 +76,7 @@
     "tweetnacl": "^1.0.3",
     "websocket": "^1.0.34",
     "ws": "^8.18.2",
-    "yargs": "^17.7.2"
+    "yargs": "^18.0.0"
   },
   "repository": {
     "type": "git",
