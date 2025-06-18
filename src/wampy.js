@@ -1781,7 +1781,8 @@ class Wampy {
         this._requests[reqId] = { topic, callbacks, advancedOptions };
 
         // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
-        this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, { match, get_retained }, topic]);
+        const options = { match, get_retained, ...this._extractCustomAttributes(advancedOptions) };
+        this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, options, topic]);
         this._cache.opStatus = { ...SUCCESS, reqId: reqId || 0 };
 
         return callbacks.promise;
@@ -1931,6 +1932,7 @@ class Wampy {
             ...(ppt_keyid ? { ppt_keyid } : {}),
             ...(exclude_me ? { exclude_me } : {}),
             ...(disclose_me ? { disclose_me } : {}),
+            ...this._extractCustomAttributes(advancedOptions)
         };
 
         const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {};
@@ -1945,6 +1947,23 @@ class Wampy {
         this._send([WAMP_MSG_SPEC.PUBLISH, reqId, messageOptions, topic, ...(payloadItems || [])]);
 
         return this._requests[reqId].callbacks.promise;
+    }
+
+    /**
+     * Extract custom attributes from advanced options as per WAMP spec 3.1
+     *
+     * @param {object} advancedOptions
+     * @private
+     * @returns {object}
+     */
+    _extractCustomAttributes(advancedOptions) {
+        const customAttrs = {};
+        for (const key in advancedOptions || {}) {
+            if (WAMP_CUSTOM_ATTR_REGEX.test(key)) {
+                customAttrs[key] = advancedOptions[key];
+            }
+        }
+        return customAttrs;
     }
 
     /**
@@ -1979,13 +1998,7 @@ class Wampy {
         if (ppt_keyid) result.ppt_keyid = ppt_keyid;
 
         // Extract custom attributes (starting with underscore) as per WAMP spec 3.1
-        for (const key in rest) {
-            if (WAMP_CUSTOM_ATTR_REGEX.test(key)) {
-                result[key] = rest[key];
-            }
-        }
-
-        return result;
+        return { ...result, ...this._extractCustomAttributes(rest) };
     }
 
     /**
@@ -2270,6 +2283,7 @@ class Wampy {
         const options = {
             ... (match ? { match } : {}),
             ... (invoke ? { invoke } : {}),
+            ...this._extractCustomAttributes(advancedOptions)
         };
 
         if (rpc) {
