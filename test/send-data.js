@@ -1606,6 +1606,28 @@ const WAMP_MSG_SPEC = {
             from: [1],
             to: [1]
         },
+        // allows to call RPC with custom attributes (WAMP spec 3.1)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                ['payload']
+            ],
+            from: [1],
+            to: [1]
+        },
+        // ignores invalid custom attributes (WAMP spec 3.1)
+        {
+            data: [
+                WAMP_MSG_SPEC.RESULT,
+                'RequestId',
+                {},
+                ['payload']
+            ],
+            from: [1],
+            to: [1]
+        },
         // allows to call RPC with progressive result receiving
         {
             data: [

@@ -1981,6 +1981,36 @@ for (const item of serializers) {
                 expect(res.argsList[0]).to.be.equal('payload');
             });
 
+            it('allows to call RPC with custom attributes (WAMP spec 3.1)', async function () {
+                const res = await wampy.call('call.rpc.custom_attrs', 'payload', {
+                    timeout: 5000,
+                    disclose_me: true,
+                    _custom_attr: 'test_value',
+                    _app_specific: { nested: 'data' },
+                    _version123: [1, 2, 3],
+                    regular_option: 'should_be_ignored'
+                });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList[0]).to.be.equal('payload');
+            });
+
+            it('ignores invalid custom attributes (WAMP spec 3.1)', async function () {
+                const res = await wampy.call('call.rpc.invalid_attrs', 'payload', {
+                    timeout: 3000,
+                    _valid_attr: 'should_pass',
+                    _abc: 'should_also_pass',
+                    _ab: 'too_short',
+                    _x: 'also_too_short',
+                    _UPPER: 'uppercase_invalid',
+                    '_special-char': 'hyphen_invalid',
+                    regular_attr: 'no_underscore'
+                });
+                expect(res).to.be.an('object');
+                expect(res.argsList).to.be.an('array');
+                expect(res.argsList[0]).to.be.equal('payload');
+            });
+
             it('allows to call RPC with progressive result receiving', async function () {
                 let progress = false;
                 const res = await wampy.call(
