@@ -981,6 +981,16 @@ const WAMP_MSG_SPEC = {
                 { topic: 'subscribe.two.wildcard' }
             ]
         },
+        // allows to subscribe with custom options (WAMP spec 3.1)
+        {
+            data: [
+                WAMP_MSG_SPEC.SUBSCRIBED,
+                'RequestId',
+                4999   // Subscription ID
+            ],
+            from: [1],
+            to: [1]
+        },
         // allows to publish event without payload
         {
             data: [
@@ -1320,6 +1330,16 @@ const WAMP_MSG_SPEC = {
                 ['payload']
             ]
         },
+        // allows to publish event with custom options (WAMP spec 3.1)
+        {
+            data: [
+                WAMP_MSG_SPEC.PUBLISHED,
+                'RequestId',
+                5999   // Publication ID
+            ],
+            from: [1],
+            to: [1]
+        },
         // allows to unsubscribe from topic only specified handler
         {
             data: [
@@ -1624,6 +1644,16 @@ const WAMP_MSG_SPEC = {
                 'RequestId',
                 {},
                 ['payload']
+            ],
+            from: [1],
+            to: [1]
+        },
+        // allows to register RPC with custom options (WAMP spec 3.1)
+        {
+            data: [
+                WAMP_MSG_SPEC.REGISTERED,
+                'RequestId',
+                2999   // Registration ID
             ],
             from: [1],
             to: [1]

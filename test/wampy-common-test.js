@@ -1156,6 +1156,22 @@ for (const item of serializers) {
                 expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
             });
 
+            it('allows to subscribe with custom options (WAMP spec 3.1)', async function () {
+                const res = await wampy.subscribe('subscribe.topic.custom_options', function (e) {
+                    // Event handler
+                }, {
+                    match: 'exact',
+                    get_retained: true,
+                    _custom_subscribe: 'test_value',
+                    _app_metadata: { client: 'test' },
+                    _priority: 10,
+                    regular_option: 'should_be_ignored'
+                });
+                expect(res).to.be.an('object');
+                expect(res.topic).to.be.equal('subscribe.topic.custom_options');
+                expect(res.subscriptionId).to.be.a('number');
+            });
+
             it('allows to publish event without payload', function (done) {
                 let i = 1;
                 wampy.subscribe('subscribe.topic3', function (e) {
@@ -1313,6 +1329,18 @@ for (const item of serializers) {
                         });
                 });
                 expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
+            });
+
+            it('allows to publish event with custom options (WAMP spec 3.1)', async function () {
+                const res = await wampy.publish('subscribe.topic.custom_options', 'payload', {
+                    exclude_me: false,
+                    _custom_publish: 'test_value',
+                    _app_metadata: { source: 'test' },
+                    _priority: 5,
+                    regular_option: 'should_be_ignored'
+                });
+                expect(res).to.be.an('object');
+                expect(res.publicationId).to.be.a('number');
             });
 
             it('disallows to publish event to topic with invalid URI', function () {
@@ -2009,6 +2037,21 @@ for (const item of serializers) {
                 expect(res).to.be.an('object');
                 expect(res.argsList).to.be.an('array');
                 expect(res.argsList[0]).to.be.equal('payload');
+            });
+
+            it('allows to register RPC with custom options (WAMP spec 3.1)', async function () {
+                const res = await wampy.register('register.rpc.custom_options', function () {
+                    return { result: 'test' };
+                }, {
+                    match: 'exact',
+                    _custom_register: 'test_value',
+                    _app_metadata: { version: '1.0' },
+                    _priority: 100,
+                    regular_option: 'should_be_ignored'
+                });
+                expect(res).to.be.an('object');
+                expect(res.topic).to.be.equal('register.rpc.custom_options');
+                expect(res.registrationId).to.be.a('number');
             });
 
             it('allows to call RPC with progressive result receiving', async function () {
