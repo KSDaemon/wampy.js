@@ -14,7 +14,7 @@
  *
  */
 
-import { E2EE_SERIALIZERS, SUCCESS, WAMP_ERROR_MSG, WAMP_MSG_SPEC } from './constants.js';
+import { E2EE_SERIALIZERS, SUCCESS, WAMP_ERROR_MSG, WAMP_MSG_SPEC, WAMP_CUSTOM_ATTR_REGEX } from './constants.js';
 import * as Errors from './errors.js';
 import { WebsocketError } from './errors.js';
 import { getNewPromise, getWebSocket } from './utils.js';
@@ -1963,19 +1963,29 @@ class Wampy {
             ppt_scheme,
             ppt_serializer,
             ppt_cipher,
-            ppt_keyid
+            ppt_keyid,
+            ...rest
         } = advancedOptions || {};
 
-        return {
-            ...(progress_callback ? { receive_progress: true } : {}),
-            ...(progress ? { progress: true } : {}),
-            ...(disclose_me ? { disclose_me: true } : {}),
-            ...(timeout ? { timeout } : {}),
-            ...(ppt_scheme ? { ppt_scheme } : {}),
-            ...(ppt_serializer ? { ppt_serializer } : {}),
-            ...(ppt_cipher ? { ppt_cipher } : {}),
-            ...(ppt_keyid ? { ppt_keyid } : {}),
-        };
+        const result = {};
+        
+        if (progress_callback) result.receive_progress = true;
+        if (progress) result.progress = true;
+        if (disclose_me) result.disclose_me = true;
+        if (timeout) result.timeout = timeout;
+        if (ppt_scheme) result.ppt_scheme = ppt_scheme;
+        if (ppt_serializer) result.ppt_serializer = ppt_serializer;
+        if (ppt_cipher) result.ppt_cipher = ppt_cipher;
+        if (ppt_keyid) result.ppt_keyid = ppt_keyid;
+
+        // Extract custom attributes (starting with underscore) as per WAMP spec 3.1
+        for (const key in rest) {
+            if (WAMP_CUSTOM_ATTR_REGEX.test(key)) {
+                result[key] = rest[key];
+            }
+        }
+
+        return result;
     }
 
     /**

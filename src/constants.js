@@ -61,3 +61,5 @@ export const WAMP_ERROR_MSG = {
 export const E2EE_SERIALIZERS = ['cbor'];
 
 export const isNode = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]');
+
+export const WAMP_CUSTOM_ATTR_REGEX = /^_[a-z0-9_]{3,}$/;
