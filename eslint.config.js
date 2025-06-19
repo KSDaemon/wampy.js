@@ -8,7 +8,7 @@ const files = ['cmd/**/*.js', 'src/**/*.js', 'test/**/*.js', 'gruntfile.cjs', 'k
 
 export default [
     {
-        ...eslintPluginUnicorn.configs['flat/recommended'],
+        ...eslintPluginUnicorn.configs['recommended'],
         files,
     },
     {
@@ -41,7 +41,7 @@ export default [
         files,
     },
     {
-        ...mochaPlugin.configs.flat.recommended,
+        ...mochaPlugin.configs.recommended,
         files,
     },
     {

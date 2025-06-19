@@ -2194,8 +2194,6 @@ for (const item of serializers) {
             });
 
             it('checks for advanced options during progressive call invocations', async function () {
-                let resArg = 1;
-
                 const { sendData, result } = wampy.progressiveCall('call.rpc.progressive', 1);
 
                 try {

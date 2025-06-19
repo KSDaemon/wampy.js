@@ -13,16 +13,16 @@ function getServerUrlForBrowser (url) {
         return url;
     }
 
-    const isSecureProtocol = window.location.protocol === 'https:';
+    const isSecureProtocol = globalThis.location.protocol === 'https:';
     const scheme = isSecureProtocol ? 'wss://' : 'ws://';
-    const port = window.location.port ? `:${window.location.port}` : '';
+    const port = globalThis.location.port ? `:${globalThis.location.port}` : '';
 
     if (!url) {
-        return `${scheme}${window.location.hostname}${port}/ws`;
+        return `${scheme}${globalThis.location.hostname}${port}/ws`;
     }
 
     if (url.startsWith('/')) {    // just path on current server
-        return `${scheme}${window.location.hostname}${port}${url}`;
+        return `${scheme}${globalThis.location.hostname}${port}${url}`;
     }
 
     // assuming just domain + path
@@ -37,10 +37,10 @@ function getServerUrlForBrowser (url) {
  * @returns {Object} A WebSocket Object, or null if none is found
  */
 function getWebSocketFromWindowObject (parsedUrl, protocols) {
-    if (window?.WebSocket) { // Chrome, MSIE, newer Firefox
-        return new window.WebSocket(parsedUrl, protocols);
-    } else if (window?.MozWebSocket) { // older versions of Firefox
-        return new window.MozWebSocket(parsedUrl, protocols);
+    if (globalThis?.WebSocket) { // Chrome, MSIE, newer Firefox
+        return new globalThis.WebSocket(parsedUrl, protocols);
+    } else if (globalThis?.MozWebSocket) { // older versions of Firefox
+        return new globalThis.MozWebSocket(parsedUrl, protocols);
     }
 
     return null;

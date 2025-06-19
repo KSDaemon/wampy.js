@@ -2,7 +2,7 @@ function convertStringToBoolean (obj) {
     for (const key in obj) {
         if (typeof obj[key] === 'object') {
             obj[key] = convertStringToBoolean(obj[key]);
-        } else if (typeof obj[key] === 'string' || obj[key] instanceof String) {
+        } else if (typeof obj[key] === 'string' || Object.prototype.toString.call(obj[key]) === '[object String]') {
             if (obj[key].toUpperCase() === 'TRUE') {
                 obj[key] = true;
             } else if (obj[key].toUpperCase() === 'FALSE') {
@@ -51,7 +51,7 @@ export const payloadArgs = function (yargs) {
 
             if (argv.argsList) {
                 argv.argsList = argv.argsList.map(v => {
-                    if (typeof v === 'string' || v instanceof String) {
+                    if (typeof v === 'string' || Object.prototype.toString.call(v) === '[object String]') {
                         if (v.toUpperCase() === 'TRUE') {
                             return true;
                         } else if (v.toUpperCase() === 'FALSE') {
@@ -78,14 +78,14 @@ export const payloadArgs = function (yargs) {
 
             if (argv.argsList) {
                 argv.argsList = argv.argsList.map(v => {
-                    if (typeof v === 'string' || v instanceof String) {
+                    if (typeof v === 'string' || Object.prototype.toString.call(v) === '[object String]') {
                         return JSON.parse(v);
                     }
                     return v;
                 });
             }
 
-            if (argv.argsDict && (typeof argv.argsDict === 'string' || argv.argsDict instanceof String)) {
+            if (argv.argsDict && (typeof argv.argsDict === 'string' || Object.prototype.toString.call(argv.argsDict) === '[object String]')) {
                 argv.argsDict = JSON.parse(argv.argsDict);
             }
 

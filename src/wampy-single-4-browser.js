@@ -3,4 +3,4 @@
  * Set window global variable
  **/
 import { Wampy } from './wampy.js';
-window.Wampy = Wampy;
+globalThis.Wampy = Wampy;

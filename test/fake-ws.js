@@ -4,7 +4,6 @@
  * Date: 07.04.15
  */
 
-import lodash from 'lodash';
 import sendData from './send-data.js';
 import { MsgpackSerializer } from '../src/serializers/msgpack-serializer.js';
 import { JsonSerializer } from '../src/serializers/json-serializer.js';
@@ -103,7 +102,7 @@ WebSocket.prototype.abort = function () {
 
 WebSocket.prototype.send = function (data) {
     const rec_data = this.decode(data);
-    const send_data = lodash.cloneDeep(sendData[sendDataCursor++]);
+    const send_data = structuredClone(sendData[sendDataCursor++]);
     let options;
 
     if (isDebugMode) { console.log('Server received a message:', rec_data); }

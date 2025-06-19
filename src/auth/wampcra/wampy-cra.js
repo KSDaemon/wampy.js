@@ -7,7 +7,7 @@
  */
 
 const isNode = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]');
-const crypto = isNode ? await import('node:crypto') : window.crypto;
+const crypto = isNode ? await import('node:crypto') : globalThis.crypto;
 
 /**
  * Derives a key using PBKDF2 algorithm.

@@ -9,8 +9,7 @@ import { WAMP_MSG_SPEC } from '../src/constants.js';
 
 const TIMEOUT = 15,
 
-    root = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]') ?
-        global : window;
+    root = globalThis;
 
 let protocol = 'json';
 

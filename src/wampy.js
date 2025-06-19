@@ -1989,14 +1989,14 @@ class Wampy {
 
         const result = {};
         
-        if (progress_callback) result.receive_progress = true;
-        if (progress) result.progress = true;
-        if (disclose_me) result.disclose_me = true;
-        if (timeout) result.timeout = timeout;
-        if (ppt_scheme) result.ppt_scheme = ppt_scheme;
-        if (ppt_serializer) result.ppt_serializer = ppt_serializer;
-        if (ppt_cipher) result.ppt_cipher = ppt_cipher;
-        if (ppt_keyid) result.ppt_keyid = ppt_keyid;
+        if (progress_callback) {result.receive_progress = true;}
+        if (progress) {result.progress = true;}
+        if (disclose_me) {result.disclose_me = true;}
+        if (timeout) {result.timeout = timeout;}
+        if (ppt_scheme) {result.ppt_scheme = ppt_scheme;}
+        if (ppt_serializer) {result.ppt_serializer = ppt_serializer;}
+        if (ppt_cipher) {result.ppt_cipher = ppt_cipher;}
+        if (ppt_keyid) {result.ppt_keyid = ppt_keyid;}
 
         // Extract custom options (starting with underscore) as per WAMP spec 3.1
         return { ...result, ...this._extractCustomOptions(rest) };
