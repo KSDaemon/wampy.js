@@ -886,6 +886,7 @@ Must meet a WAMP Spec URI requirements.
   - **ppt_serializer**: string Specifies what serializer was used to encode the payload
   - **ppt_cipher**: string Specifies the cryptographic algorithm that was used to encrypt the payload
   - **ppt_keyid**: string Contains the encryption key id that was used to encrypt the payload
+  - **Custom attributes**: Any option matching `_[a-z0-9_]{3,}` (e.g. `_my_custom_attr`) will be passed through as-is for [protocol extensibility](https://wamp-proto.org/wamp_latest_ietf.html#section-3.1).
 
 Returns a `Promise` that's either:
 
@@ -920,6 +921,18 @@ try {
     console.log('Backup successfully restored');
 } catch (e) {
     console.log('Restore failed!', e.error, e.details);
+}
+
+// Using custom attributes
+try {
+    await wampy.call('custom.api', { data: 'test' }, {
+        _custom_tracking_id: 'abc123',
+        _priority: 'high',
+        timeout: 5000
+    });
+    console.log('API call with custom attributes completed');
+} catch (e) {
+    console.log('API call failed!', e.error);
 }
 ```
 
