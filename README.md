@@ -48,6 +48,7 @@ Javascript client (for browser and node.js)
     * [register(topicURI, rpc[, advancedOptions])](#registertopicuri-rpc-advancedoptions)
     * [unregister(topicURI)](#unregistertopicuri)
     * [Error handling](#error-handling)
+    * [Custom attributes for Advanced Options](#custom-attributes-for-advanced-options)
   * [Using custom serializer](#using-custom-serializer)
   * [Connecting through TLS in node environment](#connecting-through-tls-in-node-environment)
   * [Tests and code coverage](#tests-and-code-coverage)
@@ -739,6 +740,7 @@ parameter with following attributes:
 - **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
   - **match**: string matching policy ("prefix"|"wildcard")
   - **get_retained**: bool request access to the Retained Event
+  - **Custom attributes**: See [Custom attributes for Advanced Options](#custom-attributes-for-advanced-options)
 
 Returns a `Promise` that's either:
 
@@ -832,6 +834,7 @@ Must meet a WAMP Spec URI requirements.
   - **ppt_cipher**: string Specifies the cryptographic algorithm that was used to encrypt the payload
   - **ppt_keyid**: string Contains the encryption key id that was used to encrypt the payload
   - **retain**: bool Ask broker to mark this event as retained
+  - **Custom attributes**: See [Custom attributes for Advanced Options](#custom-attributes-for-advanced-options)
 
 Returns a `Promise` that's either:
 
@@ -886,6 +889,7 @@ Must meet a WAMP Spec URI requirements.
   - **ppt_serializer**: string Specifies what serializer was used to encode the payload
   - **ppt_cipher**: string Specifies the cryptographic algorithm that was used to encrypt the payload
   - **ppt_keyid**: string Contains the encryption key id that was used to encrypt the payload
+  - **Custom attributes**: See [Custom attributes for Advanced Options](#custom-attributes-for-advanced-options)
 
 Returns a `Promise` that's either:
 
@@ -1019,6 +1023,7 @@ Must meet a WAMP Spec URI requirements.
 - **advancedOptions**. Optional parameters hash table. Must include any or all of the options:
   - **match**: string matching policy ("prefix"|"wildcard")
   - **invoke**: string invocation policy ("single"|"roundrobin"|"random"|"first"|"last")
+  - **Custom attributes**: See [Custom attributes for Advanced Options](#custom-attributes-for-advanced-options)
 
 Returns a `Promise` that's either:
 
@@ -1034,7 +1039,7 @@ Registered PRC during invocation will receive one hash-table argument with follo
 - **argsDict**: object payload (maybe omitted)
 - **details**: some invocation options object. One attribute of interest in options is "receive_progress" (boolean),
 which indicates, that caller is willing to receive progressive results, if possible. Another one is "trustlevel", which
-indicates the call trust level, assigned by dealer (of course if it is configured accordingly).
+indicates the call trust level, assigned by dealer (of course if it is configured accordingly), including custom advanced options, if it was specified and supported by the router.
 - **result_handler**: result handler for case when you want to send progressive results.
 Just call it with one parameter, same as you return from simple invocation. Also, do not forget to
 set options: `{ progress: true }` for intermediate results.
@@ -1230,6 +1235,43 @@ Wampy package exposes the following `Error` classes:
 - WebsocketError
 
 For errors attributes look at [src/errors.js](./src/errors.js) file.
+
+[Back to Table of Contents](#table-of-contents)
+
+## Custom attributes for Advanced Options
+
+Wampy.js supports custom attributes in `advancedOptions` for protocol extensibility as defined in [WAMP specification section 3.1](https://wamp-proto.org/wamp_latest_ietf.html#section-3.1).
+
+Any option matching the pattern `_[a-z0-9_]{3,}` (starting with underscore, followed by at least 3 alphanumeric characters or underscores) will be passed through as-is to the WAMP router. This allows for custom extensions and router-specific features.
+
+**Supported in:**
+- [subscribe()](#subscribetopicuri-onevent-advancedoptions) - Custom subscription attributes
+- [publish()](#publishtopicuri-payload-advancedoptions) - Custom publication attributes
+- [call()](#calltopicuri-payload-advancedoptions) - Custom call attributes
+- [progressiveCall()](#progressivecalltopicuri-payload-advancedoptions) - Custom progressive call attributes
+- [cancel()](#cancelreqid-advancedoptions) - Custom call cancellation attributes
+- [register()](#registertopicuri-rpc-advancedoptions) - Custom registration attributes
+
+**Examples:**
+
+```javascript
+// Custom tracking and priority attributes
+await wampy.call('api.process.data', { data: 'test' }, {
+    _tracking_id: 'req_12345',
+    _priority: 'high',
+    _custom_auth: 'bearer_token_xyz',
+    timeout: 5000
+});
+
+// Custom routing hints
+await wampy.call('distributed.service', payload, {
+    _route_to_region: 'us-west',
+    _load_balancer_hint: 'sticky_session',
+    _retry_policy: 'exponential'
+});
+```
+
+**Note:** Custom attributes are only passed for methods that support them. Standard WAMP options (like `timeout`, `disclose_me`, etc.) are handled separately and don't need the underscore prefix.
 
 [Back to Table of Contents](#table-of-contents)
 

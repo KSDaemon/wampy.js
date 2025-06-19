@@ -14,7 +14,7 @@
  *
  */
 
-import { E2EE_SERIALIZERS, SUCCESS, WAMP_ERROR_MSG, WAMP_MSG_SPEC } from './constants.js';
+import { E2EE_SERIALIZERS, SUCCESS, WAMP_ERROR_MSG, WAMP_MSG_SPEC, WAMP_CUSTOM_ATTR_REGEX } from './constants.js';
 import * as Errors from './errors.js';
 import { WebsocketError } from './errors.js';
 import { getNewPromise, getWebSocket } from './utils.js';
@@ -1422,6 +1422,7 @@ class Wampy {
                 ...(ppt_serializer ? { ppt_serializer } : {}),
                 ...(ppt_cipher ? { ppt_cipher } : {}),
                 ...(ppt_keyid ? { ppt_keyid } : {}),
+                ...this._extractCustomOptions(options)
             };
 
             // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
@@ -1781,7 +1782,8 @@ class Wampy {
         this._requests[reqId] = { topic, callbacks, advancedOptions };
 
         // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
-        this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, { match, get_retained }, topic]);
+        const options = { match, get_retained, ...this._extractCustomOptions(advancedOptions) };
+        this._send([WAMP_MSG_SPEC.SUBSCRIBE, reqId, options, topic]);
         this._cache.opStatus = { ...SUCCESS, reqId: reqId || 0 };
 
         return callbacks.promise;
@@ -1931,6 +1933,7 @@ class Wampy {
             ...(ppt_keyid ? { ppt_keyid } : {}),
             ...(exclude_me ? { exclude_me } : {}),
             ...(disclose_me ? { disclose_me } : {}),
+            ...this._extractCustomOptions(advancedOptions)
         };
 
         const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {};
@@ -1945,6 +1948,23 @@ class Wampy {
         this._send([WAMP_MSG_SPEC.PUBLISH, reqId, messageOptions, topic, ...(payloadItems || [])]);
 
         return this._requests[reqId].callbacks.promise;
+    }
+
+    /**
+     * Extract custom options from advanced options as per WAMP spec 3.1
+     *
+     * @param {object} advancedOptions
+     * @private
+     * @returns {object}
+     */
+    _extractCustomOptions(advancedOptions) {
+        const customOptions = {};
+        for (const key in advancedOptions || {}) {
+            if (WAMP_CUSTOM_ATTR_REGEX.test(key)) {
+                customOptions[key] = advancedOptions[key];
+            }
+        }
+        return customOptions;
     }
 
     /**
@@ -1963,19 +1983,23 @@ class Wampy {
             ppt_scheme,
             ppt_serializer,
             ppt_cipher,
-            ppt_keyid
+            ppt_keyid,
+            ...rest
         } = advancedOptions || {};
 
-        return {
-            ...(progress_callback ? { receive_progress: true } : {}),
-            ...(progress ? { progress: true } : {}),
-            ...(disclose_me ? { disclose_me: true } : {}),
-            ...(timeout ? { timeout } : {}),
-            ...(ppt_scheme ? { ppt_scheme } : {}),
-            ...(ppt_serializer ? { ppt_serializer } : {}),
-            ...(ppt_cipher ? { ppt_cipher } : {}),
-            ...(ppt_keyid ? { ppt_keyid } : {}),
-        };
+        const result = {};
+        
+        if (progress_callback) result.receive_progress = true;
+        if (progress) result.progress = true;
+        if (disclose_me) result.disclose_me = true;
+        if (timeout) result.timeout = timeout;
+        if (ppt_scheme) result.ppt_scheme = ppt_scheme;
+        if (ppt_serializer) result.ppt_serializer = ppt_serializer;
+        if (ppt_cipher) result.ppt_cipher = ppt_cipher;
+        if (ppt_keyid) result.ppt_keyid = ppt_keyid;
+
+        // Extract custom options (starting with underscore) as per WAMP spec 3.1
+        return { ...result, ...this._extractCustomOptions(rest) };
     }
 
     /**
@@ -2204,7 +2228,11 @@ class Wampy {
         }
 
         // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
-        this._send([WAMP_MSG_SPEC.CANCEL, reqId, { mode }]);
+        const options = {
+            ...(mode ? { mode } : {}),
+            ...this._extractCustomOptions(advancedOptions)
+        };
+        this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
         this._cache.opStatus = { ...SUCCESS, reqId: reqId };
 
         return true;
@@ -2260,6 +2288,7 @@ class Wampy {
         const options = {
             ... (match ? { match } : {}),
             ... (invoke ? { invoke } : {}),
+            ...this._extractCustomOptions(advancedOptions)
         };
 
         if (rpc) {
