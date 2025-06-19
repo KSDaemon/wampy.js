@@ -1422,6 +1422,7 @@ class Wampy {
                 ...(ppt_serializer ? { ppt_serializer } : {}),
                 ...(ppt_cipher ? { ppt_cipher } : {}),
                 ...(ppt_keyid ? { ppt_keyid } : {}),
+                ...this._extractCustomOptions(options)
             };
 
             // WAMP SPEC: [YIELD, INVOCATION.Request|id, Options|dict, Arguments|list, ArgumentsKw|dict]
@@ -2227,7 +2228,11 @@ class Wampy {
         }
 
         // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
-        this._send([WAMP_MSG_SPEC.CANCEL, reqId, { mode }]);
+        const options = {
+            ...(mode ? { mode } : {}),
+            ...this._extractCustomOptions(advancedOptions)
+        };
+        this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
         this._cache.opStatus = { ...SUCCESS, reqId: reqId };
 
         return true;

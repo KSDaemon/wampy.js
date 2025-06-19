@@ -1039,7 +1039,7 @@ Registered PRC during invocation will receive one hash-table argument with follo
 - **argsDict**: object payload (maybe omitted)
 - **details**: some invocation options object. One attribute of interest in options is "receive_progress" (boolean),
 which indicates, that caller is willing to receive progressive results, if possible. Another one is "trustlevel", which
-indicates the call trust level, assigned by dealer (of course if it is configured accordingly).
+indicates the call trust level, assigned by dealer (of course if it is configured accordingly), including custom advanced options, if it was specified and supported by the router.
 - **result_handler**: result handler for case when you want to send progressive results.
 Just call it with one parameter, same as you return from simple invocation. Also, do not forget to
 set options: `{ progress: true }` for intermediate results.
@@ -1249,6 +1249,7 @@ Any option matching the pattern `_[a-z0-9_]{3,}` (starting with underscore, foll
 - [publish()](#publishtopicuri-payload-advancedoptions) - Custom publication attributes
 - [call()](#calltopicuri-payload-advancedoptions) - Custom call attributes
 - [progressiveCall()](#progressivecalltopicuri-payload-advancedoptions) - Custom progressive call attributes
+- [cancel()](#cancelreqid-advancedoptions) - Custom call cancellation attributes
 - [register()](#registertopicuri-rpc-advancedoptions) - Custom registration attributes
 
 **Examples:**
