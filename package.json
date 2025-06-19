@@ -1,6 +1,6 @@
 {
   "name": "wampy",
-  "version": "7.1.1",
+  "version": "7.2.0",
   "description": "Amazingly fast, feature-rich, lightweight WAMP Javascript client (for browser and node.js)",
   "author": "Konstantin Burkalev <KSDaemon@gmail.com> (https://ksdaemon.com)",
   "devDependencies": {
