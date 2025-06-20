@@ -838,10 +838,11 @@ class Wampy {
         }
 
         const messageOptions = {
-            ...helloCustomDetails,
+            ...this._extractCustomOptions(helloCustomDetails),
             ...this._wamp_features,
             ...(authid ? { authid, authmethods, authextra } : {}),
         };
+        // WAMP SPEC: [HELLO, Realm|string, Details|dict]
         const encodedMessage = this._encode([WAMP_MSG_SPEC.HELLO, realm, messageOptions]);
 
         if (encodedMessage) {
