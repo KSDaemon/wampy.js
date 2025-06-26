@@ -1928,12 +1928,12 @@ class Wampy {
             acknowledge: true,
             ...messageOptions,
             ...(ppt_scheme ? { ppt_scheme } : {}),
-            ...(ppt_scheme ? { ppt_scheme } : {}),
             ...(ppt_serializer ? { ppt_serializer } : {}),
             ...(ppt_cipher ? { ppt_cipher } : {}),
             ...(ppt_keyid ? { ppt_keyid } : {}),
             ...(exclude_me ? { exclude_me } : {}),
             ...(disclose_me ? { disclose_me } : {}),
+            ...(retain ? { retain } : {}),
             ...this._extractCustomOptions(advancedOptions)
         };
 
