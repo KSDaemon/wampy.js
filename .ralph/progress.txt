@@ -297,4 +297,33 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - For test files that access dynamic globalThis properties (Wampy, MsgpackSerializer, etc.), cast globalThis to `Record<string, unknown>` rather than augmenting global declarations
   - `wampyCra.sign()` returns a function that is generic over method/info — call signatures match test usage without extra casts
   - Crossbar test uses `Partial<WampyOptions>` for option subsets, then casts `as WampyOptions` when constructing Wampy
+- For tests that intentionally pass wrong types to methods (validation tests), use `as unknown as ExpectedType` casts to bypass TS compile-time checks while preserving runtime behavior
+- Catch blocks accessing `WampError` properties (`errorUri`, `argsList`, `argsDict`) need `const err = e as Errors.WampError;` cast since `catch (e)` gives `unknown`
+- `setOptions()` returns `Wampy | undefined` — chain calls need `!` (e.g., `wampy.setOptions({...})!.connect()`)
+- `getOpStatus().error` is `Error | null` — accessing `.message` needs `!` assertion: `getOpStatus().error!.message`
+- `getSessionId()` returns `number | null` — use `!` when assigning to `number` variable
+- For test option objects with `uriValidation: 'loose'`, add `as const` to prevent widening to `string`
+- The `wampy-cli-test.ts` replaces import in `cmd/wampy-helpers.ts` (not `.js`) at runtime for mocking
+- yargs `parse()` callback type: `(err: Error | undefined, argv: Record<string, unknown>, output: string) => void`
+- Serializer constructors in tests typed via `SerializerConstructor` interface: `{ new (): Serializer }`
+- FakeWebSocket from `fake-ws.ts` needs `as unknown as WampyOptions['ws']` cast when used in test serializer array
+---
+
+## 2026-03-15 27:30 (EET) - US-014
+- Converted 2 large test files from JavaScript to TypeScript:
+  - `test/wampy-common-test.js` → `test/wampy-common-test.ts` (3456 lines) — extensive typing for validation tests using `as unknown as X` casts, `WampError` catch casts, `!` non-null assertions for `getOpStatus().error`, `res.argsList`, `e.argsList`; `SerializerConstructor` interface for generic serializer loop; `UserException1`/`UserException2` converted from function constructors to class syntax; circular reference objects typed with `Record<string, unknown>`
+  - `test/wampy-cli-test.js` → `test/wampy-cli-test.ts` (187 lines) — `consoleLogSpy` typed as `sinon.SinonSpy`, `getArgvInstance()` returns `Promise<Argv>`, parse callbacks typed with `(err: Error | undefined, argv: Record<string, unknown>, output: string)`, `replaceFileName` updated to `.ts`
+- No logic changes — tests remain functionally identical
+- Files changed:
+  - Created: `test/wampy-common-test.ts`, `test/wampy-cli-test.ts`
+  - Deleted: `test/wampy-common-test.js`, `test/wampy-cli-test.js`
+  - Modified: `.ralph/prd.json`, `.ralph/progress.txt`
+- **Learnings for future iterations:**
+  - Tests that intentionally pass wrong types for validation need extensive `as unknown as X` casts — roughly 30 casts needed in wampy-common-test alone
+  - `setOptions()` returns `Wampy | undefined` — all chained calls need `!` assertion (37 instances in common test)
+  - `catch (e)` in TypeScript gives `unknown` type — any property access beyond `expect(e).to.be.instanceOf()` needs explicit cast (`const err = e as Errors.WampError`)
+  - Git correctly detects `.js` → `.ts` renames even with ~17% content change (casts + type annotations)
+  - `PublishAdvancedOptions` and `CallAdvancedOptions` have `[key: string]: unknown` index signatures — passing wrong-typed fields within objects still requires `as unknown as Type` cast because TypeScript checks known properties first
+  - `onConnect` is NOT a valid WampyOptions property — tests using it need `as WampyOptions` cast on the option object
+  - CLI test's file replacement hack needs `.ts` extension now that CLI files are TypeScript
 ---

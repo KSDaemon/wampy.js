@@ -222,8 +222,8 @@
         "Typecheck passes"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": "wampy-common-test is large but tests are repetitive patterns — typing should be mechanical."
+      "passes": true,
+      "notes": "wampy-common-test uses extensive `as unknown as X` casts for intentionally-wrong-type tests. Catch blocks accessing WampError properties use `const err = e as Errors.WampError` pattern. CLI test uses `Argv` from yargs types. replaceFileName updated from .js to .ts since CLI files were converted in US-010."
     },
     {
       "id": "US-015",
