@@ -1,11 +1,13 @@
-function convertStringToBoolean (obj) {
+import type { Argv } from 'yargs';
+
+function convertStringToBoolean (obj: Record<string, unknown>): Record<string, unknown> {
     for (const key in obj) {
-        if (typeof obj[key] === 'object') {
-            obj[key] = convertStringToBoolean(obj[key]);
+        if (typeof obj[key] === 'object' && obj[key] !== null) {
+            obj[key] = convertStringToBoolean(obj[key] as Record<string, unknown>);
         } else if (typeof obj[key] === 'string' || Object.prototype.toString.call(obj[key]) === '[object String]') {
-            if (obj[key].toUpperCase() === 'TRUE') {
+            if ((obj[key] as string).toUpperCase() === 'TRUE') {
                 obj[key] = true;
-            } else if (obj[key].toUpperCase() === 'FALSE') {
+            } else if ((obj[key] as string).toUpperCase() === 'FALSE') {
                 obj[key] = false;
             }
         }
@@ -13,7 +15,7 @@ function convertStringToBoolean (obj) {
     return obj;
 }
 
-export const payloadArgs = function (yargs) {
+export const payloadArgs = function (yargs: Argv): Argv {
     return yargs
         .option('strbool', {
             alias      : 'b',
@@ -44,17 +46,17 @@ export const payloadArgs = function (yargs) {
                 '-k.rootKey true -k.innerObj.key1 cool ==>\n{ rootKey: true, innerObj: { key1: "cool" }}\n'
         })
         // Convert all strings "true"/"false" to boolean in payload if `strbool` flag is present
-        .middleware(argv => {
+        .middleware((argv: Record<string, unknown>): void => {
             if (!argv.strbool) {
-                return argv;
+                return;
             }
 
             if (argv.argsList) {
-                argv.argsList = argv.argsList.map(v => {
+                argv.argsList = (argv.argsList as unknown[]).map((v: unknown) => {
                     if (typeof v === 'string' || Object.prototype.toString.call(v) === '[object String]') {
-                        if (v.toUpperCase() === 'TRUE') {
+                        if ((v as string).toUpperCase() === 'TRUE') {
                             return true;
-                        } else if (v.toUpperCase() === 'FALSE') {
+                        } else if ((v as string).toUpperCase() === 'FALSE') {
                             return false;
                         }
 
@@ -65,36 +67,32 @@ export const payloadArgs = function (yargs) {
             }
 
             if (argv.argsDict) {
-                argv.argsDict = convertStringToBoolean(argv.argsDict);
+                argv.argsDict = convertStringToBoolean(argv.argsDict as Record<string, unknown>);
             }
-
-            return argv;
         })
-        // Convert all payload from json-strings into JS objects if -jso-json flag is present
-        .middleware(argv => {
+        // Convert all payload from json-strings into JS objects if -json flag is present
+        .middleware((argv: Record<string, unknown>): void => {
             if (!argv.json) {
-                return argv;
+                return;
             }
 
             if (argv.argsList) {
-                argv.argsList = argv.argsList.map(v => {
+                argv.argsList = (argv.argsList as unknown[]).map((v: unknown) => {
                     if (typeof v === 'string' || Object.prototype.toString.call(v) === '[object String]') {
-                        return JSON.parse(v);
+                        return JSON.parse(v as string) as unknown;
                     }
                     return v;
                 });
             }
 
             if (argv.argsDict && (typeof argv.argsDict === 'string' || Object.prototype.toString.call(argv.argsDict) === '[object String]')) {
-                argv.argsDict = JSON.parse(argv.argsDict);
+                argv.argsDict = JSON.parse(argv.argsDict as string) as unknown;
             }
-
-            return argv;
         })
         .group(['strbool', 'json', 'argsList', 'argsDict'], 'Payload options:');
 };
 
-export const pptArgs = function (yargs) {
+export const pptArgs = function (yargs: Argv): Argv {
     return yargs
         .option('ppt_scheme', {
             description: 'Identifies the Payload Schema for Payload Passthru Mode',
@@ -115,7 +113,7 @@ export const pptArgs = function (yargs) {
         .group(['ppt_scheme', 'ppt_serializer', 'ppt_cipher', 'ppt_keyid'], 'Payload Passthru Mode options:');
 };
 
-export const helpOptions = function (yargs) {
+export const helpOptions = function (yargs: Argv): Argv {
     return yargs
         .help()
         .alias('help', 'h')
@@ -125,7 +123,7 @@ export const helpOptions = function (yargs) {
 const connOptsKeys = ['url', 'realm', 'authid', 'secret', 'ticket', 'privateKey',
     'noReconnect', 'reconnectInterval', 'maxRetries', 'helloCustomDetails'];
 
-export const connOptions = function (yargs) {
+export const connOptions = function (yargs: Argv): Argv {
     return yargs
         .option('url', {
             alias: 'w',

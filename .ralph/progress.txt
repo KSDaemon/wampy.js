@@ -25,6 +25,10 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - `SUCCESS` constant from constants.ts lacks `reqId` — use `{ ...SUCCESS, reqId: 0 }` when assigning to `WampyOpStatus`
 - When passing `this._options` to `getWebSocket()`, cast as `Record<string, unknown>` to avoid `null` vs `undefined` incompatibility on `ws` property
 - `_isPlainObject` is typed as a type guard: `input is Record<string, unknown>` — this narrows types in conditional blocks
+- CLI files (`cmd/`) are NOT built by tsup — they run from source. `bin` entry in package.json points to `cmd/cli.js`
+- yargs `MiddlewareFunction` expects `void` return — middleware callbacks that mutate `argv` should NOT return the argv object
+- Auth plugin `sign()` returns functions with specific info types (`WampCraInfo`, `CryptosignInfo`) — cast to `AuthPlugin` when assigning to `authPlugins`
+- `ws` module needs `@types/ws` for TypeScript; `yargs` needs `@types/yargs`
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -198,4 +202,26 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - For namespace imports (`import * as foo from ...`), the global var type is `typeof import('./module.js')` (the whole module namespace)
   - Each `var` declaration in `declare global` needs its own `// eslint-disable-next-line no-var` comment
   - Git detects `.js` → `.ts` renames correctly when content is similar enough
+---
+
+## 2026-03-15 24:00 (EET) - US-010
+- Converted core CLI files to TypeScript:
+  - `cmd/cli.js` → `cmd/cli.ts` with shebang preserved
+  - `cmd/main.js` → `cmd/main.ts` with yargs setup typed via `Argv` type from `@types/yargs`
+  - `cmd/common-options.js` → `cmd/common-options.ts` with `Argv` parameter types, middleware callbacks returning `void`
+  - `cmd/logger.js` → `cmd/logger.ts` with rest params typed as `...args: unknown[]`
+  - `cmd/wampy-helpers.js` → `cmd/wampy-helpers.ts` with `CliArgv` and `PPTOptions` interfaces, `prepareOptions()` returning `WampyOptions`, `getWampySession()` returning `Promise<Wampy>`
+- Added `@types/yargs` and `@types/ws` as devDependencies
+- JSDoc type annotations removed; textual descriptions preserved
+- Files changed:
+  - Created: `cmd/cli.ts`, `cmd/main.ts`, `cmd/common-options.ts`, `cmd/logger.ts`, `cmd/wampy-helpers.ts`
+  - Deleted: `cmd/cli.js`, `cmd/main.js`, `cmd/common-options.js`, `cmd/logger.js`, `cmd/wampy-helpers.js`
+  - Modified: `package.json` (added @types/yargs, @types/ws devDeps), `package-lock.json`
+- **Learnings for future iterations:**
+  - yargs `MiddlewareFunction` expects `void` return — the original JS code returned `argv` but TypeScript requires `void`
+  - `completion('completion', false)` — second arg `false` is valid (hides the command), types support `string | false`
+  - Auth plugin `sign()` functions return `(method, info: SpecificType) => string` which is contravariant with `AuthPlugin = (method, extra: Record<string, unknown>) => string` — need `as unknown as AuthPlugin` cast
+  - CLI files are NOT built by tsup (they run from source via Node.js ESM) — no tsup.config.ts changes needed
+  - `ws` constructor type from `@types/ws` works with `WampyOptions.ws` via `as unknown as WampyOptions['ws']` cast since ws class signature differs slightly
+  - The original JS code passed class constructors (not instances) to `payloadSerializers` — corrected to use `new Serializer()` instances for type safety and runtime correctness
 ---

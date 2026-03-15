@@ -7,20 +7,50 @@ import * as wampyCS from '../src/auth/cryptosign/wampy-cryptosign.js';
 import nacl from 'tweetnacl';
 import WebSocket from 'ws';
 import { logger } from './logger.js';
+import type { AuthPlugin, WampyOptions } from '../src/types.js';
 
-function prepareOptions (argv) {
-    const options = {
+/** CLI argv shape expected by wampy-helpers */
+interface CliArgv {
+    url: string;
+    realm: string;
+    debug?: boolean;
+    noReconnect?: boolean;
+    reconnectInterval?: number;
+    maxRetries?: number;
+    uriValidation?: 'strict' | 'loose';
+    serializer?: string;
+    helloCustomDetails?: Record<string, unknown>;
+    authid?: string;
+    ticket?: string;
+    secret?: string;
+    privateKey?: string;
+    ppt_scheme?: string;
+    ppt_serializer?: string;
+    ppt_cipher?: string;
+    ppt_keyid?: string;
+}
+
+/** PPT options that can be filled from CLI argv */
+interface PPTOptions {
+    ppt_scheme?: string;
+    ppt_serializer?: string;
+    ppt_cipher?: string;
+    ppt_keyid?: string;
+}
+
+function prepareOptions (argv: CliArgv): WampyOptions {
+    const options: WampyOptions = {
         debug             : argv.debug,
         autoReconnect     : !argv.noReconnect,
         reconnectInterval : argv.reconnectInterval,
         maxRetries        : argv.maxRetries,
         realm             : argv.realm,
         uriValidation     : argv.uriValidation,
-        ws                : WebSocket,
+        ws                : WebSocket as unknown as WampyOptions['ws'],
         payloadSerializers: {
-            json   : JsonSerializer,
-            cbor   : CborSerializer,
-            msgpack: MsgpackSerializer
+            json   : new JsonSerializer(),
+            cbor   : new CborSerializer(),
+            msgpack: new MsgpackSerializer()
         }
     };
 
@@ -47,7 +77,7 @@ function prepareOptions (argv) {
 
         if (argv.ticket) {
             options.authmethods.push('ticket');
-            options.authPlugins.ticket = (function (userPassword) {
+            options.authPlugins.ticket = (function (userPassword: string) {
                 return function () {
                     return userPassword;
                 };
@@ -56,7 +86,7 @@ function prepareOptions (argv) {
 
         if (argv.secret) {
             options.authmethods.push('wampcra');
-            options.authPlugins.wampcra = wampyCra.sign(argv.secret);
+            options.authPlugins.wampcra = wampyCra.sign(argv.secret) as unknown as AuthPlugin;
         }
 
         if (argv.privateKey) {
@@ -65,7 +95,7 @@ function prepareOptions (argv) {
             const publicKey = keyPair.publicKey;
             const publicKeyHex = wampyCS.bytes2hex(publicKey);
             options.authmethods.push('cryptosign');
-            options.authPlugins.cryptosign = wampyCS.sign(argv.privateKey);
+            options.authPlugins.cryptosign = wampyCS.sign(argv.privateKey) as unknown as AuthPlugin;
             options.authextra = {
                 pubkey: publicKeyHex
             };
@@ -77,13 +107,13 @@ function prepareOptions (argv) {
         options.onClose = function () {
             logger('Connection closing!');
         };
-        options.onError = function (e) {
+        options.onError = function (e: Error) {
             logger('Breakdown happened', e);
         };
         options.onReconnect = function () {
             logger('Reconnecting...');
         };
-        options.onReconnectSuccess = function (welcomeDetails) {
+        options.onReconnectSuccess = function (welcomeDetails: Record<string, unknown>) {
             logger('Reconnection succeeded. Details:', welcomeDetails);
         };
     }
@@ -91,7 +121,7 @@ function prepareOptions (argv) {
     return options;
 }
 
-export const getWampySession = async function (argv) {
+export const getWampySession = async function (argv: CliArgv): Promise<Wampy> {
     const wampy = new Wampy(argv.url, prepareOptions(argv));
 
     try {
@@ -114,7 +144,7 @@ export const getWampySession = async function (argv) {
     return wampy;
 };
 
-export const fillPPTOptions = function (options, argv) {
+export const fillPPTOptions = function (options: PPTOptions, argv: CliArgv): PPTOptions {
     if (argv.ppt_scheme) {
         options.ppt_scheme = argv.ppt_scheme;
     }
@@ -130,3 +160,5 @@ export const fillPPTOptions = function (options, argv) {
 
     return options;
 };
+
+export type { CliArgv, PPTOptions };

@@ -157,8 +157,8 @@
         "Typecheck passes"
       ],
       "priority": 10,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "@types/yargs and @types/ws added as devDependencies; yargs middleware callbacks return void (mutate in place); auth plugin sign() return types need cast to AuthPlugin due to contravariant info parameter types; payloadSerializers corrected to use instances (new Serializer()) instead of class constructors"
     },
     {
       "id": "US-011",

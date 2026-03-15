@@ -33,14 +33,14 @@ const argv = connOptions(yargs(hideBin(process.argv)))
         alias      : 's',
         description: 'Serializer to use',
         type       : 'string',
-        choices    : ['json', 'cbor', 'msgpack'],
+        choices    : ['json', 'cbor', 'msgpack'] as const,
         default    : 'json'
     })
     .option('uriValidation', {
         alias      : 'uv',
         description: 'URI Validation Mode',
         type       : 'string',
-        choices    : ['strict', 'loose'],
+        choices    : ['strict', 'loose'] as const,
         default    : 'strict'
     })
     .global(['serializer'])
