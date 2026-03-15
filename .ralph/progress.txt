@@ -450,3 +450,37 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - CI pipeline order should be: install → build → typecheck → lint → test → coverage report → upload
   - `npx c8 report` is preferred over direct `./node_modules/c8/bin/c8.js` path for portability
 ---
+
+## 2026-03-15 21:45 (EET) - US-019
+- Cleaned up removed files and updated documentation for TypeScript migration
+- Verified all .js source/test/cmd files already removed in prior stories (US-001 through US-014)
+- Verified Gruntfile.cjs and .babelrc already removed in US-001
+- Verified karma.conf.cjs already updated to use esbuild in US-015
+- Removed obsolete `karma-browserify` devDependency (replaced by `karma-esbuild` in US-015 but never uninstalled)
+- Updated README.md:
+  - Description: "javascript library" → "TypeScript library", added note about built-in `.d.ts` types
+  - Usage example: changed from `javascript` to `typescript` code block with `import` statement
+  - Exported components: updated exports map with correct `dist/esm/`, `dist/cjs/` paths and `types` conditions
+  - Browser installation: removed `browser/` path prefix (browser.zip has files at root)
+  - API section: replaced DefinitelyTyped reference with "ships with built-in TypeScript type declarations"
+  - TLS example: changed from `require()` to ESM `import` syntax
+  - Tests section: updated with current scripts (`npm run build`, `npm run typecheck`, `npm run lint`)
+  - File references: `src/errors.js` → `src/errors.ts`, serializer files → `.ts` extensions
+  - Custom serializer section: added note about `Serializer` interface in `src/serializers/serializer.ts`
+- Updated CONTRIBUTING.md:
+  - Project Setup: added `npm run build`, `npm run typecheck`, `npm run lint` instructions, Node.js v20/v22 recommendation
+  - Contribute Code: added typecheck and lint requirements
+  - CI reference: "Travis, AppVeyor" → "GitHub Actions CI"
+- .gitignore: no changes needed (already has `dist/` covering new output structure)
+- Files changed:
+  - Modified: `README.md` (TypeScript migration documentation updates)
+  - Modified: `CONTRIBUTING.md` (new build/test instructions)
+  - Modified: `package.json` (removed karma-browserify devDep)
+  - Modified: `package-lock.json` (dependency tree updated)
+  - Modified: `.ralph/prd.json` (US-019 passes: true)
+- **Learnings for future iterations:**
+  - Previous stories already handled all file renames/deletions — this story was primarily documentation cleanup
+  - `karma-browserify` was replaced by `karma-esbuild` in US-015 but was never removed from devDependencies — always check for leftover deps when switching tools
+  - README exports map must be kept in sync with package.json exports — they can easily drift
+  - Browser bundles in `browser.zip` are at the root level (not in a `browser/` subdirectory) — update `<script src>` examples accordingly
+---

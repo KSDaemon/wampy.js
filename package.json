@@ -25,7 +25,6 @@
     "jsdom": "^26.1.0",
     "jsdom-global": "^3.0.2",
     "karma": "^6.4.4",
-    "karma-browserify": "^8.1.0",
     "karma-chrome-launcher": "^3.2.0",
     "karma-coverage": "^2.2.1",
     "karma-esbuild": "^2.3.0",

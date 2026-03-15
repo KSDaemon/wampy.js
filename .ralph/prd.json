@@ -308,8 +308,8 @@
         "Typecheck passes"
       ],
       "priority": 19,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "All .js source/test/cmd files already removed in prior stories; Gruntfile.cjs and .babelrc removed in US-001; karma.conf.cjs updated in US-015; obsolete karma-browserify devDependency removed; README.md updated with TypeScript references, correct exports map, .d.ts mentions, ESM import examples; CONTRIBUTING.md updated with build/typecheck/lint/test instructions and GitHub Actions CI reference"
     }
   ]
 }
