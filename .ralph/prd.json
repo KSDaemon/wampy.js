@@ -241,8 +241,8 @@
         "Typecheck passes"
       ],
       "priority": 15,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "tsx used via NODE_OPTIONS='--import tsx/esm' for mocha ESM TypeScript support; karma-esbuild replaces karma-browserify+babelify for browser tests; c8 coverage include patterns updated from *.js to *.ts"
     },
     {
       "id": "US-016",

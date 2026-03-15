@@ -40,6 +40,9 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - `globalThis = savedGlobalThis` reassignment is not allowed in strict TS (namespace) — use `@ts-expect-error` comment
 - `chai-bytes` has bundled types (`index.d.ts`) — no `@types/chai-bytes` needed
 - For test files accessing globalThis properties that may/may not exist (Wampy, MsgpackSerializer, etc.), cast `globalThis as Record<string, unknown>` to avoid type errors
+- Test runner uses `tsx` via `NODE_OPTIONS='--import tsx/esm'` for ESM + TypeScript mocha support — mocha does NOT have a `--import` flag, so `NODE_OPTIONS` is required
+- Karma browser tests use `karma-esbuild` preprocessor (replaces `karma-browserify` + `babelify`) — esbuild handles TypeScript natively with no extra config
+- c8 coverage config `.c8rc.json` include patterns must match source file extensions (`.ts` not `.js`)
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -326,4 +329,29 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - `PublishAdvancedOptions` and `CallAdvancedOptions` have `[key: string]: unknown` index signatures — passing wrong-typed fields within objects still requires `as unknown as Type` cast because TypeScript checks known properties first
   - `onConnect` is NOT a valid WampyOptions property — tests using it need `as WampyOptions` cast on the option object
   - CLI test's file replacement hack needs `.ts` extension now that CLI files are TypeScript
+---
+
+## 2026-03-15 21:30 (EET) - US-015
+- Updated test runner and coverage configuration for TypeScript
+- Replaced `@babel/register` mocha require hook with `tsx` via `NODE_OPTIONS='--import tsx/esm'`
+- Updated all test script glob patterns from `.js` to `.ts` in package.json
+- Updated `.c8rc.json` coverage include patterns from `*.js` to `*.ts`
+- Replaced `karma-browserify` + `babelify` with `karma-esbuild` in `karma.conf.cjs`
+- Added `tsx` and `karma-esbuild` as devDependencies
+- Files changed:
+  - Modified: `package.json` (test scripts updated, tsx/karma-esbuild added as devDeps)
+  - Modified: `.c8rc.json` (include patterns updated)
+  - Modified: `karma.conf.cjs` (switched from browserify+babelify to esbuild)
+  - Modified: `package-lock.json` (dependency tree updated)
+- Test results:
+  - `npm run test:node-no-browser-wrappers`: 528 passing (2 crossbar failures expected — no server running)
+  - `npm run test:browser-wrappers`: 4 passing
+  - `npm run test:browser` (Karma): 487 passing
+  - Coverage: 84.61% statements, 93.82% branches, 96.29% functions
+- **Learnings for future iterations:**
+  - Mocha does NOT have a `--import` flag — use `NODE_OPTIONS='--import tsx/esm'` via `cross-env` to register the tsx ESM loader
+  - `--import tsx` without `/esm` fails with ERR_MODULE_NOT_FOUND — always use `tsx/esm` for ESM projects
+  - `karma-esbuild` handles TypeScript natively with zero config — just set preprocessor pattern to `'test/**/*.ts': ['esbuild']`
+  - esbuild in karma config needs `format: 'esm'`, `bundle: true`, `platform: 'browser'` for correct browser bundle output
+  - Crossbar tests always fail without a running Crossbar.io router — these are integration tests, not unit tests
 ---
