@@ -22,8 +22,8 @@
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "wampy-cra uses top-level await which is incompatible with CJS format; CJS build emits it as .mjs instead"
     },
     {
       "id": "US-002",

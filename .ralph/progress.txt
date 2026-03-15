@@ -1,0 +1,28 @@
+# Ralphy Progress Log
+Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
+---
+
+## Codebase Patterns
+- Build uses `tsup` with multi-config array in `tsup.config.ts` (ESM, CJS, IIFE browser bundles)
+- Post-build script `scripts/post-build.js` creates `dist/browser.zip` using system `zip` command
+- `wampy-cra.js` uses top-level `await import('node:crypto')` — incompatible with CJS format, so CJS build emits it as `.mjs`
+- Typecheck script uses `--declaration false --declarationMap false` flags with `--noEmit` to avoid TS9005 errors from JS test files
+- `checkJs: false` in tsconfig.json — JS files are included for module resolution but not type-checked
+- External deps for library builds: cbor-x, msgpackr, tweetnacl, websocket, ws, yargs, color-json, node:crypto
+- Browser IIFE bundles use `noExternal: [/.*/]` to bundle all dependencies inline
+
+## 2026-03-15 20:00 (EET) - US-001
+- Implemented TypeScript infrastructure and tsup build configuration
+- Files changed:
+  - Created: `tsconfig.json`, `tsup.config.ts`, `scripts/post-build.js`
+  - Modified: `package.json` (new scripts, new devDeps, removed Babel/Grunt deps)
+  - Deleted: `.babelrc`, `Gruntfile.cjs`
+  - Modified: `package-lock.json` (dependency tree updated)
+- **Learnings for future iterations:**
+  - tsup config supports array of configs for multiple output formats
+  - Top-level `await` in source files (wampy-cra.js line 10) breaks CJS builds — need special handling
+  - TS9005 "Declaration emit for this file requires using private name" occurs when `declaration: true` + `allowJs: true` with function-constructor-style exports in test JS files
+  - The original Grunt build: babel(src→dist CJS), browserify(browser entries), uglify, concat(serializers+wampy min→wampy-all.min), compress(zip), clean(browser folder)
+  - Browser entries (wampy-single-4-browser.js, wampy-all-4-browser.js) set `globalThis.*` directly — the IIFE wrapper's globalName is unused
+  - `wampy-all-4-browser.js` explicitly excludes wampcra due to `await import('node:crypto')` incompatibility
+---
