@@ -27,9 +27,9 @@ const esmEntries = {
     'constants': 'src/constants.ts',
     'errors': 'src/errors.ts',
     'utils': 'src/utils.ts',
-    'serializers/json-serializer': 'src/serializers/json-serializer.js',
-    'serializers/cbor-serializer': 'src/serializers/cbor-serializer.js',
-    'serializers/msgpack-serializer': 'src/serializers/msgpack-serializer.js',
+    'serializers/json-serializer': 'src/serializers/json-serializer.ts',
+    'serializers/cbor-serializer': 'src/serializers/cbor-serializer.ts',
+    'serializers/msgpack-serializer': 'src/serializers/msgpack-serializer.ts',
     'auth/wampcra/wampy-cra': 'src/auth/wampcra/wampy-cra.js',
     'auth/cryptosign/wampy-cryptosign': 'src/auth/cryptosign/wampy-cryptosign.js',
 };
@@ -40,9 +40,9 @@ const cjsEntries = {
     'constants': 'src/constants.ts',
     'errors': 'src/errors.ts',
     'utils': 'src/utils.ts',
-    'serializers/json-serializer': 'src/serializers/json-serializer.js',
-    'serializers/cbor-serializer': 'src/serializers/cbor-serializer.js',
-    'serializers/msgpack-serializer': 'src/serializers/msgpack-serializer.js',
+    'serializers/json-serializer': 'src/serializers/json-serializer.ts',
+    'serializers/cbor-serializer': 'src/serializers/cbor-serializer.ts',
+    'serializers/msgpack-serializer': 'src/serializers/msgpack-serializer.ts',
     'auth/cryptosign/wampy-cryptosign': 'src/auth/cryptosign/wampy-cryptosign.js',
 };
 

@@ -12,6 +12,8 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - Browser IIFE bundles use `noExternal: [/.*/]` to bundle all dependencies inline
 - When renaming `.js` → `.ts`: import paths in consuming files stay as `.js` (NodeNext resolution), but `tsup.config.ts` entry paths must be updated to `.ts`
 - For globalThis augmentations (e.g., `MozWebSocket`), use `declare global { var ... }` — NOT `declare const globalThis: typeof globalThis & { ... }` (causes circular ref)
+- Serializer interface defined in `src/serializers/serializer.ts` — all serializers implement it; import as `import type { Serializer } from './serializer.js'`
+- When third-party types are incomplete (e.g., cbor-x missing `int64AsNumber`), extend the interface locally rather than using `@ts-ignore`
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -62,4 +64,23 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - Don't use `declare const globalThis: typeof globalThis & { ... }` — causes TS circular reference error. Use `declare global { var ... }` instead
   - `ws` constructor in user-provided WebSocket class takes 5 args: `(url, protocols, origin, headers, requestOptions)` — the `origin` parameter is `null`
   - The `Deferred<T>` interface will be useful for typing `_requests` and other internal caches in wampy.ts (US-007)
+---
+
+## 2026-03-15 21:00 (EET) - US-004
+- Created `Serializer` interface in `src/serializers/serializer.ts` with `protocol`, `isBinary`, `encode()`, `decode()` members
+- Converted `src/serializers/json-serializer.js` → `src/serializers/json-serializer.ts` implementing `Serializer`
+- Converted `src/serializers/cbor-serializer.js` → `src/serializers/cbor-serializer.ts` implementing `Serializer`
+- Converted `src/serializers/msgpack-serializer.js` → `src/serializers/msgpack-serializer.ts` implementing `Serializer`
+- All three classes implement the `Serializer` interface with proper parameter and return types
+- Updated `tsup.config.ts` entry paths from `.js` to `.ts` for all three serializers
+- Files changed:
+  - Created: `src/serializers/serializer.ts`, `src/serializers/json-serializer.ts`, `src/serializers/cbor-serializer.ts`, `src/serializers/msgpack-serializer.ts`
+  - Deleted: `src/serializers/json-serializer.js`, `src/serializers/cbor-serializer.js`, `src/serializers/msgpack-serializer.js`
+  - Modified: `tsup.config.ts` (serializer entry paths updated)
+- **Learnings for future iterations:**
+  - `cbor-x` Options type is missing `int64AsNumber` property — use an extended `CborxOptions` interface to add it
+  - `Encoder.encode()` from cbor-x returns `Buffer` (extends `Uint8Array`), compatible with `Serializer` interface's `Uint8Array` return
+  - `pack()` from msgpackr returns `Buffer` — also compatible with `Uint8Array` in the `Serializer` interface
+  - tsup generates chunked `.d.ts` for shared types (e.g., `serializer-BBXXJ2B8.d.ts`) and re-exports from individual serializer `.d.ts` files
+  - The `Serializer` interface is defined in a separate `serializer.ts` file (not an index) to keep it importable as a standalone type
 ---

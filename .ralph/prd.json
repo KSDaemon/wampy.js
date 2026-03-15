@@ -65,8 +65,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "cbor-x Options type is missing int64AsNumber — extended via CborxOptions interface"
     },
     {
       "id": "US-005",
