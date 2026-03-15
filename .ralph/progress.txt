@@ -14,6 +14,8 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - For globalThis augmentations (e.g., `MozWebSocket`), use `declare global { var ... }` — NOT `declare const globalThis: typeof globalThis & { ... }` (causes circular ref)
 - Serializer interface defined in `src/serializers/serializer.ts` — all serializers implement it; import as `import type { Serializer } from './serializer.js'`
 - When third-party types are incomplete (e.g., cbor-x missing `int64AsNumber`), extend the interface locally rather than using `@ts-ignore`
+- `node:crypto` SubtleCrypto and DOM SubtleCrypto types are incompatible — extract `subtle` property directly and type-assert to `SubtleCrypto` to unify both environments
+- `tweetnacl` ships its own `.d.ts` — no `@types/tweetnacl` needed
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -83,4 +85,26 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - `pack()` from msgpackr returns `Buffer` — also compatible with `Uint8Array` in the `Serializer` interface
   - tsup generates chunked `.d.ts` for shared types (e.g., `serializer-BBXXJ2B8.d.ts`) and re-exports from individual serializer `.d.ts` files
   - The `Serializer` interface is defined in a separate `serializer.ts` file (not an index) to keep it importable as a standalone type
+---
+
+## 2026-03-15 21:30 (EET) - US-005
+- Converted `src/auth/wampcra/wampy-cra.js` → `src/auth/wampcra/wampy-cra.ts` with full typing
+  - `deriveKey()`, `signManual()`, `sign()` all typed with parameter and return types
+  - `WampCraInfo` interface defined for the signing info parameter
+  - Extracted `subtle` from crypto module with `SubtleCrypto` type assertion to unify Node.js and browser environments
+- Converted `src/auth/cryptosign/wampy-cryptosign.js` → `src/auth/cryptosign/wampy-cryptosign.ts` with full typing
+  - `hex2bytes()`, `bytes2hex()`, `sign()` all typed with parameter and return types
+  - `CryptosignInfo` interface defined for the signing info parameter
+  - tweetnacl types used via its bundled `.d.ts`
+- Updated `tsup.config.ts` entry paths from `.js` to `.ts` for both auth plugins (ESM, CJS, and CJS/MJS entries)
+- JSDoc type annotations (`@param`, `@returns`, `@type`) removed; textual descriptions preserved
+- Files changed:
+  - Created: `src/auth/wampcra/wampy-cra.ts`, `src/auth/cryptosign/wampy-cryptosign.ts`
+  - Deleted: `src/auth/wampcra/wampy-cra.js`, `src/auth/cryptosign/wampy-cryptosign.js`
+  - Modified: `tsup.config.ts` (auth entry paths updated)
+- **Learnings for future iterations:**
+  - `node:crypto` module's `SubtleCrypto` type is NOT compatible with DOM `SubtleCrypto` — the `KeyUsage` types differ (node has extra values like `"decapsulateBits"`)
+  - Solution: extract the `subtle` property directly and type-assert it to `SubtleCrypto`, rather than typing the whole crypto module
+  - `tweetnacl` ships bundled `nacl.d.ts` — no `@types/tweetnacl` package needed; `sign.detached()` and `sign.keyPair.fromSeed()/fromSecretKey()` are well-typed
+  - `str.match(/../g)` can return `null` — need to assert `as RegExpMatchArray` when the input is guaranteed to be valid hex
 ---

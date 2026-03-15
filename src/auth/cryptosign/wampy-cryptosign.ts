@@ -10,44 +10,40 @@ import tweetnacl from 'tweetnacl';
 const { sign: NaclSign } = tweetnacl;
 
 /**
- * Converts a hexadecimal string to an array of bytes.
- * @param {string} str - The hexadecimal string to convert.
- * @returns {Uint8Array} The array of bytes.
+ * Information required for Cryptosign signing.
  */
-export function hex2bytes(str) {
+interface CryptosignInfo {
+    challenge: string;
+}
+
+/**
+ * Converts a hexadecimal string to an array of bytes.
+ */
+export function hex2bytes(str: string): Uint8Array {
     // Converting hex string to array of bytes
-    return new Uint8Array(str.match(/../g).map(h=>Number.parseInt(h,16)));
+    return new Uint8Array((str.match(/../g) as RegExpMatchArray).map(h => Number.parseInt(h, 16)));
 }
 
 /**
  * Converts an array of bytes to a hexadecimal string.
- * @param {Uint8Array} bytes - The array of bytes to convert.
- * @returns {string} The hexadecimal string.
  */
-export function bytes2hex(bytes) {
-    return bytes ? Array.from(bytes, function (byte) {
+export function bytes2hex(bytes: Uint8Array): string | null {
+    return bytes ? Array.from(bytes, function (byte: number) {
             return ('0' + (byte & 0xFF).toString(16)).slice(-2);
         }).join('') : null;
 }
 
 /**
  * Creates a signing function using the specified private key.
- * @param {string} privateKey - The private key in hexadecimal format.
- * @returns {function(string, object): string} A signing function.
  */
-export function sign(privateKey) {
+export function sign(privateKey: string): (method: string, info: CryptosignInfo) => string {
     const keyPair = privateKey.length === 64 ? NaclSign.keyPair.fromSeed(hex2bytes(privateKey)) :
         NaclSign.keyPair.fromSecretKey(hex2bytes(privateKey));
 
     /**
      * Signs a challenge using the cryptosign method.
-     * @param {string} method - The authentication method.
-     * @param {object} info - Information required for signing.
-     * @param {string} info.challenge - The challenge to sign.
-     * @returns {string} The signed challenge.
-     * @throws {Error} If the provided authentication method is unknown or no challenge is provided.
      */
-    return function (method, info) {
+    return function (method: string, info: CryptosignInfo): string {
         if (method === 'cryptosign') {
             if (!info.challenge) {
                 throw new Error('No challenge provided!');

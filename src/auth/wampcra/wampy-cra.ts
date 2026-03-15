@@ -7,17 +7,23 @@
  */
 
 const isNode = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]');
-const crypto = isNode ? await import('node:crypto') : globalThis.crypto;
+const cryptoModule = isNode ? await import('node:crypto') : globalThis.crypto;
+const subtle: SubtleCrypto = ('subtle' in cryptoModule ? cryptoModule.subtle : (cryptoModule as Crypto).subtle) as SubtleCrypto;
+
+/**
+ * Information required for WAMP-CRA signing.
+ */
+interface WampCraInfo {
+    challenge: string;
+    salt?: string;
+    iterations?: number;
+    keylen?: number;
+}
 
 /**
  * Derives a key using PBKDF2 algorithm.
- * @param {string} secret - The secret key.
- * @param {string} salt - The salt value.
- * @param {number} [iterations=1000] - The number of iterations.
- * @param {number} [keylen=32] - The length of the key.
- * @returns {Promise<string>} The derived key as a base64-encoded string.
  */
-export async function deriveKey(secret, salt, iterations = 1000, keylen = 32) {
+export async function deriveKey(secret: string, salt: string, iterations: number = 1000, keylen: number = 32): Promise<string> {
     // This is how it can be done shorter using node specific API
     // if (isNode) {
     //     const key = crypto.pbkdf2Sync(secret, salt, iterations, keylen, 'sha256');
@@ -27,9 +33,9 @@ export async function deriveKey(secret, salt, iterations = 1000, keylen = 32) {
         const secretBuffer = encoder.encode(secret);
         const saltBuffer = encoder.encode(salt);
         const algorithm = { name: 'PBKDF2', hash: 'SHA-256', iterations };
-        const derivedKey = await crypto.subtle.importKey(
+        const derivedKey = await subtle.importKey(
             'raw', secretBuffer, algorithm, false, ['deriveBits']);
-        const keyBuffer = await crypto.subtle.deriveBits(
+        const keyBuffer = await subtle.deriveBits(
             { name: 'PBKDF2', salt: saltBuffer, iterations, hash: 'SHA-256' },
             derivedKey,
             keylen * 8
@@ -41,11 +47,8 @@ export async function deriveKey(secret, salt, iterations = 1000, keylen = 32) {
 
 /**
  * Signs a challenge using the manual method.
- * @param {string} key - The key used for signing.
- * @param {string} challenge - The challenge to sign.
- * @returns {Promise<string>} The signature as a base64-encoded string.
  */
-export async function signManual(key, challenge) {
+export async function signManual(key: string, challenge: string): Promise<string> {
     // This is how it can be done shorter using node specific API
     // if (isNode) {
     //     const hmac = crypto.createHmac('sha256', key);
@@ -55,12 +58,12 @@ export async function signManual(key, challenge) {
         const encoder = new TextEncoder();
         const keyBuffer = encoder.encode(key);
         const challengeBuffer = encoder.encode(challenge);
-        const keyData = await crypto.subtle.importKey('raw',
+        const keyData = await subtle.importKey('raw',
             keyBuffer,
             { name: 'HMAC', hash: 'SHA-256' },
             false,
             ['sign']);
-        const signature = await crypto.subtle.sign('HMAC', keyData, challengeBuffer);
+        const signature = await subtle.sign('HMAC', keyData, challengeBuffer);
         const signatureArray = [...new Uint8Array(signature)];
         return btoa(String.fromCodePoint(...signatureArray));
     // }
@@ -68,19 +71,12 @@ export async function signManual(key, challenge) {
 
 /**
  * Creates a signing function using the specified secret.
- * @param {string} secret - The secret key.
- * @returns {function(string, object): Promise<string>} A signing function.
  */
-export function sign(secret) {
+export function sign(secret: string): (method: string, info: WampCraInfo) => Promise<string> {
     /**
      * Signs a challenge using the wampcra method.
-     * @param {string} method - The authentication method.
-     * @param {object} info - Information required for signing.
-     * @param {string} info.challenge - The challenge to sign.
-     * @returns {string} The signed challenge.
-     * @throws {Error} If the provided authentication method is unknown or no challenge is provided.
      */
-    return async function (method, info) {
+    return async function (method: string, info: WampCraInfo): Promise<string> {
         if (method === 'wampcra') {
             return info.salt ? signManual(await deriveKey(secret, info.salt, info.iterations, info.keylen),
                 info.challenge) : signManual(secret, info.challenge);

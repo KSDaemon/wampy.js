@@ -30,8 +30,8 @@ const esmEntries = {
     'serializers/json-serializer': 'src/serializers/json-serializer.ts',
     'serializers/cbor-serializer': 'src/serializers/cbor-serializer.ts',
     'serializers/msgpack-serializer': 'src/serializers/msgpack-serializer.ts',
-    'auth/wampcra/wampy-cra': 'src/auth/wampcra/wampy-cra.js',
-    'auth/cryptosign/wampy-cryptosign': 'src/auth/cryptosign/wampy-cryptosign.js',
+    'auth/wampcra/wampy-cra': 'src/auth/wampcra/wampy-cra.ts',
+    'auth/cryptosign/wampy-cryptosign': 'src/auth/cryptosign/wampy-cryptosign.ts',
 };
 
 // CJS entries: exclude wampy-cra which uses top-level await (incompatible with CJS)
@@ -43,7 +43,7 @@ const cjsEntries = {
     'serializers/json-serializer': 'src/serializers/json-serializer.ts',
     'serializers/cbor-serializer': 'src/serializers/cbor-serializer.ts',
     'serializers/msgpack-serializer': 'src/serializers/msgpack-serializer.ts',
-    'auth/cryptosign/wampy-cryptosign': 'src/auth/cryptosign/wampy-cryptosign.js',
+    'auth/cryptosign/wampy-cryptosign': 'src/auth/cryptosign/wampy-cryptosign.ts',
 };
 
 export default defineConfig([
@@ -74,7 +74,7 @@ export default defineConfig([
     // CJS build for wampy-cra: uses ESM format since it needs top-level await
     // Consumers using require() for this module should use dynamic import
     {
-        entry: { 'auth/wampcra/wampy-cra': 'src/auth/wampcra/wampy-cra.js' },
+        entry: { 'auth/wampcra/wampy-cra': 'src/auth/wampcra/wampy-cra.ts' },
         format: ['esm'],
         outDir: 'dist/cjs',
         dts: false,

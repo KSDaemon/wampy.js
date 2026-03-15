@@ -79,8 +79,8 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "node:crypto SubtleCrypto types differ from DOM SubtleCrypto — extracted `subtle` property with type assertion to work with both environments"
     },
     {
       "id": "US-006",
