@@ -86,7 +86,7 @@ export default defineConfig([
     },
     // Browser IIFE: wampy.js (single — sets globalThis.Wampy)
     {
-        entry: { 'wampy': 'src/wampy-single-4-browser.js' },
+        entry: { 'wampy': 'src/wampy-single-4-browser.ts' },
         format: ['iife'],
         outDir: 'dist/browser',
         globalName: '__wampy_single__',
@@ -103,7 +103,7 @@ export default defineConfig([
     },
     // Browser IIFE: wampy-all.js (all serializers + auth)
     {
-        entry: { 'wampy-all': 'src/wampy-all-4-browser.js' },
+        entry: { 'wampy-all': 'src/wampy-all-4-browser.ts' },
         format: ['iife'],
         outDir: 'dist/browser',
         globalName: '__wampy_all__',
@@ -120,7 +120,7 @@ export default defineConfig([
     },
     // Browser IIFE: wampy.min.js (minified single)
     {
-        entry: { 'wampy.min': 'src/wampy-single-4-browser.js' },
+        entry: { 'wampy.min': 'src/wampy-single-4-browser.ts' },
         format: ['iife'],
         outDir: 'dist/browser',
         globalName: '__wampy_single_min__',
@@ -137,7 +137,7 @@ export default defineConfig([
     },
     // Browser IIFE: wampy-all.min.js (minified all)
     {
-        entry: { 'wampy-all.min': 'src/wampy-all-4-browser.js' },
+        entry: { 'wampy-all.min': 'src/wampy-all-4-browser.ts' },
         format: ['iife'],
         outDir: 'dist/browser',
         globalName: '__wampy_all_min__',

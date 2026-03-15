@@ -140,8 +140,8 @@
         "Typecheck passes"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Browser wrappers use `declare global { var ... }` with `typeof import(...)` for type-safe globalThis augmentation"
     },
     {
       "id": "US-010",

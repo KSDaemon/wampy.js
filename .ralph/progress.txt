@@ -184,3 +184,18 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - When cleaning JSDoc: remove `@param {type}`, `@returns`, `@return`, `@type`, `@private`, `@public` — but keep `@deprecated`, `@see`, and plain text descriptions
   - Some JSDoc blocks had both textual descriptions AND annotations — needed to preserve the text while removing annotations (e.g., WAMP SPEC format strings)
 ---
+
+## 2026-03-15 23:45 (EET) - US-009
+- Converted `src/wampy-single-4-browser.js` → `src/wampy-single-4-browser.ts` with `declare global` type augmentation for `Wampy`
+- Converted `src/wampy-all-4-browser.js` → `src/wampy-all-4-browser.ts` with `declare global` type augmentation for `JsonSerializer`, `MsgpackSerializer`, `CborSerializer`, `WampyCryptosign`
+- Updated `tsup.config.ts` entry paths from `.js` to `.ts` for all 4 browser IIFE bundles (single, all, single.min, all.min)
+- Files changed:
+  - Created: `src/wampy-single-4-browser.ts`, `src/wampy-all-4-browser.ts`
+  - Deleted: `src/wampy-single-4-browser.js`, `src/wampy-all-4-browser.js`
+  - Modified: `tsup.config.ts` (browser entry paths updated)
+- **Learnings for future iterations:**
+  - For `declare global` type augmentation of classes, use `typeof import('./module.js').ClassName` to reference the class constructor type
+  - For namespace imports (`import * as foo from ...`), the global var type is `typeof import('./module.js')` (the whole module namespace)
+  - Each `var` declaration in `declare global` needs its own `// eslint-disable-next-line no-var` comment
+  - Git detects `.js` → `.ts` renames correctly when content is similar enough
+---
