@@ -288,8 +288,8 @@
         "Typecheck passes"
       ],
       "priority": 18,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Node.js matrix updated to [20, 22]; added explicit build, typecheck, lint steps; coverallsapp/github-action updated to v2; added coveralls_finish job for parallel coverage upload; c8 report uses npx instead of direct path"
     },
     {
       "id": "US-019",

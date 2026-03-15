@@ -429,3 +429,24 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - `eslint --fix` auto-removes unused eslint-disable directives
   - `dist/*` should be in ignores to avoid linting build output
 ---
+
+## 2026-03-15 30:00 (EET) - US-018
+- Updated GitHub Actions workflow `.github/workflows/build-and-test.yml` for TypeScript codebase
+- Changes made:
+  - Node.js matrix updated from `[18, 20, 22]` to `[20, 22]` (Node 18 dropped)
+  - Added explicit `npm run build` step (tsup) before tests
+  - Added `npm run typecheck` step to catch type errors in CI
+  - Added `npm run lint` step to enforce code quality in CI
+  - `npm test` continues to run all test suites (node + browser-wrappers + karma browser)
+  - Coverage report step changed from `./node_modules/c8/bin/c8.js report` to `npx c8 report`
+  - `coverallsapp/github-action@master` updated to `coverallsapp/github-action@v2`
+  - Added `coveralls_finish` job for parallel coverage upload completion
+- Files changed:
+  - Modified: `.github/workflows/build-and-test.yml`
+  - Modified: `.ralph/prd.json` (US-018 passes: true)
+- **Learnings for future iterations:**
+  - `coverallsapp/github-action@v2` is the current stable version — `@master` is deprecated
+  - When using `parallel: true` for Coveralls with matrix builds, a separate `coveralls_finish` job with `parallel-finished: true` is required to signal completion
+  - CI pipeline order should be: install → build → typecheck → lint → test → coverage report → upload
+  - `npx c8 report` is preferred over direct `./node_modules/c8/bin/c8.js` path for portability
+---
