@@ -11,6 +11,7 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - External deps for library builds: cbor-x, msgpackr, tweetnacl, websocket, ws, yargs, color-json, node:crypto
 - Browser IIFE bundles use `noExternal: [/.*/]` to bundle all dependencies inline
 - When renaming `.js` → `.ts`: import paths in consuming files stay as `.js` (NodeNext resolution), but `tsup.config.ts` entry paths must be updated to `.ts`
+- For globalThis augmentations (e.g., `MozWebSocket`), use `declare global { var ... }` — NOT `declare const globalThis: typeof globalThis & { ... }` (causes circular ref)
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -42,4 +43,23 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - `E2EE_SERIALIZERS` is used with `.includes()` in wampy.js — can't convert to `Set` until wampy.js is also converted (Set uses `.has()`)
   - Error subclasses overriding a readonly property from parent need the `override` keyword in strict mode
   - tsup generates chunked `.d.ts` files (e.g., `errors-C_o2yEYd.d.ts`) and re-exports from the main `.d.ts`
+---
+
+## 2026-03-15 20:20 (EET) - US-003
+- Converted `src/utils.js` → `src/utils.ts` with proper types
+- `getWebSocket()` return type defined as `WebSocket | null`, config parameter typed via `GetWebSocketConfig` interface
+- `getNewPromise<T>()` is generic returning `Deferred<T>` with typed `promise`, `onSuccess`, `onError` properties
+- Exported `Deferred<T>` interface for use by other modules
+- `MozWebSocket` typed via `declare global` augmentation
+- Internal helpers (`isWebSocketSchemeSpecified`, `getServerUrlForNode`, `getServerUrlForBrowser`, `getWebSocketFromWindowObject`) all typed with parameter and return types
+- JSDoc type annotations removed; textual descriptions preserved
+- Updated `tsup.config.ts` entry paths from `.js` to `.ts` for utils
+- Files changed:
+  - Created: `src/utils.ts`
+  - Deleted: `src/utils.js`
+  - Modified: `tsup.config.ts` (utils entry paths updated)
+- **Learnings for future iterations:**
+  - Don't use `declare const globalThis: typeof globalThis & { ... }` — causes TS circular reference error. Use `declare global { var ... }` instead
+  - `ws` constructor in user-provided WebSocket class takes 5 args: `(url, protocols, origin, headers, requestOptions)` — the `origin` parameter is `null`
+  - The `Deferred<T>` interface will be useful for typing `_requests` and other internal caches in wampy.ts (US-007)
 ---
