@@ -39,31 +39,39 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   },
-  "main": "dist/wampy.js",
+  "main": "dist/cjs/wampy.cjs",
+  "module": "dist/esm/wampy.js",
+  "types": "dist/esm/wampy.d.ts",
   "exports": {
     ".": {
-      "import": "./src/wampy.js",
-      "require": "./dist/wampy.js"
+      "types": "./dist/esm/wampy.d.ts",
+      "import": "./dist/esm/wampy.js",
+      "require": "./dist/cjs/wampy.cjs"
     },
     "./JsonSerializer.js": {
-      "import": "./src/serializers/json-serializer.js",
-      "require": "./dist/serializers/json-serializer.js"
+      "types": "./dist/esm/serializers/json-serializer.d.ts",
+      "import": "./dist/esm/serializers/json-serializer.js",
+      "require": "./dist/cjs/serializers/json-serializer.cjs"
     },
     "./CborSerializer.js": {
-      "import": "./src/serializers/cbor-serializer.js",
-      "require": "./dist/serializers/cbor-serializer.js"
+      "types": "./dist/esm/serializers/cbor-serializer.d.ts",
+      "import": "./dist/esm/serializers/cbor-serializer.js",
+      "require": "./dist/cjs/serializers/cbor-serializer.cjs"
     },
     "./MsgpackSerializer.js": {
-      "import": "./src/serializers/msgpack-serializer.js",
-      "require": "./dist/serializers/msgpack-serializer.js"
+      "types": "./dist/esm/serializers/msgpack-serializer.d.ts",
+      "import": "./dist/esm/serializers/msgpack-serializer.js",
+      "require": "./dist/cjs/serializers/msgpack-serializer.cjs"
     },
     "./cryptosign.js": {
-      "import": "./src/auth/cryptosign/wampy-cryptosign.js",
-      "require": "./dist/auth/cryptosign/wampy-cryptosign.js"
+      "types": "./dist/esm/auth/cryptosign/wampy-cryptosign.d.ts",
+      "import": "./dist/esm/auth/cryptosign/wampy-cryptosign.js",
+      "require": "./dist/cjs/auth/cryptosign/wampy-cryptosign.cjs"
     },
     "./wampcra.js": {
-      "import": "./src/auth/wampcra/wampy-cra.js",
-      "require": "./dist/auth/wampcra/wampy-cra.js"
+      "types": "./dist/esm/auth/wampcra/wampy-cra.d.ts",
+      "import": "./dist/esm/auth/wampcra/wampy-cra.js",
+      "require": "./dist/cjs/auth/wampcra/wampy-cra.mjs"
     }
   },
   "type": "module",
@@ -91,8 +99,15 @@
     "url": "https://github.com/KSDaemon/wampy.js/issues"
   },
   "bin": {
-    "wampy": "cmd/cli.js"
+    "wampy": "dist/cli/cli.js"
   },
+  "files": [
+    "dist/esm/",
+    "dist/cjs/",
+    "dist/browser/",
+    "dist/browser.zip",
+    "dist/cli/"
+  ],
   "homepage": "https://github.com/KSDaemon/wampy.js#readme",
   "scripts": {
     "build": "rm -rf dist && tsup && node scripts/post-build.js",

@@ -3,7 +3,11 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 ---
 
 ## Codebase Patterns
-- Build uses `tsup` with multi-config array in `tsup.config.ts` (ESM, CJS, IIFE browser bundles)
+- Build uses `tsup` with multi-config array in `tsup.config.ts` (ESM, CJS, IIFE browser bundles, CLI)
+- CLI is built by tsup as ESM bundle in `dist/cli/` — shebang is preserved from source `cmd/cli.ts` (do NOT add a banner shebang or it will be duplicated)
+- `yargs/helpers` and `yargs/yargs` must be listed as external in tsup config (they are separate entry points, not subpaths of `yargs`)
+- `exports` map: `types` condition must come FIRST before `import`/`require` for TypeScript resolution to work correctly
+- `wampcra.js` CJS require path points to `.mjs` file (top-level await incompatible with CJS)
 - Post-build script `scripts/post-build.js` creates `dist/browser.zip` using system `zip` command
 - `wampy-cra.js` uses top-level `await import('node:crypto')` — incompatible with CJS format, so CJS build emits it as `.mjs`
 - Typecheck script uses `--declaration false --declarationMap false` flags with `--noEmit` to avoid TS9005 errors from JS test files
@@ -354,4 +358,27 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - `karma-esbuild` handles TypeScript natively with zero config — just set preprocessor pattern to `'test/**/*.ts': ['esbuild']`
   - esbuild in karma config needs `format: 'esm'`, `bundle: true`, `platform: 'browser'` for correct browser bundle output
   - Crossbar tests always fail without a running Crossbar.io router — these are integration tests, not unit tests
+---
+
+## 2026-03-15 28:00 (EET) - US-016
+- Updated package.json exports and module configuration for proper ESM/CJS/types distribution
+- Changes made:
+  - `main` → `dist/cjs/wampy.cjs` (CJS entry)
+  - `module` → `dist/esm/wampy.js` (ESM entry)
+  - `types` → `dist/esm/wampy.d.ts` (declaration entry)
+  - `exports` map updated with `types`, `import`, `require` conditions for all 6 entry points (`.`, `./JsonSerializer.js`, `./CborSerializer.js`, `./MsgpackSerializer.js`, `./cryptosign.js`, `./wampcra.js`)
+  - `bin` → `dist/cli/cli.js` (compiled CLI output instead of source `.ts`)
+  - `files` field added: `dist/esm/`, `dist/cjs/`, `dist/browser/`, `dist/browser.zip`, `dist/cli/`
+  - `type: "module"` retained
+  - CLI build added to `tsup.config.ts` as ESM bundle with external yargs deps
+  - `yargs/helpers` and `yargs/yargs` added to commonExternal in tsup config
+- Files changed:
+  - Modified: `package.json` (main, module, types, exports, bin, files)
+  - Modified: `tsup.config.ts` (CLI build config added, yargs subpath externals)
+- **Learnings for future iterations:**
+  - esbuild/tsup preserves shebang from source files automatically — do NOT add `banner: { js: '#!/usr/bin/env node' }` or the shebang gets duplicated
+  - `yargs/helpers` and `yargs/yargs` are separate entry points that must be externalized individually (not covered by just `yargs`)
+  - `exports` map must list `types` condition first — TypeScript resolvers check conditions in order and stop at the first match
+  - `wampcra.js` CJS `require` condition points to `.mjs` because wampy-cra uses top-level await (incompatible with CJS)
+  - The `files` field controls what gets published to npm — must include all dist subdirectories but NOT source files
 ---

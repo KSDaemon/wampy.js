@@ -18,6 +18,8 @@ const commonExternal = [
     'websocket',
     'ws',
     'yargs',
+    'yargs/helpers',
+    'yargs/yargs',
     'color-json',
     'node:crypto',
 ];
@@ -47,6 +49,18 @@ const cjsEntries = {
 };
 
 export default defineConfig([
+    // CLI build (ESM, bundled — shebang preserved from source)
+    {
+        entry: { 'cli': 'cmd/cli.ts' },
+        format: ['esm'],
+        outDir: 'dist/cli',
+        dts: false,
+        sourcemap: false,
+        splitting: false,
+        clean: false,
+        external: commonExternal,
+        outExtension: () => ({ js: '.js' }),
+    },
     // ESM build
     {
         entry: esmEntries,

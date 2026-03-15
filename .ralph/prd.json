@@ -259,8 +259,8 @@
         "Typecheck passes"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "CLI built by tsup as ESM bundle in dist/cli/; yargs/helpers and yargs/yargs added as external deps; wampcra.js CJS require points to .mjs due to top-level await"
     },
     {
       "id": "US-017",
