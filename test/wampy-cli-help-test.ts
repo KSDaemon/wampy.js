@@ -3,10 +3,8 @@ import { execSync } from 'node:child_process';
 
 /**
  * Programmatically set arguments and execute the CLI script
- *
- * @param {...string} args - positional and option arguments for the command to run
  */
-async function runCommand (...args) {
+async function runCommand (...args: string[]): Promise<string> {
     const cmdArgs = [
         'node', // Not used but a value is required at this index in the array
         'cmd/cli.js', // Not used but a value is required at this index in the array

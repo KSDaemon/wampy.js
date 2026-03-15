@@ -7,14 +7,21 @@
 import { expect } from 'chai';
 import * as utils  from './../src/utils.js';
 
-const isNode = Object.prototype.toString.call(process) === '[object process]';
-let getWebSocket = utils.getWebSocket;
-
-function getPseudoBrowserWebSocket (configObject = {}) {
-    return utils.getWebSocket({ ...configObject, isBrowserMock: true });
+interface SimpleWebSocket {
+    name: string;
+    url: string;
 }
 
-function ws(url) { this.name = 'UserWebSocket'; this.url = url; }
+const isNode = Object.prototype.toString.call(process) === '[object process]';
+let getWebSocket = utils.getWebSocket as (config?: Record<string, unknown>) => SimpleWebSocket | null;
+
+function getPseudoBrowserWebSocket (configObject: Record<string, unknown> = {}): SimpleWebSocket | null {
+    return utils.getWebSocket({ ...configObject, isBrowserMock: true }) as SimpleWebSocket | null;
+}
+
+function ws(this: SimpleWebSocket, url: string) { this.name = 'UserWebSocket'; this.url = url; }
+
+const g = globalThis as Record<string, unknown>;
 
 describe('Wampy.js Utils submodule', function () {
     this.timeout(0);
@@ -53,139 +60,140 @@ describe('Wampy.js Utils submodule', function () {
             return;
         }
 
-        let savedGlobalThis;
+        let savedGlobalThis: typeof globalThis;
 
         before(function () {
             savedGlobalThis = globalThis;
             getWebSocket = getPseudoBrowserWebSocket;
-            globalThis.WebSocket = function (url) { this.name = 'WebSocket'; this.url = url; };
+            g.WebSocket = function (this: SimpleWebSocket, url: string) { this.name = 'WebSocket'; this.url = url; };
         });
 
         it('allows to create websocket object without providing url', function () {
-            globalThis.location = { port: '', hostname: 'localhost', protocol: 'http:' };
-            let ws = getWebSocket();
+            g.location = { port: '', hostname: 'localhost', protocol: 'http:' };
+            let ws = getWebSocket() as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('ws://localhost/ws');
 
-            globalThis.location = { port: '8888', hostname: 'localhost', protocol: 'http:' };
-            ws = getWebSocket();
+            g.location = { port: '8888', hostname: 'localhost', protocol: 'http:' };
+            ws = getWebSocket() as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('ws://localhost:8888/ws');
 
-            globalThis.location = { port: '', hostname: 'localhost', protocol: 'https:' };
-            ws = getWebSocket();
+            g.location = { port: '', hostname: 'localhost', protocol: 'https:' };
+            ws = getWebSocket() as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://localhost/ws');
 
-            globalThis.location = { port: '1234', hostname: 'localhost', protocol: 'https:' };
-            ws = getWebSocket();
+            g.location = { port: '1234', hostname: 'localhost', protocol: 'https:' };
+            ws = getWebSocket() as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://localhost:1234/ws');
         });
 
         it('allows to create websocket object with just path in url', function () {
-            globalThis.location = { port: '', hostname: 'localhost', protocol: 'http:' };
-            let ws = getWebSocket({ url: '/websocket/wamp' });
+            g.location = { port: '', hostname: 'localhost', protocol: 'http:' };
+            let ws = getWebSocket({ url: '/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('ws://localhost/websocket/wamp');
 
-            globalThis.location = { port: '8888', hostname: 'localhost', protocol: 'http:' };
-            ws = getWebSocket({ url:'/websocket/wamp' });
+            g.location = { port: '8888', hostname: 'localhost', protocol: 'http:' };
+            ws = getWebSocket({ url:'/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('ws://localhost:8888/websocket/wamp');
 
-            globalThis.location = { port: '', hostname: 'localhost', protocol: 'https:' };
-            ws = getWebSocket({ url:'/websocket/wamp' });
+            g.location = { port: '', hostname: 'localhost', protocol: 'https:' };
+            ws = getWebSocket({ url:'/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://localhost/websocket/wamp');
 
-            globalThis.location = { port: '1234', hostname: 'localhost', protocol: 'https:' };
-            ws = getWebSocket({ url:'/websocket/wamp' });
+            g.location = { port: '1234', hostname: 'localhost', protocol: 'https:' };
+            ws = getWebSocket({ url:'/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://localhost:1234/websocket/wamp');
         });
 
         it('allows to create websocket object with domain+path url', function () {
-            globalThis.location = { port: '', hostname: 'localhost', protocol: 'http:' };
-            let ws = getWebSocket({ url:'example.com/websocket/wamp' });
+            g.location = { port: '', hostname: 'localhost', protocol: 'http:' };
+            let ws = getWebSocket({ url:'example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('ws://example.com/websocket/wamp');
 
-            globalThis.location = { port: '8888', hostname: 'localhost', protocol: 'http:' };
-            ws = getWebSocket({ url:'example.com/websocket/wamp' });
+            g.location = { port: '8888', hostname: 'localhost', protocol: 'http:' };
+            ws = getWebSocket({ url:'example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('ws://example.com/websocket/wamp');
 
-            globalThis.location = { port: '', hostname: 'localhost', protocol: 'https:' };
-            ws = getWebSocket({ url:'example.com/websocket/wamp' });
+            g.location = { port: '', hostname: 'localhost', protocol: 'https:' };
+            ws = getWebSocket({ url:'example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://example.com/websocket/wamp');
 
-            globalThis.location = { port: '1234', hostname: 'localhost', protocol: 'https:' };
-            ws = getWebSocket({ url:'example.com/websocket/wamp' });
+            g.location = { port: '1234', hostname: 'localhost', protocol: 'https:' };
+            ws = getWebSocket({ url:'example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://example.com/websocket/wamp');
         });
 
         it('allows to create websocket object with full qualified url', function () {
-            globalThis.location = { port: '', hostname: 'localhost', protocol: 'http:' };
-            let ws = getWebSocket({ url:'ws://example.com/websocket/wamp' });
+            g.location = { port: '', hostname: 'localhost', protocol: 'http:' };
+            let ws = getWebSocket({ url:'ws://example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('ws://example.com/websocket/wamp');
 
-            globalThis.location = { port: '8888', hostname: 'localhost', protocol: 'http:' };
-            ws = getWebSocket({ url:'ws://example.com/websocket/wamp' });
+            g.location = { port: '8888', hostname: 'localhost', protocol: 'http:' };
+            ws = getWebSocket({ url:'ws://example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('ws://example.com/websocket/wamp');
 
-            globalThis.location = { port: '', hostname: 'localhost', protocol: 'https:' };
-            ws = getWebSocket({ url:'ws://example.com/websocket/wamp' });
+            g.location = { port: '', hostname: 'localhost', protocol: 'https:' };
+            ws = getWebSocket({ url:'ws://example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('ws://example.com/websocket/wamp');
 
-            globalThis.location = { port: '1234', hostname: 'localhost', protocol: 'https:' };
-            ws = getWebSocket({ url:'ws://example.com/websocket/wamp' });
+            g.location = { port: '1234', hostname: 'localhost', protocol: 'https:' };
+            ws = getWebSocket({ url:'ws://example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('ws://example.com/websocket/wamp');
 
-            globalThis.location = { port: '', hostname: 'localhost', protocol: 'http:' };
-            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' });
+            g.location = { port: '', hostname: 'localhost', protocol: 'http:' };
+            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://example.com/websocket/wamp');
 
-            globalThis.location = { port: '8888', hostname: 'localhost', protocol: 'http:' };
-            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' });
+            g.location = { port: '8888', hostname: 'localhost', protocol: 'http:' };
+            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://example.com/websocket/wamp');
 
-            globalThis.location = { port: '', hostname: 'localhost', protocol: 'https:' };
-            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' });
+            g.location = { port: '', hostname: 'localhost', protocol: 'https:' };
+            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://example.com/websocket/wamp');
 
-            globalThis.location = { port: '1234', hostname: 'localhost', protocol: 'https:' };
-            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' });
+            g.location = { port: '1234', hostname: 'localhost', protocol: 'https:' };
+            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://example.com/websocket/wamp');
 
             // Test for returning MozWebSocket in old firefoxes
-            delete globalThis.WebSocket;
-            globalThis.MozWebSocket = function (url) { this.name = 'MozWebSocket'; this.url = url; };
-            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' });
+            delete g.WebSocket;
+            g.MozWebSocket = function (this: SimpleWebSocket, url: string) { this.name = 'MozWebSocket'; this.url = url; };
+            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('MozWebSocket');
             expect(ws.url).to.be.equal('wss://example.com/websocket/wamp');
-            delete globalThis.MozWebSocket;
-            globalThis.WebSocket = function (url) { this.name = 'WebSocket'; this.url = url; };
+            delete g.MozWebSocket;
+            g.WebSocket = function (this: SimpleWebSocket, url: string) { this.name = 'WebSocket'; this.url = url; };
         });
 
         it('disallows to create websocket instance if WebSocket object is not available in window', function () {
-            delete globalThis.WebSocket;
+            delete g.WebSocket;
             expect(getWebSocket({ url:'ws://example.com/ws/path' })).to.be.null;
-            globalThis.WebSocket = function (url) { this.name = 'WebSocket'; this.url = url; };
+            g.WebSocket = function (this: SimpleWebSocket, url: string) { this.name = 'WebSocket'; this.url = url; };
         });
 
         after(function () {
             // eslint-disable-next-line no-global-assign
+            // @ts-expect-error -- restoring globalThis after mock is necessary for test cleanup
             globalThis = savedGlobalThis;
         });
     });
@@ -196,29 +204,29 @@ describe('Wampy.js Utils submodule', function () {
         }
 
         it('allows to create websocket object without providing url', function () {
-            const ws = getWebSocket();
+            const ws = getWebSocket() as SimpleWebSocket;
 
             expect(ws.url).to.be.equal('ws://localhost:9876/ws');
         });
 
         it('allows to create websocket object with just path in url', function () {
-            const ws = getWebSocket({ url:'/websocket/wamp' });
+            const ws = getWebSocket({ url:'/websocket/wamp' }) as SimpleWebSocket;
 
             expect(ws.url).to.be.equal('ws://localhost:9876/websocket/wamp');
         });
 
         it('allows to create websocket object with domain+path url', function () {
-            const ws = getWebSocket({ url:'example.com/websocket/wamp' });
+            const ws = getWebSocket({ url:'example.com/websocket/wamp' }) as SimpleWebSocket;
 
             expect(ws.url).to.be.equal('ws://example.com/websocket/wamp');
         });
 
         it('allows to create websocket object with full qualified url', function () {
-            let ws = getWebSocket({ url:'ws://example.com/websocket/wamp' });
+            let ws = getWebSocket({ url:'ws://example.com/websocket/wamp' }) as SimpleWebSocket;
 
             expect(ws.url).to.be.equal('ws://example.com/websocket/wamp');
 
-            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' });
+            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' }) as SimpleWebSocket;
 
             expect(ws.url).to.be.equal('wss://example.com/websocket/wamp');
         });

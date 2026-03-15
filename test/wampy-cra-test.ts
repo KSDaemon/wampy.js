@@ -23,7 +23,7 @@ describe('Wampy-cra plugin', function () {
     });
 
     it('allows to generate derived key using PBKDF2 scheme', async function () {
-        let res;
+        let res: string;
 
         res = await wampyCra.deriveKey(secret, salt);
         expect(res).to.be.equal('PjhbMq82TzEZgl7/qKoUrk2ZdYl3sBciwBVSnE7ZCYM=');
@@ -36,8 +36,8 @@ describe('Wampy-cra plugin', function () {
     });
 
     it('allows to automatically detect requested WAMP auth method and produce signed message', async function () {
-        let res,
-            challengeInfo = {
+        let res: string,
+            challengeInfo: { challenge: string; iterations?: number; salt?: string; keylen?: number } = {
                 challenge : challenge,
                 iterations: 100,
                 salt      : salt,
@@ -70,7 +70,7 @@ describe('Wampy-cra plugin', function () {
             // If the above line does not throw an error, fail the test
             assert.fail('Expected error was not thrown');
         } catch (error) {
-            expect(error.message).to.be.equal('Unknown authentication method requested!');
+            expect((error as Error).message).to.be.equal('Unknown authentication method requested!');
         }
     });
 

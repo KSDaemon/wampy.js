@@ -35,6 +35,11 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - `WAMP_MSG_SPEC` is `as const` — its values are literal types. When using `.includes()`, cast the array to `number[]` (e.g., `([WAMP_MSG_SPEC.CALL, ...] as number[]).includes(value)`)
 - `send-data.ts` exports `SendDataItem` interface for typing the mock server response data
 - `@types/mocha`, `@types/chai`, `@types/sinon` are added as devDependencies for test file typing
+- `@types/websocket` added for crossbar test typing
+- `globalThis.location` in tests: DOM `Location` type conflicts with partial mock objects — use `const g = globalThis as Record<string, unknown>` alias
+- `globalThis = savedGlobalThis` reassignment is not allowed in strict TS (namespace) — use `@ts-expect-error` comment
+- `chai-bytes` has bundled types (`index.d.ts`) — no `@types/chai-bytes` needed
+- For test files accessing globalThis properties that may/may not exist (Wampy, MsgpackSerializer, etc.), cast `globalThis as Record<string, unknown>` to avoid type errors
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -267,4 +272,29 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - `send-data.ts` is 3500+ lines but only needs a single `SendDataItem` interface — all entries are data objects with the same shape
   - `structuredClone()` returns `SendDataItem` when input is `SendDataItem` — TypeScript infers this correctly
   - Test helper files only import from `../src/` (serializers, constants) — no circular dependency concerns
+---
+
+## 2026-03-15 26:00 (EET) - US-013
+- Converted 7 small test files from JavaScript to TypeScript:
+  - `test/wampy-utils-test.js` → `test/wampy-utils-test.ts` (226 lines) — `getWebSocket` return typed via `SimpleWebSocket` interface, `globalThis` mock via `Record<string, unknown>` alias
+  - `test/wampy-cra-test.js` → `test/wampy-cra-test.ts` (77 lines) — `challengeInfo` typed with optional fields, error caught as `Error` cast
+  - `test/wampy-cryptosign-test.js` → `test/wampy-cryptosign-test.ts` (55 lines) — `chai-bytes` bundled types work, empty object cast `as { challenge: string }`
+  - `test/wampy-crossbar-test.js` → `test/wampy-crossbar-test.ts` (44 lines) — `websocket.w3cwebsocket` cast via `as unknown as WampyOptions['ws']`, `result.argsList!` non-null assertion
+  - `test/wampy-browser-wrappers-test.js` → `test/wampy-browser-wrappers-test.ts` (31 lines) — `globalThis as Record<string, unknown>` for dynamic property access
+  - `test/wampy-serializer-handshake-test.js` → `test/wampy-serializer-handshake-test.ts` (49 lines) — `WebSocket` cast `as unknown as WampyOptions['ws']`
+  - `test/wampy-cli-help-test.js` → `test/wampy-cli-help-test.ts` (52 lines) — `runCommand` typed with `...args: string[]` and `Promise<string>` return
+- Added `@types/websocket` as devDependency for crossbar test
+- No logic changes — just enough typing to compile under strict: true
+- Files changed:
+  - Created: `test/wampy-utils-test.ts`, `test/wampy-cra-test.ts`, `test/wampy-cryptosign-test.ts`, `test/wampy-crossbar-test.ts`, `test/wampy-browser-wrappers-test.ts`, `test/wampy-serializer-handshake-test.ts`, `test/wampy-cli-help-test.ts`
+  - Deleted: `test/wampy-utils-test.js`, `test/wampy-cra-test.js`, `test/wampy-cryptosign-test.js`, `test/wampy-crossbar-test.js`, `test/wampy-browser-wrappers-test.js`, `test/wampy-serializer-handshake-test.js`, `test/wampy-cli-help-test.js`
+  - Modified: `package.json` (added @types/websocket devDep), `package-lock.json`
+- **Learnings for future iterations:**
+  - `globalThis.location` has a built-in DOM `Location` type — can't redeclare with partial mock. Use `const g = globalThis as Record<string, unknown>` and access `g.location` instead
+  - `globalThis = savedGlobalThis` is illegal in strict TS (globalThis is a namespace) — needs `@ts-expect-error` suppression
+  - `websocket` npm package needs `@types/websocket` for TypeScript; `w3cwebsocket` constructor is typed there
+  - `chai-bytes` ships its own `index.d.ts` — no separate `@types` package needed
+  - For test files that access dynamic globalThis properties (Wampy, MsgpackSerializer, etc.), cast globalThis to `Record<string, unknown>` rather than augmenting global declarations
+  - `wampyCra.sign()` returns a function that is generic over method/info — call signatures match test usage without extra casts
+  - Crossbar test uses `Partial<WampyOptions>` for option subsets, then casts `as WampyOptions` when constructing Wampy
 ---

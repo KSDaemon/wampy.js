@@ -4,14 +4,15 @@ import { Wampy } from './../src/wampy.js';
 import { JsonSerializer } from '../src/serializers/json-serializer.js';
 import { CborSerializer } from '../src/serializers/cbor-serializer.js';
 import { NoSerializerAvailableError } from '../src/errors.js';
+import type { WampyOptions } from '../src/types.js';
 
 describe('Wampy.js Serializer Handshake', function () {
     this.timeout(0);
 
     const testUrl = 'ws://fake.server.org/ws/';
-    const wampyCommonOptions = { realm: 'AppRealm', ws: WebSocket };
-    const wampyOptionsWithJsonSerializer = { ...wampyCommonOptions, serializer: new JsonSerializer() };
-    const wampyOptionsWithCborSerializer = { ...wampyCommonOptions, serializer: new CborSerializer() };
+    const wampyCommonOptions = { realm: 'AppRealm', ws: WebSocket as unknown as WampyOptions['ws'] };
+    const wampyOptionsWithJsonSerializer: WampyOptions = { ...wampyCommonOptions, serializer: new JsonSerializer() };
+    const wampyOptionsWithCborSerializer: WampyOptions = { ...wampyCommonOptions, serializer: new CborSerializer() };
 
     it('disallows to connect when server choose not available serializer', async function () {
         try {
@@ -28,7 +29,7 @@ describe('Wampy.js Serializer Handshake', function () {
         try {
             const wampy = new Wampy(testUrl, {
                 ...wampyOptionsWithJsonSerializer,
-                onError: (e) => { expect(e).to.be.instanceOf(NoSerializerAvailableError); }
+                onError: (e: Error) => { expect(e).to.be.instanceOf(NoSerializerAvailableError); }
             });
 
             wsSetProtocol('cbor');

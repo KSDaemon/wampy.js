@@ -47,7 +47,7 @@ describe('Wampy-cryptosign plugin', function () {
 
     it('throws error if challenge is missed or incorrect', function() {
         const onChallenge = wampyCryptosign.sign(privateKey);
-        expect(() => onChallenge('cryptosign', {}))
+        expect(() => onChallenge('cryptosign', {} as { challenge: string }))
             .to.throw('No challenge provided!');
         expect(() => onChallenge('cryptosign', { challenge: challenge.slice(0, 11) }))
             .to.throw('Expected challenge to be an even number of characters!');

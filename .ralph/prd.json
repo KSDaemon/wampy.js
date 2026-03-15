@@ -208,8 +208,8 @@
         "Typecheck passes"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "`globalThis.location` assignment in utils test conflicts with DOM `Location` type — use `const g = globalThis as Record<string, unknown>` alias; `globalThis = savedGlobalThis` reassignment needs `@ts-expect-error`; `@types/websocket` added for crossbar test; `chai-bytes` has bundled types"
     },
     {
       "id": "US-014",
