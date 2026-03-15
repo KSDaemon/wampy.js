@@ -10,6 +10,7 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - `checkJs: false` in tsconfig.json — JS files are included for module resolution but not type-checked
 - External deps for library builds: cbor-x, msgpackr, tweetnacl, websocket, ws, yargs, color-json, node:crypto
 - Browser IIFE bundles use `noExternal: [/.*/]` to bundle all dependencies inline
+- When renaming `.js` → `.ts`: import paths in consuming files stay as `.js` (NodeNext resolution), but `tsup.config.ts` entry paths must be updated to `.ts`
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -25,4 +26,20 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - The original Grunt build: babel(src→dist CJS), browserify(browser entries), uglify, concat(serializers+wampy min→wampy-all.min), compress(zip), clean(browser folder)
   - Browser entries (wampy-single-4-browser.js, wampy-all-4-browser.js) set `globalThis.*` directly — the IIFE wrapper's globalName is unused
   - `wampy-all-4-browser.js` explicitly excludes wampcra due to `await import('node:crypto')` incompatibility
+---
+
+## 2026-03-15 20:10 (EET) - US-002
+- Converted `src/constants.js` → `src/constants.ts` with proper types: `WAMP_MSG_SPEC` as const object, `WAMP_ERROR_MSG` as `Record<string, string>`, `SUCCESS` typed with readonly literal types, `E2EE_SERIALIZERS` as `readonly string[]`, `isNode` as boolean, `WAMP_CUSTOM_ATTR_REGEX` as RegExp
+- Converted `src/errors.js` → `src/errors.ts` with all error classes typed: readonly `code` properties, typed constructor parameters, `WampErrorParams` interface, `override` keyword on subclass `code` properties
+- Updated `tsup.config.ts` entry paths from `.js` to `.ts` for constants and errors
+- Files changed:
+  - Created: `src/constants.ts`, `src/errors.ts`
+  - Deleted: `src/constants.js`, `src/errors.js`
+  - Modified: `tsup.config.ts` (entry paths updated)
+- **Learnings for future iterations:**
+  - When renaming `.js` → `.ts`, import paths with `.js` extensions in consuming files DON'T need updating — NodeNext module resolution resolves `.js` imports to `.ts` source files
+  - `tsup.config.ts` entry paths DO need updating from `.js` to `.ts` since those are direct file paths, not module specifiers
+  - `E2EE_SERIALIZERS` is used with `.includes()` in wampy.js — can't convert to `Set` until wampy.js is also converted (Set uses `.has()`)
+  - Error subclasses overriding a readonly property from parent need the `override` keyword in strict mode
+  - tsup generates chunked `.d.ts` files (e.g., `errors-C_o2yEYd.d.ts`) and re-exports from the main `.d.ts`
 ---

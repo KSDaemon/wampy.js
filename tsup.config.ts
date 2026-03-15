@@ -24,8 +24,8 @@ const commonExternal = [
 
 const esmEntries = {
     'wampy': 'src/wampy.js',
-    'constants': 'src/constants.js',
-    'errors': 'src/errors.js',
+    'constants': 'src/constants.ts',
+    'errors': 'src/errors.ts',
     'utils': 'src/utils.js',
     'serializers/json-serializer': 'src/serializers/json-serializer.js',
     'serializers/cbor-serializer': 'src/serializers/cbor-serializer.js',
@@ -37,8 +37,8 @@ const esmEntries = {
 // CJS entries: exclude wampy-cra which uses top-level await (incompatible with CJS)
 const cjsEntries = {
     'wampy': 'src/wampy.js',
-    'constants': 'src/constants.js',
-    'errors': 'src/errors.js',
+    'constants': 'src/constants.ts',
+    'errors': 'src/errors.ts',
     'utils': 'src/utils.js',
     'serializers/json-serializer': 'src/serializers/json-serializer.js',
     'serializers/cbor-serializer': 'src/serializers/cbor-serializer.js',

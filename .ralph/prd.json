@@ -36,8 +36,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "E2EE_SERIALIZERS kept as readonly string[] instead of ReadonlySet<string> to avoid breaking runtime .includes() calls in unconverted wampy.js"
     },
     {
       "id": "US-003",

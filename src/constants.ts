@@ -23,14 +23,14 @@ export const WAMP_MSG_SPEC = {
     INVOCATION: 68,
     INTERRUPT: 69,
     YIELD: 70
-};
+} as const;
 
-export const SUCCESS = {
+export const SUCCESS: { readonly code: 0; readonly error: null } = {
     code: 0,
     error: null
 };
 
-export const WAMP_ERROR_MSG = {
+export const WAMP_ERROR_MSG: Record<string, string> = {
     SUCCESS: 'Success!',
     URI_ERROR: 'Topic URI doesn\'t meet requirements!',
     NO_BROKER: 'Server doesn\'t provide broker role!',
@@ -58,8 +58,8 @@ export const WAMP_ERROR_MSG = {
     FEATURE_NOT_SUPPORTED: 'Feature not supported'
 };
 
-export const E2EE_SERIALIZERS = ['cbor'];
+export const E2EE_SERIALIZERS: readonly string[] = ['cbor'] as const;
 
-export const isNode = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]');
+export const isNode: boolean = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]');
 
-export const WAMP_CUSTOM_ATTR_REGEX = /^_[a-z0-9_]{3,}$/;
+export const WAMP_CUSTOM_ATTR_REGEX: RegExp = /^_[a-z0-9_]{3,}$/;
