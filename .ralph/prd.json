@@ -94,8 +94,8 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Types defined in src/types.ts — covers WampyOptions, WampyOpStatus, cache/state, subscriptions, registrations, callbacks, advanced options, progressive call types, payload types, WAMP message types, and internal request/call structures"
     },
     {
       "id": "US-007",

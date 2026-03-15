@@ -16,6 +16,11 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - When third-party types are incomplete (e.g., cbor-x missing `int64AsNumber`), extend the interface locally rather than using `@ts-ignore`
 - `node:crypto` SubtleCrypto and DOM SubtleCrypto types are incompatible — extract `subtle` property directly and type-assert to `SubtleCrypto` to unify both environments
 - `tweetnacl` ships its own `.d.ts` — no `@types/tweetnacl` needed
+- Core Wampy types are in `src/types.ts` — import with `import type { ... } from './types.js'`
+- `Deferred<T>` is in `src/utils.ts` — used by cache (connectPromise, closePromise) and internal requests/calls
+- `WampyCache.timer` is typed as `ReturnType<typeof setTimeout> | null` for cross-environment compatibility
+- Internal `_requests` map uses `WampRequest` type; `_calls` map uses `WampCall` type (extends Deferred with optional `onProgress`)
+- Subscribe/Register request callbacks extend `Deferred` with additional properties (`onEvent` for subscribe, `rpc` for register)
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -106,5 +111,36 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - `node:crypto` module's `SubtleCrypto` type is NOT compatible with DOM `SubtleCrypto` — the `KeyUsage` types differ (node has extra values like `"decapsulateBits"`)
   - Solution: extract the `subtle` property directly and type-assert it to `SubtleCrypto`, rather than typing the whole crypto module
   - `tweetnacl` ships bundled `nacl.d.ts` — no `@types/tweetnacl` package needed; `sign.detached()` and `sign.keyPair.fromSeed()/fromSecretKey()` are well-typed
-  - `str.match(/../g)` can return `null` — need to assert `as RegExpMatchArray` when the input is guaranteed to be valid hex
+   - `str.match(/../g)` can return `null` — need to assert `as RegExpMatchArray` when the input is guaranteed to be valid hex
+---
+
+## 2026-03-15 22:00 (EET) - US-006
+- Created `src/types.ts` containing comprehensive type definitions for the Wampy class
+- Types defined:
+  - `WampMessageType` union and `WampMessage` tuple type for WAMP message IDs
+  - `WampyOpStatus` interface for operation status
+  - `EventData`, `CallResult`, `InvocationData` callback data types
+  - `EventCallback`, `RPCCallback`, `OnChallengeCallback`, `AuthPlugin` function types
+  - `SubscribeSuccessResult`, `UnsubscribeSuccessResult`, `PublishSuccessResult`, `RegisterSuccessResult`, `UnregisterSuccessResult` result types
+  - `Payload`, `PayloadWithArgsKwargs` for user-supplied payloads
+  - `PackPPTPayloadResult`, `UnpackPPTPayloadResult` for PPT mode
+  - `SubscribeAdvancedOptions`, `PublishAdvancedOptions`, `CallAdvancedOptions`, `CancelAdvancedOptions`, `RegisterAdvancedOptions` for public API
+  - `ProgressiveCallSendData`, `ProgressiveCallSendDataOptions`, `ProgressiveCallReturn` for progressive calls
+  - `WampyOptions` interface with all constructor/config options
+  - `WampyCache` for internal cache/state (sessionId, reqId, timers, server features, etc.)
+  - `ServerWampFeatures`, `ServerWampRole`, `WampFeatures` for WAMP features structures
+  - `SubscriptionCallbacksHash`, `RegistrationCallbacksHash` for internal subscription/registration storage
+  - `SubscribeRequestCallbacks`, `RegisterRequestCallbacks`, `WampRequest`, `WampCall` for pending requests
+  - `TopicType`, `WampRole` for internal method parameters
+  - `WebSocketConstructor`, `InvocationResult`, `InvocationResultOptions`, `InvocationErrorData` for RPC invocation handling
+- Files changed:
+  - Created: `src/types.ts`
+  - Modified: `.ralph/prd.json`, `.ralph/progress.txt`
+- **Learnings for future iterations:**
+  - The `_requests` map is polymorphic — subscribe requests add `onEvent`, register requests add `rpc` callback, publish/unsubscribe requests use plain Deferred
+  - The `_calls` map extends `Deferred<CallResult>` with optional `onProgress` for progressive call results
+  - `WampyCache.sessionId` is `number | null` (received as a number from WELCOME message)
+  - `ServerWampFeatures.roles` is `Record<string, ServerWampRole>` to allow indexing by dynamic role names ('dealer', 'broker')
+  - `WampyOptions.payloadSerializers` is `Record<string, Serializer>` for PPT mode serializer lookup by name
+  - Types use `import type` for all imports to ensure they are erased at compile time
 ---
