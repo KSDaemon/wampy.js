@@ -129,7 +129,7 @@ export const getWampySession = async function (argv: CliArgv): Promise<Wampy> {
         await wampy.connect();
     } catch (error) {
         logger('connection failed', error);
-        throw new Error('Can\'t connect to server!');
+        throw new Error('Can\'t connect to server!', { cause: error });
     }
     logger(`Connected to router at ${argv.url}`);
 

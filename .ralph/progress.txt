@@ -47,6 +47,13 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - Test runner uses `tsx` via `NODE_OPTIONS='--import tsx/esm'` for ESM + TypeScript mocha support — mocha does NOT have a `--import` flag, so `NODE_OPTIONS` is required
 - Karma browser tests use `karma-esbuild` preprocessor (replaces `karma-browserify` + `babelify`) — esbuild handles TypeScript natively with no extra config
 - c8 coverage config `.c8rc.json` include patterns must match source file extensions (`.ts` not `.js`)
+- ESLint uses `typescript-eslint` v8 with flat config via `tseslint.config()` wrapper
+- TS-specific ESLint rule overrides must come AFTER base rules (flat config applies rules in order, last wins)
+- `no-duplicate-imports` must be disabled for `.ts` files — `import type` + regular `import` from same module is valid TS
+- `no-unused-vars` / `no-use-before-define` / `default-param-last` have TS equivalents — disable base rule and enable `@typescript-eslint/` version
+- `@typescript-eslint/no-unused-expressions` must be disabled for test files — chai assertion expressions (`expect().to.be.true`) trigger it
+- `@typescript-eslint/no-this-alias` must be disabled when using `consistent-this` pattern (`const self = this`)
+- `eslint --fix` auto-removes unused eslint-disable directives when `reportUnusedDisableDirectives: 'warn'` is set
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -381,4 +388,44 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - `exports` map must list `types` condition first — TypeScript resolvers check conditions in order and stop at the first match
   - `wampcra.js` CJS `require` condition points to `.mjs` because wampy-cra uses top-level await (incompatible with CJS)
   - The `files` field controls what gets published to npm — must include all dist subdirectories but NOT source files
+---
+
+## 2026-03-15 29:00 (EET) - US-017
+- Updated ESLint configuration to lint TypeScript files with typescript-eslint
+- Changes made:
+  - Installed `typescript-eslint` v8 as devDependency
+  - Rewrote `eslint.config.js` to use `tseslint.config()` wrapper with flat config
+  - File patterns changed from `.js` to `.ts` for src/, cmd/, test/; kept `.cjs`/`.js` for karma.conf.cjs and eslint.config.js
+  - Added `tseslint.configs.recommended` for TS-specific rules
+  - Replaced JS rules with TS equivalents: `no-unused-vars` → `@typescript-eslint/no-unused-vars`, `no-use-before-define` → `@typescript-eslint/no-use-before-define`, `default-param-last` → `@typescript-eslint/default-param-last`
+  - Disabled `no-duplicate-imports` for TS files (import type + import from same module)
+  - Disabled `@typescript-eslint/no-unused-expressions` for test files (chai assertions)
+  - Disabled `@typescript-eslint/no-this-alias` (consistent-this pattern)
+  - Disabled `@typescript-eslint/no-explicit-any`, `@typescript-eslint/no-require-imports`, `@typescript-eslint/no-empty-object-type` for codebase compatibility
+  - Added `unicorn/prefer-class-fields: off` (serializer constructor patterns)
+- Fixed lint issues in source files:
+  - `cmd/wampy-helpers.ts`: Added `{ cause: error }` to re-thrown Error (unicorn/preserve-caught-error)
+  - `src/wampy.ts`: Removed unused `InvocationResultOptions` import
+  - `test/wampy-utils-test.ts`: Added `eslint-disable-next-line no-global-assign` for globalThis reassignment
+  - Removed 8 stale `eslint-disable no-var` directives from browser wrapper files and utils.ts (no longer needed with TS `declare global`)
+  - Removed stale `eslint-disable no-unused-vars` directive from cmd/cli.ts
+- Files changed:
+  - Modified: `eslint.config.js` (rewritten for TypeScript support)
+  - Modified: `package.json` (added typescript-eslint devDep)
+  - Modified: `package-lock.json` (dependency tree updated)
+  - Modified: `cmd/wampy-helpers.ts` (error cause added)
+  - Modified: `cmd/cli.ts` (stale directive removed)
+  - Modified: `src/wampy.ts` (unused import removed)
+  - Modified: `src/utils.ts` (stale directive removed)
+  - Modified: `src/wampy-single-4-browser.ts` (stale directive removed)
+  - Modified: `src/wampy-all-4-browser.ts` (stale directives removed)
+  - Modified: `test/wampy-utils-test.ts` (eslint-disable added for globalThis)
+- **Learnings for future iterations:**
+  - `typescript-eslint` v8 uses `tseslint.config()` wrapper for flat config — replaces manual parser/plugin setup
+  - TS overrides must come AFTER base config blocks — flat config applies rules in declaration order, last wins
+  - `no-duplicate-imports` doesn't understand `import type` — must be disabled for TS files
+  - `@typescript-eslint/no-unused-expressions` triggers on chai assertion chains like `expect(x).to.be.true` — disable for test files
+  - `unicorn/preserve-caught-error` (new rule) requires `{ cause }` when re-throwing errors — good practice regardless
+  - `eslint --fix` auto-removes unused eslint-disable directives
+  - `dist/*` should be in ignores to avoid linting build output
 ---

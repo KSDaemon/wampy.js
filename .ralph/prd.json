@@ -274,8 +274,8 @@
         "Typecheck passes"
       ],
       "priority": 17,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "typescript-eslint v8 with flat config; `no-duplicate-imports` disabled for .ts (import type + import valid); `no-unused-expressions` disabled for test files (chai assertions); `unicorn/prefer-class-fields` disabled to preserve existing constructor patterns"
     },
     {
       "id": "US-018",

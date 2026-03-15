@@ -56,7 +56,6 @@ import type {
     SubscribeRequestCallbacks,
     RegisterRequestCallbacks,
     ServerWampFeatures,
-    InvocationResultOptions,
 } from './types.js';
 
 const jsonSerializer: Serializer = new JsonSerializer();

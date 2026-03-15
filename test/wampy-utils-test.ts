@@ -192,8 +192,8 @@ describe('Wampy.js Utils submodule', function () {
         });
 
         after(function () {
-            // eslint-disable-next-line no-global-assign
             // @ts-expect-error -- restoring globalThis after mock is necessary for test cleanup
+            // eslint-disable-next-line no-global-assign
             globalThis = savedGlobalThis;
         });
     });

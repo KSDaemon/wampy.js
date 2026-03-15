@@ -24,7 +24,7 @@ interface GetWebSocketConfig {
 }
 
 declare global {
-    // eslint-disable-next-line no-var
+     
     var MozWebSocket: typeof WebSocket | undefined;
 }
 
