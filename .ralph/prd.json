@@ -189,8 +189,8 @@
         "Typecheck passes"
       ],
       "priority": 12,
-      "passes": false,
-      "notes": "send-data.ts is large (3497 lines) but is mostly data arrays — typing is mechanical, not complex."
+      "passes": true,
+      "notes": "send-data.ts is large (3497 lines) but is mostly data arrays — typed with SendDataItem interface. Fake WS uses function-constructor pattern with FakeWebSocket interface + `as unknown as FakeWebSocketConstructor` cast. WAMP_MSG_SPEC literal types need `as number[]` cast for .includes() compatibility."
     },
     {
       "id": "US-013",

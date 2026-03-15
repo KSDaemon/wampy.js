@@ -1,3 +1,15 @@
+export interface SendDataItem {
+    data: unknown[] | null;
+    from?: number[];
+    to?: number[];
+    silent?: boolean;
+    next?: boolean;
+    abort?: boolean;
+    close?: boolean;
+    ruinMessage?: boolean;
+    ruinPayload?: boolean;
+}
+
 const WAMP_MSG_SPEC = {
         HELLO: 1,
         WELCOME: 2,
@@ -44,7 +56,7 @@ const WAMP_MSG_SPEC = {
         }
     },
 
-    sendData = [
+    sendData: SendDataItem[] = [
         // rejects connection on websocket error
         {
             data: null,

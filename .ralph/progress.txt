@@ -31,6 +31,10 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - `ws` module needs `@types/ws` for TypeScript; `yargs` needs `@types/yargs`
 - yargs `CommandModule` handler must accept `Arguments` — cast to specific argv interface inside the handler body, not in the parameter type
 - CLI command interfaces extend `CliArgv` (from `wampy-helpers.ts`) with command-specific options (positionals, flags)
+- Test fake WS files use function-constructor pattern — type with a `FakeWebSocket` interface and cast `function() {} as unknown as FakeWebSocketConstructor`
+- `WAMP_MSG_SPEC` is `as const` — its values are literal types. When using `.includes()`, cast the array to `number[]` (e.g., `([WAMP_MSG_SPEC.CALL, ...] as number[]).includes(value)`)
+- `send-data.ts` exports `SendDataItem` interface for typing the mock server response data
+- `@types/mocha`, `@types/chai`, `@types/sinon` are added as devDependencies for test file typing
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -244,4 +248,23 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - yargs `CommandModule` handler expects `(args: ArgumentsCamelCase<{}>) => void | Promise<void>` — a handler typed with a specific argv interface is incompatible. Use `Arguments` parameter type with internal `as unknown as SpecificArgv` cast
   - `PPTOptions` without an index signature is not assignable to types with `[key: string]: unknown` (like `CallAdvancedOptions`) — add the index signature to bridge the gap
   - CLI command files follow a consistent pattern: `command`, `description`, optional `aliases`, `builder` function (configures yargs options), `handler` async function, default export object
+---
+
+## 2026-03-15 25:00 (EET) - US-012
+- Converted test helper/mock files to TypeScript:
+  - `test/send-data.js` → `test/send-data.ts` with `SendDataItem` interface exported, `sendData` array typed as `SendDataItem[]`
+  - `test/fake-ws.js` → `test/fake-ws.ts` with `FakeWebSocket` interface, `FakeWebSocketConstructor` interface, typed serializer map, typed timers, typed `send()` method with `as number[]` casts for `WAMP_MSG_SPEC` `.includes()` calls
+  - `test/fake-ws-set-protocol.js` → `test/fake-ws-set-protocol.ts` with `FakeWebSocket` interface, typed constructor and prototype methods
+  - `test/fake-wampy-mock.js` → `test/fake-wampy-mock.ts` with `FakeWampyOptions` interface, all methods typed with parameter and return types
+- Added `@types/mocha`, `@types/chai`, `@types/sinon` as devDependencies
+- Files changed:
+  - Created: `test/send-data.ts`, `test/fake-ws.ts`, `test/fake-ws-set-protocol.ts`, `test/fake-wampy-mock.ts`
+  - Deleted: `test/send-data.js`, `test/fake-ws.js`, `test/fake-ws-set-protocol.js`, `test/fake-wampy-mock.js`
+  - Modified: `package.json` (added @types/mocha, @types/chai, @types/sinon), `package-lock.json`
+- **Learnings for future iterations:**
+  - Function-constructor pattern (`const Foo = function() { ... }`) needs `FakeWebSocket` interface + `as unknown as FakeWebSocketConstructor` cast to type correctly
+  - `WAMP_MSG_SPEC` values are literal types due to `as const` — `.includes()` with `unknown` values requires casting the array to `number[]`
+  - `send-data.ts` is 3500+ lines but only needs a single `SendDataItem` interface — all entries are data objects with the same shape
+  - `structuredClone()` returns `SendDataItem` when input is `SendDataItem` — TypeScript infers this correctly
+  - Test helper files only import from `../src/` (serializers, constants) — no circular dependency concerns
 ---

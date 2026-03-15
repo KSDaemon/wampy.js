@@ -6,6 +6,7 @@
 
 import { JsonSerializer } from '../src/serializers/json-serializer.js';
 import { WAMP_MSG_SPEC } from '../src/constants.js';
+import type { Serializer } from '../src/serializers/serializer.js';
 
 const TIMEOUT = 15,
 
@@ -13,7 +14,29 @@ const TIMEOUT = 15,
 
 let protocol = 'json';
 
-const WebSocket = function (url, protocols) {
+interface FakeWebSocket {
+    url: string;
+    protocols: string[];
+    encoder: Serializer;
+    encode: Serializer['encode'];
+    decode: Serializer['decode'];
+    onclose: (() => void) | null;
+    onerror: (() => void) | null;
+    onmessage: ((event: { data: string | ArrayBuffer | Uint8Array }) => void) | null;
+    onopen: (() => void) | null;
+    protocol: string;
+    readyState: number;
+    close(code?: number, reason?: string): void;
+    abort(): void;
+    send(data: string | ArrayBuffer | Uint8Array): void;
+}
+
+interface FakeWebSocketConstructor {
+    new (url: string, protocols: string[]): FakeWebSocket;
+    prototype: FakeWebSocket;
+}
+
+const WebSocket = function (this: FakeWebSocket, url: string, protocols: string[]) {
         this.url = url;
         this.protocols = protocols;
 
@@ -32,28 +55,28 @@ const WebSocket = function (url, protocols) {
 
         root.setTimeout(() => {
             this.protocol = 'wamp.2.' + protocol;
-            this.onopen();
+            this.onopen!();
         }, TIMEOUT);
 
-    },
+    } as unknown as FakeWebSocketConstructor,
 
-    setProtocol = function (proto) {
+    setProtocol = function (proto: string): void {
         protocol = proto;
     };
 
-WebSocket.prototype.close = function (code, reason) {
+WebSocket.prototype.close = function (this: FakeWebSocket, _code?: number, _reason?: string): void {
     this.readyState = 3;    // Closed
-    this.onclose();
+    this.onclose!();
 };
 
-WebSocket.prototype.abort = function () {
+WebSocket.prototype.abort = function (this: FakeWebSocket): void {
     this.readyState = 3;    // Closed
-    this.onerror();
+    this.onerror!();
 };
 
-WebSocket.prototype.send = function (data) {
+WebSocket.prototype.send = function (this: FakeWebSocket, data: string | ArrayBuffer | Uint8Array): void {
     setTimeout(() => {
-        this.onmessage({
+        this.onmessage!({
             data: this.encode([
                 WAMP_MSG_SPEC.WELCOME,
                 127,
@@ -81,4 +104,3 @@ WebSocket.prototype.send = function (data) {
 };
 
 export { WebSocket, setProtocol };
-
