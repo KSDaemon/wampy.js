@@ -17,11 +17,17 @@ import { JsonSerializer } from '../src/serializers/json-serializer.js';
 import { MsgpackSerializer } from '../src/serializers/msgpack-serializer.js';
 import { CborSerializer } from '../src/serializers/cbor-serializer.js';
 import { WAMP_ERROR_MSG, SUCCESS } from '../src/constants.js';
+import type { WampyOptions, EventCallback, Payload, InvocationResult, SubscribeAdvancedOptions, PublishAdvancedOptions, CallAdvancedOptions, RegisterAdvancedOptions, CancelAdvancedOptions, ProgressiveCallSendDataOptions, OnChallengeCallback } from '../src/types.js';
+import type { Serializer } from '../src/serializers/serializer.js';
 
-const serializers = [
-    { serializer: JsonSerializer, ws: WebSocketModule.WebSocket, name: 'JSON Serializer' },
-    { serializer: MsgpackSerializer, ws: WebSocketModule.WebSocket, name: 'MsgPack Serializer' },
-    { serializer: CborSerializer, ws: WebSocketModule.WebSocket, name: 'CBOR Serializer' }
+interface SerializerConstructor {
+    new (): Serializer;
+}
+
+const serializers: Array<{ serializer: SerializerConstructor; ws: WampyOptions['ws']; name: string }> = [
+    { serializer: JsonSerializer, ws: WebSocketModule.WebSocket as unknown as WampyOptions['ws'], name: 'JSON Serializer' },
+    { serializer: MsgpackSerializer, ws: WebSocketModule.WebSocket as unknown as WampyOptions['ws'], name: 'MsgPack Serializer' },
+    { serializer: CborSerializer, ws: WebSocketModule.WebSocket as unknown as WampyOptions['ws'], name: 'CBOR Serializer' }
 ];
 
 for (const item of serializers) {
@@ -30,7 +36,7 @@ for (const item of serializers) {
 
     describe(`Wampy.js with ${name}`, function () {
         this.timeout(2000);
-        let wampy;
+        let wampy: Wampy;
 
         before(function () {
             WebSocketModule.startTimers();
@@ -73,16 +79,18 @@ for (const item of serializers) {
 
             it('aborts connection if it can not encode outgoing message', function (done) {
                 const origSerializer = new serializer();
-                const testSrlzr = class {
+                const testSrlzr = class implements Serializer {
+                    protocol: string;
+                    isBinary: boolean;
                     constructor () {
                         this.protocol = origSerializer.protocol;
                         this.isBinary = origSerializer.isBinary;
                     }
-                    encode () {
+                    encode (): string | ArrayBuffer | Uint8Array {
                         throw new Error('failed encode');
                     }
 
-                    decode () {
+                    decode (): unknown {
                         throw new Error('failed decode');
                     }
                 };
@@ -160,7 +168,7 @@ for (const item of serializers) {
                     reconnectInterval: 10000,
                     maxRetries: 50,
                     realm: 'AppRealm',
-                    uriValidation: 'loose',
+                    uriValidation: 'loose' as const,
                     helloCustomDetails: helloCustomDetails,
                     onChallenge: function () {
                         throw new Error('Reached onChallenge');
@@ -682,14 +690,14 @@ for (const item of serializers) {
                         maxRetries        : 5,
                         uriValidation     : 'loose',
                         helloCustomDetails: helloCustomDetails,
-                        onChallenge       : function () {},
+                        onChallenge: function () {} as unknown as OnChallengeCallback,
                         onClose           : function () {},
                         onError           : function () {},
                         onReconnect       : function () {},
                         onReconnectSuccess: function () {},
                         authid            : 'userid',
                         authmethods       : ['wampcra'],
-                    }).getOptions();
+                    })!.getOptions();
 
                 expect(options.autoReconnect).to.be.true;
                 expect(options.reconnectInterval).to.be.equal(1000);
@@ -713,49 +721,49 @@ for (const item of serializers) {
                     serializer: new serializer()
                 });
                 await wampy.connect(routerUrl);
-                const s = wampy.getSessionId();
+                const s = wampy.getSessionId()!;
                 expect(s).to.be.a('number');
                 expect(s).to.be.above(0);
             });
 
             it('allows to disconnect from connected server', async function () {
-                await wampy.setOptions({ onConnect: null, onClose: null })
+                await wampy.setOptions({ onConnect: null, onClose: null } as WampyOptions)!
                     .disconnect();
             });
 
             it('disallows to connect without specifying all of [onChallenge, authid, authmethods]', async function () {
                 try {
-                    wampy.setOptions({ authid: 'userid', authmethods: ['wampcra'], onChallenge: null }).connect();
+                    wampy.setOptions({ authid: 'userid', authmethods: ['wampcra'], onChallenge: null })!.connect();
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
                 }
 
                 try {
-                    wampy.setOptions({ authid: null, authmethods: ['wampcra'], onChallenge: null }).connect();
-                } catch (e) {
-                    expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
-                }
-
-                try {
-                    wampy.setOptions({
-                        authid: null, onChallenge: function () {}
-                    }).connect();
+                    wampy.setOptions({ authid: null, authmethods: ['wampcra'], onChallenge: null })!.connect();
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
                 }
 
                 try {
                     wampy.setOptions({
-                        authid: null, authmethods: [], onChallenge: function () {}
-                    }).connect();
+                        authid: null, onChallenge: function () {} as unknown as OnChallengeCallback
+                    })!.connect();
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
                 }
 
                 try {
                     wampy.setOptions({
-                        authid: 'userid', authmethods: 'string', onChallenge: function () {}
-                    }).connect();
+                        authid: null, authmethods: [], onChallenge: function () {} as unknown as OnChallengeCallback
+                    })!.connect();
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
+                }
+
+                try {
+                    wampy.setOptions({
+                        authid: 'userid', authmethods: 'string' as unknown as string[], onChallenge: function () {} as unknown as OnChallengeCallback
+                    })!.connect();
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCRACallbackOrIdError);
                 }
@@ -775,7 +783,7 @@ for (const item of serializers) {
                     },
                     onConnect: null,
                     onClose: null
-                })
+                } as WampyOptions)!
                     .connect();
             });
 
@@ -787,9 +795,9 @@ for (const item of serializers) {
                     onConnect: null,
                     onClose: null,
                     authid: null,
-                    authmethods: null,
+                    authmethods: null as unknown as string[],
                     onChallenge: null
-                })
+                } as WampyOptions)!
                     .connect();
             });
 
@@ -801,7 +809,7 @@ for (const item of serializers) {
                         wampy.setOptions({ onClose: null });
                         done();
                     }
-                })
+                } as WampyOptions)!
                     .connect();
             });
 
@@ -811,7 +819,7 @@ for (const item of serializers) {
                         wampy.setOptions({ onClose: null });
                         done();
                     }
-                }).connect();
+                })!.connect();
 
                 setTimeout(async function () {
                     await wampy.disconnect();
@@ -841,7 +849,7 @@ for (const item of serializers) {
             // mocha eslint plugin is not smart enough to detect that done is passed as parameter and will be called later
             // eslint-disable-next-line mocha/handle-done-callback
             it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
-                wampy.setOptions({ onClose: done })
+                wampy.setOptions({ onClose: done })!
                     .connect(anotherRouterUrl);
 
                 setTimeout(function () {
@@ -862,7 +870,7 @@ for (const item of serializers) {
                         wampy.setOptions({ onReconnect: null });
                     },
                     onReconnectSuccess: null
-                }).connect().then(async () => {
+                })!.connect().then(async () => {
                     try {
                         await wampy.subscribe('subscribe.reconnect1', () => {
                             expect(onReconnect).to.be.true;
@@ -920,7 +928,7 @@ for (const item of serializers) {
                     onError: function (e) {
                         done();
                     }
-                }).disconnect().then(() => {
+                })!.disconnect().then(() => {
                     wampy.connect();
                 });
             });
@@ -934,7 +942,7 @@ for (const item of serializers) {
                     onClose      : null,
                     onReconnect  : null,
                     onError      : null
-                }).connect();
+                })!.connect();
             });
 
             it('disallows to subscribe to topic if server does not provide BROKER role', async function () {
@@ -955,7 +963,7 @@ for (const item of serializers) {
 
             it('disallows to publish to topic if server does not provide BROKER role', async function () {
                 try {
-                    await wampy.publish('qwe.asd.zxc', 'payload', (e) => {});
+                    await wampy.publish('qwe.asd.zxc', 'payload', ((e: unknown) => {}) as unknown as PublishAdvancedOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoBrokerError);
                 }
@@ -1002,11 +1010,11 @@ for (const item of serializers) {
 
                         }, 1);
                     }
-                }).disconnect();
+                })!.disconnect();
             });
 
             it('disallows to publish/subscribe to topic if uri validation mode is specified incorrectly', async function () {
-                wampy.setOptions({ uriValidation: 'invalid' });
+                wampy.setOptions({ uriValidation: 'invalid' as WampyOptions['uriValidation'] });
                 try {
                     await wampy.subscribe('qwe.asd.zxc.', function (e) {});
                 } catch (e) {
@@ -1035,25 +1043,25 @@ for (const item of serializers) {
 
             it('checks for valid advanced options during subscribing to topic', async function () {
                 try {
-                    await wampy.subscribe('qqq.www.eee', function () {}, 'string instead of object');
+                    await wampy.subscribe('qqq.www.eee', function () {}, 'string instead of object' as unknown as SubscribeAdvancedOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    await wampy.subscribe('qqq.www.eee', function () {}, 123);
+                    await wampy.subscribe('qqq.www.eee', function () {}, 123 as unknown as SubscribeAdvancedOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    await wampy.subscribe('qqq.www.eee', function () {}, function () {});
+                    await wampy.subscribe('qqq.www.eee', function () {}, function () {} as unknown as SubscribeAdvancedOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
                     const object = {};
@@ -1062,32 +1070,33 @@ for (const item of serializers) {
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    await wampy.subscribe('qqq.www.eee', function () {}, { 'match': 'invalid' });
+                    await wampy.subscribe('qqq.www.eee', function () {}, { 'match': 'invalid' as SubscribeAdvancedOptions['match'] });
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    await wampy.subscribe('qqq.www.eee', function () {}, { 'get_retained': 'invalid' });
+                    await wampy.subscribe('qqq.www.eee', function () {}, { 'get_retained': 'invalid' as unknown as boolean });
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
             });
 
             it('disallows to subscribe to topic without specifying callback', async function () {
                 try {
+                    // @ts-expect-error testing missing callback
                     await wampy.subscribe('qqq.www.eee');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCallbackError);
                 }
 
                 try {
-                    await wampy.subscribe('qqq.www.eee', {});
+                    await wampy.subscribe('qqq.www.eee', {} as unknown as EventCallback);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCallbackError);
                 }
@@ -1176,8 +1185,8 @@ for (const item of serializers) {
                 let i = 1;
                 wampy.subscribe('subscribe.topic3', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.undefined;
-                    expect(e.argsDict).to.be.undefined;
+                    expect(e.argsList!).to.be.undefined;
+                    expect(e.argsDict!).to.be.undefined;
 
                     if (i === 2) {
                         done();
@@ -1196,9 +1205,9 @@ for (const item of serializers) {
                 let i = 1;
                 wampy.subscribe('subscribe.topic4', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal(25);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal(25);
 
                     if (i === 2) {
                         done();
@@ -1217,9 +1226,9 @@ for (const item of serializers) {
                 let i = 1;
                 wampy.subscribe('subscribe.topic5', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal('payload');
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal('payload');
 
                     if (i === 2) {
                         done();
@@ -1238,10 +1247,10 @@ for (const item of serializers) {
                 let i = 1;
                 wampy.subscribe('subscribe.topic6', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal(1);
-                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal(1);
+                    expect(e.argsList![4]).to.be.equal(5);
 
                     if (i === 2) {
                         done();
@@ -1262,10 +1271,10 @@ for (const item of serializers) {
 
                 wampy.subscribe('subscribe.topic7', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList).to.have.lengthOf(0);
-                    expect(e.argsDict).to.be.an('object');
-                    expect(e.argsDict).to.be.deep.equal(payload);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsList!).to.have.lengthOf(0);
+                    expect(e.argsDict!).to.be.an('object');
+                    expect(e.argsDict!).to.be.deep.equal(payload);
 
                     if (i === 3) {
                         done();
@@ -1289,11 +1298,11 @@ for (const item of serializers) {
 
                 wampy.subscribe('subscribe.topic77', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList[0]).to.be.equal(1);
-                    expect(e.argsList[4]).to.be.equal(5);
-                    expect(e.argsDict).to.be.an('object');
-                    expect(e.argsDict).to.be.deep.equal(dictpayload);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsList![0]).to.be.equal(1);
+                    expect(e.argsList![4]).to.be.equal(5);
+                    expect(e.argsDict!).to.be.an('object');
+                    expect(e.argsDict!).to.be.deep.equal(dictpayload);
 
                     if (i === 2) {
                         done();
@@ -1311,9 +1320,9 @@ for (const item of serializers) {
             it('allows to publish event with different advanced options', function (done) {
                 wampy.subscribe('subscribe.topic8', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal('payload');
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal('payload');
                     done();
                 }).then(() => {
                     wampy.publish('subscribe.topic8', 'payload',
@@ -1321,7 +1330,7 @@ for (const item of serializers) {
                             exclude: [1234567],
                             exclude_authid: ['iuhfiruhfhr'],
                             exclude_authrole: ['user-role'],
-                            eligible: [wampy.getSessionId(), 7654321],
+                            eligible: [wampy.getSessionId()!, 7654321],
                             eligible_authid: ['dsvsdvsfgdfg'],
                             eligible_authrole: ['admin-role'],
                             exclude_me: false,
@@ -1349,28 +1358,28 @@ for (const item of serializers) {
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
 
                 try {
                     wampy.publish('qwe.asd..zxc', 'payload');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
 
                 try {
                     wampy.publish('qq,ww,ee', 'payload');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
 
                 try {
                     wampy.publish('qq:www:ee', 'payload');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
             });
 
             it('checks for valid advanced options during publishing to topic', function () {
@@ -1378,34 +1387,34 @@ for (const item of serializers) {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        'string instead of object'
+                        'string instead of object' as unknown as PublishAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        123
+                        123 as unknown as PublishAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
                     wampy.publish(
                         'qqq.www.eee',
                         'payload',
-                        function () {}
+                        function () {} as unknown as PublishAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
                     wampy.publish(
@@ -1418,12 +1427,12 @@ for (const item of serializers) {
                             exclude_authrole: 1234567,
                             eligible_authid: 1234567,
                             eligible_authrole: 1234567
-                        }
+                        } as unknown as PublishAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
                     wampy.publish(
@@ -1436,12 +1445,12 @@ for (const item of serializers) {
                             exclude_authrole: false,
                             eligible_authid: {},
                             eligible_authrole: true
-                        }
+                        } as unknown as PublishAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
                     wampy.publish(
@@ -1454,12 +1463,12 @@ for (const item of serializers) {
                             exclude_authrole: [],
                             eligible_authid: [],
                             eligible_authrole: []
-                        }
+                        } as unknown as PublishAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
                     wampy.publish(
@@ -1472,12 +1481,12 @@ for (const item of serializers) {
                             exclude_authrole: 'role-one',
                             eligible_authid: 'sadfdfdfdsa',
                             eligible_authrole: 'role-two'
-                        }
+                        } as unknown as PublishAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
                     wampy.publish(
@@ -1490,7 +1499,7 @@ for (const item of serializers) {
                             exclude_authrole: ['role-one', 'role-three'],
                             eligible_authid: ['sadfdfdfdsa', 'dsafdfhdfgh'],
                             eligible_authrole: ['role-two', 'role-four']
-                        }
+                        } as unknown as PublishAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1503,7 +1512,7 @@ for (const item of serializers) {
                         {
                             exclude: 'invalid string',
                             eligible: 'invalid string'
-                        }
+                        } as unknown as PublishAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1515,7 +1524,7 @@ for (const item of serializers) {
                         'payload',
                         {
                             retain: 'invalid',
-                        }
+                        } as unknown as PublishAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1526,7 +1535,7 @@ for (const item of serializers) {
                 const handler1 = () => { done('Called removed handler'); };
                 const handler2 = () => { done(); };
                 const handler3 = () => { done('Called removed handler'); };
-                let subscriptionId;
+                let subscriptionId: number;
 
                 wampy.subscribe('subscribe.topic9', handler1).then((s) => {
                     subscriptionId = s.subscriptionId;
@@ -1553,7 +1562,7 @@ for (const item of serializers) {
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NonExistUnsubscribeError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_UNSUBSCRIBE);
             });
 
             it('fires error callback if error occurred during subscribing', async function () {
@@ -1588,13 +1597,13 @@ for (const item of serializers) {
                 await wampy.setOptions({
                     onReconnect  : null,
                     onError      : null
-                }).disconnect();
+                })!.disconnect();
                 await wampy.connect();
             });
 
             it('disallows to call rpc if server does not provide DEALER role', async function () {
                 try {
-                    await wampy.call('call.rpc1', 'payload', function (e) {});
+                    await wampy.call('call.rpc1', 'payload', ((e: unknown) => {}) as unknown as CallAdvancedOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoDealerError);
                 }
@@ -1618,6 +1627,7 @@ for (const item of serializers) {
 
             it('disallows to unregister rpc if server does not provide DEALER role', async function () {
                 try {
+                    // @ts-expect-error testing extra argument
                     await wampy.unregister('call.rpc3', function (e) {});
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoDealerError);
@@ -1664,11 +1674,11 @@ for (const item of serializers) {
 
                         }, 1);
                     }
-                }).disconnect();
+                })!.disconnect();
             });
 
             it('disallows to call/register an RPC if uri validation mode is specified incorrectly', async function () {
-                wampy.setOptions({ uriValidation: 'invalid' });
+                wampy.setOptions({ uriValidation: 'invalid' as WampyOptions['uriValidation'] });
                 try {
                     await wampy.register('qwe.asd.zxc.', function (e) {});
                 } catch (e) {
@@ -1701,14 +1711,14 @@ for (const item of serializers) {
                         'qqq.www.eee',
                         function (e) {},
                         {
-                            match: 'invalidoption',
+                            match: 'invalidoption' as RegisterAdvancedOptions['match'],
                             invoke: 'single'
                         }
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
                     wampy.register(
@@ -1716,24 +1726,24 @@ for (const item of serializers) {
                         function (e) {},
                         {
                             match: 'prefix',
-                            invoke: 'invalidoption'
+                            invoke: 'invalidoption' as RegisterAdvancedOptions['invoke']
                         }
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
                     wampy.register(
                         'qqq.www.eee',
                         function (e) {},
-                        'string instead of object'
+                        'string instead of object' as unknown as RegisterAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
             });
 
             it('disallows to cancel RPC invocation if dealer does not support call cancelling', function (done) {
@@ -1752,7 +1762,7 @@ for (const item of serializers) {
                             }
                         }, 1);
                     }
-                }).disconnect();
+                })!.disconnect();
             });
 
             it('allows to register RPC', function (done) {
@@ -1764,7 +1774,7 @@ for (const item of serializers) {
                             done();
                         }, 1);
                     }
-                }).disconnect();
+                })!.disconnect();
             });
 
             it('allows to register prefix-based RPC', async function () {
@@ -1785,30 +1795,30 @@ for (const item of serializers) {
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.RPCAlreadyRegisteredError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.RPC_ALREADY_REGISTERED);
             });
 
             it('disallows to call RPC with invalid URI', async function () {
                 try {
-                    await wampy.call('qwe.asd.zxc.', 'payload', function (e) {});
+                    await wampy.call('qwe.asd.zxc.', 'payload', ((e: unknown) => {}) as unknown as CallAdvancedOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
 
                 try {
-                    await wampy.call('qwe.asd..zxc', 'payload', function (e) {});
+                    await wampy.call('qwe.asd..zxc', 'payload', ((e: unknown) => {}) as unknown as CallAdvancedOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
 
                 try {
-                    await wampy.call('qq,ww,ee', 'payload', function (e) {});
+                    await wampy.call('qq,ww,ee', 'payload', ((e: unknown) => {}) as unknown as CallAdvancedOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
 
                 try {
-                    await wampy.call('qq:www:ee', 'payload', function (e) {});
+                    await wampy.call('qq:www:ee', 'payload', ((e: unknown) => {}) as unknown as CallAdvancedOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
@@ -1819,7 +1829,7 @@ for (const item of serializers) {
                     await wampy.call(
                         'qqq.www.eee',
                         'payload',
-                        'string instead of object'
+                        'string instead of object' as unknown as CallAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1829,7 +1839,7 @@ for (const item of serializers) {
                     await wampy.call(
                         'qqq.www.eee',
                         'payload',
-                        123
+                        123 as unknown as CallAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1839,7 +1849,7 @@ for (const item of serializers) {
                     await wampy.call(
                         'qqq.www.eee',
                         'payload',
-                        function () {}
+                        function () {} as unknown as CallAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1851,7 +1861,7 @@ for (const item of serializers) {
                         'payload',
                         {
                             timeout: 'string instead of number'
-                        }
+                        } as unknown as CallAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1863,7 +1873,7 @@ for (const item of serializers) {
                         'payload',
                         {
                             timeout: {}
-                        }
+                        } as unknown as CallAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1875,7 +1885,7 @@ for (const item of serializers) {
                         'payload',
                         {
                             timeout: true
-                        }
+                        } as unknown as CallAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1887,7 +1897,7 @@ for (const item of serializers) {
                         'payload',
                         {
                             progress_callback: true
-                        }
+                        } as unknown as CallAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1899,7 +1909,7 @@ for (const item of serializers) {
                         'payload',
                         {
                             progress_callback: 'not a function'
-                        }
+                        } as unknown as CallAdvancedOptions
                     );
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
@@ -1908,43 +1918,44 @@ for (const item of serializers) {
 
             it('disallows to unregister rpc if there is no such registration', async function () {
                 try {
+                    // @ts-expect-error testing extra argument
                     await wampy.unregister('call.rpc4', function (e) {});
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NonExistRPCUnregistrationError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.NON_EXIST_RPC_UNREG);
             });
 
             it('allows to call RPC without payload', async function () {
                 const res = await wampy.call('call.rpc1');
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.undefined;
-                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList!).to.be.undefined;
+                expect(res.argsDict!).to.be.undefined;
             });
 
             it('allows to call RPC with int payload', async function () {
                 const res = await wampy.call('call.rpc2', 25);
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(25);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(25);
             });
 
             it('allows to call RPC with string payload', async function () {
                 const res = await wampy.call('call.rpc3', 'payload');
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal('payload');
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal('payload');
             });
 
             it('allows to call RPC with array payload', async function () {
                 const res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5]);
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(1);
-                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(1);
+                expect(res.argsList![4]).to.be.equal(5);
             });
 
             it('allows to call RPC with hash-table payload', async function () {
@@ -1953,17 +1964,17 @@ for (const item of serializers) {
 
                 res = await wampy.call('call.rpc5', payload);
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList).to.have.lengthOf(0);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList!).to.have.lengthOf(0);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(payload);
 
                 res = await wampy.call('call.rpc5', { argsDict: payload });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList).to.have.lengthOf(0);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList!).to.have.lengthOf(0);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(payload);
             });
 
             it('allows to call RPC with both array and hash-table payload', async function () {
@@ -1972,29 +1983,29 @@ for (const item of serializers) {
 
                 const res = await wampy.call('call.rpc5', payload);
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList[0]).to.be.equal(1);
-                expect(res.argsList[4]).to.be.equal(5);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(dictpayload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList![0]).to.be.equal(1);
+                expect(res.argsList![4]).to.be.equal(5);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(dictpayload);
             });
 
             it('disallows to call RPC with invalid payload using unified payload format', async function () {
-                let payload = { argsList: 'not an array', argsDict: {} };
+                let payload = { argsList: 'not an array', argsDict: {} } as unknown as Payload;
                 try {
                     await wampy.call('call.rpc.fail', payload);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
-                payload = { argsList: [123], argsDict: 'not an object' };
+                payload = { argsList: [123], argsDict: 'not an object' } as unknown as Payload;
                 try {
                     await wampy.call('call.rpc.fail', payload);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
-                expect(wampy.getOpStatus().error.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
+                expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
             });
 
             it('allows to call RPC with different advanced options', async function () {
@@ -2004,9 +2015,9 @@ for (const item of serializers) {
                     timeout: 5000
                 });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal('payload');
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal('payload');
             });
 
             it('allows to call RPC with custom attributes (WAMP spec 3.1)', async function () {
@@ -2019,8 +2030,8 @@ for (const item of serializers) {
                     regular_option: 'should_be_ignored'
                 });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList[0]).to.be.equal('payload');
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList![0]).to.be.equal('payload');
             });
 
             it('ignores invalid custom attributes (WAMP spec 3.1)', async function () {
@@ -2035,13 +2046,13 @@ for (const item of serializers) {
                     regular_attr: 'no_underscore'
                 });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList[0]).to.be.equal('payload');
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList![0]).to.be.equal('payload');
             });
 
             it('allows to register RPC with custom options (WAMP spec 3.1)', async function () {
                 const res = await wampy.register('register.rpc.custom_options', function () {
-                    return { result: 'test' };
+                    return { result: 'test' } as unknown as InvocationResult;
                 }, {
                     match: 'exact',
                     _custom_register: 'test_value',
@@ -2062,19 +2073,19 @@ for (const item of serializers) {
                     {
                         progress_callback: function (e) {
                             expect(e).to.be.an('object');
-                            expect(e.argsList).to.be.an('array');
-                            expect(e.argsDict).to.be.undefined;
+                            expect(e.argsList!).to.be.an('array');
+                            expect(e.argsDict!).to.be.undefined;
                             progress = true;
                         }
                     }
                 );
-                expect(res.argsList[0]).to.be.equal(100);
+                expect(res.argsList![0]).to.be.equal(100);
                 expect(progress).to.be.true;
             });
 
 
             it('checks options during canceling RPC invocation', function (done) {
-                let reqId;  // eslint-disable-line prefer-const
+                let reqId: number;  // eslint-disable-line prefer-const
 
                 wampy.call(
                     'call.rpc8',
@@ -2082,16 +2093,16 @@ for (const item of serializers) {
                     {
                         progress_callback: function (res) {
                             expect(res).to.be.an('object');
-                            expect(res.argsList).to.be.an('array');
+                            expect(res.argsList!).to.be.an('array');
 
                             try {
-                                wampy.cancel(reqId, { mode: 'falseoption' });
+                                wampy.cancel(reqId, { mode: 'falseoption' as CancelAdvancedOptions['mode'] });
                             } catch (e) {
                                 expect(e).to.be.instanceOf(Errors.InvalidParamError);
                             }
 
                             try {
-                                wampy.cancel(reqId, 'string_instead_of_object');
+                                wampy.cancel(reqId, 'string_instead_of_object' as unknown as CancelAdvancedOptions);
                             } catch (e) {
                                 expect(e).to.be.instanceOf(Errors.InvalidParamError);
                             }
@@ -2105,7 +2116,7 @@ for (const item of serializers) {
             });
 
             it('allows to cancel RPC invocation', function (done) {
-                let reqId;  // eslint-disable-line prefer-const
+                let reqId: number;  // eslint-disable-line prefer-const
 
                 wampy.call(
                     'call.rpc8',
@@ -2139,7 +2150,7 @@ for (const item of serializers) {
                             }
                         }, 1);
                     }
-                }).disconnect();
+                })!.disconnect();
             });
 
             it('allows progressive call invocations', function(done) {
@@ -2160,14 +2171,14 @@ for (const item of serializers) {
 
                             const res = await result;
                             expect(res).to.be.an('object');
-                            expect(res.argsList).to.be.an('array');
-                            expect(res.argsDict).to.be.undefined;
-                            expect(res.argsList[0]).to.be.equal(100);
+                            expect(res.argsList!).to.be.an('array');
+                            expect(res.argsDict!).to.be.undefined;
+                            expect(res.argsList![0]).to.be.equal(100);
                             done();
 
                         }, 1);
                     }
-                }).disconnect();
+                })!.disconnect();
             });
 
             it('allows progressive call invocations with progressive result receiving', async function () {
@@ -2177,9 +2188,9 @@ for (const item of serializers) {
                     wampy.progressiveCall('call.rpc.progressive', 1, {
                         progress_callback: function (e) {
                             expect(e).to.be.an('object');
-                            expect(e.argsList).to.be.an('array');
-                            expect(e.argsDict).to.be.undefined;
-                            expect(e.argsList[0]).to.be.equal(resArg++);
+                            expect(e.argsList!).to.be.an('array');
+                            expect(e.argsDict!).to.be.undefined;
+                            expect(e.argsList![0]).to.be.equal(resArg++);
                         }
                     });
 
@@ -2188,22 +2199,22 @@ for (const item of serializers) {
 
                 const res = await result;
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(3);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(3);
             });
 
             it('checks for advanced options during progressive call invocations', async function () {
                 const { sendData, result } = wampy.progressiveCall('call.rpc.progressive', 1);
 
                 try {
-                    sendData(2, 'invalid_options');
+                    sendData(2, 'invalid_options' as unknown as ProgressiveCallSendDataOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
 
                 try {
-                    sendData(2, { progress: 'string instead of boolean'});
+                    sendData(2, { progress: 'string instead of boolean'} as unknown as ProgressiveCallSendDataOptions);
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.InvalidParamError);
                 }
@@ -2212,9 +2223,9 @@ for (const item of serializers) {
 
                 const res = await result;
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(100);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(100);
             });
 
             it('allows to invoke asynchronous RPC without value', async function () {
@@ -2231,8 +2242,8 @@ for (const item of serializers) {
                     { exclude_me: false }
                 );
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.undefined;
-                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList!).to.be.undefined;
+                expect(res.argsDict!).to.be.undefined;
             });
 
             it('allows to invoke asynchronous RPC without value but with extra options', async function () {
@@ -2251,8 +2262,8 @@ for (const item of serializers) {
                 expect(res).to.be.an('object');
                 expect(res.details).to.be.an('object');
                 expect(res.details.extra).to.be.true;
-                expect(res.argsList).to.be.undefined;
-                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList!).to.be.undefined;
+                expect(res.argsDict!).to.be.undefined;
             });
 
             it('allows to invoke pattern-based RPC providing original uri in options', async function () {
@@ -2267,8 +2278,8 @@ for (const item of serializers) {
                 const res = await wampy.call('register.prefixbased.maiden');
                 expect(res).to.be.an('object');
                 expect(res.details).to.be.an('object');
-                expect(res.argsList).to.be.undefined;
-                expect(res.argsDict).to.be.undefined;
+                expect(res.argsList!).to.be.undefined;
+                expect(res.argsDict!).to.be.undefined;
             });
 
             it('allows to invoke asynchronous RPC with single value', async function () {
@@ -2284,9 +2295,9 @@ for (const item of serializers) {
                     100
                 );
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(100);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(100);
             });
 
             it('allows to invoke asynchronous RPC with array value', async function () {
@@ -2302,10 +2313,10 @@ for (const item of serializers) {
                     [1, 2, 3, 4, 5]
                 );
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(1);
-                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(1);
+                expect(res.argsList![4]).to.be.equal(5);
             });
 
             it('allows to invoke asynchronous RPC with hash-table value', async function () {
@@ -2322,10 +2333,10 @@ for (const item of serializers) {
                     payload
                 );
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList).to.have.lengthOf(0);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList!).to.have.lengthOf(0);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(payload);
             });
 
             it('allows to return progressive results from asynchronous RPC', async function () {
@@ -2357,9 +2368,9 @@ for (const item of serializers) {
                     }
                 );
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList).to.have.lengthOf(1);
-                expect(res.argsList[0]).to.be.equal(5);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList!).to.have.lengthOf(1);
+                expect(res.argsList![0]).to.be.equal(5);
                 expect(progress).to.be.true;
                 expect(res.details.progress).to.be.false;
             });
@@ -2398,19 +2409,29 @@ for (const item of serializers) {
                     definedArgsList = [1, 2, 3, 4, 5],
                     definedArgsDict = { key1: 'key1', key2: true, key3: 25 };
 
-                const UserException1 = function () {
-                    this.error = definedUri;
-                    this.details = definedDetails;
-                    this.argsList = definedArgsList;
-                    this.argsDict = definedArgsDict;
-                };
+                class UserException1 {
+                    error: string;
+                    details: Record<string, unknown>;
+                    argsList: unknown[];
+                    argsDict: Record<string, unknown>;
+                    constructor () {
+                        this.error = definedUri;
+                        this.details = definedDetails;
+                        this.argsList = definedArgsList;
+                        this.argsDict = definedArgsDict;
+                    }
+                }
 
-                const UserException2 = function () {
-                    this.error = definedUri;
-                    // no details
-                    // no args list, only args dict
-                    this.argsDict = definedArgsDict;
-                };
+                class UserException2 {
+                    error: string;
+                    argsDict: Record<string, unknown>;
+                    constructor () {
+                        this.error = definedUri;
+                        // no details
+                        // no args list, only args dict
+                        this.argsDict = definedArgsDict;
+                    }
+                }
 
                 await wampy.register('register.rpc88', function (e) {
                     throw new UserException1();
@@ -2419,12 +2440,13 @@ for (const item of serializers) {
                 try {
                     await wampy.call('register.rpc88', 100);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.errorUri).to.be.equal(definedUri);
-                    expect(e.details).to.be.deep.equal(definedDetails);
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList[0]).to.be.equal(1);
-                    expect(e.argsDict).to.be.deep.equal(definedArgsDict);
+                    expect(err.errorUri).to.be.equal(definedUri);
+                    expect(err.details).to.be.deep.equal(definedDetails);
+                    expect(err.argsList!).to.be.an('array');
+                    expect(err.argsList![0]).to.be.equal(1);
+                    expect(err.argsDict!).to.be.deep.equal(definedArgsDict);
                 }
 
                 await wampy.register('register.rpc99', function (e) {
@@ -2434,12 +2456,13 @@ for (const item of serializers) {
                 try {
                     await wampy.call('register.rpc99', 100);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.errorUri).to.be.equal(definedUri);
-                    expect(e.details).to.be.deep.equal({});
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList).to.have.lengthOf(0);
-                    expect(e.argsDict).to.be.deep.equal(definedArgsDict);
+                    expect(err.errorUri).to.be.equal(definedUri);
+                    expect(err.details).to.be.deep.equal({});
+                    expect(err.argsList!).to.be.an('array');
+                    expect(err.argsList!).to.have.lengthOf(0);
+                    expect(err.argsDict!).to.be.deep.equal(definedArgsDict);
                 }
             });
 
@@ -2469,6 +2492,7 @@ for (const item of serializers) {
 
             it('disallows to register RPC without providing rpc itself', function () {
                 try {
+                    // @ts-expect-error testing missing callback
                     wampy.register('register.rpc8');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCallbackError);
@@ -2519,23 +2543,25 @@ for (const item of serializers) {
                 try {
                     await wampy.call('call.rpc1', [1, 2, 3, 4, 5]);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.errorUri).to.be.equal('call.error');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList[0]).to.be.equal(1);
-                    expect(e.argsList[4]).to.be.equal(5);
-                    expect(e.argsList).to.have.lengthOf(5);
-                    expect(e.argsDict).to.be.undefined;
+                    expect(err.errorUri).to.be.equal('call.error');
+                    expect(err.argsList!).to.be.an('array');
+                    expect(err.argsList![0]).to.be.equal(1);
+                    expect(err.argsList![4]).to.be.equal(5);
+                    expect(err.argsList!).to.have.lengthOf(5);
+                    expect(err.argsDict!).to.be.undefined;
                 }
 
                 try {
                     await wampy.call('call.rpc1', { k1: 1, k2: 2 });
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.errorUri).to.be.equal('call.error');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList).to.have.lengthOf(0);
-                    expect(e.argsDict).to.be.deep.equal({ k1: 1, k2: 2 });
+                    expect(err.errorUri).to.be.equal('call.error');
+                    expect(err.argsList!).to.be.an('array');
+                    expect(err.argsList!).to.have.lengthOf(0);
+                    expect(err.argsDict!).to.be.deep.equal({ k1: 1, k2: 2 });
                 }
             });
 
@@ -2557,7 +2583,7 @@ for (const item of serializers) {
                     onError: null,
                     onReconnect: null,
                     onClose: null
-                }).disconnect();
+                })!.disconnect();
                 await wampy.connect();
             });
 
@@ -2624,9 +2650,9 @@ for (const item of serializers) {
             it('allows to publish event with int payload in ppt mode (custom scheme, native serializer)', function (done) {
                 wampy.subscribe('subscribe.topic4', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal(25);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal(25);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
 
@@ -2645,9 +2671,9 @@ for (const item of serializers) {
             it('allows to publish event with string payload in ppt mode (custom scheme, native serializer)', function (done) {
                 wampy.subscribe('subscribe.topic5', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal('payload');
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal('payload');
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
 
@@ -2666,10 +2692,10 @@ for (const item of serializers) {
             it('allows to publish event with array payload in ppt mode (custom scheme, native serializer)', function (done) {
                 wampy.subscribe('subscribe.topic6', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal(1);
-                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal(1);
+                    expect(e.argsList![4]).to.be.equal(5);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
 
@@ -2690,10 +2716,10 @@ for (const item of serializers) {
 
                 wampy.subscribe('subscribe.topic7', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList).to.have.lengthOf(0);
-                    expect(e.argsDict).to.be.an('object');
-                    expect(e.argsDict).to.be.deep.equal(payload);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsList!).to.have.lengthOf(0);
+                    expect(e.argsDict!).to.be.an('object');
+                    expect(e.argsDict!).to.be.deep.equal(payload);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
 
@@ -2715,11 +2741,11 @@ for (const item of serializers) {
 
                 wampy.subscribe('subscribe.topic77', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList[0]).to.be.equal(1);
-                    expect(e.argsList[4]).to.be.equal(5);
-                    expect(e.argsDict).to.be.an('object');
-                    expect(e.argsDict).to.be.deep.equal(dictpayload);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsList![0]).to.be.equal(1);
+                    expect(e.argsList![4]).to.be.equal(5);
+                    expect(e.argsDict!).to.be.an('object');
+                    expect(e.argsDict!).to.be.deep.equal(dictpayload);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
 
@@ -2738,9 +2764,9 @@ for (const item of serializers) {
             it('allows to call RPC with int payload in ppt mode (custom scheme, native serializer)', async function () {
                 const res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(25);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(25);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
             });
@@ -2748,9 +2774,9 @@ for (const item of serializers) {
             it('allows to call RPC with string payload in ppt mode (custom scheme, native serializer)', async function () {
                 const res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal('payload');
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal('payload');
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
             });
@@ -2758,10 +2784,10 @@ for (const item of serializers) {
             it('allows to call RPC with array payload in ppt mode (custom scheme, native serializer)', async function () {
                 const res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(1);
-                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(1);
+                expect(res.argsList![4]).to.be.equal(5);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
             });
@@ -2772,19 +2798,19 @@ for (const item of serializers) {
 
                 res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList).to.have.lengthOf(0);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList!).to.have.lengthOf(0);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(payload);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
 
                 res = await wampy.call('call.rpc5', { argsDict: payload }, { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList).to.have.lengthOf(0);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList!).to.have.lengthOf(0);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(payload);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
             });
@@ -2795,11 +2821,11 @@ for (const item of serializers) {
 
                 const res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList[0]).to.be.equal(1);
-                expect(res.argsList[4]).to.be.equal(5);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(dictpayload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList![0]).to.be.equal(1);
+                expect(res.argsList![4]).to.be.equal(5);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(dictpayload);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
             });
@@ -2807,9 +2833,9 @@ for (const item of serializers) {
             it('allows to publish event with int payload in ppt mode (custom scheme, cbor serializer)', function (done) {
                 wampy.subscribe('subscribe.topic4.cbor', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal(25);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal(25);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
                     expect(e.details.ppt_serializer).to.be.equal('cbor');
@@ -2830,9 +2856,9 @@ for (const item of serializers) {
             it('allows to publish event with string payload in ppt mode (custom scheme, cbor serializer)', function (done) {
                 wampy.subscribe('subscribe.topic5.cbor', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal('payload');
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal('payload');
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
                     expect(e.details.ppt_serializer).to.be.equal('cbor');
@@ -2853,10 +2879,10 @@ for (const item of serializers) {
             it('allows to publish event with array payload in ppt mode (custom scheme, cbor serializer)', function (done) {
                 wampy.subscribe('subscribe.topic6.cbor', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal(1);
-                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal(1);
+                    expect(e.argsList![4]).to.be.equal(5);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
                     expect(e.details.ppt_serializer).to.be.equal('cbor');
@@ -2879,10 +2905,10 @@ for (const item of serializers) {
 
                 wampy.subscribe('subscribe.topic7.cbor', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList).to.have.lengthOf(0);
-                    expect(e.argsDict).to.be.an('object');
-                    expect(e.argsDict).to.be.deep.equal(payload);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsList!).to.have.lengthOf(0);
+                    expect(e.argsDict!).to.be.an('object');
+                    expect(e.argsDict!).to.be.deep.equal(payload);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
                     expect(e.details.ppt_serializer).to.be.equal('cbor');
@@ -2906,11 +2932,11 @@ for (const item of serializers) {
 
                 wampy.subscribe('subscribe.topic8.cbor', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList[0]).to.be.equal(1);
-                    expect(e.argsList[4]).to.be.equal(5);
-                    expect(e.argsDict).to.be.an('object');
-                    expect(e.argsDict).to.be.deep.equal(dictpayload);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsList![0]).to.be.equal(1);
+                    expect(e.argsList![4]).to.be.equal(5);
+                    expect(e.argsDict!).to.be.an('object');
+                    expect(e.argsDict!).to.be.deep.equal(dictpayload);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
                     expect(e.details.ppt_serializer).to.be.equal('cbor');
@@ -2931,9 +2957,9 @@ for (const item of serializers) {
             it('allows to call RPC with int payload in ppt mode (custom scheme, cbor serializer)', async function () {
                 const res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(25);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(25);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('cbor');
@@ -2942,9 +2968,9 @@ for (const item of serializers) {
             it('allows to call RPC with string payload in ppt mode (custom scheme, cbor serializer)', async function () {
                 const res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal('payload');
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal('payload');
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('cbor');
@@ -2953,10 +2979,10 @@ for (const item of serializers) {
             it('allows to call RPC with array payload in ppt mode (custom scheme, cbor serializer)', async function () {
                 const res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(1);
-                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(1);
+                expect(res.argsList![4]).to.be.equal(5);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('cbor');
@@ -2968,20 +2994,20 @@ for (const item of serializers) {
 
                 res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList).to.have.lengthOf(0);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList!).to.have.lengthOf(0);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(payload);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('cbor');
 
                 res = await wampy.call('call.rpc5', { argsDict: payload }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList).to.have.lengthOf(0);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList!).to.have.lengthOf(0);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(payload);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('cbor');
@@ -2993,11 +3019,11 @@ for (const item of serializers) {
 
                 const res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList[0]).to.be.equal(1);
-                expect(res.argsList[4]).to.be.equal(5);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(dictpayload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList![0]).to.be.equal(1);
+                expect(res.argsList![4]).to.be.equal(5);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(dictpayload);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('cbor');
@@ -3006,9 +3032,9 @@ for (const item of serializers) {
             it('allows to publish event with int payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
                 wampy.subscribe('subscribe.topic4.msgpack', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal(25);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal(25);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
                     expect(e.details.ppt_serializer).to.be.equal('msgpack');
@@ -3029,9 +3055,9 @@ for (const item of serializers) {
             it('allows to publish event with string payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
                 wampy.subscribe('subscribe.topic5.msgpack', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal('payload');
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal('payload');
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
                     expect(e.details.ppt_serializer).to.be.equal('msgpack');
@@ -3052,10 +3078,10 @@ for (const item of serializers) {
             it('allows to publish event with array payload in ppt mode (custom scheme, msgpack serializer)', function (done) {
                 wampy.subscribe('subscribe.topic6.msgpack', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsDict).to.be.undefined;
-                    expect(e.argsList[0]).to.be.equal(1);
-                    expect(e.argsList[4]).to.be.equal(5);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsDict!).to.be.undefined;
+                    expect(e.argsList![0]).to.be.equal(1);
+                    expect(e.argsList![4]).to.be.equal(5);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
                     expect(e.details.ppt_serializer).to.be.equal('msgpack');
@@ -3078,10 +3104,10 @@ for (const item of serializers) {
 
                 wampy.subscribe('subscribe.topic7.msgpack', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList).to.have.lengthOf(0);
-                    expect(e.argsDict).to.be.an('object');
-                    expect(e.argsDict).to.be.deep.equal(payload);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsList!).to.have.lengthOf(0);
+                    expect(e.argsDict!).to.be.an('object');
+                    expect(e.argsDict!).to.be.deep.equal(payload);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
                     expect(e.details.ppt_serializer).to.be.equal('msgpack');
@@ -3105,11 +3131,11 @@ for (const item of serializers) {
 
                 wampy.subscribe('subscribe.topic8.msgpack', function (e) {
                     expect(e).to.be.an('object');
-                    expect(e.argsList).to.be.an('array');
-                    expect(e.argsList[0]).to.be.equal(1);
-                    expect(e.argsList[4]).to.be.equal(5);
-                    expect(e.argsDict).to.be.an('object');
-                    expect(e.argsDict).to.be.deep.equal(dictpayload);
+                    expect(e.argsList!).to.be.an('array');
+                    expect(e.argsList![0]).to.be.equal(1);
+                    expect(e.argsList![4]).to.be.equal(5);
+                    expect(e.argsDict!).to.be.an('object');
+                    expect(e.argsDict!).to.be.deep.equal(dictpayload);
                     expect(e.details).to.be.an('object');
                     expect(e.details.ppt_scheme).to.be.equal('x_custom_scheme');
                     expect(e.details.ppt_serializer).to.be.equal('msgpack');
@@ -3130,9 +3156,9 @@ for (const item of serializers) {
             it('allows to call RPC with int payload in ppt mode (custom scheme, msgpack serializer)', async function () {
                 const res = await wampy.call('call.rpc2', 25, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(25);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(25);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('msgpack');
@@ -3141,9 +3167,9 @@ for (const item of serializers) {
             it('allows to call RPC with string payload in ppt mode (custom scheme, msgpack serializer)', async function () {
                 const res = await wampy.call('call.rpc3', 'payload', { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal('payload');
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal('payload');
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('msgpack');
@@ -3152,10 +3178,10 @@ for (const item of serializers) {
             it('allows to call RPC with array payload in ppt mode (custom scheme, msgpack serializer)', async function () {
                 const res = await wampy.call('call.rpc4', [1, 2, 3, 4, 5], { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsDict).to.be.undefined;
-                expect(res.argsList[0]).to.be.equal(1);
-                expect(res.argsList[4]).to.be.equal(5);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsDict!).to.be.undefined;
+                expect(res.argsList![0]).to.be.equal(1);
+                expect(res.argsList![4]).to.be.equal(5);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('msgpack');
@@ -3167,20 +3193,20 @@ for (const item of serializers) {
 
                 res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList).to.have.lengthOf(0);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList!).to.have.lengthOf(0);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(payload);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('msgpack');
 
                 res = await wampy.call('call.rpc5', { argsDict: payload }, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList).to.have.lengthOf(0);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(payload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList!).to.have.lengthOf(0);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(payload);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('msgpack');
@@ -3192,11 +3218,11 @@ for (const item of serializers) {
 
                 const res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
-                expect(res.argsList).to.be.an('array');
-                expect(res.argsList[0]).to.be.equal(1);
-                expect(res.argsList[4]).to.be.equal(5);
-                expect(res.argsDict).to.be.an('object');
-                expect(res.argsDict).to.be.deep.equal(dictpayload);
+                expect(res.argsList!).to.be.an('array');
+                expect(res.argsList![0]).to.be.equal(1);
+                expect(res.argsList![4]).to.be.equal(5);
+                expect(res.argsDict!).to.be.an('object');
+                expect(res.argsDict!).to.be.deep.equal(dictpayload);
                 expect(res.details).to.be.an('object');
                 expect(res.details.ppt_scheme).to.be.equal('x_custom_scheme');
                 expect(res.details.ppt_serializer).to.be.equal('msgpack');
@@ -3207,7 +3233,7 @@ for (const item of serializers) {
                     payloadSerializers: {
                         json: new JsonSerializer(),
                     }
-                }).subscribe('subscribe.topic.ppt.no.srzlr', function () {
+                })!.subscribe('subscribe.topic.ppt.no.srzlr', function () {
                     // Bad event is omitted and the next one is received
                     done();
                 });
@@ -3219,7 +3245,7 @@ for (const item of serializers) {
                         json: new JsonSerializer(),
                         cbor: new CborSerializer()
                     }
-                }).subscribe('subscribe.topic.ppt.srzlr.fails', function () {
+                })!.subscribe('subscribe.topic.ppt.srzlr.fails', function () {
                     // Bad event is omitted and the next one is received
                     done();
                 });
@@ -3230,13 +3256,14 @@ for (const item of serializers) {
                     payloadSerializers: {
                         json: new JsonSerializer()
                     }
-                }).register('register.rpc.ppt.no.srlzr', function () {});
+                })!.register('register.rpc.ppt.no.srlzr', function () {});
 
                 try {
                     await wampy.call('register.rpc.ppt.no.srlzr', 100);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
+                    expect(err.argsList![0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
                 }
             });
 
@@ -3246,13 +3273,14 @@ for (const item of serializers) {
                         json: new JsonSerializer(),
                         cbor: new CborSerializer()
                     }
-                }).register('register.rpc.ppt.srlzr.fail', function () {});
+                })!.register('register.rpc.ppt.srlzr.fail', function () {});
 
                 try {
                     await wampy.call('register.rpc.ppt.srlzr.fail', 100);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
+                    expect(err.argsList![0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
                 }
             });
 
@@ -3261,13 +3289,14 @@ for (const item of serializers) {
                     payloadSerializers: {
                         json: new JsonSerializer()
                     }
-                }).register('register.rpc.ppt.invoke.no.srlzr', function () {});
+                })!.register('register.rpc.ppt.invoke.no.srlzr', function () {});
 
                 try {
                     await wampy.call('register.rpc.ppt.invoke.no.srlzr', 100);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
+                    expect(err.argsList![0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
                 }
             });
 
@@ -3277,13 +3306,14 @@ for (const item of serializers) {
                         json: new JsonSerializer(),
                         cbor: new CborSerializer()
                     }
-                }).register('register.rpc.ppt.invoke.srlzr.fail', function () {});
+                })!.register('register.rpc.ppt.invoke.srlzr.fail', function () {});
 
                 try {
                     await wampy.call('register.rpc.ppt.invoke.srlzr.fail', 100);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
+                    expect(err.argsList![0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
                 }
             });
 
@@ -3294,7 +3324,7 @@ for (const item of serializers) {
                         cbor: new CborSerializer(),
                         msgpack: new MsgpackSerializer(),
                     }
-                }).register('register.rpc.ppt.yield.invalid.scheme', function () {
+                })!.register('register.rpc.ppt.yield.invalid.scheme', function () {
                     return {
                         argsList: [100],
                         options : { ppt_scheme: 'invalid_scheme', ppt_serializer: 'cbor' }
@@ -3304,8 +3334,9 @@ for (const item of serializers) {
                 try {
                     await wampy.call('register.rpc.ppt.yield.invalid.scheme', 100);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME);
+                    expect(err.argsList![0]).to.be.equal(WAMP_ERROR_MSG.PPT_INVALID_SCHEME);
                 }
             });
 
@@ -3316,8 +3347,8 @@ for (const item of serializers) {
                         cbor: new CborSerializer(),
                         msgpack: new MsgpackSerializer(),
                     }
-                }).register('register.rpc.ppt.yield.srzl.fails', function () {
-                    const a = {}, b = {};
+                })!.register('register.rpc.ppt.yield.srzl.fails', function () {
+                    const a: Record<string, unknown> = {}, b: Record<string, unknown> = {};
                     a.b = b;
                     b.a = a;
 
@@ -3331,8 +3362,9 @@ for (const item of serializers) {
                 try {
                     await wampy.call('register.rpc.ppt.yield.srzl.fails', 100);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
+                    expect(err.argsList![0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_ERR);
                 }
             });
 
@@ -3342,7 +3374,7 @@ for (const item of serializers) {
                         json: new JsonSerializer(),
                         cbor: new CborSerializer()
                     }
-                }).register('register.rpc.ppt.yield.srzl.not.supported', function () {
+                })!.register('register.rpc.ppt.yield.srzl.not.supported', function () {
                     return {
                         argsList: [100],
                         options : { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
@@ -3352,8 +3384,9 @@ for (const item of serializers) {
                 try {
                     await wampy.call('register.rpc.ppt.yield.srzl.not.supported', 100);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
+                    expect(err.argsList![0]).to.be.equal(WAMP_ERROR_MSG.PPT_SRLZ_INVALID);
                 }
             });
 
@@ -3364,7 +3397,7 @@ for (const item of serializers) {
                         msgpack: new MsgpackSerializer(),
                         cbor: new CborSerializer()
                     }
-                }).register('register.rpc.ppt.invoke', function () {
+                })!.register('register.rpc.ppt.invoke', function () {
                     return {
                         argsList: [100],
                         options : { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' }
@@ -3390,7 +3423,7 @@ for (const item of serializers) {
                             });
                         }, 1);
                     }
-                }).disconnect();
+                })!.disconnect();
             });
 
             it('calls error handler if RPC Result in ppt mode was received, while dealer didn\'t announce it', async function () {
@@ -3400,13 +3433,14 @@ for (const item of serializers) {
                         msgpack: new MsgpackSerializer(),
                         cbor: new CborSerializer()
                     }
-                }).register('register.rpc.no.ppt', function () {});
+                })!.register('register.rpc.no.ppt', function () {});
 
                 try {
                     await wampy.call('register.rpc.no.ppt', 100);
                 } catch (e) {
+                    const err = e as Errors.WampError;
                     expect(e).to.be.instanceOf(Errors.CallError);
-                    expect(e.argsList[0]).to.be.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED);
+                    expect(err.argsList![0]).to.be.equal(WAMP_ERROR_MSG.PPT_NOT_SUPPORTED);
                 }
             });
 
@@ -3423,7 +3457,7 @@ for (const item of serializers) {
                         done();
                     },
                     onClose: null
-                }).register('register.rpc.ppt.no.dealer.fail', function () {}).then(() => {
+                })!.register('register.rpc.ppt.no.dealer.fail', function () {}).then(() => {
                     wampy.call('register.rpc.ppt.no.dealer.fail', 100);
                 });
             });
@@ -3440,7 +3474,7 @@ for (const item of serializers) {
                         done();
                     },
                     onClose: null
-                }).connect().then(() => {
+                })!.connect().then(() => {
                     wampy.register('register.rpc.ppt.yield.noppt', function () {
                         return {
                             argsList: [100],

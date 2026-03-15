@@ -2,17 +2,18 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { readFileSync, writeFileSync } from 'node:fs';
 import emitter from 'node:events';
+import type { Argv } from 'yargs';
 
-const replaceFileName = './cmd/wampy-helpers.js';
-let consoleLogSpy;
+const replaceFileName = './cmd/wampy-helpers.ts';
+let consoleLogSpy: sinon.SinonSpy;
 
-async function getArgvInstance () {
+async function getArgvInstance (): Promise<Argv> {
     const argv = await import(`../cmd/main.js?update=${Date.now()}`);
 
-    return argv.default.scriptName('wampy').exitProcess(false);
+    return argv.default.scriptName('wampy').exitProcess(false) as Argv;
 }
 
-function commonArgs () {
+function commonArgs (): string[] {
     return ['-r', 'realm1', '-w', 'ws://127.0.0.1:8080'];
 }
 
@@ -41,14 +42,14 @@ describe('Wampy CLI test suite', function () {
 
     it('should show general help', async function () {
         const argv = await getArgvInstance();
-        await argv.parse(['-h'], function (err, argv, output) {
+        await argv.parse(['-h'], function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(output).to.contain('To get information about command options just type: wampy <command> -h');
         });
     });
 
     it('should show a subscribe command help', async function () {
         const argv = await getArgvInstance();
-        await argv.parse(['subscribe', '-h'], function (err, argv, output) {
+        await argv.parse(['subscribe', '-h'], function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(output).to.contain('Subscribe to a WAMP Events topic');
             expect(output).to.contain('subscribe "updates..status" --match wildcard');
         });
@@ -56,14 +57,14 @@ describe('Wampy CLI test suite', function () {
 
     it('should subscribe to a topic', async function () {
         const argv = await getArgvInstance();
-        await argv.parse([...commonArgs(), 'subscribe', 'topic.uri'], function (err, argv, output) {
+        await argv.parse([...commonArgs(), 'subscribe', 'topic.uri'], function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Successfully subscribed to topic');
         });
     });
 
     it('should show a publish command help', async function () {
         const argv = await getArgvInstance();
-        await argv.parse(['publish', '-h'], function (err, argv, output) {
+        await argv.parse(['publish', '-h'], function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(output).to.contain('Publish a WAMP Event to topic');
             expect(output).to.contain('publish user.updated -d -k.nickname KSDaemon -k.email="email@example.com"');
         });
@@ -74,14 +75,14 @@ describe('Wampy CLI test suite', function () {
         await argv.parse([...commonArgs(), 'publish', 'topic.uri', '-e', '123', '--ea', '234', '--er', 'role',
             '-l', '654', '--la', '2355', '--lr', 'exrole', '-d',
             '-a', '100', '-k.nickname', 'KSDaemon', '-k.email="email@example.com"'],
-        function (err, argv, output) {
+        function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Successfully published to topic');
         });
     });
 
     it('should show a register command help', async function () {
         const argv = await getArgvInstance();
-        await argv.parse(['register', '-h'], function (err, argv, output) {
+        await argv.parse(['register', '-h'], function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(output).to.contain('Register a WAMP Procedure');
             expect(output).to.contain('register "updates..status" --match wildcard');
         });
@@ -89,7 +90,7 @@ describe('Wampy CLI test suite', function () {
 
     it('should register an RPC handler', async function () {
         const argv = await getArgvInstance();
-        await argv.parse([...commonArgs(), 'register', 'topic.uri', '--mirror'], function (err, argv, output) {
+        await argv.parse([...commonArgs(), 'register', 'topic.uri', '--mirror'], function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(consoleLogSpy.secondCall.args[0]).to.contain('Received call invocation');
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Successfully registered procedure');
         });
@@ -97,7 +98,7 @@ describe('Wampy CLI test suite', function () {
 
     it('should show a call command help', async function () {
         const argv = await getArgvInstance();
-        await argv.parse(['call', '-h'], function (err, argv, output) {
+        await argv.parse(['call', '-h'], function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(output).to.contain('Make a WAMP Remote Procedure Call');
             expect(output).to.contain('call update.user -d -k.nickname KSDaemon -k.email="email@example.com"');
         });
@@ -108,7 +109,7 @@ describe('Wampy CLI test suite', function () {
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '-b', '-d', '-p', '-t', '1000',
             '-a', '100', '-a', 'false', '-a', 'True', '-a', 'notTrueorFalse', '-k.nickname', 'KSDaemon', '-k.email="email@example.com"',
             '-k.rootbool', 'True', '-k.inner.obj.bool', 'false'],
-        function (err, argv, output) {
+        function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(consoleLogSpy.secondCall.args[0]).to.contain('Received intermediate call results');
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Received final call results');
         });
@@ -119,7 +120,7 @@ describe('Wampy CLI test suite', function () {
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '-j',
             '-a', '{"kety": 100}',
             '-k', '{"key1": 125, "key2": "strings", "key3": true}'],
-        function (err, argv, output) {
+        function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Received call results');
         });
     });
@@ -131,7 +132,7 @@ describe('Wampy CLI test suite', function () {
             '--ppt_keyid', 'ppt_keyid',
             '-a', '100', '-a', 'false', '-a', 'True', '-a', 'notTrueorFalse', '-k.nickname', 'KSDaemon', '-k.email="email@example.com"',
             '-k.rootbool', 'True', '-k.inner.obj.bool', 'false'],
-        function (err, argv, output) {
+        function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Received call results');
         });
     });
@@ -141,7 +142,7 @@ describe('Wampy CLI test suite', function () {
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '--serializer', 'cbor',
             '-j', '-a', '{"kety": 100}',
             '-k', '{"key1": 125, "key2": "strings", "key3": true}'],
-        function (err, argv, output) {
+        function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Received call results');
         });
     });
@@ -151,7 +152,7 @@ describe('Wampy CLI test suite', function () {
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '--serializer', 'msgpack',
             '-j', '-a', '{"kety": 100}',
             '-k', '{"key1": 125, "key2": "strings", "key3": true}'],
-        function (err, argv, output) {
+        function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Received call results');
         });
     });
@@ -160,7 +161,7 @@ describe('Wampy CLI test suite', function () {
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'call', 'topic.uri',
             '--hello.key1', '250', '--hello.key2', 'my-string'],
-        function (err, argv, output) {
+        function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Received call results');
         });
     });
@@ -171,7 +172,7 @@ describe('Wampy CLI test suite', function () {
             '--authid', 'authid', '--ticket', 'ticket', '--secret', 'user-secret',
             '--pk', '7b2315dd53896f15b0e197fec287aa909c7434148ae50351ec6e6b5bc5a346f5',
             '-a', '125'],
-        function (err, argv, output) {
+        function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
             expect(consoleLogSpy.lastCall.args[0]).to.contain('Received call results');
         });
     });
@@ -180,7 +181,7 @@ describe('Wampy CLI test suite', function () {
         emitter.setMaxListeners(15);
         const argv = await getArgvInstance();
         await argv.parse([...commonArgs(), 'call', 'topic.uri', '--debug'],
-            function (err, argv, output) {
+            function (err: Error | undefined, argv: Record<string, unknown>, output: string) {
                 expect(consoleLogSpy.lastCall.args[0]).to.contain('Connection closing');
             });
     });
