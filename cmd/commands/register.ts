@@ -1,13 +1,22 @@
 import cj from 'color-json';
+import type { Arguments, Argv } from 'yargs';
 import { helpOptions } from '../common-options.js';
 import { getWampySession } from '../wampy-helpers.js';
 import { logger } from '../logger.js';
+import type { CliArgv } from '../wampy-helpers.js';
+
+interface RegisterArgv extends CliArgv {
+    rpcURI: string;
+    match: 'exact' | 'prefix' | 'wildcard';
+    invoke: 'single' | 'roundrobin' | 'random' | 'first' | 'last';
+    mirror?: boolean;
+}
 
 const command = 'register <rpcURI>';
 const description = 'Register a WAMP Procedure';
 const aliases = ['reg'];
 
-const builder = function (yargs) {
+const builder = function (yargs: Argv): Argv {
     helpOptions(yargs);
     return yargs
         .positional('rpcURI', {
@@ -19,14 +28,14 @@ const builder = function (yargs) {
             alias      : 'm',
             description: 'URI Matching policy',
             type       : 'string',
-            choices    : ['exact', 'prefix', 'wildcard'],
+            choices    : ['exact', 'prefix', 'wildcard'] as const,
             default    : 'exact'
         })
         .option('invoke', {
             alias      : 'i',
             description: 'Invocation policy',
             type       : 'string',
-            choices    : ['single', 'roundrobin', 'random', 'first', 'last'],
+            choices    : ['single', 'roundrobin', 'random', 'first', 'last'] as const,
             default    : 'single'
         })
         .option('mirror', {
@@ -41,7 +50,8 @@ const builder = function (yargs) {
         ]);
 };
 
-const handler = async function (argv) {
+const handler = async function (args: Arguments): Promise<void> {
+    const argv = args as unknown as RegisterArgv;
     const wampy = await getWampySession(argv);
 
     try {

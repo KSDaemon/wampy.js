@@ -29,6 +29,8 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - yargs `MiddlewareFunction` expects `void` return — middleware callbacks that mutate `argv` should NOT return the argv object
 - Auth plugin `sign()` returns functions with specific info types (`WampCraInfo`, `CryptosignInfo`) — cast to `AuthPlugin` when assigning to `authPlugins`
 - `ws` module needs `@types/ws` for TypeScript; `yargs` needs `@types/yargs`
+- yargs `CommandModule` handler must accept `Arguments` — cast to specific argv interface inside the handler body, not in the parameter type
+- CLI command interfaces extend `CliArgv` (from `wampy-helpers.ts`) with command-specific options (positionals, flags)
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -224,4 +226,22 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - CLI files are NOT built by tsup (they run from source via Node.js ESM) — no tsup.config.ts changes needed
   - `ws` constructor type from `@types/ws` works with `WampyOptions.ws` via `as unknown as WampyOptions['ws']` cast since ws class signature differs slightly
   - The original JS code passed class constructors (not instances) to `payloadSerializers` — corrected to use `new Serializer()` instances for type safety and runtime correctness
+---
+
+## 2026-03-15 24:30 (EET) - US-011
+- Converted CLI command files to TypeScript:
+  - `cmd/commands/call.js` → `cmd/commands/call.ts` with `CallArgv` interface extending `CliArgv`, handler typed with `Arguments` from yargs + internal cast
+  - `cmd/commands/publish.js` → `cmd/commands/publish.ts` with `PublishArgv` interface, all publish-specific options typed
+  - `cmd/commands/subscribe.js` → `cmd/commands/subscribe.ts` with `SubscribeArgv` interface, match option typed as union literal
+  - `cmd/commands/register.js` → `cmd/commands/register.ts` with `RegisterArgv` interface, match/invoke options typed as union literals
+- Added index signature `[key: string]: unknown` to `PPTOptions` in `wampy-helpers.ts` for compatibility with `CallAdvancedOptions`/`PublishAdvancedOptions`
+- JSDoc type annotations removed; textual descriptions preserved
+- Files changed:
+  - Created: `cmd/commands/call.ts`, `cmd/commands/publish.ts`, `cmd/commands/subscribe.ts`, `cmd/commands/register.ts`
+  - Deleted: `cmd/commands/call.js`, `cmd/commands/publish.js`, `cmd/commands/subscribe.js`, `cmd/commands/register.js`
+  - Modified: `cmd/wampy-helpers.ts` (added index signature to PPTOptions)
+- **Learnings for future iterations:**
+  - yargs `CommandModule` handler expects `(args: ArgumentsCamelCase<{}>) => void | Promise<void>` — a handler typed with a specific argv interface is incompatible. Use `Arguments` parameter type with internal `as unknown as SpecificArgv` cast
+  - `PPTOptions` without an index signature is not assignable to types with `[key: string]: unknown` (like `CallAdvancedOptions`) — add the index signature to bridge the gap
+  - CLI command files follow a consistent pattern: `command`, `description`, optional `aliases`, `builder` function (configures yargs options), `handler` async function, default export object
 ---

@@ -36,6 +36,7 @@ interface PPTOptions {
     ppt_serializer?: string;
     ppt_cipher?: string;
     ppt_keyid?: string;
+    [key: string]: unknown;
 }
 
 function prepareOptions (argv: CliArgv): WampyOptions {

@@ -173,8 +173,8 @@
         "Typecheck passes"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Command handlers use `Arguments` from yargs with `as unknown as SpecificArgv` cast to satisfy `CommandModule` type constraints while keeping internal type safety; `PPTOptions` needed index signature `[key: string]: unknown` to be assignable to `CallAdvancedOptions`/`PublishAdvancedOptions`"
     },
     {
       "id": "US-012",

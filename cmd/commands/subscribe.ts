@@ -1,13 +1,20 @@
 import cj from 'color-json';
+import type { Arguments, Argv } from 'yargs';
 import { helpOptions } from '../common-options.js';
 import { getWampySession } from '../wampy-helpers.js';
 import { logger } from '../logger.js';
+import type { CliArgv } from '../wampy-helpers.js';
+
+interface SubscribeArgv extends CliArgv {
+    topicURI: string;
+    match: 'exact' | 'prefix' | 'wildcard';
+}
 
 const command = 'subscribe <topicURI>';
 const description = 'Subscribe to a WAMP Events topic';
 const aliases = ['sub'];
 
-const builder = function (yargs) {
+const builder = function (yargs: Argv): Argv {
     helpOptions(yargs);
     return yargs
         .positional('topicURI', {
@@ -19,7 +26,7 @@ const builder = function (yargs) {
             alias      : 'm',
             description: 'Topic URI Matching policy',
             type       : 'string',
-            choices    : ['exact', 'prefix', 'wildcard'],
+            choices    : ['exact', 'prefix', 'wildcard'] as const,
             default    : 'exact'
         })
         .example([
@@ -29,7 +36,8 @@ const builder = function (yargs) {
         ]);
 };
 
-const handler = async function (argv) {
+const handler = async function (args: Arguments): Promise<void> {
+    const argv = args as unknown as SubscribeArgv;
     const wampy = await getWampySession(argv);
 
     try {

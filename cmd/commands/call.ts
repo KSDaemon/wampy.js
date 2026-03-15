@@ -1,12 +1,24 @@
 import cj from 'color-json';
+import type { Arguments, Argv } from 'yargs';
 import { helpOptions, payloadArgs, pptArgs } from '../common-options.js';
 import { fillPPTOptions, getWampySession } from '../wampy-helpers.js';
 import { logger } from '../logger.js';
+import type { CliArgv } from '../wampy-helpers.js';
+import type { CallAdvancedOptions } from '../../src/types.js';
+
+interface CallArgv extends CliArgv {
+    rpcURI: string;
+    argsList?: unknown[];
+    argsDict?: Record<string, unknown>;
+    disclose_me?: boolean;
+    progress?: boolean;
+    timeout?: number;
+}
 
 const command = 'call <rpcURI>';
 const description = 'Make a WAMP Remote Procedure Call';
 
-const builder = function (yargs) {
+const builder = function (yargs: Argv): Argv {
     pptArgs(yargs);
     payloadArgs(yargs);
     helpOptions(yargs);
@@ -39,11 +51,12 @@ const builder = function (yargs) {
         ]);
 };
 
-const handler = async function (argv) {
+const handler = async function (args: Arguments): Promise<void> {
+    const argv = args as unknown as CallArgv;
     const wampy = await getWampySession(argv);
 
     try {
-        const payload = {};
+        const payload: { argsList?: unknown[]; argsDict?: Record<string, unknown> } = {};
         let hasPayload = false;
         if (argv.argsList) {
             payload.argsList = argv.argsList;
@@ -54,7 +67,7 @@ const handler = async function (argv) {
             hasPayload = true;
         }
 
-        const advanceOpts = fillPPTOptions({}, argv);
+        const advanceOpts: CallAdvancedOptions = fillPPTOptions({}, argv);
         if (argv.timeout) {
             advanceOpts.timeout = argv.timeout;
         }
