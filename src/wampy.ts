@@ -594,11 +594,7 @@ class Wampy {
         }
     }
 
-    /**
-     * Internal websocket on close callback
-     * @param {object} event
-     * @private
-     */
+    /** Internal websocket on close callback */
     async _wsOnClose (event: CloseEvent): Promise<void> {
         this._log('websocket disconnected. Info: ', event);
 
@@ -628,11 +624,7 @@ class Wampy {
         }
     }
 
-    /**
-     * Internal websocket on event callback
-     * @param {object} event
-     * @private
-     */
+    /** Internal websocket on event callback */
     async _wsOnMessage (event: MessageEvent): Promise<void> {
         const data = this._decode(event.data);
 
@@ -681,12 +673,7 @@ class Wampy {
         }
     }
 
-    /**
-     * Validates the requestId for message types that need this kind of validation
-     * @param {Array} data - [messageType, requestId]
-     * @return {boolean} true if it's a valid request and false if it isn't
-     * @private
-     */
+    /** Validates the requestId for message types that need this kind of validation */
     _isRequestIdValid ([messageType, requestId]: unknown[]): boolean {
         const isRequestIdValidationNeeded = ([
             WAMP_MSG_SPEC.SUBSCRIBED,
@@ -715,8 +702,6 @@ class Wampy {
     /**
      * Handles websocket welcome message event
      * WAMP SPEC: [WELCOME, Session|id, Details|dict]
-     * @param {Array} [, sessionId, details] - decoded event data
-     * @private
      */
     async _onWelcomeMessage ([, sessionId, details]: [unknown, number, ServerWampFeatures]): Promise<void> {
         this._cache.sessionId = sessionId;
@@ -744,8 +729,6 @@ class Wampy {
     /**
      * Handles websocket abort message event
      * WAMP SPEC: [ABORT, Details|dict, Error|uri]
-     * @param {Array} [, details, error] - decoded event data array
-     * @private
      */
     async _onAbortMessage ([, details, error]: [unknown, Record<string, unknown>, string]): Promise<void> {
         const err = new Errors.AbortError({ error, details });
@@ -762,8 +745,6 @@ class Wampy {
     /**
      * Handles websocket challenge message event
      * WAMP SPEC: [CHALLENGE, AuthMethod|string, Extra|dict]
-     * @param {Array} [, authMethod, extra] - decoded event data array
-     * @private
      */
     async _onChallengeMessage ([, authMethod, extra]: [unknown, string, Record<string, unknown>]): Promise<void> {
         let promise: Promise<string>;
@@ -821,7 +802,6 @@ class Wampy {
     /**
      * Handles websocket goodbye message event
      * WAMP SPEC: [GOODBYE, Details|dict, Reason|uri]
-     * @private
      */
     async _onGoodbyeMessage (): Promise<void> {
         if (!this._cache.isSayingGoodbye) {    // get goodbye, initiated by server
@@ -836,8 +816,6 @@ class Wampy {
      * Handles websocket error message event
      * WAMP SPEC: [ERROR, REQUEST.Type|int, REQUEST.Request|id, Details|dict,
      *             Error|uri, (Arguments|list, ArgumentsKw|dict)]
-     * @param {Array} [, requestType, requestId, details, error, argsList, argsDict] - decoded event data array
-     * @private
      */
     async _onErrorMessage ([, requestType, requestId, details, error, argsList, argsDict]: [unknown, number, number, Record<string, unknown>, string, unknown[]?, Record<string, unknown>?]): Promise<void> {
         const errorOptions = { error, details, argsList, argsDict };
@@ -874,8 +852,6 @@ class Wampy {
     /**
      * Handles websocket subscribed message event
      * WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
-     * @param {Array} [, requestId, subscriptionId] - decoded event data Array
-     * @private
      */
     async _onSubscribedMessage ([, requestId, subscriptionId]: [unknown, number, number]): Promise<void> {
         const { topic, advancedOptions, callbacks } = this._requests[requestId];
@@ -901,8 +877,6 @@ class Wampy {
     /**
      * Handles websocket unsubscribed message event
      * WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
-     * @param {Array} [, requestId] - decoded event data Array
-     * @private
      */
     async _onUnsubscribedMessage ([, requestId]: [unknown, number]): Promise<void> {
         const { topic, advancedOptions, callbacks } = this._requests[requestId];
@@ -921,8 +895,6 @@ class Wampy {
     /**
      * Handles websocket published message event
      * WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
-     * @param {Array} [, requestId, publicationId] - decoded event data
-     * @private
      */
     async _onPublishedMessage ([, requestId, publicationId]: [unknown, number, number]): Promise<void> {
         const { topic, callbacks } = this._requests[requestId];
@@ -938,8 +910,6 @@ class Wampy {
      * Handles websocket event message event
      * WAMP SPEC: [EVENT, SUBSCRIBED.Subscription|id, PUBLISHED.Publication|id,
      *            Details|dict, PUBLISH.Arguments|list, PUBLISH.ArgumentKw|dict]
-     * @param {Array} [, subscriptionId, publicationId, details, argsList, argsDict] - decoded event data
-     * @private
      */
     async _onEventMessage ([, subscriptionId, publicationId, details, argsList, argsDict]: [unknown, number, number, Record<string, unknown>, unknown[]?, Record<string, unknown>?]): Promise<void> {
         const subscription = this._subscriptionsById.get(subscriptionId);
@@ -979,8 +949,6 @@ class Wampy {
      * Handles websocket result message event
      * WAMP SPEC: [RESULT, CALL.Request|id, Details|dict,
      *             YIELD.Arguments|list, YIELD.ArgumentsKw|dict]
-     * @param {object} data - decoded event data
-     * @private
      */
     async _onResultMessage ([, requestId, details, argsList, argsDict]: [unknown, number, Record<string, unknown>, unknown[]?, Record<string, unknown>?]): Promise<void> {
         let args = argsList;
@@ -1024,8 +992,6 @@ class Wampy {
     /**
      * Handles websocket registered message event
      * WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
-     * @param {Array} [, requestId, registrationId] - decoded event data array
-     * @private
      */
     async _onRegisteredMessage ([, requestId, registrationId]: [unknown, number, number]): Promise<void> {
         const { topic, callbacks, options } = this._requests[requestId];
@@ -1045,8 +1011,6 @@ class Wampy {
     /**
      * Handles websocket unregistered message event
      * WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
-     * @param {Array} [, requestId] - decoded event data array
-     * @private
      */
     async _onUnregisteredMessage ([, requestId]: [unknown, number]): Promise<void> {
         const { topic, callbacks } = this._requests[requestId];
@@ -1069,8 +1033,6 @@ class Wampy {
      * Handles websocket invocation message event
      * WAMP SPEC: [INVOCATION, Request|id, REGISTERED.Registration|id, Details|dict,
      *             CALL.Arguments|list, CALL.ArgumentsKw|dict]
-     * @param {Array} data - decoded event data array
-     * @private
      */
     async _onInvocationMessage ([, requestId, registrationId, details, argsList, argsDict]: [unknown, number, number, Record<string, unknown>, unknown[]?, Record<string, unknown>?]): Promise<void> {
         const self = this;
@@ -1189,11 +1151,7 @@ class Wampy {
         }
     }
 
-    /**
-     * Internal websocket on error callback
-     * @param {object} error
-     * @private
-     */
+    /** Internal websocket on error callback */
     async _wsOnError (error: Event): Promise<void> {
         this._log('websocket error');
         const websocketError = new Errors.WebsocketError(error);
@@ -1210,10 +1168,7 @@ class Wampy {
         }
     }
 
-    /**
-     * Reconnect to server in case of websocket error
-     * @private
-     */
+    /** Reconnect to server in case of websocket error */
     _wsReconnect (): void {
         this._log('websocket reconnecting...');
 
@@ -1230,10 +1185,7 @@ class Wampy {
         this._initWsCallbacks();
     }
 
-    /**
-     * Resubscribe to topics in case of communication error
-     * @private
-     */
+    /** Resubscribe to topics in case of communication error */
     async _renewSubscriptions (): Promise<void> {
         let i: number;
         const subs = new Map(this._subscriptionsById);
@@ -1257,10 +1209,7 @@ class Wampy {
         }
     }
 
-    /**
-     * ReRegister RPCs in case of communication error
-     * @private
-     */
+    /** ReRegister RPCs in case of communication error */
     async _renewRegistrations (): Promise<void> {
         const rpcs = this._rpcRegs,
             rn = this._rpcNames;
@@ -1285,7 +1234,6 @@ class Wampy {
      * Generate a unique key for combination of topic and options
      *
      * This is needed to allow subscriptions to the same topic URI but with different options
-     * @private
      */
     _getSubscriptionKey (topic: string, options?: SubscribeAdvancedOptions): string {
         return `${topic}${options ? `-${JSON.stringify(options)}` : ''}`;
@@ -1330,7 +1278,7 @@ class Wampy {
     /**
      * Get the status of last operation
      *
-     * @returns with 3 fields: code, error, reqId
+     * Returns an object with 3 fields: code, error, reqId
      *      code: 0 - if operation was successful
      *      code > 0 - if error occurred
      *      error: error instance containing details
@@ -1421,14 +1369,7 @@ class Wampy {
         return this;
     }
 
-    /**
-     * Subscribe to a topic on a broker
-     *
-     * @param topic - a URI to subscribe to
-     * @param onEvent - received event callback
-     * @param advancedOptions - optional parameter. Must include any or all of the options:
-     *                          match, get_retained
-     */
+    /** Subscribe to a topic on a broker */
     async subscribe (topic: string, onEvent: EventCallback, advancedOptions?: SubscribeAdvancedOptions): Promise<SubscribeSuccessResult> {
         const isAdvancedOptionsAnObject = this._isPlainObject(advancedOptions);
 
@@ -1491,11 +1432,7 @@ class Wampy {
         return callbacks.promise;
     }
 
-    /**
-     * Unsubscribe from topic
-     * @param subscriptionIdOrKey Subscription ID or Key, received during .subscribe()
-     * @param onEvent - received event callback to remove (optional)
-     */
+    /** Unsubscribe from topic */
     async unsubscribe (subscriptionIdOrKey: number | string, onEvent?: EventCallback): Promise<UnsubscribeSuccessResult | true> {
         if (!this._preReqChecks(null, 'broker')) {
             throw this._cache.opStatus.error;
@@ -1532,12 +1469,7 @@ class Wampy {
         return this._requests[reqId].callbacks.promise as Promise<UnsubscribeSuccessResult>;
     }
 
-    /**
-     * Publish an event to the topic
-     * @param topic
-     * @param payload - can be either a value of any type or null or even omitted
-     * @param advancedOptions - optional parameter with publish options
-     */
+    /** Publish an event to the topic */
     async publish (topic: string, payload?: Payload, advancedOptions?: PublishAdvancedOptions): Promise<PublishSuccessResult> {
         if (!this._preReqChecks({ topic, patternBased: false, allowWAMP: false }, 'broker')) {
             throw this._cache.opStatus.error;
@@ -1714,12 +1646,7 @@ class Wampy {
         return reqId;
     }
 
-    /**
-     * Remote Procedure Call
-     * @param topic - a topic URI to be called
-     * @param payload - can be either a value of any type or null
-     * @param advancedOptions - optional parameter with call options
-     */
+    /** Remote Procedure Call */
     async call (topic: string, payload?: Payload, advancedOptions?: CallAdvancedOptions): Promise<CallResult> {
         const reqId = this._callInternal(topic, payload, advancedOptions);
         return this._calls[reqId].promise;
@@ -1731,11 +1658,6 @@ class Wampy {
      * You can send additional input data which won't be treated as a new independent but instead
      * will be transferred as another input data chunk to the same remote procedure call. Of course
      * Callee and Dealer should support the "progressive_call_invocations" feature as well.
-     *
-     * @param topic - a topic URI to be called
-     * @param payload - can be either a value of any type or null
-     * @param advancedOptions - optional parameter with call options
-     * @returns An object containing the result promise and the sendData function.
      */
     progressiveCall (topic: string, payload?: Payload, advancedOptions?: CallAdvancedOptions): ProgressiveCallReturn {
         if (!this._checkRouterFeature('dealer', 'progressive_call_invocations')) {
@@ -1785,12 +1707,7 @@ class Wampy {
         };
     }
 
-    /**
-     * RPC invocation cancelling
-     *
-     * @param reqId RPC call request ID
-     * @param advancedOptions - optional parameter with cancellation mode
-     */
+    /** RPC invocation cancelling */
     cancel (reqId: number, advancedOptions?: CancelAdvancedOptions): boolean {
         if (!this._preReqChecks(null, 'dealer') || !this._checkRouterFeature('dealer', 'call_canceling')) {
             throw this._cache.opStatus.error;
@@ -1829,12 +1746,7 @@ class Wampy {
         return true;
     }
 
-    /**
-     * RPC registration for invocation
-     * @param topic
-     * @param rpc - rpc that will receive invocations
-     * @param advancedOptions - optional parameter with registration options
-     */
+    /** RPC registration for invocation */
     async register (topic: string, rpc: RPCCallback, advancedOptions?: RegisterAdvancedOptions): Promise<RegisterSuccessResult> {
         if (this._rpcRegs[topic]?.callbacks?.length) {
             const rpcAlreadyRegisteredError = new Errors.RPCAlreadyRegisteredError();
@@ -1890,10 +1802,7 @@ class Wampy {
         return callbacks.promise;
     }
 
-    /**
-     * RPC unregistration for invocation
-     * @param topic - a topic URI to unregister
-     */
+    /** RPC unregistration for invocation */
     async unregister (topic: string): Promise<UnregisterSuccessResult> {
         if (!this._preReqChecks({ topic, patternBased: false, allowWAMP: false }, 'dealer')) {
             throw this._cache.opStatus.error;

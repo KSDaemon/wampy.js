@@ -127,8 +127,8 @@
         "Typecheck passes"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": "Continues from US-007. Together they complete the full wampy.ts conversion."
+      "passes": true,
+      "notes": "JSDoc cleanup of remaining methods (from _wsOnClose onward). All methods were already typed in US-007; this story removed 59 @param/@returns/@type/@private annotations while preserving @deprecated and textual descriptions."
     },
     {
       "id": "US-009",

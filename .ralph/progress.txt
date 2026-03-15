@@ -167,5 +167,20 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - `Required<WampyOptions>` turns `ws: WebSocketConstructor | null` into required non-optional but still nullable. When passing to `getWebSocket()` whose config expects `ws?:` (undefined-optional), cast `this._options as Record<string, unknown>` to avoid null/undefined mismatch
   - `_isPlainObject` works well as a type guard (`input is Record<string, unknown>`) — narrows the type in conditional blocks, eliminating many explicit casts
   - The file is 1923 lines — even though the PRD splits it into US-007 (first half) and US-008 (second half), the entire file must typecheck, so all methods need at least basic types. US-008 should focus on JSDoc cleanup of the remaining methods
-  - WAMP message handler dispatch table needs explicit `Record<number, () => void | Promise<void>>` type and message data needs tuple casts for destructuring
+   - WAMP message handler dispatch table needs explicit `Record<number, () => void | Promise<void>>` type and message data needs tuple casts for destructuring
+---
+
+## 2026-03-15 23:30 (EET) - US-008
+- Cleaned 59 JSDoc type annotations (`@param`, `@returns`, `@return`, `@type`, `@private`) from remaining private methods and all public API methods in `src/wampy.ts`
+- Preserved `@deprecated` annotation (line 1247) and all textual descriptions
+- Preserved `@see` inline references to WAMP spec
+- Verified exports remain: `export default Wampy`, `export { Wampy }`, `export * as Errors from './errors.js'`
+- Files changed:
+  - Modified: `src/wampy.ts` (JSDoc cleanup only, no logic changes)
+  - Modified: `.ralph/prd.json` (US-008 passes: true)
+- **Learnings for future iterations:**
+  - US-007 already typed all methods with parameter and return types — US-008 was purely JSDoc annotation removal
+  - The file went from 1923 to 1832 lines (91 lines removed) — all removed lines were JSDoc annotations
+  - When cleaning JSDoc: remove `@param {type}`, `@returns`, `@return`, `@type`, `@private`, `@public` — but keep `@deprecated`, `@see`, and plain text descriptions
+  - Some JSDoc blocks had both textual descriptions AND annotations — needed to preserve the text while removing annotations (e.g., WAMP SPEC format strings)
 ---
