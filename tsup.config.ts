@@ -23,7 +23,7 @@ const commonExternal = [
 ];
 
 const esmEntries = {
-    'wampy': 'src/wampy.js',
+    'wampy': 'src/wampy.ts',
     'constants': 'src/constants.ts',
     'errors': 'src/errors.ts',
     'utils': 'src/utils.ts',
@@ -36,7 +36,7 @@ const esmEntries = {
 
 // CJS entries: exclude wampy-cra which uses top-level await (incompatible with CJS)
 const cjsEntries = {
-    'wampy': 'src/wampy.js',
+    'wampy': 'src/wampy.ts',
     'constants': 'src/constants.ts',
     'errors': 'src/errors.ts',
     'utils': 'src/utils.ts',

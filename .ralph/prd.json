@@ -112,8 +112,8 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": false,
-      "notes": "This covers roughly the first half of the 2338-line file. The remaining private methods and public API are in the next story."
+      "passes": true,
+      "notes": "Entire file converted to .ts with typed properties, constructor overloads, and all methods typed. Remaining methods (US-008 scope) also typed with parameter/return types to satisfy typecheck — US-008 will do JSDoc cleanup on those."
     },
     {
       "id": "US-008",

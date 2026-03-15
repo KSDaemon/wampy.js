@@ -21,6 +21,10 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
 - `WampyCache.timer` is typed as `ReturnType<typeof setTimeout> | null` for cross-environment compatibility
 - Internal `_requests` map uses `WampRequest` type; `_calls` map uses `WampCall` type (extends Deferred with optional `onProgress`)
 - Subscribe/Register request callbacks extend `Deferred` with additional properties (`onEvent` for subscribe, `rpc` for register)
+- `Deferred<T>` is contravariant on `onSuccess` — when storing typed Deferreds in `WampRequest.callbacks` (which expects `Deferred<unknown>`), cast via `as unknown as Deferred`
+- `SUCCESS` constant from constants.ts lacks `reqId` — use `{ ...SUCCESS, reqId: 0 }` when assigning to `WampyOpStatus`
+- When passing `this._options` to `getWebSocket()`, cast as `Record<string, unknown>` to avoid `null` vs `undefined` incompatibility on `ws` property
+- `_isPlainObject` is typed as a type guard: `input is Record<string, unknown>` — this narrows types in conditional blocks
 
 ## 2026-03-15 20:00 (EET) - US-001
 - Implemented TypeScript infrastructure and tsup build configuration
@@ -143,4 +147,25 @@ Started: воскресенье, 15 марта 2026 г. 19:46:39 (EET)
   - `ServerWampFeatures.roles` is `Record<string, ServerWampRole>` to allow indexing by dynamic role names ('dealer', 'broker')
   - `WampyOptions.payloadSerializers` is `Record<string, Serializer>` for PPT mode serializer lookup by name
   - Types use `import type` for all imports to ensure they are erased at compile time
+---
+
+## 2026-03-15 23:00 (EET) - US-007
+- Converted `src/wampy.js` → `src/wampy.ts` with full TypeScript typing
+- All private properties typed with explicit TS types: `_url: string | null`, `_protocols: string[]`, `_wamp_features: WampFeatures`, `_cache: WampyCache`, `_ws: WebSocket | null`, `_wsQueue: (string | ArrayBuffer | Uint8Array | undefined)[]`, `_requests: Record<number, WampRequest>`, `_calls: Record<number, WampCall>`, `_subscriptionsById: Map<number, SubscriptionCallbacksHash>`, `_subscriptionsByKey: Map<string, SubscriptionCallbacksHash>`, `_rpcRegs: Record<string | number, RegistrationCallbacksHash>`, `_rpcNames: Set<string>`, `_options: Required<WampyOptions>`
+- Constructor overloads typed: `()`, `(url: string)`, `(options: WampyOptions)`, `(url: string, options: WampyOptions)`
+- All private methods from constructor through `_wsOnOpen` fully typed with parameter and return types
+- All remaining private methods (`_wsOnClose` through `_getSubscriptionKey`) and all public API methods also typed with parameter and return types to satisfy typecheck
+- JSDoc `@param`, `@returns`, `@type`, `@private` annotations removed from converted methods; textual descriptions preserved as inline comments
+- Updated `tsup.config.ts` entry paths from `.js` to `.ts` for wampy
+- Files changed:
+  - Created: `src/wampy.ts`
+  - Deleted: `src/wampy.js`
+  - Modified: `tsup.config.ts` (wampy entry paths updated), `.ralph/prd.json`, `.ralph/progress.txt`
+- **Learnings for future iterations:**
+  - `Deferred<T>` has contravariant `onSuccess` — `Deferred<SpecificType>` is NOT assignable to `Deferred<unknown>`. Use `as unknown as Deferred` when storing in `_requests`
+  - `SUCCESS` constant from `constants.ts` only has `{ code: 0, error: null }` — need to spread with `reqId: 0` for `WampyOpStatus` assignment
+  - `Required<WampyOptions>` turns `ws: WebSocketConstructor | null` into required non-optional but still nullable. When passing to `getWebSocket()` whose config expects `ws?:` (undefined-optional), cast `this._options as Record<string, unknown>` to avoid null/undefined mismatch
+  - `_isPlainObject` works well as a type guard (`input is Record<string, unknown>`) — narrows the type in conditional blocks, eliminating many explicit casts
+  - The file is 1923 lines — even though the PRD splits it into US-007 (first half) and US-008 (second half), the entire file must typecheck, so all methods need at least basic types. US-008 should focus on JSDoc cleanup of the remaining methods
+  - WAMP message handler dispatch table needs explicit `Record<number, () => void | Promise<void>>` type and message data needs tuple casts for destructuring
 ---
