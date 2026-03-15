@@ -1,0 +1,315 @@
+{
+  "project": "wampy.js",
+  "branchName": "chore/typescript-migration",
+  "description": "Migrate wampy.js codebase from JavaScript to TypeScript with strict typing, replace Grunt build with tsup, and produce ESM/CJS/UMD outputs with declaration files",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Add TypeScript infrastructure and configuration",
+      "description": "As a developer, I want TypeScript compiler configuration and tsup build tooling in place so that the migration can begin.",
+      "acceptanceCriteria": [
+        "tsconfig.json created with strict: true, target: ES2023, module: NodeNext, moduleResolution: NodeNext, declaration: true, declarationMap: true, sourceMap: true",
+        "include covers src/, cmd/, test/",
+        "outDir set to dist/",
+        "tsup installed as dev dependency with a tsup.config.ts producing ESM (dist/esm/), CJS (dist/cjs/), and UMD browser bundles (dist/browser/)",
+        "UMD browser bundles replicate current behavior: wampy.js (single, sets globalThis.Wampy), wampy-all.js (all serializers + auth), plus minified versions",
+        "browser.zip is produced containing browser bundles",
+        "package.json devDependencies adds typescript, tsup, @types/node; removes Babel, Grunt, and browserify related packages",
+        "package.json scripts.build changed to use tsup",
+        ".babelrc removed",
+        "Gruntfile.cjs removed",
+        "npm run build succeeds and produces correct output structure",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Convert constants and errors to TypeScript",
+      "description": "As a developer, I want src/constants.js and src/errors.js converted to TypeScript with proper types so that other modules can depend on them.",
+      "acceptanceCriteria": [
+        "src/constants.js renamed to src/constants.ts with WAMP_MSG_SPEC as const object, WAMP_ERROR_MSG as typed Record, SUCCESS typed, E2EE_SERIALIZERS typed as ReadonlySet<string>, WAMP_CUSTOM_ATTR_REGEX typed as RegExp, isNode typed as boolean",
+        "src/errors.js renamed to src/errors.ts with all 24 error classes typed with readonly code and readonly message, base WampError typed with details property, constructor parameters typed",
+        "JSDoc type annotations (@type, @param, @returns) removed; textual descriptions preserved",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Convert utils to TypeScript",
+      "description": "As a developer, I want src/utils.js converted to TypeScript with proper return types.",
+      "acceptanceCriteria": [
+        "src/utils.js renamed to src/utils.ts with getWebSocket() return type defined, getNewPromise<T>() generic returning typed deferred object with promise, resolve, reject",
+        "JSDoc type annotations removed; textual descriptions preserved",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Convert serializers to TypeScript with a common interface",
+      "description": "As a developer, I want serializers to implement a common Serializer interface for type safety.",
+      "acceptanceCriteria": [
+        "Serializer interface defined in src/serializers/ with protocol: string, isBinary: boolean, encode(data: unknown): string | ArrayBuffer | Uint8Array, decode(data: string | ArrayBuffer | Uint8Array): unknown",
+        "src/serializers/json-serializer.js renamed to .ts implementing Serializer",
+        "src/serializers/cbor-serializer.js renamed to .ts implementing Serializer",
+        "src/serializers/msgpack-serializer.js renamed to .ts implementing Serializer",
+        "JSDoc type annotations removed; textual descriptions preserved",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Convert auth plugins to TypeScript",
+      "description": "As a developer, I want the authentication plugins (WAMP-CRA, Cryptosign) converted to TypeScript with proper types.",
+      "acceptanceCriteria": [
+        "src/auth/wampcra/wampy-cra.js renamed to .ts with deriveKey, signManual, sign functions fully typed including Web Crypto API usage",
+        "src/auth/cryptosign/wampy-cryptosign.js renamed to .ts with hex2bytes, bytes2hex, sign functions typed including tweetnacl usage",
+        "JSDoc type annotations removed; textual descriptions preserved",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Define core Wampy types and interfaces",
+      "description": "As a developer, I want comprehensive type definitions for the Wampy class internals so that the main class conversion is fully typed.",
+      "acceptanceCriteria": [
+        "src/types.ts created containing: WampyOptions interface (all constructor/config options), WampyOpStatus interface, SubscriptionCallbacksHash / RegistrationCallbacksHash types, CallResult / EventData / InvocationData types, AdvancedOptions interfaces for subscribe/publish/call/register, ProgressiveCallSendData and ProgressiveCallReturn types",
+        "Enum or union types for WAMP message IDs defined",
+        "Type for internal cache/state structure defined (sessionId, reqId, timers, server features, etc.)",
+        "User-supplied payloads typed as any or unknown with appropriate generics",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Convert main Wampy class to TypeScript — private properties and constructor",
+      "description": "As a developer, I want the first half of the Wampy class converted: all private properties typed, constructor overloads typed, and private helper methods (up to _wsOnOpen) typed.",
+      "acceptanceCriteria": [
+        "src/wampy.js renamed to src/wampy.ts",
+        "All private properties typed with TS types (replace @type JSDoc)",
+        "Constructor overloads typed: new Wampy(), new Wampy(url), new Wampy(options), new Wampy(url, options)",
+        "Internal caches/maps (subscriptions, RPCs, requests) strongly typed using types from src/types.ts",
+        "WebSocket instance typed, timer references typed (ReturnType<typeof setTimeout> | null or similar)",
+        "All private methods from constructor through _wsOnOpen typed with parameter and return types",
+        "JSDoc @param, @returns, @type, @private annotations removed from converted methods; textual descriptions preserved",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "This covers roughly the first half of the 2338-line file. The remaining private methods and public API are in the next story."
+    },
+    {
+      "id": "US-008",
+      "title": "Convert main Wampy class to TypeScript — remaining private methods and public API",
+      "description": "As a developer, I want all remaining private methods and the ~16 public API methods of the Wampy class fully typed.",
+      "acceptanceCriteria": [
+        "All remaining private methods (from _wsOnClose through end of class) typed with parameter and return types",
+        "All ~16 public API methods typed with parameter and return types",
+        "JSDoc @param, @returns, @type, @private annotations removed; textual descriptions and @deprecated preserved",
+        "Exports remain: export default Wampy, export { Wampy }, export * as Errors from ./errors",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "Continues from US-007. Together they complete the full wampy.ts conversion."
+    },
+    {
+      "id": "US-009",
+      "title": "Convert browser wrapper files to TypeScript",
+      "description": "As a developer, I want the browser entry-point wrappers converted to TypeScript.",
+      "acceptanceCriteria": [
+        "src/wampy-single-4-browser.js renamed to src/wampy-single-4-browser.ts with globalThis.Wampy set and proper declare global type augmentation",
+        "src/wampy-all-4-browser.js renamed to src/wampy-all-4-browser.ts with all globals set and proper declare global type augmentation",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Convert CLI tool to TypeScript — main, logger, common-options, helpers",
+      "description": "As a developer, I want the core CLI files converted to TypeScript.",
+      "acceptanceCriteria": [
+        "cmd/cli.js renamed to cmd/cli.ts with shebang preserved in build output",
+        "cmd/main.js renamed to cmd/main.ts with yargs setup typed",
+        "cmd/common-options.js renamed to cmd/common-options.ts with all options typed",
+        "cmd/logger.js renamed to cmd/logger.ts",
+        "cmd/wampy-helpers.js renamed to cmd/wampy-helpers.ts with all function parameters and return types annotated",
+        "JSDoc type annotations removed; textual descriptions preserved",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Convert CLI command files to TypeScript",
+      "description": "As a developer, I want the CLI command files (call, publish, subscribe, register) converted to TypeScript.",
+      "acceptanceCriteria": [
+        "cmd/commands/call.js renamed to cmd/commands/call.ts with all function parameters and return types annotated",
+        "cmd/commands/publish.js renamed to cmd/commands/publish.ts with all function parameters and return types annotated",
+        "cmd/commands/subscribe.js renamed to cmd/commands/subscribe.ts with all function parameters and return types annotated",
+        "cmd/commands/register.js renamed to cmd/commands/register.ts with all function parameters and return types annotated",
+        "JSDoc type annotations removed; textual descriptions preserved",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Convert test helper files to TypeScript",
+      "description": "As a developer, I want test helper/mock files converted to TypeScript so they can be imported by typed test files.",
+      "acceptanceCriteria": [
+        "test/fake-ws.js renamed to test/fake-ws.ts with minimal typing to compile under strict",
+        "test/fake-ws-set-protocol.js renamed to test/fake-ws-set-protocol.ts with minimal typing",
+        "test/fake-wampy-mock.js renamed to test/fake-wampy-mock.ts with minimal typing",
+        "test/send-data.js renamed to test/send-data.ts with minimal typing (3497 lines — types only, no logic changes)",
+        "@types/mocha, @types/chai, @types/sinon added as devDependencies",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": "send-data.ts is large (3497 lines) but is mostly data arrays — typing is mechanical, not complex."
+    },
+    {
+      "id": "US-013",
+      "title": "Convert small test files to TypeScript",
+      "description": "As a developer, I want the smaller test files converted to TypeScript with no logic changes.",
+      "acceptanceCriteria": [
+        "test/wampy-utils-test.js renamed to test/wampy-utils-test.ts (226 lines)",
+        "test/wampy-cra-test.js renamed to test/wampy-cra-test.ts (77 lines)",
+        "test/wampy-cryptosign-test.js renamed to test/wampy-cryptosign-test.ts (55 lines)",
+        "test/wampy-crossbar-test.js renamed to test/wampy-crossbar-test.ts (44 lines)",
+        "test/wampy-browser-wrappers-test.js renamed to test/wampy-browser-wrappers-test.ts (31 lines)",
+        "test/wampy-serializer-handshake-test.js renamed to test/wampy-serializer-handshake-test.ts (49 lines)",
+        "test/wampy-cli-help-test.js renamed to test/wampy-cli-help-test.ts (52 lines)",
+        "No logic changes — just enough typing to compile under strict: true",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Convert large test files to TypeScript — common and CLI tests",
+      "description": "As a developer, I want the two largest test files converted to TypeScript with no logic changes.",
+      "acceptanceCriteria": [
+        "test/wampy-common-test.js renamed to test/wampy-common-test.ts (3456 lines) with minimal typing to compile under strict",
+        "test/wampy-cli-test.js renamed to test/wampy-cli-test.ts (187 lines) with minimal typing",
+        "No logic changes — tests remain functionally identical",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": "wampy-common-test is large but tests are repetitive patterns — typing should be mechanical."
+    },
+    {
+      "id": "US-015",
+      "title": "Update test runner and coverage configuration for TypeScript",
+      "description": "As a developer, I want the test infrastructure updated to run TypeScript tests with the same coverage reporting.",
+      "acceptanceCriteria": [
+        "Test runner configured to handle .ts files via tsx, ts-node, or @swc-node/register as mocha require hook (replacing @babel/register)",
+        "package.json test scripts updated to reference .ts test files",
+        "c8 coverage config (.c8rc.json) updated: include patterns changed from *.js to *.ts",
+        "karma.conf.cjs updated or replaced to handle TypeScript for browser tests",
+        "npm run test:node-no-browser-wrappers passes all tests",
+        "npm run test:browser-wrappers passes all tests",
+        "npm run test:browser passes all tests (or documented alternative if Karma is replaced)",
+        "Code coverage remains at the same level",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Update package.json exports and module configuration",
+      "description": "As a developer, I want package.json updated so consumers get proper ESM, CJS, and type definitions.",
+      "acceptanceCriteria": [
+        "main points to CJS entry (dist/cjs/wampy.cjs or similar)",
+        "module points to ESM entry (dist/esm/wampy.js or similar)",
+        "types points to declaration entry (dist/esm/wampy.d.ts or similar)",
+        "exports map updated with import, require, and types conditions for each entry point (., ./JsonSerializer.js, ./CborSerializer.js, ./MsgpackSerializer.js, ./cryptosign.js, ./wampcra.js)",
+        "bin entry updated to point to compiled CLI output",
+        "files field includes only necessary dist files and type declarations",
+        "type: module retained or adjusted for dual-package setup",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Update ESLint configuration for TypeScript",
+      "description": "As a developer, I want ESLint updated to lint TypeScript files with appropriate rules.",
+      "acceptanceCriteria": [
+        "typescript-eslint parser and plugin added as dev dependencies",
+        "eslint.config.js updated to handle .ts files with TypeScript-specific rules",
+        "Existing rules (unicorn, security, mocha) still apply where relevant",
+        "npm run lint passes on all .ts files with no new warnings",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Update CI/CD pipeline for TypeScript",
+      "description": "As a developer, I want the GitHub Actions workflow updated to build, lint, and test the TypeScript codebase.",
+      "acceptanceCriteria": [
+        ".github/workflows/build-and-test.yml updated: build step uses npm run build (tsup), test step runs TypeScript tests, Node.js matrix updated to 20 and 22",
+        "Coveralls integration still works with updated coverage output",
+        "CI passes on all matrix configurations",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Clean up removed files and update documentation",
+      "description": "As a developer, I want obsolete JS source files removed and documentation updated to reflect the TypeScript migration.",
+      "acceptanceCriteria": [
+        "All original .js source files in src/ removed (replaced by .ts)",
+        "All original .js test files in test/ removed (replaced by .ts)",
+        "All original .js CLI files in cmd/ removed (replaced by .ts)",
+        "Gruntfile.cjs removed",
+        ".babelrc removed",
+        "karma.conf.cjs removed or updated",
+        ".gitignore updated if dist output structure changed",
+        "README.md updated: installation and usage examples reflect TypeScript, mention .d.ts types available",
+        "CONTRIBUTING.md updated with new build/test instructions",
+        "Typecheck passes"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
