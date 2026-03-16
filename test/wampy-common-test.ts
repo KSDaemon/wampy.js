@@ -2629,6 +2629,22 @@ for (const item of serializers) {
                 }
             });
 
+            it('disallows to call RPC with wamp ppt scheme and non-e2ee serializer', async function () {
+                try {
+                    await wampy.call('rpc.call', 25, { ppt_scheme: 'wamp', ppt_serializer: 'json' });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.PPTSerializerInvalidError);
+                }
+            });
+
+            it('disallows to publish with wamp ppt scheme and non-e2ee serializer', async function () {
+                try {
+                    await wampy.publish('qwe.asd.zxc', 25, { ppt_scheme: 'wamp', ppt_serializer: 'json' });
+                } catch (e) {
+                    expect(e).to.be.instanceOf(Errors.PPTSerializerInvalidError);
+                }
+            });
+
             it('disallows to publish event if PPT Scheme is incorrect', async function () {
                 try {
                     await wampy.publish('qwe.asd.zxc', 25, {
