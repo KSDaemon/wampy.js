@@ -1,13 +1,8 @@
 import type { Serializer } from './serializer.js';
 
 export class JsonSerializer implements Serializer {
-    protocol: string;
-    isBinary: boolean;
-
-    constructor () {
-        this.protocol = 'json';
-        this.isBinary = false;
-    }
+    protocol: string = 'json';
+    isBinary: boolean = false;
 
     encode (data: unknown): string {
         return JSON.stringify(data);
