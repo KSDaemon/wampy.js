@@ -23,11 +23,6 @@ interface GetWebSocketConfig {
     isBrowserMock?: boolean;
 }
 
-declare global {
-     
-    var MozWebSocket: typeof WebSocket | undefined;
-}
-
 function isWebSocketSchemeSpecified (url: string): boolean {
     return /^ws(s)?:\/\//.test(url);
 }
@@ -59,10 +54,8 @@ function getServerUrlForBrowser (url?: string): string | null {
 
 /** Get a WebSocket object from the browser's window global variable */
 function getWebSocketFromWindowObject (parsedUrl: string, protocols?: string[]): WebSocket | null {
-    if (globalThis?.WebSocket) { // Chrome, MSIE, newer Firefox
+    if (globalThis?.WebSocket) {
         return new globalThis.WebSocket(parsedUrl, protocols);
-    } else if (globalThis?.MozWebSocket) { // older versions of Firefox
-        return new globalThis.MozWebSocket(parsedUrl, protocols);
     }
 
     return null;

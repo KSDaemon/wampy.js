@@ -174,15 +174,6 @@ describe('Wampy.js Utils submodule', function () {
             ws = getWebSocket({ url:'wss://example.com/websocket/wamp' }) as SimpleWebSocket;
             expect(ws.name).to.be.equal('WebSocket');
             expect(ws.url).to.be.equal('wss://example.com/websocket/wamp');
-
-            // Test for returning MozWebSocket in old firefoxes
-            delete g.WebSocket;
-            g.MozWebSocket = function (this: SimpleWebSocket, url: string) { this.name = 'MozWebSocket'; this.url = url; };
-            ws = getWebSocket({ url:'wss://example.com/websocket/wamp' }) as SimpleWebSocket;
-            expect(ws.name).to.be.equal('MozWebSocket');
-            expect(ws.url).to.be.equal('wss://example.com/websocket/wamp');
-            delete g.MozWebSocket;
-            g.WebSocket = function (this: SimpleWebSocket, url: string) { this.name = 'WebSocket'; this.url = url; };
         });
 
         it('disallows to create websocket instance if WebSocket object is not available in window', function () {
