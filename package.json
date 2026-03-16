@@ -112,7 +112,7 @@
   "scripts": {
     "build": "rm -rf dist && tsup && node scripts/post-build.js",
     "typecheck": "tsc --noEmit --declaration false --declarationMap false",
-    "lint": "npx eslint",
+    "lint": "eslint",
     "lint:fix": "npm run lint -- --fix",
     "test": "npm run test:node-no-browser-wrappers && npm run test:browser-wrappers && npm run test:browser",
     "test:node": "cross-env NODE_ENV=test NODE_OPTIONS='--import tsx/esm' c8 mocha --exit -R spec",
@@ -121,7 +121,7 @@
     "test:node-cli": "npm run test:node -- 'test/wampy-cli-*.ts'",
     "test:crossbar": "npm run test:node -- 'test/wampy-crossbar-test.ts'",
     "test:browser-wrappers": "npm run test:node -- -r jsdom-global/register 'test/wampy-browser-wrappers-test.ts'",
-    "test:browser": "npx karma start karma.conf.cjs",
+    "test:browser": "karma start karma.conf.cjs",
     "cover": "c8 report",
     "publish": "npm run build"
   }
