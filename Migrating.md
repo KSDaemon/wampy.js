@@ -9,6 +9,9 @@ in TypeScript and the build system has been reworked. While the public API remai
 these internal changes may affect module resolution or bundler compatibility in some setups.
 Please upgrade and verify that everything works as expected in your environment.
 
+1. The `.options()` method, deprecated since v7.0.1, has been removed.
+   Use `.getOptions()` and `.setOptions()` instead.
+
 Migrating from 6.x to 7.x versions
 ==================================
 
