@@ -1,7 +1,4 @@
-import { use } from 'chai';
-import chaiBytes from 'chai-bytes';
-
-const expect = use(chaiBytes).expect;
+import { expect } from 'chai';
 
 import * as wampyCryptosign from '../src/auth/cryptosign/wampy-cryptosign.js';
 
@@ -19,7 +16,7 @@ describe('Wampy-cryptosign plugin', function () {
                 20, 102, 225, 239,  54, 199,   8, 185,
                 110, 230, 246,  45, 221, 173, 145,  34
             ]);
-        expect(wampyCryptosign.hex2bytes(str)).to.be.equalBytes(expected);
+        expect(wampyCryptosign.hex2bytes(str)).to.deep.equal(expected);
     });
 
     it('provides helper for converting bytes array to hex string', function() {
