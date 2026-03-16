@@ -3,3 +3,5 @@ dist/
 !/.crossbar/config.json
 .crossbar/
 node_modules/
+.opencode/
+.claude/
