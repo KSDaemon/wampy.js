@@ -75,7 +75,7 @@ class Wampy {
     private _protocols: string[];
 
     /** WAMP features, supported by Wampy */
-    private _wamp_features: WampFeatures;
+    private readonly _wamp_features: WampFeatures;
 
     /** Internal cache for object lifetime */
     private _cache: WampyCache;
@@ -93,7 +93,7 @@ class Wampy {
     private _calls: Record<number, WampCall>;
 
     /** Stored Pub/Subs to access by ID */
-    private _subscriptionsById: Map<number, SubscriptionCallbacksHash>;
+    private readonly _subscriptionsById: Map<number, SubscriptionCallbacksHash>;
 
     /** Stored Pub/Subs to access by Key */
     private _subscriptionsByKey: Map<string, SubscriptionCallbacksHash>;
@@ -287,7 +287,7 @@ class Wampy {
 
     /** Check for specified feature in a role of connected WAMP Router */
     private _checkRouterFeature (role: string, feature: string): boolean {
-        if (this._cache.server_wamp_features.roles[role].features[feature] !== true) {
+        if (!this._cache.server_wamp_features.roles[role].features[feature]) {
             this._fillOpStatusByError(new Errors.FeatureNotSupportedError(role, feature));
             return false;
         }
@@ -1577,7 +1577,7 @@ class Wampy {
         } = advancedOptions || {} as CallAdvancedOptions;
 
         const result: Record<string, unknown> = {};
-        
+
         if (progress_callback) {result.receive_progress = true;}
         if (progress) {result.progress = true;}
         if (disclose_me) {result.disclose_me = true;}
