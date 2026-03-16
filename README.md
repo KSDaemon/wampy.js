@@ -27,7 +27,6 @@ client for browser and node.js, written in TypeScript
   * [Migrating or Updating versions](#migrating-or-updating-versions)
   * [API](#api)
     * [Constructor([url[, options]])](#constructorurl-options)
-    * [options([opts])](#optionsopts)
     * [getOptions()](#getoptions)
     * [setOptions([newOptions])](#setoptionsnewoptions)
     * [getOpStatus()](#getopstatus)
@@ -334,28 +333,6 @@ wampy = new Wampy({
 ```
 
 [Back to Table of Contents](#table-of-contents)
-
-### options([opts])
-
-.options() method is now deprecated, so this is here only for documentation purposes. Please
-use `getOptions()/setOptions()` instead.
-
-.options() can be called in two forms:
--- without parameters it will behave the same as new method [getOptions()](#getoptions)
--- with one parameter as a hash-table it will behave the same as new method [setOptions()](#setoptionsnewoptions)
-
-```javascript
-wampy.options(); // same as wampy.getOptions
-
-wampy.options({ // same as wampy.setOptions
-    authPlugins: {
-        ticket: ((userPassword) => (() => userPassword ))(),
-        wampcra: wampyCra.sign(secret),
-        cryptosign: wampyCryptosign.sign(privateKey)
-    },
-    authMode: 'auto'
-});
-```
 
 ### getOptions()
 
