@@ -37,22 +37,10 @@ jobs:
       - run: npm run lint
       - run: npm test
       - name: Create test coverage report
+        if: matrix.node-version == 24
         run: npx c8 report --reporter=lcovonly
       - name: Coveralls
+        if: matrix.node-version == 24
         uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel: true
-          flag-name: run node-${{ matrix.node-version }}
-
-  coveralls_finish:
-    name: Coveralls Finished
-    needs: build_and_test
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@v2
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel-finished: true

@@ -115,11 +115,12 @@
     "lint:fix": "npm run lint -- --fix",
     "test": "npm run test:node-no-browser-wrappers && npm run test:browser-wrappers && npm run test:browser",
     "test:node": "cross-env NODE_ENV=test NODE_OPTIONS='--import tsx/esm' c8 mocha --exit -R spec",
+    "test:node-no-clean": "cross-env NODE_ENV=test NODE_OPTIONS='--import tsx/esm' c8 --no-clean mocha --exit -R spec",
     "test:node-no-browser-wrappers": "npm run test:node -- 'test/!(wampy-browser-wrappers)-test.ts'",
     "test:node-no-crossbar": "npm run test:node -- 'test/!(wampy-crossbar|wampy-browser-wrappers)-test.ts'",
     "test:node-cli": "npm run test:node -- 'test/wampy-cli-*.ts'",
     "test:crossbar": "npm run test:node -- 'test/wampy-crossbar-test.ts'",
-    "test:browser-wrappers": "npm run test:node -- -r jsdom-global/register 'test/wampy-browser-wrappers-test.ts'",
+    "test:browser-wrappers": "npm run test:node-no-clean -- -r jsdom-global/register 'test/wampy-browser-wrappers-test.ts'",
     "test:browser": "karma start karma.conf.cjs",
     "cover": "c8 report",
     "publish": "npm run build"
