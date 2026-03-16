@@ -1244,25 +1244,6 @@ class Wampy {
      * Wampy public API
      *************************************************************************/
 
-    /**
-     * @deprecated since version 7.0.1
-     *
-     * Get or set Wampy options
-     *
-     * To get options - call without parameters
-     * To set options - pass hash-table with options values
-     */
-    options (newOptions?: WampyOptions): Required<WampyOptions> | Wampy | undefined {
-        console.warn('Wampy.options() is deprecated, please use Wampy.getOptions() or Wampy.setOptions() instead');
-
-        if ((newOptions) === undefined) {
-            return this._options;
-        } else if (this._isPlainObject(newOptions)) {
-            this._options = { ...this._options, ...newOptions as WampyOptions };
-            return this;
-        }
-    }
-
     /** Wampy options getter */
     getOptions (): Required<WampyOptions> {
         return this._options;
