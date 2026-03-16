@@ -17,13 +17,11 @@ const cborxOptions: CborxOptions = {
 };
 
 export class CborSerializer implements Serializer {
-    protocol: string;
-    isBinary: boolean;
+    protocol: string = 'cbor';
+    isBinary: boolean = true;
     encoder: Encoder;
 
-    constructor (options?: CborxOptions) {
-        this.protocol = 'cbor';
-        this.isBinary = true;
+    constructor(options?: CborxOptions) {
         const initOptions = options ?? cborxOptions;
         this.encoder = new Encoder(initOptions as Options);
     }
