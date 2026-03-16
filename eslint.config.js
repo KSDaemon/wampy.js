@@ -119,10 +119,7 @@ export default tseslint.config(
             // Allow this aliasing — needed for consistent-this pattern (const self = this)
             '@typescript-eslint/no-this-alias'         : 'off',
 
-            // Relax some TS rules that are too strict for this codebase
-            '@typescript-eslint/no-explicit-any'       : 'off',
-            '@typescript-eslint/no-require-imports'    : 'off',
-            '@typescript-eslint/no-empty-object-type'  : 'off',
+
         }
     },
     // Test files: allow chai-style unused expressions
