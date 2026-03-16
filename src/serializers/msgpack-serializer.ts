@@ -2,13 +2,8 @@ import { unpack, pack } from 'msgpackr';
 import type { Serializer } from './serializer.js';
 
 export class MsgpackSerializer implements Serializer {
-    protocol: string;
-    isBinary: boolean;
-
-    constructor () {
-        this.protocol = 'msgpack';
-        this.isBinary = true;
-    }
+    protocol: string = 'msgpack';
+    isBinary: boolean = true;
 
     encode (data: unknown): Buffer {
         return pack(data);
