@@ -5,8 +5,8 @@ import { isNode } from './constants.js';
  */
 export interface Deferred<T = unknown> {
     promise: Promise<T>;
-    onSuccess: (value: T | PromiseLike<T>) => void;
-    onError: (reason?: unknown) => void;
+    onSuccess: (value: T) => void | Promise<void>;
+    onError: (reason?: unknown) => void | Promise<void>;
 }
 
 /**

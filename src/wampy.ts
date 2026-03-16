@@ -19,7 +19,6 @@ import * as Errors from './errors.js';
 import { WebsocketError } from './errors.js';
 import { getNewPromise, getWebSocket } from './utils.js';
 import { JsonSerializer } from './serializers/json-serializer.js';
-import type { Deferred } from './utils.js';
 import type { Serializer } from './serializers/serializer.js';
 import type {
     WampyOptions,
@@ -55,6 +54,11 @@ import type {
     UnregisterSuccessResult,
     SubscribeRequestCallbacks,
     RegisterRequestCallbacks,
+    SubscribeRequest,
+    UnsubscribeRequest,
+    PublishRequest,
+    RegisterRequest,
+    UnregisterRequest,
     ServerWampFeatures,
 } from './types.js';
 
@@ -853,21 +857,20 @@ class Wampy {
      * WAMP SPEC: [SUBSCRIBED, SUBSCRIBE.Request|id, Subscription|id]
      */
     async _onSubscribedMessage ([, requestId, subscriptionId]: [unknown, number, number]): Promise<void> {
-        const { topic, advancedOptions, callbacks } = this._requests[requestId];
-        const reqCallbacks = callbacks as SubscribeRequestCallbacks;
+        const { topic, advancedOptions, callbacks } = this._requests[requestId] as SubscribeRequest;
         const subscription: SubscriptionCallbacksHash = {
             id: subscriptionId,
             topic,
             advancedOptions,
-            callbacks: [reqCallbacks.onEvent]
+            callbacks: [callbacks.onEvent]
         };
         const subscriptionKey = this._getSubscriptionKey(topic, advancedOptions);
 
         this._subscriptionsById.set(subscriptionId, subscription);
         this._subscriptionsByKey.set(subscriptionKey, subscription);
 
-        if (reqCallbacks.onSuccess) {
-            await reqCallbacks.onSuccess({ topic, requestId, subscriptionId, subscriptionKey } as unknown as SubscribeSuccessResult);
+        if (callbacks.onSuccess) {
+            await callbacks.onSuccess({ topic, requestId, subscriptionId, subscriptionKey });
         }
 
         delete this._requests[requestId];
@@ -878,14 +881,14 @@ class Wampy {
      * WAMP SPEC: [UNSUBSCRIBED, UNSUBSCRIBE.Request|id]
      */
     async _onUnsubscribedMessage ([, requestId]: [unknown, number]): Promise<void> {
-        const { topic, advancedOptions, callbacks } = this._requests[requestId];
+        const { topic, advancedOptions, callbacks } = this._requests[requestId] as UnsubscribeRequest;
         const subscriptionKey = this._getSubscriptionKey(topic, advancedOptions);
         const subscriptionId = this._subscriptionsByKey.get(subscriptionKey)!.id;
         this._subscriptionsByKey.delete(subscriptionKey);
         this._subscriptionsById.delete(subscriptionId);
 
         if (callbacks.onSuccess) {
-            await (callbacks.onSuccess as (v: unknown) => void)({ topic, requestId });
+            await callbacks.onSuccess({ topic, requestId });
         }
 
         delete this._requests[requestId];
@@ -896,10 +899,10 @@ class Wampy {
      * WAMP SPEC: [PUBLISHED, PUBLISH.Request|id, Publication|id]
      */
     async _onPublishedMessage ([, requestId, publicationId]: [unknown, number, number]): Promise<void> {
-        const { topic, callbacks } = this._requests[requestId];
+        const { topic, callbacks } = this._requests[requestId] as PublishRequest;
 
         if (callbacks?.onSuccess) {
-            await (callbacks.onSuccess as (v: unknown) => void)({ topic, requestId, publicationId });
+            await callbacks.onSuccess({ topic, requestId, publicationId });
         }
 
         delete this._requests[requestId];
@@ -993,15 +996,14 @@ class Wampy {
      * WAMP SPEC: [REGISTERED, REGISTER.Request|id, Registration|id]
      */
     async _onRegisteredMessage ([, requestId, registrationId]: [unknown, number, number]): Promise<void> {
-        const { topic, callbacks, options } = this._requests[requestId];
-        const reqCallbacks = callbacks as RegisterRequestCallbacks;
+        const { topic, callbacks, options } = this._requests[requestId] as RegisterRequest;
 
-        this._rpcRegs[registrationId] = { id: registrationId, callbacks: [reqCallbacks.rpc], options };
+        this._rpcRegs[registrationId] = { id: registrationId, callbacks: [callbacks.rpc], options };
         this._rpcRegs[topic] = this._rpcRegs[registrationId];
         this._rpcNames.add(topic);
 
-        if (reqCallbacks?.onSuccess) {
-            await reqCallbacks.onSuccess({ topic, requestId, registrationId } as unknown as RegisterSuccessResult);
+        if (callbacks?.onSuccess) {
+            await callbacks.onSuccess({ topic, requestId, registrationId });
         }
 
         delete this._requests[requestId];
@@ -1012,7 +1014,7 @@ class Wampy {
      * WAMP SPEC: [UNREGISTERED, UNREGISTER.Request|id]
      */
     async _onUnregisteredMessage ([, requestId]: [unknown, number]): Promise<void> {
-        const { topic, callbacks } = this._requests[requestId];
+        const { topic, callbacks } = this._requests[requestId] as UnregisterRequest;
 
         delete this._rpcRegs[this._rpcRegs[topic].id];
         delete this._rpcRegs[topic];
@@ -1022,7 +1024,7 @@ class Wampy {
         }
 
         if (callbacks?.onSuccess) {
-            await (callbacks.onSuccess as (v: unknown) => void)({ topic, requestId });
+            await callbacks.onSuccess({ topic, requestId });
         }
 
         delete this._requests[requestId];
@@ -1459,13 +1461,13 @@ class Wampy {
 
         const reqId = this._getReqId();
 
-        this._requests[reqId] = { topic: subscription.topic, callbacks: getNewPromise<UnsubscribeSuccessResult>() as unknown as Deferred };
+        this._requests[reqId] = { topic: subscription.topic, callbacks: getNewPromise<UnsubscribeSuccessResult>() };
 
         // WAMP_SPEC: [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
         this._send([WAMP_MSG_SPEC.UNSUBSCRIBE, reqId, subscription.id]);
         this._cache.opStatus = { ...SUCCESS, reqId: reqId };
 
-        return this._requests[reqId].callbacks.promise as Promise<UnsubscribeSuccessResult>;
+        return (this._requests[reqId] as UnsubscribeRequest).callbacks.promise;
     }
 
     /** Publish an event to the topic */
@@ -1544,11 +1546,11 @@ class Wampy {
             throw this._cache.opStatus.error;
         }
 
-        this._requests[reqId] = { topic, callbacks: getNewPromise<PublishSuccessResult>() as unknown as Deferred };
+        this._requests[reqId] = { topic, callbacks: getNewPromise<PublishSuccessResult>() };
         this._cache.opStatus = { ...SUCCESS, reqId };
         this._send([WAMP_MSG_SPEC.PUBLISH, reqId, messageOptions, topic, ...(payloadItems || [])]);
 
-        return this._requests[reqId].callbacks.promise as Promise<PublishSuccessResult>;
+        return (this._requests[reqId] as PublishRequest).callbacks.promise;
     }
 
     /** Extract custom options from advanced options as per WAMP spec 3.1 */
@@ -1816,7 +1818,7 @@ class Wampy {
         const reqId = this._getReqId();
         const callbacks = getNewPromise<UnregisterSuccessResult>();
 
-        this._requests[reqId] = { topic, callbacks: callbacks as unknown as Deferred };
+        this._requests[reqId] = { topic, callbacks };
 
         // WAMP SPEC: [UNREGISTER, Request|id, REGISTERED.Registration|id]
         this._send([WAMP_MSG_SPEC.UNREGISTER, reqId, this._rpcRegs[topic].id]);

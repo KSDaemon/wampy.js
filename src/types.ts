@@ -450,13 +450,41 @@ export interface RegisterRequestCallbacks extends Deferred<RegisterSuccessResult
     rpc: RPCCallback;
 }
 
-/** Internal pending request stored in `_requests` */
-export interface WampRequest {
+/** Internal pending subscribe request */
+export interface SubscribeRequest {
     topic: string;
-    callbacks: SubscribeRequestCallbacks | RegisterRequestCallbacks | Deferred;
+    callbacks: SubscribeRequestCallbacks;
     advancedOptions?: SubscribeAdvancedOptions;
+}
+
+/** Internal pending unsubscribe request */
+export interface UnsubscribeRequest {
+    topic: string;
+    callbacks: Deferred<UnsubscribeSuccessResult>;
+    advancedOptions?: SubscribeAdvancedOptions;
+}
+
+/** Internal pending publish request */
+export interface PublishRequest {
+    topic: string;
+    callbacks: Deferred<PublishSuccessResult>;
+}
+
+/** Internal pending register request */
+export interface RegisterRequest {
+    topic: string;
+    callbacks: RegisterRequestCallbacks;
     options?: RegisterAdvancedOptions;
 }
+
+/** Internal pending unregister request */
+export interface UnregisterRequest {
+    topic: string;
+    callbacks: Deferred<UnregisterSuccessResult>;
+}
+
+/** Internal pending request stored in `_requests` */
+export type WampRequest = SubscribeRequest | UnsubscribeRequest | PublishRequest | RegisterRequest | UnregisterRequest;
 
 /** Internal pending call stored in `_calls` */
 export interface WampCall extends Deferred<CallResult> {
