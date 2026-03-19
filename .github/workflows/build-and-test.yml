@@ -1,14 +1,19 @@
 name: Build and Test
+
+permissions:
+  contents: read
+  checks: write
+
 on:
   push:
     branches:
       - dev
       - master
     paths-ignore:
-      - 'README.md'
+      - '*.md'
   pull_request:
     paths-ignore:
-      - 'README.md'
+      - '*.md'
 
 jobs:
   build_and_test:
@@ -16,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [22, 24]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,13 +32,15 @@ jobs:
       - run: docker run --rm --name crossbar -d -p 8888:8888 wampy/crossbar
       - run: until docker logs crossbar | grep -qm 1 "NODE_BOOT_COMPLETE"; do sleep 0.2 ; done
       - run: npm ci
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm run lint
       - run: npm test
       - name: Create test coverage report
-        run: ./node_modules/c8/bin/c8.js report --reporter=lcovonly
+        if: matrix.node-version == 24
+        run: npx c8 report --reporter=lcovonly
       - name: Coveralls
-        uses: coverallsapp/github-action@master
+        if: matrix.node-version == 24
+        uses: coverallsapp/github-action@v2
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel: true
-          flag-name: run ${{ join(matrix.*, ' - ') }}
-

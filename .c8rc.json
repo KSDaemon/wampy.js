@@ -2,8 +2,14 @@
     "all": true,
     "sourceMap": false,
     "include": [
-        "src/**/*.js",
-        "cmd/**/*.js"
+        "src/**/*.ts",
+        "cmd/**/*.ts"
+    ],
+    "exclude": [
+        "src/types.ts",
+        "src/serializers/serializer.ts",
+        "src/wampy-all-4-browser.ts",
+        "src/wampy-single-4-browser.ts"
     ],
     "report-dir": "./coverage",
     "temp-dir": "./coverage",

@@ -4,14 +4,16 @@
   "description": "Amazingly fast, feature-rich, lightweight WAMP Javascript client (for browser and node.js)",
   "author": "Konstantin Burkalev <KSDaemon@gmail.com> (https://ksdaemon.com)",
   "devDependencies": {
-    "@babel/core": "^7.27.4",
-    "@babel/preset-env": "^7.27.2",
-    "@babel/register": "^7.27.1",
     "@eslint/js": "^10.0.1",
-    "babelify": "^10.0.0",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.5.0",
+    "@types/sinon": "^21.0.0",
+    "@types/websocket": "^1.0.10",
+    "@types/ws": "^8.18.1",
+    "@types/yargs": "^17.0.35",
     "c8": "^11.0.0",
-    "chai": "^4.4.1",
-    "chai-bytes": "^0.1.2",
+    "chai": "^6.2.2",
     "coveralls": "^3.1.1",
     "cross-env": "^10.0.0",
     "eslint": "^10.0.0",
@@ -19,64 +21,67 @@
     "eslint-plugin-security": "^4.0.0",
     "eslint-plugin-unicorn": "^63.0.0",
     "globals": "^17.0.0",
-    "grunt": "^1.5.3",
-    "grunt-babel": "^8.0.0",
-    "grunt-browserify": "^6.0.0",
-    "grunt-contrib-clean": "^2.0.1",
-    "grunt-contrib-compress": "^2.0.0",
-    "grunt-contrib-concat": "^2.1.0",
-    "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-uglify": "^5.2.2",
-    "jsdom": "^26.1.0",
+    "jsdom": "^29.0.0",
     "jsdom-global": "^3.0.2",
     "karma": "^6.4.4",
-    "karma-browserify": "^8.1.0",
     "karma-chrome-launcher": "^3.2.0",
     "karma-coverage": "^2.2.1",
+    "karma-esbuild": "^2.3.0",
     "karma-mocha": "^2.0.1",
     "karma-mocha-reporter": "^2.2.5",
     "karma-sourcemap-loader": "^0.4.0",
-    "load-grunt-tasks": "^5.1.0",
     "mocha": "^11.6.0",
     "mocha-lcov-reporter": "^1.3.0",
-    "sinon": "^21.0.0"
+    "sinon": "^21.0.3",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.0"
   },
-  "main": "dist/wampy.js",
+  "main": "dist/cjs/wampy.cjs",
+  "module": "dist/esm/wampy.js",
+  "types": "dist/esm/wampy.d.ts",
   "exports": {
     ".": {
-      "import": "./src/wampy.js",
-      "require": "./dist/wampy.js"
+      "types": "./dist/esm/wampy.d.ts",
+      "import": "./dist/esm/wampy.js",
+      "require": "./dist/cjs/wampy.cjs"
     },
     "./JsonSerializer.js": {
-      "import": "./src/serializers/json-serializer.js",
-      "require": "./dist/serializers/json-serializer.js"
+      "types": "./dist/esm/serializers/json-serializer.d.ts",
+      "import": "./dist/esm/serializers/json-serializer.js",
+      "require": "./dist/cjs/serializers/json-serializer.cjs"
     },
     "./CborSerializer.js": {
-      "import": "./src/serializers/cbor-serializer.js",
-      "require": "./dist/serializers/cbor-serializer.js"
+      "types": "./dist/esm/serializers/cbor-serializer.d.ts",
+      "import": "./dist/esm/serializers/cbor-serializer.js",
+      "require": "./dist/cjs/serializers/cbor-serializer.cjs"
     },
     "./MsgpackSerializer.js": {
-      "import": "./src/serializers/msgpack-serializer.js",
-      "require": "./dist/serializers/msgpack-serializer.js"
+      "types": "./dist/esm/serializers/msgpack-serializer.d.ts",
+      "import": "./dist/esm/serializers/msgpack-serializer.js",
+      "require": "./dist/cjs/serializers/msgpack-serializer.cjs"
     },
     "./cryptosign.js": {
-      "import": "./src/auth/cryptosign/wampy-cryptosign.js",
-      "require": "./dist/auth/cryptosign/wampy-cryptosign.js"
+      "types": "./dist/esm/auth/cryptosign/wampy-cryptosign.d.ts",
+      "import": "./dist/esm/auth/cryptosign/wampy-cryptosign.js",
+      "require": "./dist/cjs/auth/cryptosign/wampy-cryptosign.cjs"
     },
     "./wampcra.js": {
-      "import": "./src/auth/wampcra/wampy-cra.js",
-      "require": "./dist/auth/wampcra/wampy-cra.js"
+      "types": "./dist/esm/auth/wampcra/wampy-cra.d.ts",
+      "import": "./dist/esm/auth/wampcra/wampy-cra.js",
+      "require": "./dist/cjs/auth/wampcra/wampy-cra.mjs"
     }
   },
   "type": "module",
   "dependencies": {
-    "cbor-x": "^1.6.0",
+    "cbor-x": "^1.6.4",
     "color-json": "^3.0.5",
-    "msgpackr": "^1.11.4",
+    "msgpackr": "^1.11.9",
     "tweetnacl": "^1.0.3",
     "websocket": "^1.0.34",
     "ws": "^8.18.2",
-    "yargs": "^17.7.2"
+    "yargs": "^18.0.0"
   },
   "repository": {
     "type": "git",
@@ -93,21 +98,30 @@
     "url": "https://github.com/KSDaemon/wampy.js/issues"
   },
   "bin": {
-    "wampy": "cmd/cli.js"
+    "wampy": "dist/cli/cli.js"
   },
+  "files": [
+    "dist/esm/",
+    "dist/cjs/",
+    "dist/browser/",
+    "dist/browser.zip",
+    "dist/cli/"
+  ],
   "homepage": "https://github.com/KSDaemon/wampy.js#readme",
   "scripts": {
-    "build": "npx grunt",
-    "lint": "npx eslint",
+    "build": "rm -rf dist && tsup && node scripts/post-build.js",
+    "typecheck": "tsc --noEmit --declaration false --declarationMap false",
+    "lint": "eslint",
     "lint:fix": "npm run lint -- --fix",
     "test": "npm run test:node-no-browser-wrappers && npm run test:browser-wrappers && npm run test:browser",
-    "test:node": "cross-env NODE_ENV=test c8 mocha --exit -r @babel/register -R spec",
-    "test:node-no-browser-wrappers": "npm run test:node -- 'test/!(wampy-browser-wrappers)-test.js'",
-    "test:node-no-crossbar": "npm run test:node -- 'test/!(wampy-crossbar|wampy-browser-wrappers)-test.js'",
-    "test:node-cli": "npm run test:node -- 'test/wampy-cli-*.js'",
-    "test:crossbar": "npm run test:node -- 'test/wampy-crossbar-test.js'",
-    "test:browser-wrappers": "npm run test:node -- -r jsdom-global/register 'test/wampy-browser-wrappers-test.js'",
-    "test:browser": "npx karma start karma.conf.cjs",
+    "test:node": "cross-env NODE_ENV=test NODE_OPTIONS='--import tsx/esm' c8 mocha --exit -R spec",
+    "test:node-no-clean": "cross-env NODE_ENV=test NODE_OPTIONS='--import tsx/esm' c8 --no-clean mocha --exit -R spec",
+    "test:node-no-browser-wrappers": "npm run test:node -- 'test/!(wampy-browser-wrappers)-test.ts'",
+    "test:node-no-crossbar": "npm run test:node -- 'test/!(wampy-crossbar|wampy-browser-wrappers)-test.ts'",
+    "test:node-cli": "npm run test:node -- 'test/wampy-cli-*.ts'",
+    "test:crossbar": "npm run test:node -- 'test/wampy-crossbar-test.ts'",
+    "test:browser-wrappers": "npm run test:node-no-clean -- -r jsdom-global/register 'test/wampy-browser-wrappers-test.ts'",
+    "test:browser": "karma start karma.conf.cjs",
     "cover": "c8 report",
     "publish": "npm run build"
   }

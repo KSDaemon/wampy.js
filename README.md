@@ -5,7 +5,7 @@
 ## About
 
 Amazingly fast, feature-rich, lightweight and zero dependency (by default) WAMP (Web Application Messaging Protocol)
-Javascript client (for browser and node.js)
+client for browser and node.js, written in TypeScript
 
 [![NPM version][npm-image]][npm-url]
 [![Build Status][gh-build-test-image]][gh-build-test-url]
@@ -27,7 +27,6 @@ Javascript client (for browser and node.js)
   * [Migrating or Updating versions](#migrating-or-updating-versions)
   * [API](#api)
     * [Constructor([url[, options]])](#constructorurl-options)
-    * [options([opts])](#optionsopts)
     * [getOptions()](#getoptions)
     * [setOptions([newOptions])](#setoptionsnewoptions)
     * [getOpStatus()](#getopstatus)
@@ -58,11 +57,11 @@ Javascript client (for browser and node.js)
 
 ## Description
 
-Wampy.js is javascript library, that runs both in browser and node.js environments, and even in react native
+Wampy.js is a TypeScript library that runs both in browser and node.js environments, and even in react native
 environment. It implements [WAMP][] v2 specification on top of WebSocket object, also provides additional
-features like auto-reconnecting. It has no external dependencies (by default) and is easy to use. Also, it
-provides (starting from v7.1) command line wamp client which can be extremely helpful in quick check/debug
-existing WAMP-based APIs.
+features like auto-reconnecting. It has no external dependencies (by default) and is easy to use. The package
+ships with full TypeScript type declarations (`.d.ts`) out of the box. Also, it provides (starting from v7.1)
+command line wamp client which can be extremely helpful in quick check/debug existing WAMP-based APIs.
 
 Wampy.js supports the following WAMP roles and features:
 
@@ -116,7 +115,9 @@ For convenience, all API documentation is also available as a [GitBook here](htt
 
 ## Usage example
 
-```javascript
+```typescript
+import { Wampy } from 'wampy';
+
 const wampy = new Wampy('/ws/', { realm: 'AppRealm' });
 
 try {
@@ -165,54 +166,59 @@ They are available as global objects:
 window.JsonSerializer = JsonSerializer;
 window.MsgpackSerializer = MsgpackSerializer;
 window.CborSerializer = CborSerializer;
-// this is not available due to problem with browserify transforming await import('node:crypto')
-// if someone really needs it - I would appreciate a PR with fix :)
-//window.WampyCra = wampyCra;
+// WampyCra is not available in the browser bundle due to its dependency on node:crypto
 window.WampyCryptosign = wampyCryptosign;
 ```
 
 ```html
-<script src="browser/wampy-all.min.js"></script>
+<script src="wampy-all.min.js"></script>
 ```
 
 If you don't plan to use other serializers then JSON or any auth plugins, just include wampy.min.js.
 
 ```html
-<script src="browser/wampy.min.js"></script>
+<script src="wampy.min.js"></script>
 ```
 
 [Back to Table of Contents](#table-of-contents)
 
 ## Exported components
 
-Wampy.js exports next components that you can import at your needs:
+Wampy.js exports the following components that you can import as needed. All exports include TypeScript
+type declarations (`.d.ts`):
 
 ```json5
 {
     "exports": {
         ".": {  // Main Wampy class
-            "import": "./src/wampy.js",
-            "require": "./dist/wampy.js"
+            "types": "./dist/esm/wampy.d.ts",
+            "import": "./dist/esm/wampy.js",
+            "require": "./dist/cjs/wampy.cjs"
         },
         "./JsonSerializer.js": {
-            "import": "./src/serializers/json-serializer.js",
-            "require": "./dist/serializers/json-serializer.js"
+            "types": "./dist/esm/serializers/json-serializer.d.ts",
+            "import": "./dist/esm/serializers/json-serializer.js",
+            "require": "./dist/cjs/serializers/json-serializer.cjs"
         },
         "./CborSerializer.js": {
-            "import": "./src/serializers/cbor-serializer.js",
-            "require": "./dist/serializers/cbor-serializer.js"
+            "types": "./dist/esm/serializers/cbor-serializer.d.ts",
+            "import": "./dist/esm/serializers/cbor-serializer.js",
+            "require": "./dist/cjs/serializers/cbor-serializer.cjs"
         },
         "./MsgpackSerializer.js": {
-            "import": "./src/serializers/msgpack-serializer.js",
-            "require": "./dist/serializers/msgpack-serializer.js"
+            "types": "./dist/esm/serializers/msgpack-serializer.d.ts",
+            "import": "./dist/esm/serializers/msgpack-serializer.js",
+            "require": "./dist/cjs/serializers/msgpack-serializer.cjs"
         },
         "./cryptosign.js": {    // Cryptosign authentication plugin
-            "import": "./src/auth/cryptosign/wampy-cryptosign.js",
-            "require": "./dist/auth/cryptosign/wampy-cryptosign.js"
+            "types": "./dist/esm/auth/cryptosign/wampy-cryptosign.d.ts",
+            "import": "./dist/esm/auth/cryptosign/wampy-cryptosign.js",
+            "require": "./dist/cjs/auth/cryptosign/wampy-cryptosign.cjs"
         },
         "./wampcra.js": {       // WAMP-CRA authentication plugin
-            "import": "./src/auth/wampcra/wampy-cra.js",
-            "require": "./dist/auth/wampcra/wampy-cra.js"
+            "types": "./dist/esm/auth/wampcra/wampy-cra.d.ts",
+            "import": "./dist/esm/auth/wampcra/wampy-cra.js",
+            "require": "./dist/cjs/auth/wampcra/wampy-cra.mjs"
         }
     }
 }
@@ -263,7 +269,7 @@ Please refer to [Migrating.md](Migrating.md) for instructions on upgrading major
 ## API
 
 Below is a description of the exposed public API.
-Wampy also has type definitions available at [DefinitelyTyped.org][], but they are only for versions < 7.x for now. Feel free to update!)
+Wampy ships with built-in TypeScript type declarations — no separate `@types/wampy` package is needed.
 
 ### Constructor([url[, options]])
 
@@ -327,28 +333,6 @@ wampy = new Wampy({
 ```
 
 [Back to Table of Contents](#table-of-contents)
-
-### options([opts])
-
-.options() method is now deprecated, so this is here only for documentation purposes. Please
-use `getOptions()/setOptions()` instead.
-
-.options() can be called in two forms:
--- without parameters it will behave the same as new method [getOptions()](#getoptions)
--- with one parameter as a hash-table it will behave the same as new method [setOptions()](#setoptionsnewoptions)
-
-```javascript
-wampy.options(); // same as wampy.getOptions
-
-wampy.options({ // same as wampy.setOptions
-    authPlugins: {
-        ticket: ((userPassword) => (() => userPassword ))(),
-        wampcra: wampyCra.sign(secret),
-        cryptosign: wampyCryptosign.sign(privateKey)
-    },
-    authMode: 'auto'
-});
-```
 
 ### getOptions()
 
@@ -1234,7 +1218,7 @@ Wampy package exposes the following `Error` classes:
 - CallError
 - WebsocketError
 
-For errors attributes look at [src/errors.js](./src/errors.js) file.
+For errors attributes look at [src/errors.ts](./src/errors.ts) file.
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -1287,8 +1271,11 @@ Custom serializer instance must meet a few requirements:
 "wamp.2." string and is then passed as websocket subprotocol http header.
 - Have a `isBinary` boolean property, that indicates, is this a binary protocol or not.
 
-Take a look at [json-serializer.js](src/serializers/json-serializer.js) or
-[msgpack-serializer.js](src/serializers/msgpack-serializer.js) as examples.
+Take a look at [json-serializer.ts](src/serializers/json-serializer.ts) or
+[msgpack-serializer.ts](src/serializers/msgpack-serializer.ts) as examples.
+
+For TypeScript users, the `Serializer` interface is available in `src/serializers/serializer.ts`
+and can be imported from the package for implementing custom serializers.
 
 [Back to Table of Contents](#table-of-contents)
 
@@ -1299,10 +1286,10 @@ in node.js environment (thnx `websocket` library). See example below. For `wsReq
 described in [tls.connect options][] documentation.
 
 ```javascript
-const Wampy = require('wampy').Wampy;
-const w3cws = require('websocket').w3cwebsocket;
+import { Wampy } from 'wampy';
+import { w3cwebsocket as w3cws } from 'websocket';
 
-wampy = new Wampy('wss://wamp.router.url:8888/wamp-router', {
+const wampy = new Wampy('wss://wamp.router.url:8888/wamp-router', {
     ws: w3cws,
     realm: 'realm1',
     additionalHeaders: {
@@ -1333,18 +1320,29 @@ wampy = new Wampy('wss://wamp.router.url:8888/wamp-router', {
 
 ## Tests and code coverage
 
-Wampy.js uses mocha and chai for tests and c8/istanbul for code coverage.
-Wampy sources are mostly all covered with tests! :)
+Wampy.js uses mocha and chai for tests (all written in TypeScript) and c8 for code coverage.
+Wampy sources are mostly all covered with tests!
 
 ```bash
-# use standard npm test command
+# Build the project first (required for CLI tests)
+> npm run build
+
+# Run TypeScript type checking
+> npm run typecheck
+
+# Run all tests (node + browser-wrappers + karma browser)
 > npm test
-# or only some tests
-> npm run test:node
+
+# Or run specific test suites
+> npm run test:node-no-browser-wrappers
 > npm run test:node-no-crossbar
+> npm run test:browser-wrappers
 > npm run test:browser
 
-# for code coverage report run
+# Lint the codebase
+> npm run lint
+
+# For code coverage report run
 > npm run cover
 # and then open coverage/lcov-report/index.html
 ```

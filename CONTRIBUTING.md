@@ -81,14 +81,20 @@ If this seems like a lot or you aren't able to do all this setup, you might also
 
 If you want to go the usual route and run the project locally, though:
 
-* [Install Node.js](https://nodejs.org/en/download/)
+* [Install Node.js](https://nodejs.org/en/download/) (v20 or v22 recommended)
 * [Fork the project](https://guides.github.com/activities/forking/#fork)
 
 Then in your terminal:
 
 * `cd path/to/your/clone`
 * `npm install`
-* `npm test`
+* `npm run build` — builds ESM, CJS, browser bundles, and CLI using tsup
+* `npm run typecheck` — runs the TypeScript compiler to check for type errors
+* `npm run lint` — runs ESLint on all TypeScript source files
+* `npm test` — runs all test suites (node, browser-wrappers, karma browser tests)
+
+The project is written in TypeScript with strict mode enabled. Source files are in `src/`, CLI files
+in `cmd/`, and test files in `test/`. All source, test, and CLI files use the `.ts` extension.
 
 And you should be ready to go!
 
@@ -127,7 +133,9 @@ The main difference between code contributions and documentation contributions i
 To contribute code:
 
 * [Set up the project](#project-setup).
-* Make any necessary changes to the source code.
+* Make any necessary changes to the source code (all source is TypeScript in `src/`, `cmd/`, `test/`).
+* Ensure `npm run typecheck` passes with no errors.
+* Ensure `npm run lint` passes with no warnings.
 * Include any [additional documentation](#contribute-documentation) the changes might need.
 * Write tests that verify that your contribution works as expected.
 * Write clear, concise commit message(s) using [conventional-changelog format](https://github.com/conventional-changelog/conventional-changelog-angular/blob/master/convention.md).
@@ -137,7 +145,7 @@ To contribute code:
 
 Once you've filed the PR:
 
-* Barring special circumstances, maintainers will not review PRs until all checks pass (Travis, AppVeyor, etc).
+* Barring special circumstances, maintainers will not review PRs until all checks pass (GitHub Actions CI).
 * One or more maintainers will use GitHub's review feature to review your PR.
 * If the maintainer asks for any changes, edit your changes, push, and ask for another review. Additional tags (such as `needs-tests`) will be added depending on the review.
 * If the maintainer decides to pass on your PR, they will thank you for the contribution and explain why they won't be accepting the changes. That's ok! We still really appreciate you taking the time to do it, and we don't take that lightly.

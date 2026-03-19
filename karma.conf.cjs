@@ -2,18 +2,26 @@ module.exports = function karmaConfig(config) {
 
     config.set({
         basePath: '',
-        frameworks: ['mocha', 'browserify'],
+        frameworks: ['mocha'],
         exclude: [],
         files: [{
-            pattern: 'test/wampy-common-test.js',
+            pattern: 'test/wampy-common-test.ts',
             watched: false
         }],
         preprocessors: {
-            'test/*-test.js': ['browserify']
+            'test/**/*.ts': ['esbuild']
         },
 
-        browserify: {
-            transform: [['babelify', { 'presets': ['@babel/preset-env'] }]]
+        esbuild: {
+            format: 'esm',
+            target: 'es2020',
+            bundle: true,
+            platform: 'browser',
+            define: {
+                'process.env.NODE_ENV': '"test"'
+            },
+            // Do not externalize any packages — bundle everything for the browser
+            external: []
         },
         coverageReporter: {
             dir: 'coverage/',
@@ -23,7 +31,6 @@ module.exports = function karmaConfig(config) {
                 { type: 'html' }
             ]
         },
-        webpackServer: { noInfo: true },
         reporters: ['mocha', 'coverage'],
         port: 9876,
         colors: true,
