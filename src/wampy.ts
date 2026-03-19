@@ -70,7 +70,7 @@ const jsonSerializer: Serializer = new JsonSerializer();
 class Wampy {
 
     /** Wampy version */
-    version: string = 'v8.0.0';
+    version: string = 'v8.0.1';
 
     /** WS Url */
     private _url: string | null;
