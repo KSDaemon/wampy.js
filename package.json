@@ -19,7 +19,7 @@
     "eslint": "^10.0.0",
     "eslint-plugin-mocha": "^11.1.0",
     "eslint-plugin-security": "^4.0.0",
-    "eslint-plugin-unicorn": "^63.0.0",
+    "eslint-plugin-unicorn": "^64.0.0",
     "globals": "^17.0.0",
     "jsdom": "^29.0.0",
     "jsdom-global": "^3.0.2",
