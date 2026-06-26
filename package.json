@@ -80,8 +80,11 @@
     "msgpackr": "^2.0.1",
     "tweetnacl": "^1.0.3",
     "websocket": "^1.0.34",
-    "ws": "^8.18.2",
+    "ws": "^8.21.0",
     "yargs": "^18.0.0"
+  },
+  "overrides": {
+    "ws": "^8.21.0"
   },
   "repository": {
     "type": "git",
