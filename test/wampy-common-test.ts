@@ -1281,13 +1281,10 @@ for (const item of serializers) {
                     } else {
                         i++;
                     }
-                }).then(() => {
-                    wampy.publish('subscribe.topic7', payload).then(() => {
-                        wampy.publish('subscribe.topic7', payload, { exclude_me: false, disclose_me: true }).then(() => {
-                            wampy.publish('subscribe.topic7', { argsDict: payload }, { exclude_me: false, disclose_me: true });
-                        });
-                    });
-                });
+                })
+                    .then(() => wampy.publish('subscribe.topic7', payload))
+                    .then(() => wampy.publish('subscribe.topic7', payload, { exclude_me: false, disclose_me: true }))
+                    .then(() => wampy.publish('subscribe.topic7', { argsDict: payload }, { exclude_me: false, disclose_me: true }));
                 expect(wampy.getOpStatus().code).to.be.equal(SUCCESS.code);
             });
 
@@ -2346,11 +2343,9 @@ for (const item of serializers) {
 
                     return new Promise(function (resolve, reject) {
                         for (let i = 1; i <= 5; i++) {
-                            (function (j, p) {
-                                setTimeout(function () {
-                                    e.result_handler({ options: { progress: p }, argsList: [j] });
-                                }, 10 * j);
-                            }(i, i < 5));
+                            setTimeout(function () {
+                                e.result_handler({ options: { progress: i < 5 }, argsList: [i] });
+                            }, 10 * i);
                         }
 
                         setTimeout(function () {

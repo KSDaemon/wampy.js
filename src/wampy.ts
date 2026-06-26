@@ -306,7 +306,7 @@ class Wampy {
             return false;
         }
 
-        if ((options.ppt_scheme as string).search(/^(wamp$|mqtt$|x_)/) < 0) {
+        if (!(/^(wamp$|mqtt$|x_)/).test(options.ppt_scheme as string)) {
             this._fillOpStatusByError(new Errors.PPTInvalidSchemeError());
             return false;
         }
@@ -418,11 +418,11 @@ class Wampy {
 
     /** Unpack PPT/E2EE payload to common */
     private _unpackPPTPayload (role: string, pptPayload: unknown, options: Record<string, unknown>): UnpackPPTPayloadResult {
-        let decodedPayload: { args?: unknown[]; kwargs?: Record<string, unknown> };
-
         if (!this._checkPPTOptions(role, options)) {
             return { err: this._cache.opStatus.error || false };
         }
+
+        let decodedPayload: { args?: unknown[]; kwargs?: Record<string, unknown> };
 
         // TODO: implement End-to-End Encryption
         // wamp scheme means Payload End-to-End Encryption
@@ -557,7 +557,7 @@ class Wampy {
     /** Internal websocket on open callback */
     private _wsOnOpen (): void {
         const { helloCustomDetails, authmethods, authid, authextra, serializer, onError, realm } = this._options;
-        const serverProtocol = this._ws!.protocol?.split('.')?.[2];
+        const serverProtocol = this._ws!.protocol?.split('.', 3)?.[2];
         const hasServerChosenOurPreferredProtocol = serverProtocol === serializer.protocol;
 
         this._log(`Websocket connected. Server has chosen protocol: "${serverProtocol}"`);
@@ -587,7 +587,7 @@ class Wampy {
         const messageOptions = {
             ...helloCustomDetails,
             ...this._wamp_features,
-            ...(authid ? { authid, authmethods, authextra } : {}),
+            ...(authid && { authid, authmethods, authextra }),
         };
         const encodedMessage = this._encode([WAMP_MSG_SPEC.HELLO, realm, messageOptions]);
 
@@ -661,11 +661,12 @@ class Wampy {
         }
 
         const needNoSession = ([WAMP_MSG_SPEC.WELCOME, WAMP_MSG_SPEC.CHALLENGE] as number[]).includes(messageType);
-        const needValidSession = !needNoSession && messageType !== WAMP_MSG_SPEC.ABORT;
 
         if (needNoSession && this._cache.sessionId) {
             return this._hardClose(errorURI, `Received message "${messageType}" after session was established`);
         }
+
+        const needValidSession = !needNoSession && messageType !== WAMP_MSG_SPEC.ABORT;
 
         if (needValidSession && !this._cache.sessionId) {
             return this._hardClose(errorURI, `Received message "${messageType}" before session was established`);
@@ -695,11 +696,7 @@ class Wampy {
             return true;
         }
 
-        if (this._requests[requestId as number]) {
-            return true;
-        }
-
-        return false;
+        return Boolean(this._requests[requestId as number]);
     }
 
     /**
@@ -1127,10 +1124,10 @@ class Wampy {
 
             const messageOptions: Record<string, unknown> = {
                 ...options,
-                ...(ppt_scheme ? { ppt_scheme } : {}),
-                ...(ppt_serializer ? { ppt_serializer } : {}),
-                ...(ppt_cipher ? { ppt_cipher } : {}),
-                ...(ppt_keyid ? { ppt_keyid } : {}),
+                ...(ppt_scheme && { ppt_scheme }),
+                ...(ppt_serializer && { ppt_serializer }),
+                ...(ppt_cipher && { ppt_cipher }),
+                ...(ppt_keyid && { ppt_keyid }),
                 ...this._extractCustomOptions(options as Record<string, unknown>)
             };
 
@@ -1251,10 +1248,12 @@ class Wampy {
 
     /** Wampy options setter */
     setOptions (newOptions: WampyOptions): Wampy | undefined {
-        if (this._isPlainObject(newOptions)) {
-            this._options = { ...this._options, ...newOptions as WampyOptions };
-            return this;
+        if (!this._isPlainObject(newOptions)) {
+            return;
         }
+
+        this._options = { ...this._options, ...newOptions as WampyOptions };
+        return this;
     }
 
     /**
@@ -1330,7 +1329,8 @@ class Wampy {
 
             return defer.promise;
 
-        } else if (this._ws) {
+        }
+        if (this._ws) {
             this._ws.close();
         }
 
@@ -1510,22 +1510,23 @@ class Wampy {
         messageOptions = {
             acknowledge: true,
             ...messageOptions,
-            ...(ppt_scheme ? { ppt_scheme } : {}),
-            ...(ppt_scheme ? { ppt_scheme } : {}),
-            ...(ppt_serializer ? { ppt_serializer } : {}),
-            ...(ppt_cipher ? { ppt_cipher } : {}),
-            ...(ppt_keyid ? { ppt_keyid } : {}),
-            ...(exclude_me ? { exclude_me } : {}),
-            ...(disclose_me ? { disclose_me } : {}),
+            ...(ppt_scheme && { ppt_scheme }),
+            ...(ppt_scheme && { ppt_scheme }),
+            ...(ppt_serializer && { ppt_serializer }),
+            ...(ppt_cipher && { ppt_cipher }),
+            ...(ppt_keyid && { ppt_keyid }),
+            ...(exclude_me && { exclude_me }),
+            ...(disclose_me && { disclose_me }),
             ...this._extractCustomOptions(advancedOptions)
         };
 
         const { err, payloadItems } = payload ? this._packPPTPayload(payload, messageOptions) : {} as Partial<PackPPTPayloadResult>;
-        const reqId = this._getReqId();
 
         if (err) {
             throw this._cache.opStatus.error;
         }
+
+        const reqId = this._getReqId();
 
         this._requests[reqId] = { topic, callbacks: getNewPromise<PublishSuccessResult>() };
         this._cache.opStatus = { ...SUCCESS, reqId };
@@ -1646,7 +1647,7 @@ class Wampy {
             throw this._cache.opStatus.error;
         }
 
-        advancedOptions = advancedOptions || {} as CallAdvancedOptions;
+        advancedOptions ||= {} as CallAdvancedOptions;
         (advancedOptions as Record<string, unknown>).progress = true;    // Implicitly set the progress flag before making the first call
         const reqId = this._callInternal(topic, payload, advancedOptions);
 
@@ -1719,7 +1720,7 @@ class Wampy {
 
         // WAMP SPEC: [CANCEL, CALL.Request|id, Options|dict]
         const options: Record<string, unknown> = {
-            ...(mode ? { mode } : {}),
+            ...(mode && { mode }),
             ...this._extractCustomOptions(advancedOptions)
         };
         this._send([WAMP_MSG_SPEC.CANCEL, reqId, options]);
@@ -1766,8 +1767,8 @@ class Wampy {
         const reqId = this._getReqId();
         const callbacks = getNewPromise<RegisterSuccessResult>() as RegisterRequestCallbacks;
         const options: Record<string, unknown> = {
-            ... (match ? { match } : {}),
-            ... (invoke ? { invoke } : {}),
+            ... (match && { match }),
+            ... (invoke && { invoke }),
             ...this._extractCustomOptions(advancedOptions)
         };
 

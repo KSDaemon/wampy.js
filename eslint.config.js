@@ -26,6 +26,36 @@ export default tseslint.config(
             'unicorn/prefer-add-event-listener': 'off',
             'unicorn/numeric-separators-style' : ['warn', { onlyIfContainsSeparator: true }],
             'unicorn/prefer-class-fields'      : 'off',
+
+            // Abbreviations are allowed across the project (companion to prevent-abbreviations
+            // above) — we keep short, conventional names like `e`, `err`, `res`, `str`, `utils`.
+            'unicorn/name-replacements'        : 'off',
+            // Mocha test callbacks rely on `this` (this.timeout(), this.skip()) with regular
+            // functions, and src uses the `const self = this` aliasing pattern (see no-this-assignment).
+            'unicorn/no-this-outside-of-class' : 'off',
+            // Tests intentionally exercise promise chains with .then()/.catch().
+            'unicorn/prefer-await'             : 'off',
+            // We keep descriptive boolean names (noSend, needNoSession, patternBased, progress, ...)
+            // without forcing an is/has/should prefix.
+            'unicorn/consistent-boolean-name'  : 'off',
+            // Test helpers reassign module-scoped fixtures from within setup functions.
+            'unicorn/no-top-level-assignment-in-function': 'off',
+            // Private members use the `_name` convention, not #private fields (see prefer-class-fields).
+            'unicorn/prefer-private-class-fields': 'off',
+            // Isomorphic code must reference browser globals through globalThis (e.g. globalThis?.WebSocket)
+            // so it does not throw a ReferenceError under Node.js.
+            'unicorn/no-unnecessary-global-this': 'off',
+            // The browser entry files intentionally expose Wampy & serializers on the global object.
+            'unicorn/no-global-object-property-assignment': 'off',
+            // Dynamic property existence checks (obj[key]) are intentional throughout the WAMP message handling.
+            'unicorn/no-computed-property-existence-check': 'off',
+            // http:// here is only the canonical MIT-license URL inside license banners.
+            'unicorn/prefer-https'             : 'off',
+            // Promise.try() and Uint8Array#toBase64() are too new for our supported browser/runtime range.
+            'unicorn/prefer-promise-try'       : 'off',
+            'unicorn/prefer-uint8array-base64' : 'off',
+            // The public `version` field is intentionally kept at the top of the Wampy class.
+            'unicorn/consistent-class-member-order': 'off',
         }
     },
     {
