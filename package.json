@@ -16,11 +16,11 @@
     "chai": "^6.2.2",
     "coveralls": "^3.1.1",
     "cross-env": "^10.0.0",
-    "eslint": "^10.0.0",
+    "eslint": "^10.5.0",
     "eslint-plugin-mocha": "^11.1.0",
-    "eslint-plugin-security": "^4.0.0",
-    "eslint-plugin-unicorn": "^64.0.0",
-    "globals": "^17.0.0",
+    "eslint-plugin-security": "^4.0.1",
+    "eslint-plugin-unicorn": "^69.0.0",
+    "globals": "^17.7.0",
     "jsdom": "^29.0.0",
     "jsdom-global": "^3.0.2",
     "karma": "^6.4.4",
@@ -36,7 +36,7 @@
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.1"
+    "typescript-eslint": "^8.62.0"
   },
   "main": "dist/cjs/wampy.cjs",
   "module": "dist/esm/wampy.js",
@@ -80,8 +80,11 @@
     "msgpackr": "^2.0.1",
     "tweetnacl": "^1.0.3",
     "websocket": "^1.0.34",
-    "ws": "^8.18.2",
+    "ws": "^8.21.0",
     "yargs": "^18.0.0"
+  },
+  "overrides": {
+    "ws": "^8.21.0"
   },
   "repository": {
     "type": "git",

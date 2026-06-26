@@ -56,7 +56,7 @@ interface FakeWebSocketConstructor {
 const WebSocket = function (this: FakeWebSocket, url: string, protocols: string[]) {
     this.url = url;
     this.protocols = protocols;
-    this.transportEncoding = this.protocols[0].split('.')[2];
+    this.transportEncoding = this.protocols[0].split('.', 3)[2];
     this.protocol = `wamp.2.${this.transportEncoding}`;
 
     if (['msgpack', 'cbor'].includes(this.transportEncoding)) {
@@ -97,10 +97,8 @@ function resetCursor (): void {
 }
 
 function processQueue (): void {
-    let currentHandler: (() => void) | undefined;
-
     while (clientMessageHandlersQueue.length > 0) {
-        currentHandler = clientMessageHandlersQueue.shift();
+        const currentHandler = clientMessageHandlersQueue.shift();
         currentHandler!();
     }
 }

@@ -56,7 +56,8 @@ export const payloadArgs = function (yargs: Argv): Argv {
                     if (typeof v === 'string' || Object.prototype.toString.call(v) === '[object String]') {
                         if ((v as string).toUpperCase() === 'TRUE') {
                             return true;
-                        } else if ((v as string).toUpperCase() === 'FALSE') {
+                        }
+                        if ((v as string).toUpperCase() === 'FALSE') {
                             return false;
                         }
 

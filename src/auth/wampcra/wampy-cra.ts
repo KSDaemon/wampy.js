@@ -8,7 +8,7 @@
 
 const isNode = (typeof process === 'object' && Object.prototype.toString.call(process) === '[object process]');
 const cryptoModule = isNode ? await import('node:crypto') : globalThis.crypto;
-const subtle: SubtleCrypto = ('subtle' in cryptoModule ? cryptoModule.subtle : (cryptoModule as Crypto).subtle) as SubtleCrypto;
+const subtle: SubtleCrypto = ('subtle' in cryptoModule ? cryptoModule : (cryptoModule as Crypto)).subtle as SubtleCrypto;
 
 /**
  * Information required for WAMP-CRA signing.
@@ -78,10 +78,10 @@ export function sign(secret: string): (method: string, info: WampCraInfo) => Pro
      */
     return async function (method: string, info: WampCraInfo): Promise<string> {
         if (method === 'wampcra') {
-            return info.salt ? signManual(await deriveKey(secret, info.salt, info.iterations, info.keylen),
-                info.challenge) : signManual(secret, info.challenge);
-        } else {
-            throw new Error('Unknown authentication method requested!');
+            return signManual(
+                info.salt ? await deriveKey(secret, info.salt, info.iterations, info.keylen) : secret,
+                info.challenge);
         }
+        throw new Error('Unknown authentication method requested!');
     };
 }

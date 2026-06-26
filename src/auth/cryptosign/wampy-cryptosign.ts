@@ -57,9 +57,8 @@ export function sign(privateKey: string): (method: string, info: CryptosignInfo)
 
             return bytes2hex(signature) + info.challenge;
 
-        } else {
-            throw new Error('Unknown authentication method requested!');
         }
+        throw new Error('Unknown authentication method requested!');
     };
 }
 
