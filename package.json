@@ -7,7 +7,7 @@
     "@eslint/js": "^10.0.1",
     "@types/chai": "^5.2.3",
     "@types/mocha": "^10.0.10",
-    "@types/node": "^25.5.0",
+    "@types/node": "^26.1.1",
     "@types/sinon": "^22.0.0",
     "@types/websocket": "^1.0.10",
     "@types/ws": "^8.18.1",
