@@ -56,6 +56,9 @@ export default tseslint.config(
             'unicorn/prefer-uint8array-base64' : 'off',
             // The public `version` field is intentionally kept at the top of the Wampy class.
             'unicorn/consistent-class-member-order': 'off',
+            // Concise one-line JSDoc (`/** Validate uri */`) is the established style for member
+            // and type documentation across src/ — expanding all of them to multiline adds noise.
+            'unicorn/single-line-block-comment-style': 'off',
         }
     },
     {
@@ -158,6 +161,10 @@ export default tseslint.config(
         files: ['test/**/*.ts'],
         rules: {
             '@typescript-eslint/no-unused-expressions': 'off',
+            // The plugin only tracks `done` when it is called from the test callback body.
+            // Our tests hand it to Wampy option callbacks instead (`onError: function (e) { ... done(); }`,
+            // `onClose: done`), which it cannot follow — every such test reports a false positive.
+            'mocha/handle-done-callback'              : 'off',
         }
     },
     {

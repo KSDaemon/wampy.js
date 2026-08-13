@@ -325,7 +325,7 @@ class Wampy {
         const isLooseValidation = this._options.uriValidation === 'loose';
         const isValidationTypeUnknown = !isStrictValidation && !isLooseValidation;
 
-        if (isValidationTypeUnknown || (uri.startsWith('wamp.') && !isWampAllowed)) {
+        if (isValidationTypeUnknown || (!isWampAllowed && uri.startsWith('wamp.'))) {
             return false;
         }
 
@@ -1702,7 +1702,7 @@ class Wampy {
             throw nonExistRPCReqIdError;
         }
 
-        if (!this._isPlainObject(advancedOptions) && (advancedOptions) !== undefined) {
+        if ((advancedOptions) !== undefined && !this._isPlainObject(advancedOptions)) {
             const invalidParamError = new Errors.InvalidParamError('advancedOptions');
             this._fillOpStatusByError(invalidParamError);
             throw invalidParamError;
