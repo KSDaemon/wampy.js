@@ -846,8 +846,6 @@ for (const item of serializers) {
                 expect(onCloseFired).to.be.true;
             });
 
-            // mocha eslint plugin is not smart enough to detect that done is passed as parameter and will be called later
-            // eslint-disable-next-line mocha/handle-done-callback
             it('allows to abort WebSocketModule.WebSocket/WAMP session establishment', function (done) {
                 wampy.setOptions({ onClose: done })!
                     .connect(anotherRouterUrl);
@@ -878,26 +876,31 @@ for (const item of serializers) {
                         });
                     } catch {
                         done('Expect subscribe to work');
+                        return;
                     }
                     try {
                         await wampy.subscribe('subscribe.reconnect2', () => {});
                     } catch {
                         done('Expect subscribe to work');
+                        return;
                     }
                     try {
                         await wampy.register('register.reconnect1', () => {});
                     } catch {
                         done('Expect register to work');
+                        return;
                     }
                     try {
                         await wampy.register('register.reconnect2', () => {});
                     } catch {
                         done('Expect register to work');
+                        return;
                     }
                     try {
                         await wampy.register('register.reconnect3', () => {});
                     } catch {
                         done('Expect register to work');
+                        return;
                     }
                 });
             });
@@ -1349,39 +1352,39 @@ for (const item of serializers) {
                 expect(res.publicationId).to.be.a('number');
             });
 
-            it('disallows to publish event to topic with invalid URI', function () {
+            it('disallows to publish event to topic with invalid URI', async function () {
                 try {
-                    wampy.publish('qwe.asd.zxc.', 'payload');
+                    await wampy.publish('qwe.asd.zxc.', 'payload');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
 
                 try {
-                    wampy.publish('qwe.asd..zxc', 'payload');
+                    await wampy.publish('qwe.asd..zxc', 'payload');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
 
                 try {
-                    wampy.publish('qq,ww,ee', 'payload');
+                    await wampy.publish('qq,ww,ee', 'payload');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
 
                 try {
-                    wampy.publish('qq:www:ee', 'payload');
+                    await wampy.publish('qq:www:ee', 'payload');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.URI_ERROR);
             });
 
-            it('checks for valid advanced options during publishing to topic', function () {
+            it('checks for valid advanced options during publishing to topic', async function () {
                 try {
-                    wampy.publish(
+                    await wampy.publish(
                         'qqq.www.eee',
                         'payload',
                         'string instead of object' as unknown as PublishAdvancedOptions
@@ -1392,7 +1395,7 @@ for (const item of serializers) {
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    wampy.publish(
+                    await wampy.publish(
                         'qqq.www.eee',
                         'payload',
                         123 as unknown as PublishAdvancedOptions
@@ -1403,7 +1406,7 @@ for (const item of serializers) {
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    wampy.publish(
+                    await wampy.publish(
                         'qqq.www.eee',
                         'payload',
                         function () {} as unknown as PublishAdvancedOptions
@@ -1414,7 +1417,7 @@ for (const item of serializers) {
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    wampy.publish(
+                    await wampy.publish(
                         'qqq.www.eee',
                         'payload',
                         {
@@ -1432,7 +1435,7 @@ for (const item of serializers) {
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    wampy.publish(
+                    await wampy.publish(
                         'qqq.www.eee',
                         'payload',
                         {
@@ -1450,7 +1453,7 @@ for (const item of serializers) {
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    wampy.publish(
+                    await wampy.publish(
                         'qqq.www.eee',
                         'payload',
                         {
@@ -1468,7 +1471,7 @@ for (const item of serializers) {
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    wampy.publish(
+                    await wampy.publish(
                         'qqq.www.eee',
                         'payload',
                         {
@@ -1486,7 +1489,7 @@ for (const item of serializers) {
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    wampy.publish(
+                    await wampy.publish(
                         'qqq.www.eee',
                         'payload',
                         {
@@ -1503,7 +1506,7 @@ for (const item of serializers) {
                 }
 
                 try {
-                    wampy.publish(
+                    await wampy.publish(
                         'qqq.www.eee',
                         'payload',
                         {
@@ -1516,7 +1519,7 @@ for (const item of serializers) {
                 }
 
                 try {
-                    wampy.publish(
+                    await wampy.publish(
                         'qqq.www.eee',
                         'payload',
                         {
@@ -1702,9 +1705,9 @@ for (const item of serializers) {
                 wampy.setOptions({ uriValidation: 'strict' });
             });
 
-            it('checks for valid advanced options during RPC registration', function () {
+            it('checks for valid advanced options during RPC registration', async function () {
                 try {
-                    wampy.register(
+                    await wampy.register(
                         'qqq.www.eee',
                         function (e) {},
                         {
@@ -1718,7 +1721,7 @@ for (const item of serializers) {
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    wampy.register(
+                    await wampy.register(
                         'qqq.www.eee',
                         function (e) {},
                         {
@@ -1732,7 +1735,7 @@ for (const item of serializers) {
                 expect(wampy.getOpStatus().error!.message).to.be.equal(WAMP_ERROR_MSG.INVALID_PARAM);
 
                 try {
-                    wampy.register(
+                    await wampy.register(
                         'qqq.www.eee',
                         function (e) {},
                         'string instead of object' as unknown as RegisterAdvancedOptions
@@ -2164,6 +2167,7 @@ for (const item of serializers) {
                                 sendData(100, { progress: false });
                             } catch (e) {
                                 done(e);
+                                return;
                             }
 
                             const res = await result;
@@ -2469,26 +2473,26 @@ for (const item of serializers) {
                 }
             });
 
-            it('calls error handler on trying to unregister non existent RPC', function () {
+            it('calls error handler on trying to unregister non existent RPC', async function () {
                 try {
-                    wampy.unregister('register.nonexistent');
+                    await wampy.unregister('register.nonexistent');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NonExistRPCUnregistrationError);
                 }
             });
 
-            it('disallows to unregister RPC with invalid URI', function () {
+            it('disallows to unregister RPC with invalid URI', async function () {
                 try {
-                    wampy.unregister('q:w:e');
+                    await wampy.unregister('q:w:e');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.UriError);
                 }
             });
 
-            it('disallows to register RPC without providing rpc itself', function () {
+            it('disallows to register RPC without providing rpc itself', async function () {
                 try {
                     // @ts-expect-error testing missing callback
-                    wampy.register('register.rpc8');
+                    await wampy.register('register.rpc8');
                 } catch (e) {
                     expect(e).to.be.instanceOf(Errors.NoCallbackError);
                 }
