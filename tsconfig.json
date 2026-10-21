@@ -13,7 +13,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "allowJs": true,
-    "checkJs": false
+    "checkJs": false,
+    "types": ["node", "mocha"]
   },
   "include": ["src/", "cmd/", "test/"],
   "exclude": ["node_modules", "dist"]
