@@ -1034,6 +1034,8 @@ class Wampy {
      */
     async _onInvocationMessage ([, requestId, registrationId, details, argsList, argsDict]: [unknown, number, number, Record<string, unknown>, unknown[]?, Record<string, unknown>?]): Promise<void> {
         const self = this;
+        // `||` fallbacks below must also cover null/empty values, which destructuring defaults would not.
+        // eslint-disable-next-line unicorn/prefer-default-parameters
         const handleInvocationError = ({ error, details, argsList, argsDict }: InvocationErrorData): void => {
             const message: unknown[] = [
                 WAMP_MSG_SPEC.ERROR,
