@@ -34,7 +34,7 @@
     "sinon": "^22.1.0",
     "tsup": "^9.0.0",
     "tsx": "^4.23.12",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.67.0"
   },
   "main": "dist/cjs/wampy.cjs",
