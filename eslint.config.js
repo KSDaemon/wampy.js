@@ -59,6 +59,12 @@ export default tseslint.config(
             // Concise one-line JSDoc (`/** Validate uri */`) is the established style for member
             // and type documentation across src/ — expanding all of them to multiline adds noise.
             'unicorn/single-line-block-comment-style': 'off',
+            // Multiline JSDoc blocks keep the conventional ` * ` line prefix.
+            'unicorn/no-asterisk-prefix-in-documentation-comments': 'off',
+            // Explicit `if` branches with early returns are the established control-flow style;
+            // collapsing them into ternaries / inverted guards hurts readability.
+            'unicorn/prefer-ternary'           : 'off',
+            'unicorn/prefer-early-return'      : 'off',
         }
     },
     {
@@ -165,6 +171,14 @@ export default tseslint.config(
             // Our tests hand it to Wampy option callbacks instead (`onError: function (e) { ... done(); }`,
             // `onClose: done`), which it cannot follow — every such test reports a false positive.
             'mocha/handle-done-callback'              : 'off',
+        }
+    },
+    // Config files necessarily build their export with top-level calls (e.g. tseslint.config()).
+    {
+        name : 'config file overrides',
+        files: jsFiles,
+        rules: {
+            'unicorn/no-top-level-side-effects': 'off',
         }
     },
     {
