@@ -23,9 +23,7 @@ describe('Wampy-cra plugin', function () {
     });
 
     it('allows to generate derived key using PBKDF2 scheme', async function () {
-        let res: string;
-
-        res = await wampyCra.deriveKey(secret, salt);
+        let res: string = await wampyCra.deriveKey(secret, salt);
         expect(res).to.be.equal('PjhbMq82TzEZgl7/qKoUrk2ZdYl3sBciwBVSnE7ZCYM=');
 
         res = await wampyCra.deriveKey(secret, salt, 500);
