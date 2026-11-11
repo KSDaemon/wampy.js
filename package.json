@@ -20,7 +20,7 @@
     "eslint-plugin-security": "^4.0.1",
     "eslint-plugin-unicorn": "^77.0.0",
     "globals": "^17.11.0",
-    "jsdom": "^30.0.1",
+    "jsdom": "^31.0.0",
     "jsdom-global": "^3.0.2",
     "karma": "^6.4.4",
     "karma-chrome-launcher": "^3.2.0",
