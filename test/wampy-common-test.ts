@@ -1960,9 +1960,7 @@ for (const item of serializers) {
 
             it('allows to call RPC with hash-table payload', async function () {
                 const payload = { key1: 100, key2: 'string-key' };
-                let res;
-
-                res = await wampy.call('call.rpc5', payload);
+                let res = await wampy.call('call.rpc5', payload);
                 expect(res).to.be.an('object');
                 expect(res.argsList!).to.be.an('array');
                 expect(res.argsList!).to.have.lengthOf(0);
@@ -2809,9 +2807,7 @@ for (const item of serializers) {
 
             it('allows to call RPC with hash-table payload in ppt mode (custom scheme, native serializer)', async function () {
                 const payload = { key1: 100, key2: 'string-key' };
-                let res;
-
-                res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme' });
+                let res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme' });
                 expect(res).to.be.an('object');
                 expect(res.argsList!).to.be.an('array');
                 expect(res.argsList!).to.have.lengthOf(0);
@@ -3005,9 +3001,7 @@ for (const item of serializers) {
 
             it('allows to call RPC with hash-table payload in ppt mode (custom scheme, cbor serializer)', async function () {
                 const payload = { key1: 100, key2: 'string-key' };
-                let res;
-
-                res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
+                let res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'cbor' });
                 expect(res).to.be.an('object');
                 expect(res.argsList!).to.be.an('array');
                 expect(res.argsList!).to.have.lengthOf(0);
@@ -3204,9 +3198,7 @@ for (const item of serializers) {
 
             it('allows to call RPC with hash-table payload in ppt mode (custom scheme, msgpack serializer)', async function () {
                 const payload = { key1: 100, key2: 'string-key' };
-                let res;
-
-                res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
+                let res = await wampy.call('call.rpc5', payload, { ppt_scheme: 'x_custom_scheme', ppt_serializer: 'msgpack' });
                 expect(res).to.be.an('object');
                 expect(res.argsList!).to.be.an('array');
                 expect(res.argsList!).to.have.lengthOf(0);
