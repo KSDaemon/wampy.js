@@ -1,4 +1,5 @@
 import { isNode } from './constants.js';
+import type { WampyOptions } from './types.js';
 
 /**
  * Deferred promise object with exposed resolve and reject callbacks.
@@ -19,6 +20,7 @@ interface GetWebSocketConfig {
         ws?: { new (url: string, protocols?: string[], origin?: null, headers?: Record<string, string>, requestOptions?: Record<string, unknown>): WebSocket };
         additionalHeaders?: Record<string, string>;
         wsRequestOptions?: Record<string, unknown>;
+        transportUrlMode?: WampyOptions['transportUrlMode'];
     };
     isBrowserMock?: boolean;
 }
@@ -63,24 +65,26 @@ function getWebSocketFromWindowObject (parsedUrl: string, protocols?: string[]):
 
 /** Get a WebSocket object according to the user's current environment */
 export function getWebSocket ({ url, protocols, options, isBrowserMock }: GetWebSocketConfig = {}): WebSocket | null {
-    const { ws, additionalHeaders, wsRequestOptions } = options || {};
+    const { ws, additionalHeaders, wsRequestOptions, transportUrlMode = 'verify' } = options || {};
     const isActualNode = isNode && !isBrowserMock;
 
     if (!ws && isActualNode) {
         return null;
     }
 
-    const parsedUrl = isActualNode ? getServerUrlForNode(url!) : getServerUrlForBrowser(url);
+    const parsedUrl = transportUrlMode === 'passthrough'
+        ? url
+        : (isActualNode ? getServerUrlForNode(url!) : getServerUrlForBrowser(url));
 
-    if (!parsedUrl) {
+    if (transportUrlMode !== 'passthrough' && !parsedUrl) {
         return null;
     }
 
     if (ws) {    // User-provided WebSocket class
-        return new ws(parsedUrl, protocols, null, additionalHeaders, wsRequestOptions);
+        return new ws(parsedUrl!, protocols, null, additionalHeaders, wsRequestOptions);
     }
 
-    return getWebSocketFromWindowObject(parsedUrl, protocols);
+    return getWebSocketFromWindowObject(parsedUrl!, protocols);
 }
 
 /** Create a new deferred promise with exposed resolve and reject callbacks */

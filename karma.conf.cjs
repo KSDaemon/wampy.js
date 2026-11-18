@@ -5,6 +5,9 @@ module.exports = function karmaConfig(config) {
         frameworks: ['mocha'],
         exclude: [],
         files: [{
+            pattern: 'test/wampy-transport-url-test.ts',
+            watched: false
+        }, {
             pattern: 'test/wampy-common-test.ts',
             watched: false
         }, {

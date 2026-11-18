@@ -399,6 +399,11 @@ This function receives welcome details as an argument.
 - **onReconnectSuccess**. Default value: `null`. Callback function. Fired every time when reconnection succeeded.
 This function receives welcome details as an argument.
 - **ws**. Default value: `null`. User provided WebSocket class. Useful in node environment.
+- **transportUrlMode**. Default value: `'verify'`. Router URL handling mode.
+  - `'verify'`: keeps WebSocket URL validation in Node.js and URL completion based on the current page in browsers.
+  - `'passthrough'`: passes the URL unchanged to the transport, without validation or URL completion.
+    Useful for custom transports provided via `ws`; also works with the built-in browser WebSocket.
+    The transport is responsible for interpreting and validating the address.
 - **additionalHeaders**. Default value: `null`. User provided additional HTTP headers (for use in Node.js environment)
 - **wsRequestOptions**. Default value: `null`. User provided WS Client Config Options (for use in Node.js environment).
 See docs for [WebSocketClient][], [tls.connect options][].
