@@ -112,12 +112,24 @@ for (const uriValidation of ['strict', 'loose'] as const) {
                 await expectUriError(client, client.register(uri, () => {}));
             });
 
+            it(`rejects non-concrete URI ${JSON.stringify(uri)} with exact registration matching`, async function () {
+                await expectUriError(client, client.register(uri, () => {}, { match: 'exact' }));
+            });
+
             it(`rejects non-concrete publication URI ${JSON.stringify(uri)}`, async function () {
                 await expectUriError(client, client.publish(uri));
             });
 
             it(`rejects non-concrete call URI ${JSON.stringify(uri)}`, async function () {
                 await expectUriError(client, client.call(uri));
+            });
+        }
+
+        for (const method of ['subscribe', 'register'] as const) {
+            it(`allows a concrete URI with exact ${method} matching`, async function () {
+                const uri = 'com.myapp.update';
+                await expectQueued(client, client[method](uri, () => {}, { match: 'exact' }),
+                    method === 'subscribe' ? 32 : 64, uri, 'exact');
             });
         }
 

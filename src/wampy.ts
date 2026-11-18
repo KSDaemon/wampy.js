@@ -1761,7 +1761,7 @@ class Wampy {
             throw invalidParamError;
         }
 
-        if (!this._preReqChecks({ topic, patternBased: Boolean(match), allowWAMP: false }, 'dealer')) {
+        if (!this._preReqChecks({ topic, patternBased: match === 'prefix' || match === 'wildcard', allowWAMP: false }, 'dealer')) {
             throw this._cache.opStatus.error;
         }
 
