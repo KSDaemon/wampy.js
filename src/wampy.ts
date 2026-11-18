@@ -73,7 +73,7 @@ class Wampy {
     version: string = 'v8.0.3';
 
     /** WS Url */
-    private _url: string | null;
+    private _url: string | undefined;
 
     /** WS protocols */
     private _protocols: string[];
@@ -117,7 +117,7 @@ class Wampy {
     constructor (url: string, options: WampyOptions);
     constructor (url?: string | WampyOptions, options?: WampyOptions) {
 
-        this._url = (typeof url === 'string') ? url : null;
+        this._url = (typeof url === 'string') ? url : undefined;
 
         this._protocols = ['wamp.2.json'];
 
@@ -207,6 +207,7 @@ class Wampy {
             onReconnect: null,
             onReconnectSuccess: null,
             ws: null,
+            transportUrlMode: 'verify',
             additionalHeaders: null,
             wsRequestOptions: null,
             serializer: jsonSerializer,
@@ -1177,7 +1178,7 @@ class Wampy {
 
         this._cache.reconnectingAttempts++;
         this._ws = getWebSocket({
-            url: this._url!,
+            url: this._url,
             protocols: this._protocols,
             options: this._options as Record<string, unknown>
         });
@@ -1277,7 +1278,7 @@ class Wampy {
 
     /** Connect to server */
     async connect (url?: string): Promise<Record<string, unknown>> {
-        if (url) {
+        if (url || (url !== undefined && this._options.transportUrlMode === 'passthrough')) {
             this._url = url;
         }
 
@@ -1300,7 +1301,7 @@ class Wampy {
 
         this._setWsProtocols();
         this._ws = getWebSocket({
-            url: this._url!,
+            url: this._url,
             protocols: this._protocols,
             options: this._options as Record<string, unknown>
         });

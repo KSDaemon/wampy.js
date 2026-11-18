@@ -344,6 +344,12 @@ export interface WampyOptions {
     /** User-provided WebSocket class */
     ws?: WebSocketConstructor | null;
 
+    /**
+     * Router URL handling: 'verify' (default) preserves WebSocket URL checks and
+     * browser URL completion; 'passthrough' forwards the URL unchanged to the transport.
+     */
+    transportUrlMode?: 'verify' | 'passthrough';
+
     /** Additional HTTP headers (for use in Node.js environment) */
     additionalHeaders?: Record<string, string> | null;
 
