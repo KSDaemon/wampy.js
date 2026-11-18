@@ -7,6 +7,12 @@ module.exports = function karmaConfig(config) {
         files: [{
             pattern: 'test/wampy-common-test.ts',
             watched: false
+        }, {
+            pattern: 'test/wampy-uri-validation-test.ts',
+            watched: false
+        }, {
+            pattern: 'test/wampy-pattern-routing-test.ts',
+            watched: false
         }],
         preprocessors: {
             'test/**/*.ts': ['esbuild']
