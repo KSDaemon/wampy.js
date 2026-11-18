@@ -332,10 +332,10 @@ class Wampy {
         let reBase: RegExp | undefined, rePattern: RegExp | undefined;
         if (isStrictValidation) {
             reBase = /^(\w+\.)*(\w+)$/;
-            rePattern = /^(\w+\.{1,2})*(\w+)$/;
+            rePattern = /^((\w+\.)|\.)*(\w+)?$/;
         } else if (isLooseValidation) {
             reBase = /^([^\s#.]+\.)*([^\s#.]+)$/;
-            rePattern = /^([^\s#.]+\.{1,2})*([^\s#.]+)$/;
+            rePattern = /^(([^\s#.]+\.)|\.)*([^\s#.]+)?$/;
         }
 
         return (isPatternBased ? rePattern! : reBase!).test(uri);
