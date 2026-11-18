@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { Wampy } from '../src/wampy.js';
 import { UriError } from '../src/errors.js';
+import { WAMP_MSG_SPEC } from '../src/constants.js';
 
 function queuedMessages (client: Wampy): unknown[][] {
     const { _wsQueue } = client as unknown as { _wsQueue: string[] };
@@ -47,6 +48,10 @@ const wildcardUris = [
     '...'
 ];
 const invalidUris = ['com.my app.update', 'com.my\tapp.update', 'com.my\napp.update', 'com.myapp.#'];
+const methods = [
+    { method: 'subscribe', messageType: WAMP_MSG_SPEC.SUBSCRIBE },
+    { method: 'register', messageType: WAMP_MSG_SPEC.REGISTER }
+] as const;
 
 for (const uriValidation of ['strict', 'loose'] as const) {
     describe(`Wampy.js URI validation (${uriValidation})`, function () {
@@ -56,19 +61,19 @@ for (const uriValidation of ['strict', 'loose'] as const) {
             client = new Wampy({ realm: 'realm1', uriValidation });
         });
 
-        for (const method of ['subscribe', 'register'] as const) {
+        for (const { method, messageType } of methods) {
             describe(`${method} patterns`, function () {
                 for (const uri of wildcardUris) {
                     it(`allows wildcard URI ${JSON.stringify(uri)}`, async function () {
                         await expectQueued(client, client[method](uri, () => {}, { match: 'wildcard' }),
-                            method === 'subscribe' ? 32 : 64, uri, 'wildcard');
+                            messageType, uri, 'wildcard');
                     });
                 }
 
                 for (const uri of ['', 'com.myapp.', 'com.myapp']) {
                     it(`allows prefix URI ${JSON.stringify(uri)}`, async function () {
                         await expectQueued(client, client[method](uri, () => {}, { match: 'prefix' }),
-                            method === 'subscribe' ? 32 : 64, uri, 'prefix');
+                            messageType, uri, 'prefix');
                     });
                 }
 
@@ -79,21 +84,10 @@ for (const uriValidation of ['strict', 'loose'] as const) {
                         });
                     }
 
-                    for (const uri of ['com.my-app.update', 'com.my/app.update']) {
-                        it(`${uriValidation === 'loose' ? 'allows' : 'rejects'} ${match} URI ${JSON.stringify(uri)}`, async function () {
-                            const operation = client[method](uri, () => {}, { match });
-                            if (uriValidation === 'loose') {
-                                await expectQueued(client, operation, method === 'subscribe' ? 32 : 64, uri, match);
-                            } else {
-                                await expectUriError(client, operation);
-                            }
-                        });
-                    }
-
                     it(`preserves uppercase letters and underscores in ${match} URIs`, async function () {
                         const uri = 'Com.My_app.Update1';
                         await expectQueued(client, client[method](uri, () => {}, { match }),
-                            method === 'subscribe' ? 32 : 64, uri, match);
+                            messageType, uri, match);
                     });
                 }
             });
@@ -125,11 +119,11 @@ for (const uriValidation of ['strict', 'loose'] as const) {
             });
         }
 
-        for (const method of ['subscribe', 'register'] as const) {
+        for (const { method, messageType } of methods) {
             it(`allows a concrete URI with exact ${method} matching`, async function () {
                 const uri = 'com.myapp.update';
                 await expectQueued(client, client[method](uri, () => {}, { match: 'exact' }),
-                    method === 'subscribe' ? 32 : 64, uri, 'exact');
+                    messageType, uri, 'exact');
             });
         }
 
@@ -140,8 +134,45 @@ for (const uriValidation of ['strict', 'loose'] as const) {
 
             it(`allows meta API URI with ${match} subscription matching`, async function () {
                 await expectQueued(client, client.subscribe('wamp.session.on_join', () => {}, { match }),
-                    32, 'wamp.session.on_join', match);
+                    WAMP_MSG_SPEC.SUBSCRIBE, 'wamp.session.on_join', match);
             });
         }
     });
 }
+
+describe('Wampy.js strict versus loose URI character rules', function () {
+    const concreteUris = ['com.my-app.update', 'com.my/app.update', 'com.приложение.update'];
+    const cases = [
+        { match: 'exact', uris: concreteUris },
+        { match: 'prefix', uris: [...concreteUris, 'com.my-app.'] },
+        {
+            match: 'wildcard',
+            uris: [
+                ...concreteUris,
+                '.my-app.update',
+                'com.my/app.',
+                'com.приложение..update',
+                'com.my-app...update',
+                'com.my/app..status..update',
+                '.my-app..status.',
+                '.приложение..status.'
+            ]
+        }
+    ] as const;
+
+    for (const { method, messageType } of methods) {
+        for (const { match, uris } of cases) {
+            for (const uri of uris) {
+                it(`strict rejects ${method} ${match} URI ${JSON.stringify(uri)}`, async function () {
+                    const client = new Wampy({ realm: 'realm1', uriValidation: 'strict' });
+                    await expectUriError(client, client[method](uri, () => {}, { match }));
+                });
+
+                it(`loose accepts ${method} ${match} URI ${JSON.stringify(uri)}`, async function () {
+                    const client = new Wampy({ realm: 'realm1', uriValidation: 'loose' });
+                    await expectQueued(client, client[method](uri, () => {}, { match }), messageType, uri, match);
+                });
+            }
+        }
+    }
+});
