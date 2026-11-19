@@ -756,18 +756,18 @@ const WAMP_MSG_SPEC = {
         },
         {
             data: [
-                WAMP_MSG_SPEC.SUBSCRIBED,
+                WAMP_MSG_SPEC.REGISTERED,
                 'RequestId',
-                37
+                38   // Registration ID
             ],
             from: [1],
             to: [1]
         },
         {
             data: [
-                WAMP_MSG_SPEC.REGISTERED,
+                WAMP_MSG_SPEC.SUBSCRIBED,
                 'RequestId',
-                38   // Registration ID
+                37
             ],
             from: [1],
             to: [1]

@@ -162,7 +162,80 @@ for (const SerializerClass of [JsonSerializer, MsgpackSerializer, CborSerializer
                 await receive(client, serializer, errorReply);
                 expect(pending.errors).to.have.lengthOf(1);
             });
+
+            it(`ignores success replies of other types for a pending ${testCase.name}`, async function () {
+                const pending = await startRequest(client, serializer, testCase.request);
+
+                for (const other of requestCases) {
+                    if (other.request === testCase.request) {
+                        continue;
+                    }
+                    await receive(client, serializer, successReply(other.response, pending.requestId));
+                    expect(pending.results, other.name).to.deep.equal([]);
+                    expect(pending.errors, other.name).to.deep.equal([]);
+                }
+
+                await receive(client, serializer, successReply(testCase.response, pending.requestId));
+                await pending.done;
+                expect(pending.results).to.have.lengthOf(1);
+                expect(pending.results[0]).to.deep.include(testCase.expected);
+                expect(pending.errors).to.deep.equal([]);
+            });
+
+            it(`ignores ERRORs naming other request types for a pending ${testCase.name}`, async function () {
+                const pending = await startRequest(client, serializer, testCase.request);
+
+                for (const other of requestCases) {
+                    if (other.request === testCase.request) {
+                        continue;
+                    }
+                    await receive(client, serializer, [
+                        WAMP_MSG_SPEC.ERROR, other.request, pending.requestId, {}, 'com.myapp.wrong_type'
+                    ]);
+                    expect(pending.results, other.name).to.deep.equal([]);
+                    expect(pending.errors, other.name).to.deep.equal([]);
+                }
+
+                await receive(client, serializer, [WAMP_MSG_SPEC.ERROR, testCase.request, pending.requestId, {}, 'com.myapp.failed']);
+                await pending.done;
+                expect(pending.results).to.deep.equal([]);
+                expect(pending.errors).to.have.lengthOf(1);
+                expect(pending.errors[0]).to.be.instanceOf(testCase.error);
+                expect(pending.errors[0]).to.include({ errorUri: 'com.myapp.failed' });
+            });
         }
+
+        it('correlates mixed concurrent requests without consuming another operation on mismatched replies', async function () {
+            const subscription = await startRequest(client, serializer, WAMP_MSG_SPEC.SUBSCRIBE);
+            const publication = await startRequest(client, serializer, WAMP_MSG_SPEC.PUBLISH);
+            const call = await startRequest(client, serializer, WAMP_MSG_SPEC.CALL);
+
+            await receive(client, serializer, [WAMP_MSG_SPEC.PUBLISHED, subscription.requestId, 301]);
+            await receive(client, serializer, [WAMP_MSG_SPEC.ERROR, WAMP_MSG_SPEC.SUBSCRIBE, publication.requestId, {}, 'com.myapp.wrong_type']);
+            await receive(client, serializer, [WAMP_MSG_SPEC.RESULT, call.requestId, {}, ['call']]);
+            await call.done;
+            expect(subscription.results).to.deep.equal([]);
+            expect(subscription.errors).to.deep.equal([]);
+            expect(publication.results).to.deep.equal([]);
+            expect(publication.errors).to.deep.equal([]);
+            expect(call.results).to.deep.equal([{ details: {}, argsList: ['call'], argsDict: undefined }]);
+
+            await receive(client, serializer, [WAMP_MSG_SPEC.PUBLISHED, publication.requestId, 302]);
+            await publication.done;
+            expect(publication.results).to.deep.equal([{ topic, requestId: publication.requestId, publicationId: 302 }]);
+            expect(subscription.results).to.deep.equal([]);
+
+            await receive(client, serializer, [WAMP_MSG_SPEC.SUBSCRIBED, subscription.requestId, 303]);
+            await subscription.done;
+            expect(subscription.results).to.deep.equal([{
+                topic, requestId: subscription.requestId, subscriptionId: 303, subscriptionKey: topic
+            }]);
+
+            const events: unknown[] = [];
+            await client.subscribe(topic, event => { events.push(event); });
+            await receive(client, serializer, [WAMP_MSG_SPEC.EVENT, 303, 401, {}, ['event']]);
+            expect(events).to.deep.equal([{ details: {}, argsList: ['event'], argsDict: undefined }]);
+        });
 
         it('correlates concurrent calls whose results arrive in reverse order', async function () {
             const first = await startRequest(client, serializer, WAMP_MSG_SPEC.CALL);
