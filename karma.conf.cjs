@@ -16,6 +16,9 @@ module.exports = function karmaConfig(config) {
         }, {
             pattern: 'test/wampy-pattern-routing-test.ts',
             watched: false
+        }, {
+            pattern: 'test/wampy-request-correlation-test.ts',
+            watched: false
         }],
         preprocessors: {
             'test/**/*.ts': ['esbuild']
