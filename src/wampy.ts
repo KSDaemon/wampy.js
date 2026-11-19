@@ -679,25 +679,35 @@ class Wampy {
     }
 
     /** Validates the requestId for message types that need this kind of validation */
-    _isRequestIdValid ([messageType, requestId]: unknown[]): boolean {
-        const isRequestIdValidationNeeded = ([
-            WAMP_MSG_SPEC.SUBSCRIBED,
-            WAMP_MSG_SPEC.UNSUBSCRIBED,
-            WAMP_MSG_SPEC.PUBLISHED,
-            WAMP_MSG_SPEC.RESULT,
-            WAMP_MSG_SPEC.REGISTERED,
-            WAMP_MSG_SPEC.UNREGISTERED
-        ] as number[]).includes(messageType as number);
+    _isRequestIdValid ([messageType, requestId, errorRequestId]: unknown[]): boolean {
+        const requestTypes: Record<number, number> = {
+            [WAMP_MSG_SPEC.SUBSCRIBED]: WAMP_MSG_SPEC.SUBSCRIBE,
+            [WAMP_MSG_SPEC.UNSUBSCRIBED]: WAMP_MSG_SPEC.UNSUBSCRIBE,
+            [WAMP_MSG_SPEC.PUBLISHED]: WAMP_MSG_SPEC.PUBLISH,
+            [WAMP_MSG_SPEC.RESULT]: WAMP_MSG_SPEC.CALL,
+            [WAMP_MSG_SPEC.REGISTERED]: WAMP_MSG_SPEC.REGISTER,
+            [WAMP_MSG_SPEC.UNREGISTERED]: WAMP_MSG_SPEC.UNREGISTER
+        };
+        let requestType = requestTypes[messageType as number];
 
-        if (!isRequestIdValidationNeeded) {
+        if (messageType === WAMP_MSG_SPEC.ERROR) {
+            // Invalid ERROR request types must reach the protocol violation handler.
+            if (!Object.values(requestTypes).includes(requestId as number)) {
+                return true;
+            }
+            requestType = requestId as number;
+            requestId = errorRequestId;
+        }
+
+        if (requestType === undefined) {
             return true;
         }
 
-        if (messageType === WAMP_MSG_SPEC.RESULT && this._calls[requestId as number]) {
-            return true;
+        if (requestType === WAMP_MSG_SPEC.CALL) {
+            return Boolean(this._calls[requestId as number]);
         }
 
-        return Boolean(this._requests[requestId as number]);
+        return this._requests[requestId as number]?.requestType === requestType;
     }
 
     /**
@@ -1406,7 +1416,7 @@ class Wampy {
         const callbacks = getNewPromise<SubscribeSuccessResult>() as SubscribeRequestCallbacks;
 
         callbacks.onEvent = onEvent;
-        this._requests[reqId] = { topic, callbacks, advancedOptions };
+        this._requests[reqId] = { requestType: WAMP_MSG_SPEC.SUBSCRIBE, topic, callbacks, advancedOptions };
 
         // WAMP SPEC: [SUBSCRIBE, Request|id, Options|dict, Topic|uri]
         const options = { match, get_retained, ...this._extractCustomOptions(advancedOptions) };
@@ -1444,7 +1454,9 @@ class Wampy {
 
         const reqId = this._getReqId();
 
-        this._requests[reqId] = { topic: subscription.topic, callbacks: getNewPromise<UnsubscribeSuccessResult>() };
+        this._requests[reqId] = {
+            requestType: WAMP_MSG_SPEC.UNSUBSCRIBE, topic: subscription.topic, callbacks: getNewPromise<UnsubscribeSuccessResult>()
+        };
 
         // WAMP_SPEC: [UNSUBSCRIBE, Request|id, SUBSCRIBED.Subscription|id]
         this._send([WAMP_MSG_SPEC.UNSUBSCRIBE, reqId, subscription.id]);
@@ -1530,7 +1542,7 @@ class Wampy {
 
         const reqId = this._getReqId();
 
-        this._requests[reqId] = { topic, callbacks: getNewPromise<PublishSuccessResult>() };
+        this._requests[reqId] = { requestType: WAMP_MSG_SPEC.PUBLISH, topic, callbacks: getNewPromise<PublishSuccessResult>() };
         this._cache.opStatus = { ...SUCCESS, reqId };
         this._send([WAMP_MSG_SPEC.PUBLISH, reqId, messageOptions, topic, ...(payloadItems || [])]);
 
@@ -1778,7 +1790,7 @@ class Wampy {
             callbacks.rpc = rpc;
         }
 
-        this._requests[reqId] = { topic, callbacks, options: options as RegisterAdvancedOptions };
+        this._requests[reqId] = { requestType: WAMP_MSG_SPEC.REGISTER, topic, callbacks, options: options as RegisterAdvancedOptions };
 
         // WAMP SPEC: [REGISTER, Request|id, Options|dict, Procedure|uri]
         this._send([WAMP_MSG_SPEC.REGISTER, reqId, options, topic]);
@@ -1802,7 +1814,7 @@ class Wampy {
         const reqId = this._getReqId();
         const callbacks = getNewPromise<UnregisterSuccessResult>();
 
-        this._requests[reqId] = { topic, callbacks };
+        this._requests[reqId] = { requestType: WAMP_MSG_SPEC.UNREGISTER, topic, callbacks };
 
         // WAMP SPEC: [UNREGISTER, Request|id, REGISTERED.Registration|id]
         this._send([WAMP_MSG_SPEC.UNREGISTER, reqId, this._rpcRegs[topic].id]);

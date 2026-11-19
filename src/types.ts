@@ -458,6 +458,7 @@ export interface RegisterRequestCallbacks extends Deferred<RegisterSuccessResult
 
 /** Internal pending subscribe request */
 export interface SubscribeRequest {
+    requestType: typeof WAMP_MSG_SPEC.SUBSCRIBE;
     topic: string;
     callbacks: SubscribeRequestCallbacks;
     advancedOptions?: SubscribeAdvancedOptions;
@@ -465,6 +466,7 @@ export interface SubscribeRequest {
 
 /** Internal pending unsubscribe request */
 export interface UnsubscribeRequest {
+    requestType: typeof WAMP_MSG_SPEC.UNSUBSCRIBE;
     topic: string;
     callbacks: Deferred<UnsubscribeSuccessResult>;
     advancedOptions?: SubscribeAdvancedOptions;
@@ -472,12 +474,14 @@ export interface UnsubscribeRequest {
 
 /** Internal pending publish request */
 export interface PublishRequest {
+    requestType: typeof WAMP_MSG_SPEC.PUBLISH;
     topic: string;
     callbacks: Deferred<PublishSuccessResult>;
 }
 
 /** Internal pending register request */
 export interface RegisterRequest {
+    requestType: typeof WAMP_MSG_SPEC.REGISTER;
     topic: string;
     callbacks: RegisterRequestCallbacks;
     options?: RegisterAdvancedOptions;
@@ -485,6 +489,7 @@ export interface RegisterRequest {
 
 /** Internal pending unregister request */
 export interface UnregisterRequest {
+    requestType: typeof WAMP_MSG_SPEC.UNREGISTER;
     topic: string;
     callbacks: Deferred<UnregisterSuccessResult>;
 }
